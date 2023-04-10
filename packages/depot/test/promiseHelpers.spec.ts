@@ -71,21 +71,21 @@ describe("sequence()", () => {
                 return 300;
             },
             (): number => {
-                expect(false).toBeTruthy();  // This line should never be executed
+                fail("This line should never be executed.");
                 return 400;
             }
         ];
 
         sequence(tasks, 100)
         .then(() => {
-            expect(false).toBeTruthy();  // This line should never be executed
+            fail("This line should never be executed");
         })
         .catch((err) => {
-            expect(err.message).toEqual("error message");
+            const typedErr = err as {message: string};
+            expect(typedErr.message).toBeTruthy();
+            expect(typedErr.message).toEqual("error message");
             done();
         });
-
-
     });
 
 
@@ -699,7 +699,8 @@ describe("mapAsync()", () => {
 
         mapAsync(src, valueFunc)
         .catch((err) => {
-            expect(err.message).toEqual("31 rejected.");
+            const typedErr = err as {message: string};
+            expect(typedErr.message).toEqual("31 rejected.");
             done();
         });
     });
@@ -738,7 +739,8 @@ describe("zipWithAsyncValues()", () => {
 
         zipWithAsyncValues(src, valueFunc)
         .catch((err) => {
-            expect(err.message).toEqual("31 rejected.");
+            const typedErr = err as {message: string};
+            expect(typedErr.message).toEqual("31 rejected.");
             done();
         });
     });
@@ -776,7 +778,8 @@ describe("filterAsync", () => {
 
         filterAsync(src, asyncRejectIfOdd)
         .catch((err) => {
-            expect(err.message).toEqual("31 rejected.");
+            const typedErr = err as {message: string};
+            expect(typedErr.message).toEqual("31 rejected.");
             done();
         });
     });
@@ -819,7 +822,8 @@ describe("partitionAsync", () => {
 
         partitionAsync(src, asyncRejectIfOdd)
         .catch((err) => {
-            expect(err.message).toEqual("31 rejected.");
+            const typedErr = err as {message: string};
+            expect(typedErr.message).toEqual("31 rejected.");
             done();
         });
     });
@@ -863,7 +867,8 @@ describe("removeAsync", () => {
 
         removeAsync(src, asyncRejectIfOdd)
         .catch((err) => {
-            expect(err.message).toEqual("31 rejected.");
+            const typedErr = err as {message: string};
+            expect(typedErr.message).toEqual("31 rejected.");
             // `src` should be unmodified.
             expect(src.length).toEqual(3);
             done();

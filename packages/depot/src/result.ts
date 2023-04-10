@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 /* eslint-disable max-len */
 
+import { isIToString } from "./toString";
+
 
 interface IResult<TSuccess, TError> {
     /**
@@ -57,9 +59,12 @@ export class SucceededResult<TSuccess> implements IResult<TSuccess, undefined> {
     }
 
     public toString(): string {
-        return `Successful Result (${this._value})`;
+        return isIToString(this._value) ?
+            `Successful Result (${this._value.toString()})` :
+            "Successful Result";
     }
 }
+
 
 export class FailedResult<TError> implements IResult<undefined, TError> {
 
@@ -86,7 +91,9 @@ export class FailedResult<TError> implements IResult<undefined, TError> {
     }
 
     public toString(): string {
-        return `Failed Result (${this._error})`;
+        return isIToString(this._error) ?
+            `Failed Result (${this._error.toString()})` :
+            "Failed Result";
     }
 }
 
@@ -343,7 +350,7 @@ export namespace Result {
     ): Result<Array<unknown>, unknown> {
         const firstFailureIdx = results.findIndex((res) => res.failed);
         if (firstFailureIdx === -1) {
-            const successVals = results.map((res) => res.value!);
+            const successVals = results.map((res) => res.value);
             return new SucceededResult(successVals);
         }
         else {
@@ -674,7 +681,7 @@ export namespace Result {
                 }
 
                 // We have not failed yet, so execute the current function.
-                const res = curFn();
+                const res = curFn() as Result<unknown, unknown>;
                 if (res.succeeded) {
                     // Note:  Do not use array.concat() here, because if the current
                     // result's value is an array, it will be flattened.
