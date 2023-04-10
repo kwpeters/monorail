@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "ut": "ts-node --project ./tsconfig.json ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
-    "ut-watch": "ts-node-dev --respawn --project ./tsconfig.json -- ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json"
+    "ut-watch": "ts-node-dev --respawn --project ./tsconfig.json --transpile-only -- ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json"
   },
   "files": [
     "dist"
