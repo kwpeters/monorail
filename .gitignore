@@ -1,0 +1,19 @@
+# Node.js packages
+node_modules/
+
+# TS incremental build cache information`
+*.tsbuildinfo
+
+# Built files
+dist/
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# Misc
+tmp/

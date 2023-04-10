@@ -1,0 +1,21 @@
+{
+  "name": "depot",
+  "version": "1.0.0",
+  "description": "A bunch of utilties",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "gulp ut"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "jasmine": "^4.6.0",
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "@types/jasmine": "^4.3.1",
+    "@types/lodash": "^4.14.192"
+  }
+}

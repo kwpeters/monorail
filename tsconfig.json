@@ -1,0 +1,9 @@
+{
+    "extends": "./tsconfig.compileroptions.json",
+    "files": [],
+    "references": [
+        {
+            "path": "./packages/depot"
+        }
+    ]
+}
