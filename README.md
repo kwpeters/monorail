@@ -8,6 +8,6 @@
 - [X] Remove use of Gulp
 - [X] Add tsc watch script for unit tests using ts-node-dev
 - [X] Add a sample app.
-- [ ] Rename "build" npm script to "compile"
+- [ ] Rename "build" npm script to "tsc"
 - [ ] Might want to use npm-run-all as shown in this package
       <https://www.npmjs.com/package/check-dependency-version-consistency>
