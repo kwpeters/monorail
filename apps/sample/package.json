@@ -1,7 +1,7 @@
 {
-    "name": "depot",
+    "name": "sample",
     "version": "1.0.0",
-    "description": "A bunch of utilties",
+    "description": "A sample client that uses packages",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
@@ -11,12 +11,9 @@
     "files": [
         "dist"
     ],
-    "dependencies": {
-        "lodash": "^4.17.21"
-    },
+    "dependencies": {},
     "devDependencies": {
         "@types/jasmine": "^4.3.1",
-        "@types/lodash": "^4.14.192",
         "jasmine": "^4.6.0"
     }
 }

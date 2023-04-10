@@ -4,6 +4,9 @@
     "references": [
         {
             "path": "./packages/depot"
+        },
+        {
+            "path": "./apps/sample"
         }
     ]
 }
