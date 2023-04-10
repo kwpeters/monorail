@@ -10,8 +10,15 @@
         "eslint:recommended",
         "plugin:@typescript-eslint/eslint-recommended",
         "plugin:@typescript-eslint/recommended",
-        "plugin:@typescript-eslint/recommended-requiring-type-checking"
+        "plugin:@typescript-eslint/recommended-requiring-type-checking",
+        "plugin:import/recommended"
     ],
+    "settings": {
+        "import/resolver": {
+            "typescript": true,
+            "node": true
+        }
+    },
     "ignorePatterns": ["node_modules/", "dist/"],
     "rules": {
         "@typescript-eslint/comma-dangle": [
@@ -679,7 +686,17 @@
         "wrap-iife": [
             "error",
             "any"
-        ]
+        ],
+        "import/no-extraneous-dependencies": [
+            "error",
+            {
+                "devDependencies": [
+                    "**/*.test.js",
+                    "**/*.spec.js"
+                ]
+            }
+        ],
+        "import/order": ["error"]
     },
     "overrides": [
         {
