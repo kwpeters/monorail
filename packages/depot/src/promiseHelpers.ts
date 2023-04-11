@@ -1,7 +1,7 @@
 import {Writable} from "stream";
 import {EventEmitter} from "events";
-import * as _ from "lodash";
-import {ListenerTracker} from "./listenerTracker";
+import {random, chain, partition, map} from "lodash-es";
+import {ListenerTracker} from "./listenerTracker.js";
 
 
 /**
@@ -240,7 +240,7 @@ function retryWhileImpl<TResolve>(
                         // calculated base, whichever is larger.
 
                         const randomHalfRange: number = Math.max(BACKOFF_MULTIPLIER, 0.25 * backoffBaseMs);
-                        const randomMs: number = _.random(-1 * randomHalfRange, randomHalfRange);
+                        const randomMs: number = random(-1 * randomHalfRange, randomHalfRange);
                         const delayMs: number = backoffBaseMs + randomMs;
 
                         // logger.info("Failed. Queuing next attempt in " + backoffBaseMs + " + " + randomMs + " (" + delayMs + ") ms\n");
@@ -400,7 +400,7 @@ export async function filterAsync<T>(
     asyncPredicate: (curVal: T) => Promise<unknown>
 ): Promise<Array<T>> {
     const pairs = await zipWithAsyncValues(collection, asyncPredicate);
-    return _.chain(pairs)
+    return chain(pairs)
     .filter((curPair) => !!curPair[1])
     .map((curPair) => curPair[0])
     .value();
@@ -424,10 +424,10 @@ export async function partitionAsync<T>(
 ): Promise<[Array<T>, Array<T>]> {
     const pairs = await zipWithAsyncValues(collection, asyncPredicate);
 
-    const [truthyPairs, falsyPairs] = _.partition(pairs, (curPair) => !!curPair[1]);
+    const [truthyPairs, falsyPairs] = partition(pairs, (curPair) => !!curPair[1]);
     return [
-        _.map(truthyPairs, (curPair) => curPair[0]),
-        _.map(falsyPairs, (curPair) => curPair[0])
+        map(truthyPairs, (curPair) => curPair[0]),
+        map(falsyPairs, (curPair) => curPair[0])
     ];
 
 }

@@ -1,4 +1,4 @@
-import { pipe } from "../src/pipe";
+import { pipe } from "../src/pipe.js";
 
 
 

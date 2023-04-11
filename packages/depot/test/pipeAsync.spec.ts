@@ -1,5 +1,5 @@
-import {pipeAsync} from "../src/pipeAsync";
-import { getTimerPromise } from "../src/promiseHelpers";
+import {pipeAsync} from "../src/pipeAsync.js";
+import { getTimerPromise } from "../src/promiseHelpers.js";
 
 
 async function parseIntAsync(str: string): Promise<number> {

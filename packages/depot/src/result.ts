@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 /* eslint-disable max-len */
 
-import { isIToString } from "./toString";
+import { isIToString } from "./toString.js";
 
 
 interface IResult<TSuccess, TError> {

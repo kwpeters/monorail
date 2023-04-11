@@ -2,22 +2,22 @@
     "name": "depot",
     "version": "1.0.0",
     "description": "A bunch of utilties",
+    "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
-        "ut": "ts-node --project ./tsconfig.json --transpile-only ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
-        "ut-watch": "ts-node-dev --respawn --project ./tsconfig.json --transpile-only -- ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
+        "ut": "ts-node --esm --project ./tsconfig.json --transpile-only ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
         "post-build": ""
     },
     "files": [
         "dist"
     ],
     "dependencies": {
-        "lodash": "^4.17.21"
+        "lodash-es": "^4.17.21"
     },
     "devDependencies": {
         "@types/jasmine": "^4.3.1",
-        "@types/lodash": "^4.14.192",
+        "@types/lodash-es": "^4.17.7",
         "jasmine": "^4.6.0"
     }
 }

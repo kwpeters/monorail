@@ -1,6 +1,6 @@
-import { assertNever } from "../src/never";
-import { pipe } from "../src/pipe";
-import { FailedResult, Result, SucceededResult } from "../src/result";
+import { assertNever } from "../src/never.js";
+import { pipe } from "../src/pipe.js";
+import { FailedResult, Result, SucceededResult } from "../src/result.js";
 
 
 describe("SucceededResult", () => {

@@ -3,7 +3,7 @@ import {
     sequence, getTimerPromise, retry, retryWhile, promiseWhile,
     eventToPromise, conditionalTask, sequentialSettle, delaySettle,
     mapAsync, zipWithAsyncValues, filterAsync, removeAsync, partitionAsync
-} from "../src/promiseHelpers";
+} from "../src/promiseHelpers.js";
 
 
 describe("sequence()", () => {
