@@ -25,20 +25,26 @@
     "devDependencies": {
         "@typescript-eslint/eslint-plugin": "^5.57.1",
         "@typescript-eslint/parser": "^5.57.1",
+        "check-dependency-version-consistency": "^3.0.3",
         "eslint": "^8.37.0",
         "eslint-import-resolver-typescript": "^3.5.5",
         "eslint-plugin-import": "^2.27.5",
         "npm-run-all": "^4.1.5",
         "ts-node": "^10.9.1",
         "ts-node-dev": "^2.0.0",
-        "typescript": "^5.0.3"
+        "typescript": "^5.0.4"
     },
     "scripts": {
-        "tsc": "tsc --build --verbose",
-        "tsc-clean": "tsc --build --clean",
-        "lint": "eslint . --ext .js --ext .ts",
+        "lint:dep-consistency": "check-dependency-version-consistency",
+        "lint:eslint": "eslint . --ext .js --ext .ts",
+        "lint": "npm-run-all --aggregate-output --parallel lint:*",
+
         "ut": "npm run ut --workspaces",
-        "build": "npm-run-all --aggregate-output --parallel tsc-clean lint ut --serial tsc post-build",
-        "post-build": "npm run post-build --workspaces"
+
+        "tsc": "tsc --build --verbose",
+        "tsc:clean": "tsc --build --clean",
+
+        "build:post": "npm run post-build --workspaces",
+        "build": "npm-run-all --aggregate-output --parallel lint ut --serial tsc build:post"
     }
 }
