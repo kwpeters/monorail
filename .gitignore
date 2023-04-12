@@ -1,11 +1,27 @@
-# Node.js packages
-node_modules/
+# See http://help.github.com/ignore-files/ for more about ignoring files.
 
-# TS incremental build cache information`
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# TS incremental build cache information
 *.tsbuildinfo
 
-# Built files
+# Generated files
 dist/
+tmp/
+out-tsc/
+bazel-out/
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
 
 # Visual Studio Code
 .vscode/*
@@ -15,5 +31,15 @@ dist/
 !.vscode/extensions.json
 .history/*
 
-# Misc
-tmp/
+# Miscellaneous
+**/.angular/cache/
+.sass-cache/
+connect.lock
+coverage/
+libpeerconnection.log
+testem.log
+typings/
+
+# System files
+.DS_Store
+Thumbs.db
