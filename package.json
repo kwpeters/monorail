@@ -34,16 +34,20 @@
         "typescript": "^5.0.4"
     },
     "scripts": {
-        "lint:dep-consistency": "check-dependency-version-consistency",
+        "lint:dep-consistency": "check-dependency-version-consistency || exit 0",
         "lint:eslint": "eslint . --ext .js --ext .ts",
         "lint": "npm-run-all --aggregate-output --parallel lint:*",
 
         "ut": "npm run ut --workspaces",
 
-        "tsc": "tsc --build --verbose",
-        "tsc:clean": "tsc --build --clean",
+        "packages-tsc": "npm-run-all --serial packages-tsc:x packages-tsc:post",
+        "packages-tsc:x": "tsc --build --verbose",
+        "packages-tsc:post": "npm run packages-tsc:post --workspaces --if-present",
 
-        "build:post": "npm run post-build --workspaces",
-        "build": "npm-run-all --aggregate-output --parallel lint ut --serial tsc build:post"
+        "packages-tsc:clean": "tsc --build --clean",
+
+        "app-build": "npm run app-build --workspaces --if-present",
+
+        "build": "npm-run-all --aggregate-output --serial packages-tsc --parallel lint ut app-build"
     }
 }

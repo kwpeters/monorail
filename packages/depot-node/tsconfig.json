@@ -4,6 +4,11 @@
         // This is an ESM module so that it can be used in browser and Node.js.
         "module": "NodeNext",
         // Can't inherit outDir because it is relative to the containing file.
-        "outDir": "./dist",
-    }
+        "outDir": "../../out/packages/depot-node",
+    },
+    "references": [
+        {
+            "path": "../depot"
+        }
+    ]
 }

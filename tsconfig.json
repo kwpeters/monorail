@@ -6,6 +6,9 @@
             "path": "./packages/depot"
         },
         {
+            "path": "./packages/depot-node"
+        },
+        {
             "path": "./apps/sample"
         }
     ]

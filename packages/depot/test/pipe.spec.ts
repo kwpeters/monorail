@@ -1,7 +1,6 @@
 import { pipe } from "../src/pipe.js";
 
 
-
 describe("Pipe", () => {
 
 

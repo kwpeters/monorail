@@ -3,11 +3,11 @@
     "version": "1.0.0",
     "description": "A bunch of utilties",
     "type": "module",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
+    "main": "../../out/packages/depot-node/src/index.js",
+    "types": "../../out/packages/depot-node/src/index.d.ts",
     "scripts": {
         "ut": "ts-node --esm --project ./tsconfig.json --transpile-only ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
-        "post-build": ""
+        "packages-tsc:post": "cp package.json ../../out/packages/depot-node"
     },
     "files": [
         "dist"

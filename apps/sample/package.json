@@ -1,12 +1,13 @@
 {
     "name": "sample",
     "version": "1.0.0",
+    "type": "module",
     "description": "A sample client that uses packages",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
+    "main": "../../out/apps/sample/src/index.js",
+    "types": "../../out/apps/sample/src/index.d.ts",
     "scripts": {
-        "ut": "ts-node --project ./tsconfig.json --transpile-only ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
-        "post-build": ""
+        "ut": "ts-node --esm --project ./tsconfig.json --transpile-only ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
+        "packages-tsc:post": "cp package.json ../../out/apps/sample"
     },
     "files": [
         "dist"

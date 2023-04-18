@@ -1,6 +1,6 @@
 import {EventEmitter} from "events";
 import {eventToPromise} from "../src/promiseHelpers.js";
-import {getTimerPromise} from "../..//depot/src/promiseHelpers.js";
+import {getTimerPromise} from "../../depot/src/promiseHelpers.js";
 
 
 describe("eventToPromise()", () => {
