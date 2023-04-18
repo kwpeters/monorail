@@ -3,5 +3,10 @@
     "compilerOptions": {
         // Can't inherit outDir because it is relative to the containing file.
         "outDir": "./dist",
-    }
+    },
+    "references": [
+        {
+            "path": "../../packages/depot"
+        }
+    ]
 }
