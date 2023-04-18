@@ -12,9 +12,9 @@ describe("ListenerTracker", () => {
         let listener2Count = 0;
 
         tracker.on("event-a", () => { listener1Count++; });
-        expect(EventEmitter.listenerCount(ee, "event-a")).toEqual(1);
+        expect(ee.listenerCount("event-a")).toEqual(1);
         tracker.on("event-a", () => { listener2Count++; });
-        expect(EventEmitter.listenerCount(ee, "event-a")).toEqual(2);
+        expect(ee.listenerCount("event-a")).toEqual(2);
 
         ee.emit("event-b");
         expect(listener1Count).toEqual(0);
@@ -38,9 +38,9 @@ describe("ListenerTracker", () => {
         let listener2Count = 0;
 
         tracker.once("event-a", () => { listener1Count++; });
-        expect(EventEmitter.listenerCount(ee, "event-a")).toEqual(1);
+        expect(ee.listenerCount("event-a")).toEqual(1);
         tracker.once("event-a", () => { listener2Count++; });
-        expect(EventEmitter.listenerCount(ee, "event-a")).toEqual(2);
+        expect(ee.listenerCount("event-a")).toEqual(2);
 
         ee.emit("event-b");
         expect(listener1Count).toEqual(0);
@@ -49,7 +49,7 @@ describe("ListenerTracker", () => {
         ee.emit("event-a");
         expect(listener1Count).toEqual(1);
         expect(listener2Count).toEqual(1);
-        expect(EventEmitter.listenerCount(ee, "event-a")).toEqual(0);
+        expect(ee.listenerCount("event-a")).toEqual(0);
 
         ee.emit("event-a");
         expect(listener1Count).toEqual(1);
@@ -62,19 +62,19 @@ describe("ListenerTracker", () => {
         const tracker = new ListenerTracker(ee);
 
         tracker.on("event-a", () => {});
-        expect(EventEmitter.listenerCount(ee, "event-a")).toEqual(1);
+        expect(ee.listenerCount("event-a")).toEqual(1);
 
         tracker.on("event-a", () => {});
-        expect(EventEmitter.listenerCount(ee, "event-a")).toEqual(2);
+        expect(ee.listenerCount("event-a")).toEqual(2);
 
         tracker.once("event-a", () => {});
-        expect(EventEmitter.listenerCount(ee, "event-a")).toEqual(3);
+        expect(ee.listenerCount("event-a")).toEqual(3);
 
         tracker.once("event-a", () => {});
-        expect(EventEmitter.listenerCount(ee, "event-a")).toEqual(4);
+        expect(ee.listenerCount("event-a")).toEqual(4);
 
         tracker.removeAll();
-        expect(EventEmitter.listenerCount(ee, "event-a")).toEqual(0);
+        expect(ee.listenerCount("event-a")).toEqual(0);
     });
 
 

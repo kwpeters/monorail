@@ -1,0 +1,23 @@
+{
+    "name": "depot-node",
+    "version": "1.0.0",
+    "description": "A bunch of utilties",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "ut": "ts-node --esm --project ./tsconfig.json --transpile-only ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
+        "post-build": ""
+    },
+    "files": [
+        "dist"
+    ],
+    "dependencies": {
+        "lodash-es": "^4.17.21"
+    },
+    "devDependencies": {
+        "@types/jasmine": "^4.3.1",
+        "@types/lodash-es": "^4.17.7",
+        "jasmine": "^4.6.0"
+    }
+}
