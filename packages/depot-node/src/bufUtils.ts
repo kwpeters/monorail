@@ -77,12 +77,9 @@ export function boolify(num: number, numBytes: number): Array<boolean> {
  * @return The converted character
  */
 function getPrintableChar(charCode: number): string {
-    if ((charCode >= 0x20) && (charCode <= 0x7e)) {
-        return String.fromCharCode(charCode);
-    }
-    else {
-        return ".";
-    }
+    return (charCode >= 0x20) && (charCode <= 0x7e) ?
+        String.fromCharCode(charCode) :
+        ".";
 }
 
 
