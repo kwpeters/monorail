@@ -2,6 +2,6 @@
     "extends": "../../tsconfig.compileroptions.json",
     "compilerOptions": {
         // Can't inherit outDir because it is relative to the containing file.
-        "outDir": "../../out/packages/depot",
+        "outDir": "../../out/packages/depot"
     }
 }

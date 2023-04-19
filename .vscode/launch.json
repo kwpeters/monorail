@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "depot ut",
+            "name": "depot - ut",
             "type": "node",
             "request": "launch",
             "program": "${workspaceRoot}/node_modules/ts-node/dist/bin.js",
@@ -15,11 +15,35 @@
                 "--project",
                 "./tsconfig.json",
                 "--transpile-only",
-                "../../node_modules/jasmine/bin/jasmine.js",
+                "${workspaceRoot}/node_modules/jasmine/bin/jasmine.js",
                 "--color",
                 "--config=./jasmine.json"
             ],
             "cwd": "${workspaceRoot}/packages/depot",
+            "runtimeArgs": [
+                "--nolazy"
+            ],
+            "console": "internalConsole",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+        },
+        {
+            "name": "depot-node - ut",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/ts-node/dist/bin.js",
+            "stopOnEntry": false,
+            "args": [
+                "--esm",
+                "--project",
+                "./tsconfig.json",
+                "--transpile-only",
+                "${workspaceRoot}/node_modules/jasmine/bin/jasmine.js",
+                "--color",
+                "--config=./jasmine.json"
+            ],
+            "cwd": "${workspaceRoot}/packages/depot-node",
             "runtimeArgs": [
                 "--nolazy"
             ],

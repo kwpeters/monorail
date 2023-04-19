@@ -13,7 +13,10 @@
         "dist"
     ],
     "dependencies": {
-        "lodash-es": "^4.17.21"
+        "@types/sprintf-js": "^1.1.2",
+        "lodash-es": "^4.17.21",
+        "long": "^5.2.3",
+        "sprintf-js": "^1.1.2"
     },
     "devDependencies": {
         "@types/jasmine": "^4.3.1",
