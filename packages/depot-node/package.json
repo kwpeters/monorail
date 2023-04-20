@@ -13,11 +13,13 @@
         "../../out/packages/depot-node"
     ],
     "dependencies": {
+        "inquirer": "^9.1.5",
         "lodash-es": "^4.17.21",
         "long": "^5.2.3",
         "sprintf-js": "^1.1.2"
     },
     "devDependencies": {
+        "@types/inquirer": "^9.0.3",
         "@types/jasmine": "^4.3.1",
         "@types/lodash-es": "^4.17.7",
         "@types/sprintf-js": "^1.1.2",
