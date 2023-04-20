@@ -10,7 +10,7 @@
         "packages-tsc:post": "cp package.json ../../out/packages/depot"
     },
     "files": [
-        "dist"
+        "../../out/packages/depot"
     ],
     "dependencies": {
         "lodash-es": "^4.17.21"
