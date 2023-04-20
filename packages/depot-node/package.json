@@ -10,10 +10,9 @@
         "packages-tsc:post": "cp package.json ../../out/packages/depot-node"
     },
     "files": [
-        "dist"
+        "../../out/packages/depot-node"
     ],
     "dependencies": {
-        "@types/sprintf-js": "^1.1.2",
         "lodash-es": "^4.17.21",
         "long": "^5.2.3",
         "sprintf-js": "^1.1.2"
@@ -21,6 +20,7 @@
     "devDependencies": {
         "@types/jasmine": "^4.3.1",
         "@types/lodash-es": "^4.17.7",
+        "@types/sprintf-js": "^1.1.2",
         "jasmine": "^4.6.0"
     }
 }
