@@ -1,3 +1,4 @@
+import { sprintf } from "sprintf-js";
 import { FailedResult, Result, SucceededResult } from "./result.js";
 
 
@@ -73,7 +74,9 @@ export class ByteString {
 
 
     public toNormalizedString(): string {
-        const normalized = this._bytes.map((byte) => byte.toString(16)).join(" ");
+        const normalized =
+            this._bytes.map((byte) => sprintf("%02x", byte))
+            .join(" ");
         return normalized;
     }
 

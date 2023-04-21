@@ -1,8 +1,9 @@
 import * as os from "os";
-import * as _ from "lodash";
-import {createEolRegex} from "./regexpHelpers";
-import { FailedResult, Result, SucceededResult } from "./result";
-import {sprintf} from "sprintf-js";
+import * as _ from "lodash-es";
+import { sprintf } from "sprintf-js";
+import {createEolRegex} from "./regexpHelpers.js";
+import { FailedResult, Result, SucceededResult } from "./result.js";
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -15,7 +16,7 @@ export function hexStr(val: number): string {
 
 
 export function decAndHex(val: number): string {
-    return val + " (" + hexStr(val) + ")";
+    return `${val} (${hexStr(val) })`;
 }
 
 

@@ -4,7 +4,7 @@ import {
     repeat, splice, getEol, parseDecInt, hexStr, decAndHex, hexStr8, hexStr16,
     hexStr16Array, hexStr32, toExponential, isValidIpAddress, containsNestedPairs,
     getBufferString
-} from "./stringHelpers";
+} from "../src/stringHelpers.js";
 
 describe("string helpers module", () => {
 
