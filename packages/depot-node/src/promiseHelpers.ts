@@ -2,6 +2,7 @@ import {Writable} from "stream";
 import {EventEmitter} from "events";
 import {ListenerTracker} from "./listenerTracker.js";
 
+
 /**
  * Adapts an EventEmitter to a Promise interface
  * @param emitter - The event emitter to listen to

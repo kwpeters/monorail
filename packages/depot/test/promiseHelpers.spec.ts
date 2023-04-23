@@ -1,4 +1,3 @@
-import {EventEmitter} from "events";
 import {
     sequence, getTimerPromise, retry, retryWhile, promiseWhile,
     conditionalTask, sequentialSettle, delaySettle,

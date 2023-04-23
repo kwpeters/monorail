@@ -1,5 +1,5 @@
-import {EventEmitter} from "events";
-import {ListenerTracker} from "../src/listenerTracker.js";
+import { EventEmitter } from "events";
+import { ListenerTracker } from "../src/listenerTracker.js";
 
 
 describe("ListenerTracker", () => {

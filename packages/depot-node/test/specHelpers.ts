@@ -1,5 +1,5 @@
 import * as url from "url";
-import {Directory} from "../src/directory.js";
+import { Directory } from "../src/directory.js";
 
 
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));

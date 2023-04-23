@@ -1,4 +1,4 @@
-import {pipeAsync} from "../src/pipeAsync.js";
+import { pipeAsync } from "../src/pipeAsync.js";
 import { getTimerPromise } from "../src/promiseHelpers.js";
 
 

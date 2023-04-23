@@ -1,4 +1,3 @@
-
 /**
  * Provides an initial value with which to start a pipeline containing
  * synchronous and asynchronous functions.

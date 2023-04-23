@@ -3,6 +3,7 @@ import { IntRange } from "../../depot/src/intRange.js";
 import { Result } from "../../depot/src/result.js";
 import { pipe } from "../../depot/src/pipe.js";
 import { validateIndex } from "../../depot/src/primitives.js";
+// TODO: Remove the following dependency and this file can move to depot.
 import { BufReader } from "./bufReader.js";
 
 

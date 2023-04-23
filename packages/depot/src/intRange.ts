@@ -1,4 +1,3 @@
-
 /**
  * Creates an iterable range of numbers that can be iterated over using
  * standard iterator protocol.
