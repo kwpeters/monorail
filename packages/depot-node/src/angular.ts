@@ -1,5 +1,6 @@
 import { insertIf } from "../../depot/src/arrayHelpers.js";
 import { FailedResult, Result, SucceededResult } from "../../depot/src/result.js";
+import { errorToString } from "../../depot/src/errorHelpers.js";
 import { nodeBinForOs } from "./nodeUtil.js";
 import { Directory } from "./directory.js";
 import { File } from "./file.js";
@@ -118,10 +119,10 @@ export async function lintFiles(
     const jsonStr = matches.groups!.json;
     let json: EslintResults;
     try {
-        json = JSON.parse(jsonStr);
+        json = JSON.parse(jsonStr) as EslintResults;
     }
     catch (error) {
-        const errMsg = `Failed to parse "ng lint JSON output.  ${error}`;
+        const errMsg = `Failed to parse "ng lint JSON output.  ${errorToString(error)}`;
         return new FailedResult(errMsg);
     }
 

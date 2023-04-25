@@ -1,7 +1,7 @@
 import * as _ from "lodash-es";
 import {CompareResult} from "../src/compare.js";
 import {Heap} from "../src/heap.js";
-import {randomizedArray} from "./random_data.spec";
+import {randomizedArray} from "./random_data.spec.js";
 
 
 // A comparison function that compares numbers.

@@ -161,20 +161,25 @@ export class TaskQueue extends EventEmitter {
             // console.log("Looks like we might be done.  Waiting for handlers to run.");
 
             this._lastSettledInternalRunPromise!
-            .then(() => {
-                if (this._isProcessingLastFulfillment) {
-                    // console.log("No additional tasks queued. TaskQueue is now drained.");
+            .then(
+                () => {
+                    if (this._isProcessingLastFulfillment) {
+                        // console.log("No additional tasks queued. TaskQueue is now drained.");
 
-                    // We waited one more tick and no new tasks have been
-                    // enqueued.  It is safe to say that this queue is now
-                    // drained.
-                    if (this._pauseWhenDrained) {
-                        this.pause();
+                        // We waited one more tick and no new tasks have been
+                        // enqueued.  It is safe to say that this queue is now
+                        // drained.
+                        if (this._pauseWhenDrained) {
+                            this.pause();
+                        }
+                        this.emit(TaskQueue.eventNameDrained);
+                        this._isProcessingLastFulfillment = false;
                     }
-                    this.emit(TaskQueue.eventNameDrained);
-                    this._isProcessingLastFulfillment = false;
+                },
+                () => {
+                    // Intentionally empty.
                 }
-            });
+            );
 
             return;
         }

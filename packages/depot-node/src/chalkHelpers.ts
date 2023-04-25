@@ -1,4 +1,4 @@
-import chalk = require("chalk");
+import * as chalk from "chalk";
 
 
 /**
@@ -14,7 +14,7 @@ import chalk = require("chalk");
 export function highlightMatches(
     str: string,
     regex: RegExp,
-    highlightStyle: chalk.Chalk
+    highlightStyle: chalk.ChalkInstance
 ): [numHighlights: number, highlightedStr: string] {
     let numReplacements = 0;
     const highlightedStr = str.replace(regex, (matchedText) => {

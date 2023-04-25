@@ -30,14 +30,14 @@ describe("hash()", () => {
 
 
     it("returns hexadecimal output when requested", () => {
-        const hash1 = hash("foo", "sha256", "hex");
-        expect(hash1).toEqual("2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae");
+        const hash1 = hash("foo", "hex");
+        expect(hash1).toEqual("f7fbba6e0636f890e56fbbf3283e524c6fa3204ae298382d624741d0dc6638326e282c41be5e4254d8820772c5518a2c5a8c0c7f7eda19594a7eb539453e1ed7");
     });
 
 
     it("returns base64 output when requested", () => {
-        const hash1 = hash("foo", "sha256", "base64");
-        expect(hash1).toEqual("LCa0a2j/xo/5m0U8HTBBNBNCLXBkg7+g+YpeiGJm564=");
+        const hash1 = hash("foo", "base64");
+        expect(hash1).toEqual("9/u6bgY2+JDlb7vzKD5STG+jIErimDgtYkdB0NxmODJuKCxBvl5CVNiCB3LFUYosWowMf37aGVlKfrU5RT4e1w==");
     });
 
 });

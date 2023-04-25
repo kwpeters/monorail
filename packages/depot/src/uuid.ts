@@ -1,9 +1,7 @@
+import {v4 as uuidv4} from "uuid";
 import { IEquatable } from "./equate.js";
 import { FailedResult, Result, SucceededResult } from "./result.js";
 
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const uuidv4: () => string = require("uuid/v4");
 
 // This module is a simple wrapper around the uuid package's uuid generator.
 // I created this module, because I could not find accurate type definitions
@@ -55,17 +53,6 @@ export function generateUuid(format: UuidFormat = UuidFormat.D): string {
 
 
 export class Uuid implements IEquatable<Uuid>, IEquatable<string> {
-    /**
-     * Creates a standardized representation of the specified UUID string to make
-     * validation and comparison simpler.
-     *
-     * @param uuidStr - The string UUID to be normalized
-     * @return The normalized version of the specified UUID string.
-     */
-    private static toNormalizedString(uuidStr: string): string {
-        return uuidStr.toLowerCase().replace(/-/g, "");
-    }
-
 
     /**
      * Determines whether the specified string is a valid UUID string.
@@ -109,6 +96,18 @@ export class Uuid implements IEquatable<Uuid>, IEquatable<string> {
 
         const instance = new Uuid(uuidStr);
         return new SucceededResult(instance);
+    }
+
+
+    /**
+     * Creates a standardized representation of the specified UUID string to make
+     * validation and comparison simpler.
+     *
+     * @param uuidStr - The string UUID to be normalized
+     * @return The normalized version of the specified UUID string.
+     */
+    private static toNormalizedString(uuidStr: string): string {
+        return uuidStr.toLowerCase().replace(/-/g, "");
     }
 
 

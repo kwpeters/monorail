@@ -1,4 +1,3 @@
-import * as os from "os-need-to-move-node-specific-funcs-out";
 import * as _ from "lodash-es";
 import { sprintf } from "sprintf-js";
 import {createEolRegex} from "./regexpHelpers.js";
@@ -376,18 +375,6 @@ export function getEol(text: string): string | undefined {
     else {
         return match[0];
     }
-}
-
-
-/**
- * Concatenates an array of strings into a single string using the specified
- * separator.
- * @param strings - The strings to join
- * @param sep - The separator to insert between each array element
- * @return Description
- */
-export function concatStrings(strings: Array<string>, sep: string = os.EOL): string {
-    return strings.join(sep);
 }
 
 

@@ -7,7 +7,7 @@ export function readableStreamToText(readable: Readable): Promise<string> {
         let accumulatedText = "";
 
         readable.on("readable", () => {
-            const chunk = readable.read();
+            const chunk = readable.read() as string | null;
             if (chunk !== null) {
                 accumulatedText += chunk;
             }
@@ -29,7 +29,7 @@ export function readableStreamToText(readable: Readable): Promise<string> {
 export function streamToBuffer(readableStream: NodeJS.ReadableStream): Promise<Buffer> {
     return new Promise((resolve, reject) => {
         const chunks: Array<Buffer> = [];
-        readableStream.on("data", (data) => {
+        readableStream.on("data", (data: WithImplicitCoercion<ArrayBuffer | SharedArrayBuffer>) => {
             chunks.push(data instanceof Buffer ? data : Buffer.from(data));
         });
         readableStream.on("end", () => {

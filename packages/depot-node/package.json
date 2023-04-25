@@ -1,5 +1,9 @@
 {
     "name": "depot-node",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/kwpeters/monorail.git"
+    },
     "version": "1.0.0",
     "description": "A bunch of utilties",
     "type": "module",
@@ -13,15 +17,20 @@
         "../../out/packages/depot-node"
     ],
     "dependencies": {
+        "chalk": "^5.2.0",
+        "compressing": "^1.9.0",
         "inquirer": "^9.1.5",
         "lodash-es": "^4.17.21",
         "long": "^5.2.3",
+        "node-fetch": "^3.3.1",
+        "semver": "^7.5.0",
         "sprintf-js": "^1.1.2"
     },
     "devDependencies": {
         "@types/inquirer": "^9.0.3",
         "@types/jasmine": "^4.3.1",
         "@types/lodash-es": "^4.17.7",
+        "@types/semver": "^7.3.13",
         "@types/sprintf-js": "^1.1.2",
         "jasmine": "^4.6.0"
     }

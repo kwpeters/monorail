@@ -1,5 +1,5 @@
 export function strMapToObj<TValue>(strMap: Map<string, TValue>): {[key: string]: TValue} {
-    const obj: {[key: string]: TValue} = Object.create(null);
+    const obj = Object.create(null) as { [key: string]: TValue; };
     for (const [k, v] of strMap) {
         // We don’t escape the key '__proto__'
         // which can cause problems on older engines
@@ -28,7 +28,7 @@ export function strMapToJson(
 
 
 export function jsonToStrMap<TValue>(jsonStr: string): Map<string, TValue> {
-    return objToStrMap(JSON.parse(jsonStr));
+    return objToStrMap(JSON.parse(jsonStr) as {[key: string]: TValue});
 }
 
 

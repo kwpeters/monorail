@@ -1,6 +1,7 @@
 import * as path from "path";
 import { Stats } from "fs";
 import * as _ from "lodash-es";
+import { assertNever } from "../../depot/src/never.js";
 import { Directory } from "./directory.js";
 import {File} from "./file.js";
 
@@ -74,7 +75,7 @@ export class FileCompareAction {
             return Promise.resolve();
         }
         else {
-            return Promise.reject(new Error(`Unsupported action "${this._actionType}".`));
+            assertNever(this._actionType);
         }
     }
 }
@@ -98,6 +99,12 @@ export class FileComparer implements IFilesToCompare {
     // #endregion
 
 
+    private constructor(leftFile: File, rightFile: File) {
+        this._leftFile = leftFile;
+        this._rightFile = rightFile;
+    }
+
+
     public get leftFile(): File {
         return this._leftFile;
     }
@@ -107,10 +114,6 @@ export class FileComparer implements IFilesToCompare {
         return this._rightFile;
     }
 
-    private constructor(leftFile: File, rightFile: File) {
-        this._leftFile = leftFile;
-        this._rightFile = rightFile;
-    }
 
     public async isLeftOnly(): Promise<boolean> {
         const [leftExists, rightExists] = await Promise.all([
@@ -121,6 +124,7 @@ export class FileComparer implements IFilesToCompare {
         return !!(leftExists && !rightExists);
     }
 
+
     public async isRightOnly(): Promise<boolean> {
         const [leftExists, rightExists] = await Promise.all([
             this._leftFile.exists(),
@@ -129,6 +133,7 @@ export class FileComparer implements IFilesToCompare {
 
         return !!(!leftExists && rightExists);
     }
+
 
     public async isInBoth(): Promise<boolean> {
         const [leftExists, rightExists] = await Promise.all([
@@ -143,6 +148,7 @@ export class FileComparer implements IFilesToCompare {
     public async bothExistAndIdentical(): Promise<boolean> {
         return filesAreIdentical(this._leftFile, undefined, this._rightFile, undefined);
     }
+
 
     public async actions(actionPriority: ActionPriority): Promise<Array<FileCompareAction>> {
 

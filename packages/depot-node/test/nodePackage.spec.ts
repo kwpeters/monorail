@@ -1,7 +1,12 @@
+import * as url from "url";
 import { Directory } from "../src/directory.js";
 import { File } from "../src/file.js";
 import { NodePackage } from "../src/nodePackage.js";
-import { tmpDir } from "./specHelpers";
+import { tmpDir } from "./specHelpers.js";
+
+
+const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
+const pkgDir = new Directory(__dirname, "..", "..", "..");
 
 
 describe("NodePackage", () => {
@@ -11,8 +16,7 @@ describe("NodePackage", () => {
         describe("fromDirectory", () => {
 
             it("will reject when given a non-existent directory", (done) => {
-                const dir = new Directory(__dirname, "xyzzy");
-                NodePackage.fromDirectory(dir)
+                NodePackage.fromDirectory(new Directory(__dirname, "xyzzy"))
                 .catch(() => {
                     done();
                 });
@@ -20,8 +24,7 @@ describe("NodePackage", () => {
 
 
             it("will reject when given a directory that does not have a package.json file", (done) => {
-                const dir = new Directory(__dirname);
-                NodePackage.fromDirectory(dir)
+                NodePackage.fromDirectory(new Directory(__dirname))
                 .catch(() => {
                     done();
                 });
@@ -29,8 +32,7 @@ describe("NodePackage", () => {
 
 
             it("will create a new instance when given a valid directory", (done) => {
-                const dir = new Directory(__dirname, "..");
-                NodePackage.fromDirectory(dir)
+                NodePackage.fromDirectory(pkgDir)
                 .then((pkg: NodePackage) => {
                     expect(pkg).toBeTruthy();
                     done();
@@ -49,44 +51,16 @@ describe("NodePackage", () => {
         describe("config", () => {
 
             it("will return properties read from package.json", (done) => {
-                const pkgDir = new Directory(__dirname, "..");
                 NodePackage.fromDirectory(pkgDir)
                 .then((pkg) => {
-                    expect(pkg.config.name).toEqual("depot");
+                    expect(pkg.config.name).toEqual("monorail");
                     expect(pkg.config.version).toBeTruthy();
                     expect(pkg.config.description).toBeTruthy();
                     expect(pkg.config.repository).toBeTruthy();
                     done();
                 });
 
-
             });
-        });
-
-
-        describe("lockedDependencies", () => {
-
-            it("returns properties from package-lock.json", async () => {
-                const pkgDir = new Directory(__dirname, "..");
-                const pkg = await NodePackage.fromDirectory(pkgDir);
-                const lockedDeps = pkg.lockedDependencies;
-
-                expect(lockedDeps!.name).toEqual("depot");
-                expect(lockedDeps!.dependencies).toBeTruthy();
-            });
-
-
-            it("return undefined when the package directory does not contain package-lock.json", async () => {
-                // First create an empty directory that contains only a package.json.
-                tmpDir.emptySync();
-                const packageJson = new File(__dirname, "..", "package.json");
-                packageJson.copySync(tmpDir);
-
-                const pkg = await NodePackage.fromDirectory(tmpDir);
-                expect(pkg.lockedDependencies).toEqual(undefined);
-            });
-
-
         });
 
 
@@ -100,7 +74,7 @@ describe("NodePackage", () => {
                 })
                 .then((packedFile: File) => {
                     expect(packedFile).toBeTruthy();
-                    expect(packedFile.fileName).toMatch(/depot-\d+\.\d+\.\d+\.tgz/);
+                    expect(packedFile.fileName).toMatch(/depot-node-\d+\.\d+\.\d+\.tgz/);
                     expect(packedFile.existsSync()).toBeTruthy();
                     done();
                 });

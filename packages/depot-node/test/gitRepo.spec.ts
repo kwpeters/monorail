@@ -1,13 +1,19 @@
 import path from "path";
-import { Url } from "url";
+import * as url from "url";
 import * as _ from "lodash-es";
-import { GitRepo } from "../src/gitRepo.js";
-import { GitBranch } from "../src/gitBranch.js";
-import { Directory } from "../src/directory.js";
-import { File } from "../src/file.js";
-import { CommitHash } from "../../depot/src/commitHash.js";
+import {Url} from "../../depot/src/url.js";
+import {CommitHash} from "../../depot/src/commitHash.js";
 import {generateUuid, UuidFormat} from "../../depot/src/uuid.js";
-import {sampleRepoDir, sampleRepoUrl, tmpDir} from "./specHelpers";
+import {GitRepo} from "../src/gitRepo.js";
+import {GitBranch} from "../src/gitBranch.js";
+import {Directory} from "../src/directory.js";
+import {File} from "../src/file.js";
+import { resolveDirectoryLocation } from "../src/filesystemHelpers.js";
+import {sampleRepoDir, sampleRepoUrl, tmpDir} from "./specHelpers.js";
+
+
+const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
+const repoDir = (await resolveDirectoryLocation(".git", new Directory(__dirname))).value!.parentDir()!;
 
 
 describe("GitRepo", () => {
@@ -24,7 +30,7 @@ describe("GitRepo", () => {
 
 
             it("will create a new instance when given a Git repo directory", async () => {
-                const result = await GitRepo.fromDirectory(new Directory(__dirname, ".."));
+                const result = await GitRepo.fromDirectory(new Directory(repoDir));
                 expect(result.succeeded).toBeTrue();
             });
 
@@ -103,6 +109,7 @@ describe("GitRepo", () => {
         describe("files()", () => {
 
             it("will return the files under version control", async () => {
+                tmpDir.emptySync();
                 const repo = await GitRepo.clone(sampleRepoDir, tmpDir);
                 const files = await repo.files();
 
@@ -117,13 +124,13 @@ describe("GitRepo", () => {
         describe("remotes()", () => {
 
             it("will return the correct map of remotes", (done) => {
-                GitRepo.fromDirectory(new Directory(__dirname, ".."))
+                GitRepo.fromDirectory(repoDir)
                 .then((repoResult) => {
                     return repoResult.value!.remotes();
                 })
                 .then((remotes) => {
                     expect(Object.keys.length).toEqual(1);
-                    expect(remotes.origin).toEqual("https://github.com/tewl/depot.git");
+                    expect(remotes.origin).toEqual("https://github.com/kwpeters/monorail.git");
                     done();
                 });
             });
@@ -134,12 +141,12 @@ describe("GitRepo", () => {
         describe("name()", () => {
 
             it("will return the name of the repo", (done) => {
-                GitRepo.fromDirectory(new Directory(__dirname, ".."))
+                GitRepo.fromDirectory(repoDir)
                 .then((repoResult) => {
                     return repoResult.value!.name();
                 })
                 .then((repoName) => {
-                    expect(repoName).toEqual("depot");
+                    expect(repoName).toEqual("monorail");
                     done();
                 });
             });
@@ -151,11 +158,11 @@ describe("GitRepo", () => {
         describe("directory", () => {
 
             it("will return the directory of the repo", (done) => {
-                GitRepo.fromDirectory(new Directory(__dirname, ".."))
+                GitRepo.fromDirectory(repoDir)
                 .then((repoResult) => {
                     const repo = repoResult.value!;
                     expect(repo.directory).toBeTruthy();
-                    expect(repo.directory.absPath()).toContain("depot");
+                    expect(repo.directory.absPath()).toContain("monorail");
                     done();
                 });
             });
@@ -167,8 +174,8 @@ describe("GitRepo", () => {
         describe("equals()", () => {
 
             it("will return true for two GitRepos pointing at the same directory", async () => {
-                const repo1 = (await GitRepo.fromDirectory(new Directory(__dirname, ".."))).value!;
-                const repo2 = (await GitRepo.fromDirectory(new Directory(__dirname, ".."))).value!;
+                const repo1 = (await GitRepo.fromDirectory(repoDir)).value!;
+                const repo2 = (await GitRepo.fromDirectory(repoDir)).value!;
                 expect(repo1.equals(repo2)).toBeTruthy();
             });
 
@@ -192,7 +199,7 @@ describe("GitRepo", () => {
         describe("tags()", () => {
 
             it("will list the tags applied to the repository", (done) => {
-                GitRepo.fromDirectory(new Directory(__dirname, ".."))
+                GitRepo.fromDirectory(repoDir)
                 .then((repoResult) => {
                     return repoResult.value!.tags();
                 })
@@ -209,7 +216,7 @@ describe("GitRepo", () => {
         describe("hasTag()", () => {
 
             it("will return true for a tag that exists", (done) => {
-                GitRepo.fromDirectory(new Directory(__dirname, ".."))
+                GitRepo.fromDirectory(repoDir)
                 .then((repoResult) => {
                     return repoResult.value!.hasTag("test");
                 })
@@ -221,7 +228,7 @@ describe("GitRepo", () => {
 
 
             it("will return false for a tag that does not exists", (done) => {
-                GitRepo.fromDirectory(new Directory(__dirname, ".."))
+                GitRepo.fromDirectory(repoDir)
                 .then((repoResult) => {
                     return repoResult.value!.hasTag("xyzzy");
                 })
@@ -238,13 +245,14 @@ describe("GitRepo", () => {
         describe("createTag()", () => {
 
             let theRepo: GitRepo;
+            const unitTestTag = "unittest_tag";
 
 
             beforeEach((done) => {
-                GitRepo.fromDirectory(new Directory(__dirname, ".."))
+                GitRepo.fromDirectory(repoDir)
                 .then((repoResult) => {
                     theRepo = repoResult.value!;
-                    return repoResult.value!.deleteTag("unittest_tag");
+                    return theRepo.deleteTag(unitTestTag);
                 })
                 .then(() => {
                     done();
@@ -253,9 +261,9 @@ describe("GitRepo", () => {
 
 
             it("will resolve when the specified tag is created", (done) => {
-                theRepo.createTag("unittest_tag")
+                theRepo.createTag(unitTestTag)
                 .then(() => {
-                    return theRepo.hasTag("unittest_tag");
+                    return theRepo.hasTag(unitTestTag);
                 })
                 .then((hasTag) => {
                     expect(hasTag).toBeTruthy();
@@ -265,9 +273,9 @@ describe("GitRepo", () => {
 
 
             it("will reject when the tag already exists", (done) => {
-                theRepo.createTag("unittest_tag")
+                theRepo.createTag(unitTestTag)
                 .then(() => {
-                    return theRepo.createTag("unittest_tag");
+                    return theRepo.createTag(unitTestTag);
                 })
                 .catch(() => {
                     done();
@@ -276,9 +284,9 @@ describe("GitRepo", () => {
 
 
             it("will resolve when the tag already exists but force is set to true", (done) => {
-                theRepo.createTag("unittest_tag")
+                theRepo.createTag(unitTestTag)
                 .then(() => {
-                    return theRepo.createTag("unittest_tag", "", true);
+                    return theRepo.createTag(unitTestTag, "", true);
                 })
                 .then(() => {
                     done();
@@ -292,19 +300,20 @@ describe("GitRepo", () => {
         describe("deleteTag()", () => {
 
             let theRepo: GitRepo;
+            const unitTestTag = "unittest_tag";
 
 
             beforeEach(() => {
-                return GitRepo.fromDirectory(new Directory(__dirname, ".."))
+                return GitRepo.fromDirectory(repoDir)
                 .then((repoResult) => {
                     theRepo = repoResult.value!;
-                    return repoResult.value!.deleteTag("unittest_tag");
+                    return repoResult.value!.deleteTag(unitTestTag);
                 });
             });
 
 
             afterEach(() => {
-                return theRepo.deleteTag("unittest_tag");
+                return theRepo.deleteTag(unitTestTag);
             });
 
 
@@ -317,12 +326,12 @@ describe("GitRepo", () => {
 
 
             it("will resolve when the tag is deleted", (done) => {
-                theRepo.createTag("unittest_tag")
+                theRepo.createTag(unitTestTag)
                 .then(() => {
-                    return theRepo.deleteTag("unittest_tag");
+                    return theRepo.deleteTag(unitTestTag);
                 })
                 .then(() => {
-                    return theRepo.hasTag("unittest_tag");
+                    return theRepo.hasTag(unitTestTag);
                 })
                 .then((hasTag) => {
                     expect(hasTag).toBeFalsy();
@@ -335,11 +344,12 @@ describe("GitRepo", () => {
 
         describe("getBranches", () => {
 
+
             it("will return the branches", async () => {
-                const repo = (await GitRepo.fromDirectory(new Directory(__dirname, ".."))).value!;
+                const repo = (await GitRepo.fromDirectory(repoDir)).value!;
                 const branches = await repo.getBranches();
                 expect(branches.length).toBeGreaterThan(0);
-                expect(_.map(branches, "name")).toContain("master");
+                expect(_.map(branches, "name")).toContain("main");
             });
 
 
@@ -349,7 +359,7 @@ describe("GitRepo", () => {
         describe("getCurrentBranch()", () => {
 
             it("will return the current branch", async () => {
-                const repo = (await GitRepo.fromDirectory(new Directory(__dirname, ".."))).value!;
+                const repo = (await GitRepo.fromDirectory(repoDir)).value!;
                 const curBranch = await repo.getCurrentBranch();
                 expect(curBranch!.name.length).toBeGreaterThan(0);
             });
@@ -370,16 +380,28 @@ describe("GitRepo", () => {
 
         describe("checkoutBranch()", () => {
             // TODO:  Create unit tests.
+
+            it("todo", () => {
+                expect(true).toBeTruthy();
+            });
         });
 
 
         describe("checkoutCommit()", () => {
             // TODO:  Create unit tests.
+
+            it("todo", () => {
+                expect(true).toBeTruthy();
+            });
         });
 
 
         describe("stageAll()", () => {
             // TODO:  Create unit tests.
+
+            it("todo", () => {
+                expect(true).toBeTruthy();
+            });
         });
 
 
@@ -438,12 +460,22 @@ describe("GitRepo", () => {
 
 
         describe("pushCurrentBranch()", () => {
+
             // TODO:  Create unit tests.
+
+            it("todo", () => {
+                expect(true).toBeTruthy();
+            });
         });
 
 
         describe("getCommitDeltas()", () => {
+
             // TODO:  Create unit tests.
+
+            it("todo", () => {
+                expect(true).toBeTruthy();
+            });
         });
 
 
@@ -805,7 +837,7 @@ describe("GitRepo", () => {
                 const mergedBranchesResult = await workingRepo.getMergedBranches(undefined, true, false);
                 expect(mergedBranchesResult.succeeded).toBeTrue();
                 const foundFeatureBranch = _.find(
-                    mergedBranchesResult.value!,
+                    mergedBranchesResult.value,
                     (curBranch) => curBranch.name === branchName
                 );
                 expect(foundFeatureBranch).toBeDefined();
@@ -845,7 +877,7 @@ describe("GitRepo", () => {
                 const mergedBranchesResult = await workingRepo.getMergedBranches(undefined, false, true);
                 expect(mergedBranchesResult.succeeded).toBeTrue();
                 const foundFeatureBranch = _.find(
-                    mergedBranchesResult.value!,
+                    mergedBranchesResult.value,
                     (curBranch) => curBranch.name === branchName
                 );
                 expect(foundFeatureBranch).toBeDefined();
@@ -885,7 +917,7 @@ describe("GitRepo", () => {
                 const mergedBranchesResult = await workingRepo.getMergedBranches(undefined, true, true);
                 expect(mergedBranchesResult.succeeded).toBeTrue();
                 const foundFeatureBranches = _.filter(
-                    mergedBranchesResult.value!,
+                    mergedBranchesResult.value,
                     (curBranch) => curBranch.name === branchName
                 );
                 expect(foundFeatureBranches.length).toEqual(2);
@@ -933,7 +965,7 @@ describe("GitRepo", () => {
                 const mergedBranchesResult = await workingRepo.getMergedBranches(mainBranch, true, true);
                 expect(mergedBranchesResult.succeeded).toBeTrue();
                 const foundFeatureBranches = _.filter(
-                    mergedBranchesResult.value!,
+                    mergedBranchesResult.value,
                     (curBranch) => curBranch.name === branchName
                 );
                 expect(foundFeatureBranches.length).toEqual(2);

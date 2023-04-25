@@ -1,18 +1,18 @@
 import * as _ from "lodash-es";
 import {insertIf} from "../../depot/src/arrayHelpers.js";
-import { outdent, trimBlankLines, splitIntoLines } from "../../depot/src/stringHelpers.js";
-import { CommitHash } from "../../depot/src/commitHash.js";
-import { toPromise } from "../../depot/src/promiseResult.js";
+import {outdent, trimBlankLines, splitIntoLines} from "../../depot/src/stringHelpers.js";
+import {Url} from "../../depot/src/url.js";
+import {CommitHash} from "../../depot/src/commitHash.js";
 import {mapAsync} from "../../depot/src/promiseHelpers.js";
 import { FailedResult, Result, SucceededResult } from "../../depot/src/result.js";
-import {Directory} from "./directory.js";
-import {File} from "./file.js";
-import {spawn} from "./spawn.js";
-import {spawn as spawn2, spawnErrorToString} from "./spawn2.js";
-import {GitBranch} from "./gitBranch.js";
-import {Url} from "./url-convert-use-to-standard-way";
-import {gitUrlToProjectName, isGitUrl} from "./gitHelpers.js";
-import {IPackageJson} from "./nodePackage.js";
+import { PromiseResult } from "../../depot/src/promiseResult.js";
+import {Directory} from "../src/directory.js";
+import {File} from "../src/file.js";
+import {spawn} from "../src/spawn.js";
+import {ISpawnExitError, spawn as spawn2, spawnErrorToString} from "../src/spawn2.js";
+import {GitBranch} from "../src/gitBranch.js";
+import {gitUrlToProjectName, isGitUrl} from "../src/gitHelpers.js";
+import {IPackageJson} from "../src/nodePackage.js";
 
 
 interface IGitLogEntry {
@@ -47,9 +47,9 @@ function getLogEntryRegex(): RegExp {
 
 
 /**
- * Determines whether dir is a directory containing a Git repository.
+ * Determines whether _dir_ is a directory containing a Git repository.
  * @param dir - The directory to inspect
- * @return A promise for a boolean indicating whether dir contains a Git
+ * @return A promise for a boolean indicating whether _dir_ contains a Git
  * repository.  This promise will never reject.
  */
 export function isGitRepoDir(dir: Directory): Promise<boolean> {
@@ -123,7 +123,7 @@ export class GitRepo {
         return parentDir.exists()
         .then((parentDirExists) => {
             if (!parentDirExists) {
-                throw new Error(`${parentDir} is not a directory.`);
+                throw new Error(`${parentDir.toString()} is not a directory.`);
             }
         })
         .then(() => {
@@ -390,7 +390,7 @@ export class GitRepo {
     public deleteTag(tagName: string): Promise<GitRepo> {
         return spawn("git", ["tag", "--delete", tagName], {cwd: this._dir.toString()})
         .closePromise
-        .catch((err) => {
+        .catch((err: ISpawnExitError) => {
             if (err.stderr.includes("not found")) {
                 // The specified tag name was not found.  We are still
                 // successful.
@@ -496,7 +496,7 @@ export class GitRepo {
                 return Promise.resolve(undefined);
             }
             else {
-                return toPromise(GitBranch.create(this, branchName));
+                return PromiseResult.toPromise(GitBranch.create(this, branchName));
             }
         });
     }

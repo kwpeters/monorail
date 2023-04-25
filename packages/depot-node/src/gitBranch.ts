@@ -35,7 +35,7 @@ export class GitBranch {
      * @return A promise for a boolean that will indicate whether branchName is
      * valid.  This promise will never reject.
      */
-    public static isValidBranchName(branchName: string): Promise<boolean> {
+    public static isValidBranchName(this: void, branchName: string): Promise<boolean> {
         // A Git branch name cannot:
         // - Have a path component that begins with "."
         // - Have a double dot ".."
@@ -149,25 +149,6 @@ export class GitBranch {
     }
 
 
-    public equals(other: GitBranch): boolean {
-        return this._repo.equals(other._repo) &&
-               this._name === other._name     &&
-               this._remoteName === other._remoteName;
-    }
-
-
-    /**
-     * Determines whether the branch represented by this instance exists within
-     * its Git repository.
-     * @return A Promise that resolves with a boolean indicating whether this
-     * branch exists.
-     */
-    public async exists(): Promise<boolean> {
-        const branches = await this._repo.getBranches();
-        return branches.some((curBranch) => curBranch.equals(this));
-    }
-
-
     public get repo(): GitRepo {
         return this._repo;
     }
@@ -186,6 +167,25 @@ export class GitBranch {
 
     public get name(): string {
         return this._name;
+    }
+
+
+    public equals(other: GitBranch): boolean {
+        return this._repo.equals(other._repo) &&
+               this._name === other._name     &&
+               this._remoteName === other._remoteName;
+    }
+
+
+    /**
+     * Determines whether the branch represented by this instance exists within
+     * its Git repository.
+     * @return A Promise that resolves with a boolean indicating whether this
+     * branch exists.
+     */
+    public async exists(): Promise<boolean> {
+        const branches = await this._repo.getBranches();
+        return branches.some((curBranch) => curBranch.equals(this));
     }
 
 

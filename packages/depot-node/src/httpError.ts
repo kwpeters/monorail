@@ -1,4 +1,4 @@
-import _ from "lodash-es";
+import * as _ from "lodash-es";
 import { Response } from "node-fetch";
 import { ContentType, HeaderName } from "../../depot/src/httpConstants.js";
 

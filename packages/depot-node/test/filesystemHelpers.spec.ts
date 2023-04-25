@@ -1,6 +1,6 @@
 import * as path from "path";
 import { getTimerPromise } from "../../depot/src/promiseHelpers.js";
-import { getFilesystemItem, getMostRecentlyModified, resolveFileLocation } from "../src/filesystemHelpers.js";
+import { getFilesystemItem, getMostRecentlyModified, resolveDirectoryLocation, resolveFileLocation } from "../src/filesystemHelpers.js";
 import {File} from "../src/file.js";
 import {Directory} from "../src/directory.js";
 import { tmpDir } from "./specHelpers.js";
@@ -106,6 +106,56 @@ describe("resolveFileLocation()", () => {
 
     it("resolves with a failed result when the file is not found", async () => {
         const result = await resolveFileLocation("aFileThatShouldNeverBeFound.txt", tmpDir);
+        expect(result.failed).toBeTruthy();
+        if (result.failed) {
+            expect(result.error.length).toBeGreaterThan(0);
+        }
+    });
+
+});
+
+
+describe("resolveDirectoryLocation()", () => {
+
+    beforeEach(() => {
+        tmpDir.ensureExistsSync();
+        tmpDir.emptySync();
+    });
+
+
+    it("resolves with the expected directory when the search directory is found in the starting directory", async () => {
+        const searchDir = new Directory(tmpDir, "fooDir");
+        searchDir.ensureExistsSync();
+
+        const result = await resolveDirectoryLocation("fooDir", tmpDir);
+        expect(result.succeeded).toBeTruthy();
+        if (result.succeeded) {
+            expect(result.value.parentDir()!.equals(tmpDir)).toBeTruthy();
+        }
+    });
+
+
+    it("resolves with the expected directory when the search directory is found in a parent directory", async () => {
+        const searchDir = new Directory(tmpDir, "fooDir");
+        searchDir.ensureExistsSync();
+
+        const dirA = new Directory(tmpDir, "dirA");
+        dirA.ensureExistsSync();
+        const dirB = new Directory(dirA, "dirB");
+        dirB.ensureExistsSync();
+        const dirC = new Directory(dirB, "dirC");
+        dirC.ensureExistsSync();
+
+        const result = await resolveDirectoryLocation("fooDir", dirC);
+        expect(result.succeeded).toBeTruthy();
+        if (result.succeeded) {
+            expect(result.value.parentDir()!.equals(tmpDir)).toBeTruthy();
+        }
+    });
+
+
+    it("resolves with a failed Result when the search directory is not found", async () => {
+        const result = await resolveDirectoryLocation("aDirectoryThatShouldNeverBeFound", tmpDir);
         expect(result.failed).toBeTruthy();
         if (result.failed) {
             expect(result.error.length).toBeGreaterThan(0);

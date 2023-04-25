@@ -110,4 +110,10 @@ describe("RecursivePartial", () => {
             prop1a: 0
         }
     };
+
+
+    it("dummy test", () => {
+        expect(true).toBeTruthy();
+    });
+
 });

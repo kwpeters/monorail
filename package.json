@@ -1,7 +1,7 @@
 {
     "name": "monorail",
     "version": "1.0.0",
-    "description": "",
+    "description": "Monorepo for packages and apps",
     "private": true,
     "engines": {
         "node": ">=18.15.0",

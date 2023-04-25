@@ -18,21 +18,6 @@ export interface IPackageJson {
     dependencies: {[packageName: string]: string};
 }
 
-export interface ILockedDependency {
-    name?: string;
-    version: string;
-    lockfileVersion?: number;
-    packageIntegrity?: string;
-    preserveSymlinks?: boolean;
-    dependencies: {[dependencyName: string]: ILockedDependency};
-    integrity?: string;
-    resolved?: string;
-    bundled?: boolean;
-    dev?: boolean;
-    optional?: boolean;
-    requires?: boolean | {[packageName: string]: string};
-}
-
 
 export class NodePackage {
 
@@ -98,18 +83,7 @@ export class NodePackage {
             this._config = new File(this._pkgDir, "package.json").readJsonSync<IPackageJson>();
         }
 
-        return this._config!;
-    }
-
-
-    public get lockedDependencies(): undefined | ILockedDependency {
-        const packageLockJson = new File(this._pkgDir, "package-lock.json");
-        if (packageLockJson.existsSync()) {
-            return packageLockJson.readJsonSync<ILockedDependency>();
-        }
-        else {
-            return undefined;
-        }
+        return this._config;
     }
 
 

@@ -1,7 +1,7 @@
 import * as cp from "child_process";
 import * as stream from "stream";
 import * as _ from "lodash-es";
-import { eventToPromise } from "../../depot/src/promiseHelpers.js";
+import { eventToPromise } from "./promiseHelpers.js";
 import {CollectorStream} from "./collectorStream.js";
 import {NullStream} from "./nullStream.js";
 
@@ -50,7 +50,7 @@ export interface ISpawnSystemError extends ISystemError {
 
 export interface ISpawnExitError {
     type:     "ISpawnExitError";
-    exitCode: number;
+    exitCode: number | null;  // Will be null when child process is killed
     stderr:   string;
     stdout:   string;
 }
@@ -125,25 +125,31 @@ export function spawn(
                 // Wait for all steams to flush before reporting that the child
                 // process has finished.
                 eventToPromise(childProcess, "close")
-                .then(() => {
-                    if (exitCode === 0) {
-                        if (description) {
-                            console.log(`Child process succeeded: ${cmdLineRepresentation}`);
+                .then(
+                    () => {
+                        if (exitCode === 0) {
+                            if (description) {
+                                console.log(`Child process succeeded: ${cmdLineRepresentation}`);
+                            }
+                            resolve(_.trim(stdoutCollector.collected));
                         }
-                        resolve(_.trim(stdoutCollector.collected));
-                    }
-                    else {
-                        if (description) {
-                            console.log(`Child process failed: ${cmdLineRepresentation}`);
+                        else {
+                            if (description) {
+                                console.log(`Child process failed: ${cmdLineRepresentation}`);
+                            }
+                            reject({
+                                type:     "ISpawnExitError",
+                                exitCode: exitCode,
+                                stderr:   stderrCollector.collected,
+                                stdout:   stdoutCollector.collected
+                            });
                         }
-                        reject({
-                            type:     "ISpawnExitError",
-                            exitCode: exitCode,
-                            stderr:   stderrCollector.collected,
-                            stdout:   stdoutCollector.collected
-                        });
+                    },
+                    () => {
+                        // Intentionally empty.
                     }
-                });
+                );
+
             });
 
         }

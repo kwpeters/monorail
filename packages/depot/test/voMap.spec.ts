@@ -23,7 +23,7 @@ function createPersonMap(iterable?: Iterable<[Person, number]>): VoMap<Person, n
             first: p.first.toLocaleLowerCase(),
             last:  p.last.toLocaleLowerCase()
         };
-        return hash(JSON.stringify(intrinsics), "sha256", "base64");
+        return hash(JSON.stringify(intrinsics), "base64");
     }
 }
 

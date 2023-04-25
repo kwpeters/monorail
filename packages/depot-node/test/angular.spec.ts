@@ -57,9 +57,3 @@ describe("findAngularProjectDirs()", () => {
         expect(projectDirs).toContain(dir3);
     });
 });
-
-
-describe("lintFiles()", () => {
-    // Setting up a sample Angular project configured to use ESLint is currently
-    // beyond the scope of these unit tests.
-});

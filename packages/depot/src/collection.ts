@@ -23,7 +23,7 @@ export function find<TCollectionItem, TPredicateReturn>(
     for (const curItem of collection) {
         const result = predicate(curItem, index, collection);
         if (result) {
-            return {item: curItem, predicateReturn: result!};
+            return {item: curItem, predicateReturn: result};
         }
         else {
             index++;

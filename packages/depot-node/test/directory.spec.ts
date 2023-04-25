@@ -7,7 +7,6 @@ import { Directory, IDirectoryContents } from "../src/directory.js";
 import { getOs, OperatingSystem } from "../src/os.js";
 import { tmpDir } from "./specHelpers.js";
 
-
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 

@@ -50,7 +50,7 @@ export async function resolveFileLocation(
     let curDir = startingDir;
     let done = false;
     while (!done) {
-        const result = await fileExistsInDir(searchFileName, curDir);
+        const result = await findFile(searchFileName, curDir);
         if (result.succeeded) {
             return result;
         }
@@ -67,8 +67,7 @@ export async function resolveFileLocation(
     return new FailedResult(`${searchFileName} could not be found in ${startingDir.toString()} or any parent directory.`);
 
 
-
-    async function fileExistsInDir(searchFileName: string, dir: Directory): Promise<Result<File, string>> {
+    async function findFile(searchFileName: string, dir: Directory): Promise<Result<File, string>> {
         const contents = await dir.contents(false);
         const files = contents.files;
         const matchingFile = _.find(files, (curExistingFile) => curExistingFile.fileName === searchFileName);
@@ -79,6 +78,45 @@ export async function resolveFileLocation(
             return new SucceededResult(matchingFile);
         }
     }
+}
+
+
+export async function resolveDirectoryLocation(
+    searchDirName: string,
+    startingDir: Directory
+): Promise<Result<Directory, string>> {
+    let curDir = startingDir;
+    let done = false;
+    while (!done) {
+        const result = await findSubdir(searchDirName, curDir);
+        if (result.succeeded) {
+            return result;
+        }
+
+        const parentDir = curDir.parentDir();
+        if (parentDir === undefined) {
+            done = true;
+        }
+        else {
+            curDir = parentDir;
+        }
+    }
+
+    return new FailedResult(`${searchDirName} could not be found in ${startingDir.toString()} or any parent directory.`);
+
+
+    async function findSubdir(searchDirName: string, dir: Directory): Promise<Result<Directory, string>> {
+        const contents = await dir.contents(false);
+        const subdirs = contents.subdirs;
+        const matchingSubdir = _.find(subdirs, (curExistingSubdir) => curExistingSubdir.dirName === searchDirName);
+        if (matchingSubdir === undefined) {
+            return new FailedResult(`${searchDirName} could not be found in ${dir.toString()}.`);
+        }
+        else {
+            return new SucceededResult(matchingSubdir);
+        }
+    }
+
 }
 
 

@@ -8,12 +8,8 @@ import { IIndexedItem } from "./utilityTypes.js";
 import { errorToString } from "./errorHelpers.js";
 
 
-export type PromiseResult<TSuccess, TError> = Promise<Result<TSuccess, TError>>;
-
-
 /**
- * A namespace that will be merged with the PromiseResult<> type.  Serves as a
- * useful place to create functions that operate on PromiseResult objects.
+ * Export a namespace similar to what is done for Result.
  */
 export namespace PromiseResult {
 

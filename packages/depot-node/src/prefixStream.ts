@@ -20,6 +20,16 @@ export class PrefixStream extends Transform {
     }
 
 
+    public get prefix(): string {
+        return this._prefixBuf.toString();
+    }
+
+
+    public get flushedPromise(): Promise<void> {
+        return this._flushedDeferred.promise;
+    }
+
+
     public override _transform(chunk: Buffer | string, encoding: string, done: () => unknown): void {
         // Convert to a Buffer.
         const chunkBuf: Buffer = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
@@ -48,15 +58,5 @@ export class PrefixStream extends Transform {
         this._flushedDeferred.resolve(undefined);
 
         done();
-    }
-
-
-    public get prefix(): string {
-        return this._prefixBuf.toString();
-    }
-
-
-    public get flushedPromise(): Promise<void> {
-        return this._flushedDeferred.promise;
     }
 }

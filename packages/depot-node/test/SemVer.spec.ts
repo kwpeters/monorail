@@ -133,7 +133,7 @@ describe("SemVer", () => {
             expect(semver!.major).toEqual(1);
             expect(semver!.minor).toEqual(2);
             expect(semver!.patch).toEqual(3);
-            expect(semver!.prerelease).toEqual({type: "alpha", version: 4});
+            expect(semver!.prerelease).toEqual(["alpha", 4]);
         });
 
 
@@ -153,17 +153,17 @@ describe("SemVer", () => {
 
 
         it("prerelease property will return the expected value", () => {
-            expect(SemVer.fromString("1.2.3-alpha.4")!.prerelease).toEqual({type: "alpha", version: 4});
+            expect(SemVer.fromString("1.2.3-alpha.4")!.prerelease).toEqual(["alpha", 4]);
         });
 
 
         it("prerelease property will return only a type when no version is present", () => {
-            expect(SemVer.fromString("1.2.3-alpha")!.prerelease).toEqual({type: "alpha"});
+            expect(SemVer.fromString("1.2.3-alpha")!.prerelease).toEqual(["alpha"]);
         });
 
 
-        it("prerelease property will be undefined when not present", () => {
-            expect(SemVer.fromString("1.2.3")!.prerelease).toEqual(undefined);
+        it("prerelease property will be an empty array when not present", () => {
+            expect(SemVer.fromString("1.2.3")!.prerelease).toEqual([]);
         });
 
 

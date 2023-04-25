@@ -71,10 +71,15 @@ describe("spawn", () => {
         .then(() => {
             fail("closePromise should reject when the child process is killed.");
         })
-        .catch((reason) => {
-            expect(reason.exitCode).toEqual(null);
-            expect(reason.stderr).toEqual("");
-            done();
+        .catch((reason: SpawnCloseError) => {
+            if (reason.type === "ISpawnExitError") {
+                expect(reason.exitCode).toEqual(null);
+                expect(reason.stderr).toEqual("");
+                done();
+            }
+            else {
+                fail("spawn() did not return the exepected ISpawnExitError.");
+            }
         });
     });
 
@@ -146,14 +151,18 @@ describe("spawn", () => {
         const lsCmd = os === OperatingSystem.Windows ? "dir" : "ls";
         const options = os === OperatingSystem.Windows ? {shell: true} : undefined;
         spawn(lsCmd, [nonExistantFilePath], options).closePromise
-        .catch((err) => {
+        .catch((err: SpawnCloseError) => {
             expect(err).toBeTruthy();
-            expect(err.exitCode).not.toEqual(0);
 
-            const windowsMsgRegex = /File Not Found/;
-            const macMsgRegex = /No such file or directory/;
-            expect(windowsMsgRegex.test(err.stderr) || macMsgRegex.test(err.stderr)).toBeTruthy();
-            done();
+            if (err.type === "ISpawnExitError") {
+                expect(err.exitCode).not.toEqual(0);
+                expect(err.stderr.includes("File Not Found") ||
+                       err.stderr.includes("No such file or directory")).toBeTruthy();
+                done();
+            }
+            else {
+                fail("spawn() did not return the expected ISpawnExitError");
+            }
         });
     });
 

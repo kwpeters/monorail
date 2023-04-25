@@ -212,6 +212,3 @@ Object.freeze(Logger.prototype);
 function getTimestamp(): string {
     return new Date().toISOString();
 }
-
-
-Object.freeze(exports);

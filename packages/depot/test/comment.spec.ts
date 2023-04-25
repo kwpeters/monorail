@@ -202,7 +202,7 @@ describe("toggleComment()", () => {
         ];
         const precedingLine = orig.shift();
 
-        const result = toggleComment(orig.join("\n"), precedingLine!);
+        const result = toggleComment(orig.join("\n"), precedingLine);
         expect(result).toBeDefined();
         expect(splitIntoLines(result!)).toEqual([
             "    //     blah",

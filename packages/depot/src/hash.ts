@@ -1,4 +1,4 @@
-import * as crypto from "crypto-replace-this-with-hash-wasm";
+import nacl from "tweetnacl";
 import { Brand } from "./brand.js";
 
 
@@ -17,17 +17,20 @@ export type HashFn<T> = (val: T) => HashString;
 /**
  * Hashes the specified string
  * @param str - The string to be hashed
- * @param algorithm - The hashing algorithm to use (e.g. "md5", "sha1",
- * "sha256", "sha512")
  * @param encoding - The encoding used in the returned string ("base64" or
  * "hex")
  * @returns The hashed value of the string
  */
 export function hash(
-    str: string
+    str: string,
+    encoding: "hex" | "base64" = "hex"
 ): HashString {
-    const hash = crypto.createHash(algorithm).update(str).digest(encoding);
-    return hash as HashString;
+    const encoder = new TextEncoder();
+    const strBuf = encoder.encode(str);
+    const hashUInt8Arr = nacl.hash(strBuf);
+    const hashBuf = Buffer.from(hashUInt8Arr);
+    const hashStr = hashBuf.toString(encoding);
+    return hashStr as HashString;
 }
 
 

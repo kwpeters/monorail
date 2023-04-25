@@ -1,9 +1,7 @@
 import * as net from "net";
 import * as _ from "lodash-es";
-import {
-    getExternalIpv4Addresses, isTcpPortAvailable, getAvailableTcpPort,
-    selectAvailableTcpPort, determinePort
-} from "../src/networkHelpers.js";
+import { getExternalIpv4Addresses, isTcpPortAvailable, getAvailableTcpPort,
+         selectAvailableTcpPort} from "../src/networkHelpers.js";
 
 
 interface IServerInfo {
@@ -22,7 +20,7 @@ function startServerAtFirstAvailablePort(): Promise<IServerInfo> {
 
             if (!address ||
                 typeof address === "string") {
-                reject(new Error(`Server is listening but has invalid address ${address}.`));
+                reject(new Error(`Server is listening but has invalid address ${address || "null"}.`));
             }
             else {
                 resolve({server, port: address.port});
@@ -130,52 +128,6 @@ describe("selectAvailableTcpPort()", () => {
             shutdownServer(serverInfo1.server),
             shutdownServer(serverInfo2.server)
         ]);
-    });
-
-
-});
-
-
-describe("determinePort()", () => {
-
-    it("rejects when a required port is specified and it is not available", async () => {
-        const server = await startServerAtFirstAvailablePort();
-
-        try {
-            await determinePort({requiredPort: server.port});
-            fail("The above line should have rejected.");
-        }
-        catch (err) {
-            expect((err as Error).message).toMatch(/Required port .* is not available./);
-        }
-    });
-
-
-    it("resolves with a required port when it is available", async () => {
-        const availablePort = await selectAvailableTcpPort();
-        const port = await determinePort({requiredPort: availablePort});
-        expect(port).toEqual(availablePort);
-    });
-
-
-    it("resolves with the preferred port when it is available", async () => {
-        const availablePort = await selectAvailableTcpPort();
-        const port = await determinePort({preferredPort: availablePort});
-        expect(port).toEqual(availablePort);
-    });
-
-
-    it("resolves with a free port when the preferred one is not available", async () => {
-        const server = await startServerAtFirstAvailablePort();
-
-        try {
-            const port = await determinePort({preferredPort: server.port});
-            expect(port).not.toEqual(server.port);
-            expect(port).toBeGreaterThan(0);
-        }
-        catch (err) {
-            fail("The promise should not have rejected.");
-        }
     });
 
 

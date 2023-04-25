@@ -7,7 +7,7 @@ import { FailedResult, Result, SucceededResult } from "../../depot/src/result.js
 import { eventToPromise } from "./promiseHelpers.js";
 import {CollectorStream} from "./collectorStream.js";
 import {NullStream} from "./nullStream.js";
-import { ISystemError } from "./nodeTypes";
+import { ISystemError } from "./nodeTypes.js";
 
 
 /**
@@ -15,6 +15,7 @@ import { ISystemError } from "./nodeTypes";
  */
 export interface ISpawnSystemError extends ISystemError {
     type: "ISpawnSystemError";
+    code?: string;
 }
 
 export function isISpawnSystemError(a: unknown): a is ISpawnSystemError {
@@ -31,6 +32,7 @@ export interface ISpawnExitError {
      * The process's exit code.  May be _null_ if the process was killed.
      */
     exitCode: number | null;
+    code?:    string;
     stderr:   string;
     stdout:   string;
 }
@@ -56,7 +58,7 @@ export function spawnErrorToString(err: SpawnError): string {
             return `System error: ${JSON.stringify(err)}`;
 
         case "ISpawnExitError":
-            return `Process failed with code ${err.exitCode}.${os.EOL}${err.stdout}${err.stderr}`;
+            return `Process failed with code ${err.exitCode ?? "null"}.${os.EOL}${err.stdout}${err.stderr}`;
 
         default:
             return assertNever(err);
@@ -151,25 +153,30 @@ export function spawn(
                 // Wait for all steams to flush before reporting that the child
                 // process has finished.
                 eventToPromise(childProcess, "close")
-                .then(() => {
-                    if (exitCode === 0) {
-                        if (description) {
-                            console.log(`Child process succeeded: ${cmdLineRepresentation}`);
+                .then(
+                    () => {
+                        if (exitCode === 0) {
+                            if (description) {
+                                console.log(`Child process succeeded: ${cmdLineRepresentation}`);
+                            }
+                            resolve(new SucceededResult(_.trim(stdoutCollector.collected)));
                         }
-                        resolve(new SucceededResult(_.trim(stdoutCollector.collected)));
-                    }
-                    else {
-                        if (description) {
-                            console.log(`Child process failed: ${cmdLineRepresentation}`);
+                        else {
+                            if (description) {
+                                console.log(`Child process failed: ${cmdLineRepresentation}`);
+                            }
+                            resolve(new FailedResult({
+                                type:     "ISpawnExitError",
+                                exitCode: exitCode,
+                                stderr:   _.trim(stderrCollector.collected),
+                                stdout:   _.trim(stdoutCollector.collected)
+                            }));
                         }
-                        resolve(new FailedResult({
-                            type:     "ISpawnExitError",
-                            exitCode: exitCode,
-                            stderr:   _.trim(stderrCollector.collected),
-                            stdout:   _.trim(stdoutCollector.collected)
-                        }));
+                    },
+                    () => {
+                        // Intentionally empty.
                     }
-                });
+                );
             });
 
         }

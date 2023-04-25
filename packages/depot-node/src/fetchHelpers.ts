@@ -170,7 +170,7 @@ export async function fetchJson<TDto>(
 
     let parsedBody: Partial<TDto>;
     try {
-        parsedBody = await resp.json();
+        parsedBody = await resp.json() as Partial<TDto>;
     }
     catch (err: unknown) {
         const errMsg = err instanceof Error ? err.message : JSON.stringify(err);

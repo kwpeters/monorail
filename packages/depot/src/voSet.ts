@@ -32,6 +32,14 @@ export class VoSet<TVal> implements Iterable<TVal>, ReadonlySet<TVal> {
 
 
     /**
+     * The number of elements in this set.
+     */
+    public get size(): number {
+        return this._backingStore.size;
+    }
+
+
+    /**
      * Appends a new element with a specified value to the end of the Set.
      */
     public add(value: TVal): this {
@@ -92,14 +100,6 @@ export class VoSet<TVal> implements Iterable<TVal>, ReadonlySet<TVal> {
             return new SucceededResult(val);
         }
         return new FailedResult(undefined);
-    }
-
-
-    /**
-     * The number of elements in this set.
-     */
-    public get size(): number {
-        return this._backingStore.size;
     }
 
 

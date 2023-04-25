@@ -14,7 +14,6 @@
                 "--esm",
                 "--project",
                 "./tsconfig.json",
-                "--transpile-only",
                 "${workspaceRoot}/node_modules/jasmine/bin/jasmine.js",
                 "--color",
                 "--config=./jasmine.json"
@@ -38,7 +37,6 @@
                 "--esm",
                 "--project",
                 "./tsconfig.json",
-                "--transpile-only",
                 "${workspaceRoot}/node_modules/jasmine/bin/jasmine.js",
                 "--color",
                 "--config=./jasmine.json"

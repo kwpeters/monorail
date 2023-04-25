@@ -8,6 +8,7 @@ const VERSION_STRING_PREFIX = "v";
 
 
 export class SemVer {
+
     public static sort(arr: Array<SemVer>): Array<SemVer> {
         return arr.sort((semverA, semverB) => {
             return semver.compare(semverA._semver, semverB._semver);
@@ -27,15 +28,6 @@ export class SemVer {
 
     private constructor(semver: semver.SemVer) {
         this._semver = semver;
-    }
-
-
-    /**
-     * Returns this version as a string (no prefixes)
-     * @return A string representation of this version
-     */
-    public toString(): string {
-        return this._semver.toString();
     }
 
 
@@ -63,26 +55,18 @@ export class SemVer {
     }
 
 
-    public get prerelease(): {type: string, version?: number} | undefined {
-        // The type definition for semver.prerelease is Array<string>, which is
-        // wrong.  Unfortunately, in TS, tuples cannot have optional values, so
-        // in order to make this more strongly typed we will convert it into an
-        // object.  In order to do the conversion, we must temporarily treat the
-        // returned array as an Array<any>.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const prereleaseParts: Array<any> = this._semver.prerelease;
+    // public get prerelease(): {type: string, version?: number} {
+    public get prerelease(): ReadonlyArray<string | number> {
+        return this._semver.prerelease;
+    }
 
-        if (prereleaseParts.length === 0) {
-            return undefined;
-        }
 
-        const prerelease: {type: string, version?: number} = {type: prereleaseParts[0]};
-
-        if (prereleaseParts.length >= 2) {
-            prerelease.version = prereleaseParts[1];
-        }
-
-        return prerelease;
+    /**
+     * Returns this version as a string (no prefixes)
+     * @return A string representation of this version
+     */
+    public toString(): string {
+        return this._semver.toString();
     }
 
 

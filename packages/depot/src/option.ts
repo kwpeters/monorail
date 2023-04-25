@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 
 
+import { inspect } from "./inspect.js";
+
+
 interface IOption<T> {
     /**
      * Returns whether this option contains a value.
@@ -42,7 +45,8 @@ export class SomeOption<T> implements IOption<T> {
     }
 
     public toString(): string {
-        return `SomeOption (${this._value})`;
+        const str = `SomeOption ${inspect(this._value)}`;
+        return str;
     }
 }
 

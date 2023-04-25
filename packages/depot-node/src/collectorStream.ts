@@ -16,6 +16,16 @@ export class CollectorStream extends Transform {
     }
 
 
+    public get collected(): string {
+        return this._collected.toString();
+    }
+
+
+    public get flushedPromise(): Promise<void> {
+        return this._flushedDeferred.promise;
+    }
+
+
     public override _transform(chunk: Buffer | string, encoding: string, done: () => unknown): void {
         // Convert to a Buffer.
         const chunkBuf: Buffer = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
@@ -29,15 +39,5 @@ export class CollectorStream extends Transform {
     public override _flush(done: () => unknown): void {
         this._flushedDeferred.resolve(undefined);
         done();
-    }
-
-
-    public get collected(): string {
-        return this._collected.toString();
-    }
-
-
-    public get flushedPromise(): Promise<void> {
-        return this._flushedDeferred.promise;
     }
 }
