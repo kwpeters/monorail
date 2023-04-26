@@ -3,7 +3,7 @@ import * as url from "url";
 import * as path from "path";
 import * as _ from "lodash-es";
 import { File } from "../src/file.js";
-import { Directory, IDirectoryContents } from "../src/directory.js";
+import { Directory, IDirectoryContents, IFilterResult } from "../src/directory.js";
 import { getOs, OperatingSystem } from "../src/os.js";
 import { tmpDir } from "./specHelpers.js";
 
@@ -1431,6 +1431,79 @@ describe("Directory", () => {
             });
 
 
+        });
+
+
+        describe("filter()", () => {
+
+
+            beforeEach(() => {
+                /* eslint-disable no-irregular-whitespace */
+                tmpDir.emptySync();
+
+                // Create the following directory structure under tmpDir.
+                // tmp
+                // ├── dirA
+                // │   ├── dirAA
+                // │   │   ├── aa1.txt
+                // │   │   └── aa2.txt
+                // │   └── dirAB
+                // │       ├── ab1.txt
+                // │       └── ab2.txt
+                // ├── dirB
+                // │   ├── b1.txt
+                // │   └── b2.txt
+                // ├── root1.txt
+                // └── root2.txt
+
+                // Create the directories.
+                const dirA = new Directory(tmpDir, "dirA").ensureExistsSync();
+                const dirAA = new Directory(dirA, "dirAA").ensureExistsSync();
+                const dirAB = new Directory(dirA, "dirAB").ensureExistsSync();
+                const dirB = new Directory(tmpDir, "dirB").ensureExistsSync();
+
+                // Create the files.
+                const root1 = new File(tmpDir, "root1.txt");
+                root1.writeSync("root1");
+                const root2 = new File(tmpDir, "root2.txt");
+                root2.writeSync("root2");
+                const aa1 = new File(dirAA, "aa1.txt");
+                aa1.writeSync("aa1");
+                const aa2 = new File(dirAA, "aa2.txt");
+                aa2.writeSync("aa2");
+                const ab1 = new File(dirAB, "ab1.txt");
+                ab1.writeSync("ab1");
+                const ab2 = new File(dirAB, "ab2.txt");
+                ab2.writeSync("ab2");
+                const b1 = new File(dirB, "b1.txt");
+                b1.writeSync("b1");
+                const b2 = new File(dirB, "b2.txt");
+                b2.writeSync("b2");
+            });
+
+
+            it("invokes the callback for every file and directory", async () => {
+                function filterFn(fsItem: File | Directory): IFilterResult {
+                    return { include: true, recurse: true };
+                }
+
+                const fsItems = await tmpDir.filter(filterFn);
+                expect(fsItems.length).toEqual(12);
+            });
+
+
+            it("will not recurse into a directory when instructed not to recurse", async () => {
+                function filterFn(fsItem: File | Directory): IFilterResult {
+                    const shouldExclude =
+                        fsItem instanceof Directory &&
+                        fsItem.dirName === "dirAA";
+
+                    return { include: true, recurse: !shouldExclude };
+                }
+
+                const fsItems = await tmpDir.filter(filterFn);
+                expect(fsItems.length).toEqual(10);
+            });
         });
 
 

@@ -18,6 +18,11 @@ export interface IDirectoryContents {
 
 export type WalkCallback = (item: Directory | File) => boolean | Promise<boolean>;
 
+export interface IFilterResult {
+    recurse?: boolean;
+    include: boolean;
+}
+export type FilterCallback = (item: Directory | File) => IFilterResult | Promise<IFilterResult>;
 
 export class Directory {
 
@@ -406,6 +411,13 @@ export class Directory {
         });
 
         fsItems.forEach((curFsItem) => {
+
+            // TODO: The following statSync() throws
+            // { errno: -4058, syscall: 'stat', code: 'ENOENT', path: 'tmp\dirA\mylink.txt' }
+            // when trying to delete a symbolic link that is broken.  lstat()
+            // should probably be used here.
+            //
+            // This should be fixed in the async delete() method too.
             const stats = fs.statSync(curFsItem);
             if (stats.isDirectory()) {
                 const subdir = new Directory(curFsItem);
@@ -782,6 +794,7 @@ export class Directory {
 
     /**
      * Walks this Directory in a depth-first manner.
+     *
      * @param cb - A callback function that will be called for each subdirectory
      *   and file encountered.  It is invoked with one argument: (item).  When
      *   item is a Directory, the function returns a boolean indicating whether
@@ -806,6 +819,48 @@ export class Directory {
                 await curSubDir.walk(cb);
             }
         }
+    }
+
+
+    /**
+     * Filters the contents of this directory.
+     *
+     * @param cb - A callback function that will be called for each contained
+     *   file and subdirectory.  When invoked for a Directory, this callback
+     *   should specify whether to recurse into the directory.
+     * @returns A Promise that is resolved with all of the items for which _cb_
+     *   returned a truthy _include_ property.
+     */
+    public async filter(cb: FilterCallback): Promise<Array<File | Directory>> {
+        let selected: Array<File | Directory> = [];
+        const thisDirectoryContents = await this.contents(false);
+
+        // Process the files in this directory.
+        await mapAsync(
+            thisDirectoryContents.files,
+            async (curFile) => {
+                const res = await Promise.resolve(cb(curFile));
+                if (res.include) {
+                    selected.push(curFile);
+                }
+            }
+        );
+
+        await mapAsync(
+            thisDirectoryContents.subdirs,
+            async (curSubdir) => {
+                const res = await Promise.resolve(cb(curSubdir));
+                if (res.include) {
+                    selected.push(curSubdir);
+                }
+                if (res.recurse) {
+                    const subdirFsItems = await curSubdir.filter(cb);
+                    selected = selected.concat(subdirFsItems);
+                }
+            }
+        );
+
+        return selected;
     }
 
 
