@@ -871,11 +871,11 @@ export namespace Result {
      * Performs side-effects when the specified Result is a failure
      *
      * @param fn - The function to invoke, passing the failed Result's error
-     * @param input - The Input Result
+     * @param input - The input Result
      * @returns The original input Result
      */
     export function tapError<TSuccess, TError>(
-        fn: (val: TError) => void,
+        fn: (val: TError) => unknown,
         input: Result<TSuccess, TError>
     ): Result<TSuccess, TError> {
         if (input.failed) {
@@ -893,7 +893,7 @@ export namespace Result {
      * @returns The original input Result
      */
     export function tapSuccess<TSuccess, TError>(
-        fn: (val: TSuccess) => void,
+        fn: (val: TSuccess) => unknown,
         input: Result<TSuccess, TError>
     ): Result<TSuccess, TError> {
         if (input.succeeded) {
