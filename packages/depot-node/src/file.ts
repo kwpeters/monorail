@@ -744,6 +744,45 @@ export class File {
         });
     }
 
+
+    /**
+     * Creates a symlink to this file.
+     *
+     * @param symlink - The symlink file itself
+     * @param pathType - How the new symbolic link should refer to this file. If
+     *   "relative", this file and the symlink can be moved together to a new
+     *   location and the symlink will continue to work as long as this file
+     *   (the target) can be reach via the same relative path.  If "absolute",
+     *   the symlink will contain the absolute path to this file (the target)
+     *   and will break if this file is moved.
+     * @returns When successful, a result containing the symlink file itself.
+     *   When an error occurs, a descriptive error message.
+     */
+    public async createSymlink(
+        symlink: File,
+        pathType: "absolute" | "relative"
+    ): Promise<Result<File, string>> {
+
+        return new Promise((resolve, reject) => {
+
+            const pathToThisFile =
+                pathType === "relative" ?
+                File.relative(symlink.directory, this).toString() :
+                this.absolute().toString();
+
+            fs.symlink(
+                pathToThisFile,
+                symlink.absolute().toString(),
+                "file",
+                (err: NodeJS.ErrnoException | null) => {
+                    resolve(err ?
+                        new FailedResult(err.message) :
+                        new SucceededResult(symlink));
+                }
+            );
+        });
+    }
+
 }
 
 

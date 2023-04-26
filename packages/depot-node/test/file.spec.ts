@@ -1392,6 +1392,106 @@ describe("File", () => {
         });
 
 
+        describe("createSymlink()", () => {
+
+            describe("when a relative symlink is created", () => {
+
+                it("the target file can be read via the symlink", async () => {
+                    const targetFile = new File(tmpDir, "target.txt");
+                    targetFile.writeSync("target text");
+
+                    const dirA = new Directory(tmpDir, "dirA");
+                    dirA.ensureExistsSync();
+                    const symlink = new File(dirA, "mylink.txt");
+
+                    // When I create a relative symlink...
+                    const res = await targetFile.createSymlink(symlink, "relative" );
+
+                    // then the symlink file exists...
+                    expect(res.succeeded).toBeTrue();
+                    expect(res.value!.absPath()).toEqual(symlink.absPath());
+
+                    // and the target file can be read via the symlink.
+                    const text = res.value!.readSync();
+                    expect(text).toEqual("target text");
+                });
+
+
+                it("both can be moved and the symlink will still be valid", async () => {
+                    const targetFile = new File(tmpDir, "target.txt");
+                    targetFile.writeSync("target text");
+
+                    const dirA = new Directory(tmpDir, "dirA");
+                    dirA.ensureExistsSync();
+                    const symlink = new File(dirA, "mylink.txt");
+
+                    // When I create a relative symlink...
+                    const res = await targetFile.createSymlink(symlink, "relative");
+
+                    // I can move the symlink such that the relative path remains valid...
+                    const dirB = new Directory(tmpDir, "dirB");
+                    dirB.ensureExistsSync();
+                    const movedSymlink = symlink.moveSync(dirB);
+
+                    // and I can still read the target file via the symlink.
+                    const text = movedSymlink.readSync();
+                    expect(text).toEqual("target text");
+                });
+
+            });
+
+
+            describe("when an absolute symlink is created", () => {
+
+
+                it("the target file can be read via the symlink", async () => {
+                    const targetFile = new File(tmpDir, "target.txt");
+                    targetFile.writeSync("target text");
+
+                    const dirA = new Directory(tmpDir, "dirA");
+                    dirA.ensureExistsSync();
+                    const symlink = new File(dirA, "mylink.txt");
+
+                    // When I create an absolute symlink...
+                    const res = await targetFile.createSymlink(symlink, "absolute");
+
+                    // then the symlink file exists...
+                    expect(res.succeeded).toBeTrue();
+                    expect(res.value!.absPath()).toEqual(symlink.absPath());
+
+                    // and the target file can be read via the symlink.
+                    const text = res.value!.readSync();
+                    expect(text).toEqual("target text");
+                });
+
+
+                it("when the target is moved the symlink becomes invalid", async () => {
+                    const targetFile = new File(tmpDir, "target.txt");
+                    targetFile.writeSync("target text");
+
+                    const dirA = new Directory(tmpDir, "dirA");
+                    dirA.ensureExistsSync();
+                    const symlink = new File(dirA, "mylink.txt");
+
+                    // When I create an absolute symlink...
+                    const res = await targetFile.createSymlink(symlink, "absolute");
+                    expect(res.succeeded).toBeTrue();
+
+                    // when I move the target
+                    targetFile.moveSync(targetFile.directory, "movedtarget.txt");
+
+                    // then the target can no longer be read via the symlink
+                    expect(() => {
+                        res.value!.readSync();
+                    }).toThrow();
+                });
+
+            });
+
+
+        });
+
+
     });
 
 });
