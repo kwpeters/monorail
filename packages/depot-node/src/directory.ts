@@ -374,7 +374,11 @@ export class Directory {
                     });
 
                     const deletePromises = absPaths.map((curAbsPath: string) => {
-                        if (fs.statSync(curAbsPath).isDirectory()) {
+                        // Use lstat() to get the stats on curFsItem because calling stat()
+                        // on a symlink with throw if the target of the symlink does not
+                        // exist.  We don't care about the target.  We only care about the
+                        // symlink.
+                        if (fs.lstatSync(curAbsPath).isDirectory()) {
                             const subdir = new Directory(curAbsPath);
                             return subdir.delete();
                         }
@@ -412,13 +416,11 @@ export class Directory {
 
         fsItems.forEach((curFsItem) => {
 
-            // TODO: The following statSync() throws
-            // { errno: -4058, syscall: 'stat', code: 'ENOENT', path: 'tmp\dirA\mylink.txt' }
-            // when trying to delete a symbolic link that is broken.  lstat()
-            // should probably be used here.
-            //
-            // This should be fixed in the async delete() method too.
-            const stats = fs.statSync(curFsItem);
+            // Use lstat() to get the stats on curFsItem because calling stat()
+            // on a symlink with throw if the target of the symlink does not
+            // exist.  We don't care about the target.  We only care about the
+            // symlink.
+            const stats = fs.lstatSync(curFsItem);
             if (stats.isDirectory()) {
                 const subdir = new Directory(curFsItem);
                 subdir.deleteSync();

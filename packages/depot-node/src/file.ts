@@ -136,7 +136,9 @@ export class File {
 
 
     /**
-     * Checks to see if this File exists.
+     * Checks to see if this File exists.  If this file is a symbolic link,
+     * the targeted file will be stated.
+     *
      * @return A Promise that is always resolved.  It is resolved with a truthy
      * fs.Stats object if it exists.  Otherwise, it is resolved with undefined.
      */
@@ -238,25 +240,55 @@ export class File {
     }
 
 
+    /**
+     * Deletes this file (or symlink).  If this file represents a symlink, the
+     * symlink is deleted not the file it targets.
+     *
+     * @returns A Promise that resolves when this file has been deleted (or it
+     * doesn't exist).
+     */
     public delete(): Promise<void> {
-        return this.exists()
-        .then((stats) => {
-            if (!stats) {
-                return Promise.resolve();
+
+        // Use lstat() so that we test for the existence of the symbolic link,
+        // not the existence of the file it targets.
+        return fsp.lstat(this._filePath)
+        .then(
+            (stats) => {
+                return stats && !stats.isDirectory() ?
+                    fsp.unlink(this._filePath) :
+                    Promise.resolve();
+            },
+            (err: NodeJS.ErrnoException) => {
+                if (err.code !== "ENOENT") {
+                    throw err;
+                }
             }
-            else {
-                return fsp.unlink(this._filePath);
-            }
-        });
+        );
     }
 
 
+    /**
+     * Deletes this file (or symlink).  If this file represents a symlink, the
+     * symlink is deleted not the file it targets.
+     */
     public deleteSync(): void {
-        if (!this.existsSync()) {
-            return;
-        }
 
-        fs.unlinkSync(this._filePath);
+        try {
+            // Use lstat() so that we test for the existence of the symbolic link,
+            // not the existence of the file it targets.
+            const stats = fs.lstatSync(this._filePath);
+            if (stats) {
+                fs.unlinkSync(this._filePath);
+            }
+        }
+        catch (err) {
+            if ((err as NodeJS.ErrnoException).code === "ENOENT") {
+                // It doesn't exist.  Not a problem.
+            }
+            else {
+                throw err;
+            }
+        }
     }
 
 
