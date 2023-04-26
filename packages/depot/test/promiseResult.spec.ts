@@ -1,7 +1,112 @@
 import { PromiseResult } from "../src/promiseResult.js";
 import { getTimerPromise } from "../src/promiseHelpers.js";
-import { FailedResult, SucceededResult } from "../src/result.js";
+import { Result, FailedResult, SucceededResult } from "../src/result.js";
 import { pipeAsync } from "../src/pipeAsync.js";
+
+
+describe("augment()", () => {
+
+    it("if the input is an error, returns it without invoking the function", async () => {
+        function step1() {
+            return Promise.resolve(new FailedResult("Step 1 error."));
+        }
+
+        let numStep2Invocations = 0;
+        function step2() {
+            numStep2Invocations++;
+            return Promise.resolve(new SucceededResult({ c: 3, d: 4 }));
+        }
+
+        const res =
+            await pipeAsync(step1())
+            .pipe((res) => PromiseResult.augment(step2, res))
+            .end();
+
+        expect(res).toEqual(new FailedResult("Step 1 error."));
+        expect(numStep2Invocations).toEqual(0);
+    });
+
+
+    it("if the input is successful, invokes fn", async () => {
+        function step1() {
+            return Promise.resolve(new SucceededResult({ a: 1, b: 2 }));
+        }
+
+        let numStep2Invocations = 0;
+        function step2(props: { b: number; }) {
+            numStep2Invocations++;
+            return Promise.resolve(new SucceededResult({ c: props.b + 1, d: props.b + 2 }));
+        }
+
+        const res =
+            await pipeAsync(step1())
+            .pipe((res) => PromiseResult.augment(step2, res))
+            .end();
+
+        expect(numStep2Invocations).toEqual(1);
+    });
+
+
+    it("if the input is successful and fn errors, returns fn's error", async () => {
+        function step1() {
+            return Promise.resolve(new SucceededResult({ a: 1, b: 2 }));
+        }
+
+        let numStep2Invocations = 0;
+        function step2(props: { b: number; }) {
+            numStep2Invocations++;
+            return Promise.resolve(new FailedResult("Step 2 error."));
+        }
+
+        const res =
+            await pipeAsync(step1())
+            .pipe((res) => PromiseResult.augment(step2, res))
+            .end();
+
+        expect(res).toEqual(new FailedResult("Step 2 error."));
+    });
+
+
+    it("if the input and fn are successful, returns a successful result containing all properties", async () => {
+        function step1() {
+            return Promise.resolve(new SucceededResult({ a: 1, b: 2 }));
+        }
+
+        let numStep2Invocations = 0;
+        function step2(props: { b: number; }) {
+            numStep2Invocations++;
+            return Promise.resolve(new SucceededResult({ c: props.b + 1, d: props.b + 2 }));
+        }
+
+        const res =
+            await pipeAsync(step1())
+            .pipe((res) => PromiseResult.augment(step2, res))
+            .end();
+
+        expect(res).toEqual(new SucceededResult({ a: 1, b: 2, c: 3, d: 4 }));
+    });
+
+
+    it("properties in the original input can be reassigned", async () => {
+        function step1() {
+            return Promise.resolve(new SucceededResult({ a: 1, b: 2 }));
+        }
+
+        let numStep2Invocations = 0;
+        function step2(props: { b: number; }) {
+            numStep2Invocations++;
+            return Promise.resolve(new SucceededResult({ b: 0 }));
+        }
+
+        const res =
+            await pipeAsync(step1())
+            .pipe((res) => PromiseResult.augment(step2, res))
+            .end();
+
+        expect(res).toEqual(new SucceededResult({ a: 1, b: 0 }));
+    });
+
+});
 
 
 describe("toPromise()", () => {
@@ -340,6 +445,120 @@ describe("mapSuccess()", () => {
             .end();
         expect(res.succeeded).toBeTrue();
         expect(res.value).toEqual(8);
+    });
+
+});
+
+
+describe("tapError()", () => {
+
+    it("allows the input to be a Result", async () => {
+        const fn = async () => Promise.resolve(undefined);
+        const res = await PromiseResult.tapError(fn, new SucceededResult(3));
+        expect(res.succeeded).toBeTrue();
+    });
+
+
+    it("calls the function when the input Result is a failure", async () => {
+        let numInvocations = 0;
+        function tapFn(err: string) {
+            numInvocations++;
+            return Promise.resolve("tapFn() return value");
+        }
+
+        await pipeAsync(new FailedResult("error message") as Result<number, string>)
+        .pipe((res) => PromiseResult.tapError(tapFn, res))
+        .end();
+
+        expect(numInvocations).toEqual(1);
+    });
+
+
+    it("does not call the function when the input Result is successful", async () => {
+        let numInvocations = 0;
+        function tapFn(err: string) {
+            numInvocations++;
+            return Promise.resolve("tapFn() return value");
+        }
+
+        await pipeAsync(new SucceededResult(1) as Result<number, string>)
+        .pipe((res) => PromiseResult.tapError(tapFn, res))
+        .end();
+
+        expect(numInvocations).toEqual(0);
+    });
+
+
+    it("returns the original Result", async () => {
+        let numInvocations = 0;
+        function tapFn(err: string) {
+            numInvocations++;
+            return Promise.resolve("tapFn() return value");
+        }
+
+        const actual =
+            await pipeAsync(new FailedResult("error message") as Result<number, string>)
+            .pipe((res) => PromiseResult.tapError(tapFn, res))
+            .end();
+
+        expect(actual).toEqual(new FailedResult("error message"));
+    });
+});
+
+
+describe("tapSuccess()", () => {
+
+
+    it("allows the input to be a Result", async () => {
+        const fn = async () => Promise.resolve(undefined);
+        const res = await PromiseResult.tapSuccess(fn, new SucceededResult(3));
+        expect(res.succeeded).toBeTrue();
+    });
+
+
+    it("does not call the function when the input Result is a failure", async () => {
+        let numInvocations = 0;
+        function tapFn(num: number) {
+            numInvocations++;
+            return Promise.resolve("tap func return value");
+        }
+
+        await pipeAsync(new FailedResult("error message") as Result<number, string>)
+        .pipe((res) => PromiseResult.tapSuccess(tapFn, res))
+        .end();
+
+        expect(numInvocations).toEqual(0);
+    });
+
+
+    it("calls the function when the input Result is successful", async () => {
+        let numInvocations = 0;
+        function tapFn(num: number) {
+            numInvocations++;
+            return Promise.resolve("tap func return value");
+        }
+
+        await pipeAsync(new SucceededResult(3) as Result<number, string>)
+        .pipe((res) => PromiseResult.tapSuccess(tapFn, res))
+        .end();
+
+        expect(numInvocations).toEqual(1);
+    });
+
+
+    it("returns the original Result", async () => {
+        let numInvocations = 0;
+        function tapFn(num: number) {
+            numInvocations++;
+            return Promise.resolve("tap func return value");
+        }
+
+        const actual =
+            await pipeAsync(new SucceededResult(3) as Result<number, string>)
+            .pipe((res) => PromiseResult.tapSuccess(tapFn, res))
+            .end();
+
+        expect(actual).toEqual(new SucceededResult(3));
     });
 
 });

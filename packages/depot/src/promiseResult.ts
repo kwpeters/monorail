@@ -13,6 +13,45 @@ import { errorToString } from "./errorHelpers.js";
  */
 export namespace PromiseResult {
 
+
+    /**
+     * If the input Result is successful, invokes _fn_ with the value.  If a
+     * successful Result is returned, the original input value is augmented with
+     * the value.  Augment is a lot like bind(), except it automatically
+     * includes all of the input's properties.  It can also serve as a reality
+     * check or gate when augmenting no additional properties.
+     *
+     * @param fn - Function that will be invoked if the input Result is
+     * successful.  Returns a Result.  If successful, the properties will be
+     * added to _input_ and returned as a successful Result.
+     * @param input - The input Result
+     * @returns An error if the input is an error or _fn_ returns an error.
+     * Otherwise, a successful Result containing all properties of the original
+     * input and the value returned by _fn_.
+     */
+    export async function augment<TInputSuccess, TInputError, TFnSuccess, TFnError>(
+        fn: (input: TInputSuccess) => Promise<Result<TFnSuccess, TFnError>>,
+        input: Result<TInputSuccess, TInputError>
+    ): Promise<Result<TInputSuccess & TFnSuccess, TInputError | TFnError>> {
+
+        if (input.failed) {
+            return input;
+        }
+
+        // The input is a successful Result.
+        const fnRes = await fn(input.value);
+        if (fnRes.failed) {
+            // _fn_ has errored.  Return that error.
+            return fnRes;
+        }
+
+        // _fn_ has succeeded.  Return an object containing all properties of
+        // the original input and the value returned by _fn_.
+        const augmented = { ...input.value, ...fnRes.value };
+        return new SucceededResult(augmented);
+    }
+
+
     /**
      * Converts a Promise<Result<>> to a Promise.
      *
@@ -393,6 +432,42 @@ export namespace PromiseResult {
 
 
     /**
+     * Performs side-effects when the specified Result is a failure
+     *
+     * @param fn - The function to invoke, passing the failed Result's error
+     * @param input - The input Result
+     * @returns The original input Result
+     */
+    export async function tapError<TSuccess, TError>(
+        fn: (val: TError) => Promise<unknown>,
+        input: Result<TSuccess, TError>
+    ): Promise<Result<TSuccess, TError>> {
+        if (input.failed) {
+            await fn(input.error);
+        }
+        return input;
+    }
+
+
+    /**
+     * Performs side-effects when the specified Result is successful
+     *
+     * @param fn - The function to invoke, passing the successful Result's value
+     * @param input - The input Result
+     * @returns The original input Result
+     */
+    export async function tapSuccess<TSuccess, TError>(
+        fn: (val: TSuccess) => Promise<unknown>,
+        input: Result<TSuccess, TError>
+    ): Promise<Result<TSuccess, TError>> {
+        if (input.succeeded) {
+            await fn(input.value);
+        }
+        return input;
+    }
+
+
+    /**
      * Forces a Promise<Result<>> to always resolve (and never reject) with a
      * Result<>.
      *
@@ -400,9 +475,9 @@ export namespace PromiseResult {
      * @returns A Promise that will always resolve with a Result.
      */
     export async function forceResult<TSuccess, TError>(
-        pr: Promise<Result<TSuccess, TError>>
+        pr: Promise<Result<TSuccess, TError>> | Result<TSuccess, TError>
     ): Promise<Result<TSuccess, TError | string>> {
-        return pr
+        return Promise.resolve(pr)
         .catch((err) => {
             return new FailedResult(errorToString(err));
         });
