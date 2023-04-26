@@ -7,10 +7,16 @@ import { sampleRepoDir, tmpDir } from "./specHelpers.js";
 
 
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
-const repoDir = (await resolveDirectoryLocation(".git", new Directory(__dirname))).value!.parentDir()!;
 
 
 describe("GitBranch", () => {
+
+    let repoDir: Directory;
+
+    beforeAll(async () => {
+        repoDir = (await resolveDirectoryLocation(".git", new Directory(__dirname))).value!.parentDir()!;
+    });
+
 
     describe("static", () => {
 

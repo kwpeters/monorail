@@ -13,10 +13,16 @@ import {sampleRepoDir, sampleRepoUrl, tmpDir} from "./specHelpers.js";
 
 
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
-const repoDir = (await resolveDirectoryLocation(".git", new Directory(__dirname))).value!.parentDir()!;
 
 
 describe("GitRepo", () => {
+
+    let repoDir: Directory;
+
+    beforeAll(async () => {
+        repoDir = (await resolveDirectoryLocation(".git", new Directory(__dirname))).value!.parentDir()!;
+    });
+
 
     describe("static", () => {
 
