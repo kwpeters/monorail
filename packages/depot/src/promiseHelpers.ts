@@ -11,6 +11,7 @@ export type Task<TResolve> = () => Promise<TResolve>;
 /**
  * Runs a sequence of functions in order with each returned value feeding into
  * the parameter of the next.
+ *
  * @param tasks - The functions to execute in sequence.  Each function will
  * receive 1 parameter, the return value of the previous function.  A function
  * should throw an exception if it wishes to terminate the sequence and reject
@@ -63,6 +64,7 @@ export function getTimerPromise<TResolve>(
 
 /**
  * Invokes a task only when a condition is true.
+ *
  * @param condition - The condition that controls whether the task is run
  * @param task - The task that is run when `condition` is truthy
  * @param falseResolveValue - The value the returned promise will resolve with
@@ -154,6 +156,7 @@ const BACKOFF_MULTIPLIER = 20;
 /**
  * Recursive implementation of retryWhile(), allowing for additional
  * implementation specific arguments.
+ *
  * @param theFunc - The operation to perform
  * @param whilePredicate - Predicate that determines whether to retry
  * @param maxNumAttempts - Maximum number of invocations of theFunc
@@ -218,6 +221,7 @@ function retryWhileImpl<TResolve>(
 
 /**
  * A promise version of a while() {} loop
+ *
  * @param predicate - A predicate that will be invoked before each iteration of
  * body.  Iteration will stop when this function returns false.
  * @param body - A promise returning function that will be invoked for each
@@ -251,6 +255,7 @@ export function promiseWhile(predicate: () => boolean, body: Task<void>): Promis
  * Maps an array of Promises to a new same sized array of Promises.  The new
  * array of Promises will settle starting at index 0 and continue through the
  * array sequentially.
+ *
  * @param inputPromises - The array of Promises to transform
  * @returns A new array of Promises that will settle sequentially,
  * starting at index 0.
@@ -274,6 +279,7 @@ export function sequentialSettle<TResolve>(inputPromises: Array<Promise<TResolve
 /**
  * Returns a promise that wraps thePromise, but will be resolved or rejected
  * after the resolution or rejection of waitFor.
+ *
  * @param thePromise - the Promise to be wrapped/delayed
  * @param waitFor - The Promise that must be settled before the returned promise
  * will settle.
@@ -303,7 +309,11 @@ export function delaySettle<TResolve>(
 
 
 /**
- * Maps values in `collection` using an async function.
+ * Maps values in `collection` using an async function.  The async function will
+ * be invoked for each item in the collection concurrently.  The returned
+ * Promise will reject as soon as the first async function rejects.  If none of
+ * the async functions reject, an array containing their results is returned.
+ *
  * @param collection - The collection of items to iterate over.
  * @param asyncValueFunc - The async mapping function.
  * @return A promise for an array of the resulting mapped values.
@@ -321,6 +331,7 @@ export async function mapAsync<TInput, TOutput>(
 /**
  * Zips values in `collection` into a tuple with the result of calling the async
  * function.
+ *
  * @param collection - The collection of items.
  * @param asyncValueFunction - The async function that will be called for each
  * item in the collection.
@@ -345,6 +356,7 @@ export async function zipWithAsyncValues<TInput, TOutput>(
 
 /**
  * Filters a collection based on the result of an asynchronous predicate.
+ *
  * @param collection - The collection of items.
  * @param asyncPredicate - The async function that will be called for each item
  * in collection.  Returns a truthy or falsy value indicating whether the
@@ -367,6 +379,7 @@ export async function filterAsync<T>(
 /**
  * Partitions a collection into two collections based on the result of invoking
  * an asynchronous predicate on each item.
+ *
  * @param collection - The collection of items.
  * @param asyncPredicate - The async function that will be called for each item
  * in the collection.  Returns a truthy or falsy value indicating whether the
@@ -392,6 +405,7 @@ export async function partitionAsync<T>(
 
 /**
  * Removes items from a collection based on the result of an asynchronous predicate.
+ *
  * @param collection - The collection of items.
  * @param asyncPredicate - The async function that will be called for each item
  * in collection.  Returns a truthy or falsy value indicating whether the
