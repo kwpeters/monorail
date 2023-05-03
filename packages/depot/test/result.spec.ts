@@ -198,6 +198,13 @@ describe("Result namespace", () => {
 
     describe("allArrayA", () => {
 
+
+        it("when given an empty array as input, returns a successful Result containing an empty array", async () => {
+            const res = Result.allArrayA([] as Array<Result<number, string>>);
+            expect(res).toEqual(new SucceededResult([]));
+        });
+
+
         it("when some Results are failures, returns a failure Result wrapping all errors", () => {
             const res = Result.allArrayA([
                 new SucceededResult(5),
@@ -207,7 +214,6 @@ describe("Result namespace", () => {
             ]);
             expect(res.failed).toBeTrue();
             expect(res.error).toEqual(["error 37", "error 47"]);
-
         });
 
 
@@ -226,6 +232,12 @@ describe("Result namespace", () => {
 
 
     describe("allArrayM()", () => {
+
+        it("when given an empty array as input, returns a successful Result containing an empty array", () => {
+            const results: Array<Result<number, string>> = [];
+            expect(Result.allArrayM(results)).toEqual(new SucceededResult([]));
+        });
+
 
         it("when given successful results, returns an array of their values", () => {
             const results = [

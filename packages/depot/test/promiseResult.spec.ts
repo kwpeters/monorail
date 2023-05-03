@@ -227,6 +227,16 @@ describe("allM()", () => {
 
 describe("allArrayA()", () => {
 
+    it("when input array is empty, returns a successful result with an empty array", async () => {
+
+        const res = await PromiseResult.allArrayA([]);
+        expect(res.succeeded).toBeTrue();
+        if (res.succeeded) {
+            expect(res.value.length).toEqual(0);
+        }
+    });
+
+
     it("when there are failures, returns IIndexedItems referencing each failure", async () => {
         const start = Date.now();
 
@@ -271,6 +281,16 @@ describe("allArrayA()", () => {
 
 
 describe("allArrayM()", () => {
+
+    it("when the input array is empty, returns a successful result with an empty array", async () => {
+        const res = await PromiseResult.allArrayM([]);
+
+        expect(res.succeeded).toBeTrue();
+        if (res.succeeded) {
+            expect(res.value.length).toEqual(0);
+        }
+    });
+
 
     it("resolves as soon as possible with the first failure", async () => {
 

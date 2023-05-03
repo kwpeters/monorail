@@ -313,6 +313,11 @@ export namespace PromiseResult {
     export function allArrayM<TSuccess, TError>(
         promises: Array<Promise<Result<TSuccess, TError>>>
     ): Promise<Result<Array<TSuccess>, IIndexedItem<TError>>> {
+
+        if (promises.length === 0) {
+            return Promise.resolve(new SucceededResult([]));
+        }
+
         return new Promise((resolve, reject) => {
             const numPromises = promises.length;
             let numSuccesses = 0;
