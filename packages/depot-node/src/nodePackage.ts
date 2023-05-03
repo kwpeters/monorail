@@ -1,6 +1,9 @@
 import * as fs from "fs";
 import * as cp from "child_process";
 import * as compressing from "compressing";
+import { Result } from "../../depot/src/result.js";
+import { mapAsync } from "../../depot/src/promiseHelpers.js";
+import { PromiseResult } from "../../depot/src/promiseResult.js";
 import {Directory} from "./directory.js";
 import {File} from "./file.js";
 import {spawn} from "./spawn.js";
@@ -13,13 +16,33 @@ export interface IPackageJson {
     version: string;
     description: string;
     main: string;
-    repository: {type: string, url: string};
+    repository: {type: string, url: string} | undefined;
     devDependencies: {[packageName: string]: string};
     dependencies: {[packageName: string]: string};
+    bin: { [binName: string]: string; };
 }
 
 
 export class NodePackage {
+
+    public static async find(dir: Directory): Promise<Result<Array<NodePackage>, string>> {
+
+        // TODO: Write unit tests for this method.
+
+        const packageJsonFiles = await dir.filter((fsItem) => {
+            return {
+                recurse: true,
+                include: (fsItem instanceof File) && (fsItem.fileName === "package.json")
+            };
+        }) as Array<File>;
+
+        const packagesPromise = mapAsync(
+            packageJsonFiles,
+            (curPkgJson) => NodePackage.fromDirectory(curPkgJson.directory)
+        );
+
+        return PromiseResult.fromPromise(packagesPromise);
+    }
 
     /**
      * Creates a NodePackage representing the package in the specified directory.
@@ -29,6 +52,9 @@ export class NodePackage {
      * package.json file.
      */
     public static fromDirectory(pkgDir: Directory): Promise<NodePackage> {
+
+        // TODO: Refactor this method to return a Promise<Result>>.
+
         // Make sure the directory exists.
         return pkgDir.exists()
         .then((stats: fs.Stats | undefined) => {
@@ -71,9 +97,8 @@ export class NodePackage {
     }
 
 
-    // TODO: Write unit tests for the following method.
-    public get projectName(): string {
-        return gitUrlToProjectName(this.config.repository.url);
+    public get directory(): Directory {
+        return this._pkgDir;
     }
 
 
@@ -84,6 +109,23 @@ export class NodePackage {
         }
 
         return this._config;
+    }
+
+
+    // TODO: Write unit tests for the following method.
+    public get projectName(): string {
+        return this.config?.repository?.url ?
+            gitUrlToProjectName(this.config?.repository.url) :
+            this.config.name;
+    }
+
+
+    public get bin(): ReadonlyMap<string, string> {
+        const bins =  this.config.bin === undefined ?
+            new Map<string, string>() :
+            new Map<string, string>(Object.entries(this.config.bin));
+
+        return bins;
     }
 
 
