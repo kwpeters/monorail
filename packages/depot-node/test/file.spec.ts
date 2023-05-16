@@ -1433,7 +1433,9 @@ describe("File", () => {
                     dirB.ensureExistsSync();
                     const movedSymlink = symlink.moveSync(dirB);
 
-                    // and I can still read the target file via the symlink.
+                    // Then the moved symlink is still a symlink
+                    // TODO: Implement this check
+                    // and it can be used to read the target file.
                     const text = movedSymlink.readSync();
                     expect(text).toEqual("target text");
                 });
@@ -1465,6 +1467,14 @@ describe("File", () => {
                 });
 
 
+
+                // TODO: Create a test where the absolute symlink and its target
+                // are moved together (so the relative path from symlink to
+                // target is preserved).  This should still result in an
+                // inability to read the target file since the symlink was
+                // absolute.
+
+
                 it("when the target is moved the symlink becomes invalid", async () => {
                     const targetFile = new File(tmpDir, "target.txt");
                     targetFile.writeSync("target text");
@@ -1485,6 +1495,7 @@ describe("File", () => {
                         res.value!.readSync();
                     }).toThrow();
                 });
+
 
             });
 
