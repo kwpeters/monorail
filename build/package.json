@@ -1,0 +1,21 @@
+{
+    "name": "monorail-build",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/kwpeters/monorail.git"
+    },
+    "version": "1.0.0",
+    "description": "Build script for Monorail monorepo",
+    "type": "module",
+    "main": "../out/build/index.js",
+    "types": "../out/build/index.d.ts",
+    "scripts": {
+    },
+    "files": [
+        "../out/build"
+    ],
+    "dependencies": {
+    },
+    "devDependencies": {
+    }
+}

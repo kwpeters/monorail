@@ -199,7 +199,7 @@ describe("Result namespace", () => {
     describe("allArrayA", () => {
 
 
-        it("when given an empty array as input, returns a successful Result containing an empty array", async () => {
+        it("when given an empty array as input, returns a successful Result containing an empty array", () => {
             const res = Result.allArrayA([] as Array<Result<number, string>>);
             expect(res).toEqual(new SucceededResult([]));
         });

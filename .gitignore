@@ -11,6 +11,7 @@ yarn-error.log
 # Generated files
 dist/
 out/
+snapshot/
 tmp/
 out-tsc/
 bazel-out/

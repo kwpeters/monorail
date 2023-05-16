@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as cp from "child_process";
 import * as compressing from "compressing";
-import { Result } from "../../depot/src/result.js";
+import { Result, SucceededResult } from "../../depot/src/result.js";
 import { mapAsync } from "../../depot/src/promiseHelpers.js";
 import { PromiseResult } from "../../depot/src/promiseResult.js";
 import {Directory} from "./directory.js";
@@ -9,6 +9,7 @@ import {File} from "./file.js";
 import {spawn} from "./spawn.js";
 import {gitUrlToProjectName} from "./gitHelpers.js";
 import {getOs, OperatingSystem} from "./os.js";
+import { addShebang, createCmdLaunchScript, makeFileExecutable } from "./nodeUtil.js";
 
 
 export interface IPackageJson {
@@ -120,12 +121,89 @@ export class NodePackage {
     }
 
 
+    /**
+     * Gets a map of bin files for this package.  The key is the the bin name
+     * and the value is the path to the file.
+     */
     public get bin(): ReadonlyMap<string, string> {
         const bins =  this.config.bin === undefined ?
             new Map<string, string>() :
             new Map<string, string>(Object.entries(this.config.bin));
 
         return bins;
+    }
+
+
+    /**
+     * Gets a map of bin files for this package.  The key is the bin name
+     * and the value is a File instnace.
+     */
+    public get binFiles(): ReadonlyMap<string, File> {
+        if (this.config?.bin === undefined) {
+            return new Map<string, File>();
+        }
+
+        const entries =
+            Object.entries(this.config.bin)
+            .map(([name, path]) => [name, new File(this._pkgDir, path)] as const);
+        return new Map<string, File>(entries);
+    }
+
+
+    /**
+     * Performs operations to make scripts executable:
+     *     - Prepends a shebang line
+     *     - Sets executable mode bits
+     *     - On Windows, creates a .cmd launcher
+     *
+     * @return A map of all executable bin files, including both the scripts
+     *   themselves as well as any .cmd files that were created (on Windows).
+     *   The keys are a string name, and the values are the File instances.
+     */
+    public async makeBinsExecutable(): Promise<Result<ReadonlyMap<string, File>, string>> {
+
+        // TODO: Write unit tests for this method.
+        const cmdFiles: Array<File> = [];
+
+        const promises = Array.from(this.binFiles.entries()).map(async ([binName, binScript]) => {
+
+            // Prepend a shebang line to the script.
+            const shebangRes = await addShebang(binScript);
+            if (shebangRes.failed) {
+                return shebangRes;
+            }
+
+            // Set the access mode of the script.
+            const modeRes = await makeFileExecutable(binScript);
+            if (modeRes.failed) {
+                return modeRes;
+            }
+
+            // If running on Windows, create a .cmd launch script.
+            const cmdRes = await createCmdLaunchScript(binScript);
+            if (cmdRes.failed) {
+                return cmdRes;
+            }
+
+            // If a .cmd file was created (i.e. if running on Windows), add it
+            // and the file it runs to the list.
+            if (cmdRes.value) {
+                cmdFiles.push(binScript);
+                cmdFiles.push(cmdRes.value);
+            }
+            return undefined;
+        });
+
+        await Promise.all(promises);
+
+        // Create a map that contains all of the bin files above...
+        const binFileMap = new Map<string, File>(this.binFiles.entries());
+        // ... and add any .cmd files that were created.
+        for (const curCmdFile of cmdFiles) {
+            binFileMap.set(curCmdFile.fileName, curCmdFile);
+        }
+
+        return new SucceededResult(binFileMap);
     }
 
 

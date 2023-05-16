@@ -5,7 +5,8 @@
         "tsconfigRootDir": ".",
         "project": [
             "./packages/*/tsconfig.json",
-            "./apps/*/tsconfig.json"
+            "./apps/*/tsconfig.json",
+            "./build/tsconfig.json"
         ]
     },
     "plugins": ["@typescript-eslint"],
@@ -22,7 +23,7 @@
             "node": true
         }
     },
-    "ignorePatterns": ["node_modules/", "dist/", "out/"],
+    "ignorePatterns": ["node_modules/", "dist/", "out/", "snapshot/"],
     "rules": {
         "@typescript-eslint/comma-dangle": [
             "error",

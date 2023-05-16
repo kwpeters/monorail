@@ -3,6 +3,9 @@
     "files": [],
     "references": [
         {
+            "path": "./build"
+        },
+        {
             "path": "./packages/depot"
         },
         {

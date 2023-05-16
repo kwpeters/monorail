@@ -76,34 +76,52 @@ describe("createCmdLaunchScript()", () => {
 
 
     it("will create the associated .cmd file", async () => {
-        const cmdFile = await createCmdLaunchScript(jsScriptFile);
-        expect(cmdFile.existsSync()).toBeDefined();
+        if (getOs() !== OperatingSystem.Windows) {
+            return;
+        }
+
+        const cmdFile = (await createCmdLaunchScript(jsScriptFile)).value;
+        expect(cmdFile).toBeDefined();
+        expect(cmdFile!.existsSync()).toBeDefined();
     });
 
 
     it("will create a .cmd file that contains code to launch the specified js file", async () => {
-        const cmdFile = await createCmdLaunchScript(jsScriptFile);
-        const cmdContents = cmdFile.readSync();
+        if (getOs() !== OperatingSystem.Windows) {
+            return;
+        }
 
+        const cmdFile = (await createCmdLaunchScript(jsScriptFile)).value;
+        expect(cmdFile).toBeDefined();
+        const cmdContents = cmdFile!.readSync();
         expect(_.includes(cmdContents, jsScriptFile.fileName)).toBeTruthy();
     });
 
 
     it("returns a file representing the newly created .cmd file", async () => {
-        const cmdFile = await createCmdLaunchScript(jsScriptFile);
+        if (getOs() !== OperatingSystem.Windows) {
+            return;
+        }
+
+        const cmdFile = (await createCmdLaunchScript(jsScriptFile)).value;
         expect(cmdFile).toBeDefined();
-        expect(cmdFile.directory.toString()).toEqual(jsScriptFile.directory.toString());
-        expect(cmdFile.fileName).toEqual(jsScriptFile.baseName + ".cmd");
+        expect(cmdFile!.directory.toString()).toEqual(jsScriptFile.directory.toString());
+        expect(cmdFile!.fileName).toEqual(jsScriptFile.baseName + ".cmd");
     });
 
 
     it("will overwrite and existing .cmd file", async () => {
+        if (getOs() !== OperatingSystem.Windows) {
+            return;
+        }
+
         const preexistingCmdFile = new File(jsScriptFile.directory, jsScriptFile.baseName + ".cmd");
         const preexistingText = "preexisting";
         preexistingCmdFile.writeSync(preexistingText);
 
-        const newCmdFile = await createCmdLaunchScript(jsScriptFile);
-        const newText = newCmdFile.readSync();
+        const newCmdFile = (await createCmdLaunchScript(jsScriptFile)).value;
+        expect(newCmdFile).toBeDefined();
+        const newText = newCmdFile!.readSync();
         expect(newText).not.toEqual(preexistingText);
     });
 

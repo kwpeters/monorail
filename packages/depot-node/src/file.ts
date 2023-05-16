@@ -242,7 +242,7 @@ export class File {
 
     /**
      * Deletes this file (or symlink).  If this file represents a symlink, the
-     * symlink is deleted not the file it targets.
+     * symlink is deleted, not the file it targets.
      *
      * @returns A Promise that resolves when this file has been deleted (or it
      * doesn't exist).
@@ -790,7 +790,7 @@ export class File {
      * @returns When successful, a result containing the symlink file itself.
      *   When an error occurs, a descriptive error message.
      */
-    public async createSymlink(
+    public createSymlink(
         symlink: File,
         pathType: "absolute" | "relative"
     ): Promise<Result<File, string>> {
