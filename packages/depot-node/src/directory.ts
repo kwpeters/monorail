@@ -372,34 +372,7 @@ export class Directory {
                 return;
             }
             else {
-                // First, delete the contents of the specified directory.
-                return fsp.readdir(this._dirPath)
-                .then((items: Array<string>) => {
-                    const absPaths = items.map((curItem) => {
-                        return path.join(this._dirPath, curItem);
-                    });
-
-                    const deletePromises = absPaths.map((curAbsPath: string) => {
-                        // Use lstat() to get the stats on curFsItem because calling stat()
-                        // on a symlink with throw if the target of the symlink does not
-                        // exist.  We don't care about the target.  We only care about the
-                        // symlink.
-                        if (fs.lstatSync(curAbsPath).isDirectory()) {
-                            const subdir = new Directory(curAbsPath);
-                            return subdir.delete();
-                        }
-                        else {
-                            return fsp.unlink(curAbsPath);
-                        }
-                    });
-
-                    return Promise.all(deletePromises);
-                })
-                .then(() => {
-                    // Now that all of the items in the directory have been deleted, delete
-                    // the directory itself.
-                    return fsp.rmdir(this._dirPath);
-                });
+                return fsp.rm(this._dirPath, {recursive: true, force: true});
             }
         });
     }
@@ -414,31 +387,7 @@ export class Directory {
             return;
         }
 
-        // First, delete the contents of the specified directory.
-        let fsItems: Array<string> = fs.readdirSync(this._dirPath);
-        fsItems = fsItems.map((curFsItem) => {
-            return path.join(this._dirPath, curFsItem);
-        });
-
-        fsItems.forEach((curFsItem) => {
-
-            // Use lstat() to get the stats on curFsItem because calling stat()
-            // on a symlink with throw if the target of the symlink does not
-            // exist.  We don't care about the target.  We only care about the
-            // symlink.
-            const stats = fs.lstatSync(curFsItem);
-            if (stats.isDirectory()) {
-                const subdir = new Directory(curFsItem);
-                subdir.deleteSync();
-            }
-            else {
-                fs.unlinkSync(curFsItem);
-            }
-        });
-
-        // Now that all of the items in the directory have been deleted, delete the
-        // directory itself.
-        fs.rmdirSync(this._dirPath);
+        fs.rmSync(this._dirPath, {recursive: true, force: true});
     }
 
 
