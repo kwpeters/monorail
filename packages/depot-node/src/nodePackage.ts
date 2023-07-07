@@ -136,7 +136,7 @@ export class NodePackage {
 
     /**
      * Gets a map of bin files for this package.  The key is the bin name
-     * and the value is a File instnace.
+     * and the value is a File instance.
      */
     public get binFiles(): ReadonlyMap<string, File> {
         if (this.config?.bin === undefined) {
