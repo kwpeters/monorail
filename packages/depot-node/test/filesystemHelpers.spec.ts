@@ -3,6 +3,7 @@ import { getTimerPromise } from "../../depot/src/promiseHelpers.js";
 import { getFilesystemItem, getMostRecentlyModified, resolveDirectoryLocation, resolveFileLocation } from "../src/filesystemHelpers.js";
 import {File} from "../src/file.js";
 import {Directory} from "../src/directory.js";
+import { Symlink } from "../src/symlink.js";
 import { tmpDir } from "./specHelpers.js";
 
 
@@ -13,32 +14,43 @@ describe("getFilesystemItem()", () => {
     });
 
 
-    it("resolves with a File when the path represents a file", async () => {
+    it("succeeds with a File when the path represents a file", async () => {
         const file = new File(tmpDir, "test.txt");
         file.writeSync("hello");
 
-        const fsItem = await getFilesystemItem(path.join("tmp", "test.txt"));
-        expect(fsItem instanceof File).toBeTruthy();
+        const fsItemRes = await getFilesystemItem(path.join("tmp", "test.txt"));
+        expect(fsItemRes.succeeded).toBeTrue();
+        expect(fsItemRes.value instanceof File).toBeTruthy();
     });
 
 
-    it("resolves with a Directory when the path represents a directory", async () => {
+    it("succeeds with a Directory when the path represents a directory", async () => {
         const dir = new Directory(tmpDir, "test");
         dir.ensureExistsSync();
 
-        const fsItem = await getFilesystemItem(path.join("tmp", "test"));
-        expect(fsItem instanceof Directory).toBeTruthy();
+        const fsItemRes = await getFilesystemItem(path.join("tmp", "test"));
+        expect(fsItemRes.succeeded).toBeTrue();
+        expect(fsItemRes.value instanceof Directory).toBeTruthy();
     });
 
 
-    it("rejects when the specified item does not exist", async () => {
-        try {
-            await getFilesystemItem(path.join("tmp", "does-not-exist"));
-            fail("The preceding line should have rejected.");
-        }
-        catch (err) {
-            // Correctly rejected.
-        }
+    it("succeeds with a Symlink when the path represents a symbolic link", async () => {
+        const targetFile = new File(tmpDir, "foo.txt");
+        await targetFile.write("text");
+
+        const symlink = new Symlink(tmpDir, "link");
+        await symlink.create(targetFile, "relative");
+
+        const fsItemRes = await getFilesystemItem(symlink.toString());
+        expect(fsItemRes.succeeded).toBeTrue();
+        expect(fsItemRes.value instanceof Symlink).toBeTrue();
+    });
+
+
+    it("fails when the specified item does not exist", async () => {
+
+        const res = await getFilesystemItem(path.join("tmp", "does-not-exist"));
+        expect(res.failed).toBeTrue();
     });
 
 

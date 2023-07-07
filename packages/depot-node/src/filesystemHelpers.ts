@@ -1,8 +1,11 @@
 import * as fs from "fs";
+import * as fsp from "fs/promises";
 import * as _ from "lodash-es";
 import { FailedResult, Result, SucceededResult } from "../../depot/src/result.js";
+import { errorToString } from "../../depot/src/errorHelpers.js";
 import {Directory} from "./directory.js";
 import {File} from "./file.js";
+import { Symlink  } from "./symlink.js";
 
 
 /**
@@ -11,26 +14,28 @@ import {File} from "./file.js";
  * @return A Promise that resolves with a Directory or File object.  The Promise
  *   is rejected if `path` does not exist.
  */
-export function getFilesystemItem(path: string): Promise<Directory | File> {
-    return new Promise<Directory | File>((resolve, reject) => {
-        fs.stat(path, (err, stats: fs.Stats) => {
-            if (err) {
-                reject(new Error(`"${path}" does not exist.`));
-                return;
-            }
+export async function getFilesystemItem(path: string): Promise<Result<Directory | File | Symlink, string>> {
 
-            if (stats.isDirectory()) {
-                resolve(new Directory(path));
-            }
-            else if (stats.isFile()) {
-                resolve(new File(path));
-            }
-            else {
-                reject(new Error(`"${path}" is not a file or directory.`));
-            }
-        });
+    let stats: fs.Stats;
+    try {
+        stats = await fsp.lstat(path);
+    }
+    catch (err) {
+        return new FailedResult(`Item "${path}" does not exist in filesystem.  ${errorToString(err)}`);
+    }
 
-    });
+    if (stats.isDirectory()) {
+        return new SucceededResult(new Directory(path));
+    }
+    else if (stats.isSymbolicLink()) {
+        return new SucceededResult(new Symlink(path));
+    }
+    else if (stats.isFile()) {
+        return new SucceededResult(new File(path));
+    }
+    else {
+        return new FailedResult(`Filesystem item "${path}" has unknown type.`);
+    }
 }
 
 

@@ -1,10 +1,10 @@
 import * as url from "url";
 import { FailedResult, Result, SucceededResult } from "../packages/depot/src/result.js";
 import { PromiseResult } from "../packages/depot/src/promiseResult.js";
-import { File } from "../packages/depot-node/src/file.js";
 import { Directory } from "../packages/depot-node/src/directory.js";
 import { pipeAsync } from "../packages/depot/src/pipeAsync.js";
 import { NodePackage } from "../packages/depot-node/src/nodePackage.js";
+import { Symlink } from "../packages/depot-node/src/symlink.js";
 import { getRepoDir, getOutDir, getBinDir } from "./monorepoSettings.js";
 
 
@@ -72,11 +72,11 @@ async function main(): Promise<Result<number, string>> {
     await binDirRes.value.empty();
 
     // Create symbolic links for each binary in the .bin folder.
-    const pr: Array<Promise<Result<File, string>>> = [];
+    const pr: Array<Promise<Result<Symlink, string>>> = [];
     for (const curMap of binMapsRes.value) {
         for (const [name, file] of curMap.entries()) {
-            const symlinkFile = new File(binDirRes.value, name);
-            pr.push(file.createSymlink(symlinkFile, "relative"));
+            const symlink = new Symlink(binDirRes.value, name);
+            pr.push(symlink.create(file, "relative"));
         }
     }
 

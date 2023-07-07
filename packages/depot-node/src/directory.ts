@@ -60,6 +60,12 @@ export class Directory {
     // endregion
 
 
+    /**
+     * Constructs a new instance.
+     *
+     * @param pathPart - First required part of the path
+     * @param pathParts - Optional subsequent path parts
+     */
     public constructor(pathPart: PathPart, ...pathParts: Array<PathPart>) {
         const allParts: Array<PathPart> = [pathPart].concat(pathParts);
         this._dirPath = reducePathParts(allParts);

@@ -43,6 +43,12 @@ export class File {
     // endregion
 
 
+    /**
+     * Constructs a new instance.
+     *
+     * @param pathPart - First required part of the path
+     * @param pathParts - Optional subsequent path parts
+     */
     public constructor(pathPart: PathPart, ...pathParts: Array<PathPart>) {
         if (typeof pathPart === "string" && pathPart === "") {
             throw new Error("File instance created with illegal first pathPart.");
@@ -139,7 +145,7 @@ export class File {
      * Checks to see if this File exists.  If this file is a symbolic link,
      * the targeted file will be stated.
      *
-     * @return A Promise that is always resolved.  It is resolved with a truthy
+     * @return A Promise that always resolves.  It is resolved with a truthy
      * fs.Stats object if it exists.  Otherwise, it is resolved with undefined.
      */
     public exists(): Promise<fs.Stats | undefined> {
@@ -776,44 +782,6 @@ export class File {
         });
     }
 
-
-    /**
-     * Creates a symlink to this file.
-     *
-     * @param symlink - The symlink file itself
-     * @param pathType - How the new symbolic link should refer to this file. If
-     *   "relative", this file and the symlink can be moved together to a new
-     *   location and the symlink will continue to work as long as this file
-     *   (the target) can be reach via the same relative path.  If "absolute",
-     *   the symlink will contain the absolute path to this file (the target)
-     *   and will break if this file is moved.
-     * @returns When successful, a result containing the symlink file itself.
-     *   When an error occurs, a descriptive error message.
-     */
-    public createSymlink(
-        symlink: File,
-        pathType: "absolute" | "relative"
-    ): Promise<Result<File, string>> {
-
-        return new Promise((resolve, reject) => {
-
-            const pathToThisFile =
-                pathType === "relative" ?
-                File.relative(symlink.directory, this).toString() :
-                this.absolute().toString();
-
-            fs.symlink(
-                pathToThisFile,
-                symlink.absolute().toString(),
-                "file",
-                (err: NodeJS.ErrnoException | null) => {
-                    resolve(err ?
-                        new FailedResult(err.message) :
-                        new SucceededResult(symlink));
-                }
-            );
-        });
-    }
 
 }
 
