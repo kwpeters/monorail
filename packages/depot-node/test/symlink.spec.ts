@@ -1,10 +1,10 @@
 import * as url from "url";
 import * as path from "path";
+import { getTimerPromise } from "../../depot/src/promiseHelpers.js";
 import { Symlink } from "../src/symlink.js";
 import { File } from "../src/file.js";
 import { Directory } from "../src/directory.js";
 import { tmpDir } from "./specHelpers.js";
-import { getTimerPromise } from "../../depot/src/promiseHelpers.js";
 
 
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
