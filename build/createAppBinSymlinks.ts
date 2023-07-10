@@ -4,7 +4,7 @@ import { PromiseResult } from "../packages/depot/src/promiseResult.js";
 import { Directory } from "../packages/depot-node/src/directory.js";
 import { pipeAsync } from "../packages/depot/src/pipeAsync.js";
 import { NodePackage } from "../packages/depot-node/src/nodePackage.js";
-import { Symlink } from "../packages/depot-node/src/symlink.js";
+import { getLaunchScriptCode } from "../packages/depot-node/src/nodeUtil.js";
 import { getRepoDir, getOutDir, getBinDir } from "./monorepoSettings.js";
 
 
@@ -62,32 +62,37 @@ async function main(): Promise<Result<number, string>> {
     }
 
     //
-    // Get the .bin directory that will contain symlinks to all binaries.
+    // Get the .bin directory that will contain launch scripts for the binaries.
     //
     const binDirRes = await getBinDir(outDirRes.value);
     if (binDirRes.failed) {
         return binDirRes;
     }
 
+    // Empty the .bin directory.
     await binDirRes.value.empty();
 
-    // Create symbolic links for each binary in the .bin folder.
-    const pr: Array<Promise<Result<Symlink, string>>> = [];
-    for (const curMap of binMapsRes.value) {
-        for (const [name, file] of curMap.entries()) {
-            const symlink = new Symlink(binDirRes.value, name);
-            pr.push(symlink.create(file, "relative"));
-        }
-    }
+    // Create a single array of all .js bin files across all packages.
+    const binFiles =
+        binMapsRes.value
+        .flatMap((curMap) => Array.from(curMap.values()))
+        .filter((curFile) => curFile.extName === ".js");
 
-    const symlinksRes = await PromiseResult.allArrayM(pr);
-    if (symlinksRes.failed) {
-        return new FailedResult(symlinksRes.error.item);
-    }
+    // Create a launcher script for each .js bin file.
+    const launcherPRs =
+        binFiles.map(async (curJsBinFile): Promise<Result<void, string>> => {
+            const launcherRes = getLaunchScriptCode(binDirRes.value, curJsBinFile);
+            if (launcherRes.failed) {
+                return launcherRes;
+            }
 
-    console.log("Symlinks created:");
-    for (const curSymlink of symlinksRes.value) {
-        console.log(curSymlink.toString());
+            const launcherInfo = launcherRes.value;
+            return PromiseResult.fromPromise(launcherInfo.scriptFile.write(launcherInfo.scriptCode));
+        });
+
+    const overallLauncherRes = await PromiseResult.allArrayM(launcherPRs);
+    if (overallLauncherRes.failed) {
+        return new FailedResult(overallLauncherRes.error.item);
     }
 
     return new SucceededResult(0);

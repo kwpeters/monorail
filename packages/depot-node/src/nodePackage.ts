@@ -9,7 +9,7 @@ import {File} from "./file.js";
 import {spawn} from "./spawn.js";
 import {gitUrlToProjectName} from "./gitHelpers.js";
 import {getOs, OperatingSystem} from "./os.js";
-import { addShebang, createCmdLaunchScript, makeFileExecutable } from "./nodeUtil.js";
+import { addShebang, makeFileExecutable } from "./nodeUtil.js";
 
 
 export interface IPackageJson {
@@ -154,56 +154,35 @@ export class NodePackage {
      * Performs operations to make scripts executable:
      *     - Prepends a shebang line
      *     - Sets executable mode bits
-     *     - On Windows, creates a .cmd launcher
      *
-     * @return A map of all executable bin files, including both the scripts
-     *   themselves as well as any .cmd files that were created (on Windows).
-     *   The keys are a string name, and the values are the File instances.
+     * @return A map of all files that were made executable.  The keys are a
+     * string name, and the values are the File instances.
      */
     public async makeBinsExecutable(): Promise<Result<ReadonlyMap<string, File>, string>> {
 
         // TODO: Write unit tests for this method.
-        const cmdFiles: Array<File> = [];
+        await mapAsync(
+            Array.from(this.binFiles.entries()),
+            async ([binName, binScript]) => {
+                // Prepend a shebang line to the script.
+                const shebangRes = await addShebang(binScript);
+                if (shebangRes.failed) {
+                    return shebangRes;
+                }
 
-        const promises = Array.from(this.binFiles.entries()).map(async ([binName, binScript]) => {
+                // Set the access mode of the script.
+                const modeRes = await makeFileExecutable(binScript);
+                if (modeRes.failed) {
+                    return modeRes;
+                }
 
-            // Prepend a shebang line to the script.
-            const shebangRes = await addShebang(binScript);
-            if (shebangRes.failed) {
-                return shebangRes;
+                return undefined;
             }
+        );
 
-            // Set the access mode of the script.
-            const modeRes = await makeFileExecutable(binScript);
-            if (modeRes.failed) {
-                return modeRes;
-            }
-
-            // If running on Windows, create a .cmd launch script.
-            const cmdRes = await createCmdLaunchScript(binScript);
-            if (cmdRes.failed) {
-                return cmdRes;
-            }
-
-            // If a .cmd file was created (i.e. if running on Windows), add it
-            // and the file it runs to the list.
-            if (cmdRes.value) {
-                cmdFiles.push(binScript);
-                cmdFiles.push(cmdRes.value);
-            }
-            return undefined;
-        });
-
-        await Promise.all(promises);
-
-        // Create a map that contains all of the bin files above...
-        const binFileMap = new Map<string, File>(this.binFiles.entries());
-        // ... and add any .cmd files that were created.
-        for (const curCmdFile of cmdFiles) {
-            binFileMap.set(curCmdFile.fileName, curCmdFile);
-        }
-
-        return new SucceededResult(binFileMap);
+        // Return to the caller a map of all the bin files that were made
+        // executable.
+        return new SucceededResult(this.binFiles);
     }
 
 

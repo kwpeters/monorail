@@ -16,6 +16,7 @@ const NODEJS_SHEBANG = "#!/usr/bin/env node";
 /**
  * Makes the specified script file executable by prepending a shebang line and
  * setting file permissions.
+ *
  * @param file - The file to make executable
  * @return A promise that resolves with the file that was made executable
  */
@@ -112,6 +113,7 @@ export async function makeFileExecutable(file: File): Promise<Result<File, strin
 
 /**
  * Makes all .js files in the specified directory executable.
+ *
  * @param dir - The directory containing the .js files
  * @param recursive - Whether to search `dir` recursively for .js files
  * @return A promise that resolves with an array of files that were made
@@ -133,6 +135,7 @@ export function makeAllJsScriptsExecutable(dir: Directory, recursive = false): P
  * Converts the specified `node_modules/.bin/` script file name to the one
  * that should be executed on the current OS.  On Windows, this means the file
  * with the `.cmd` extension.
+ *
  * @param nodeBinFile - The node binary symbolic link file that exists in
  * `node_modules/.bin/`.
  * @return The node script file that should be executed for the current OS.
@@ -150,8 +153,9 @@ export function nodeBinForOs(nodeBinFile: File | string): File {
 
 
 /**
- * Creates a Windows .cmd file that will launch the specified .js file using
- * Node.
+ * DEPRECATED.  See getLaunchScriptCode().  Creates a Windows .cmd file that
+ * will launch the specified .js file using Node.
+ *
  * @param jsFile - The JavaScript file to be launched by node.exe
  * @return A File object representing the created .cmd file.  If not running on
  *   Windows, a successful result containing undefined is returned.
@@ -190,4 +194,55 @@ function getCmdLauncherCode(jsFile: File): string {
                     `)` + EOL;
 
     return cmdCode;
+}
+
+
+interface ILaunchScript {
+    scriptFile: File;
+    scriptCode: string;
+}
+
+/**
+ * Generates script code that will launch the specified target .js file.
+ *
+ * @param launchScriptDir - Where this launch script will eventually reside
+ * within the filesystem
+ * @param targetJsFile - The .js file that will be run by this script
+ * @return The platform
+ */
+export function getLaunchScriptCode(
+    launchScriptDir: Directory,
+    targetJsFile: File
+): Result<ILaunchScript, string> {
+
+    // Currently, only Windows is supported.  Will need to generate a bash
+    // script on other operating systems, but I'm not going to worry about it
+    // right now.
+    if (getOs() !== OperatingSystem.Windows) {
+        return new FailedResult(`getLaunchScriptCode() is currently only supported on Windows.`);
+    }
+
+    // I could test to make sure the target file exists, but that seems like
+    // an unnecessary restriction.  I don't need it to exist in order to do what
+    // this function requires.
+
+    // Get the relative path from the launch script to the target .js file.
+    // Within the script code (below), this relative path will be appended to
+    // the launch script's path (%~dp0 (drive and path of argument 0)).
+    const targetRelPath = File.relative(launchScriptDir, targetJsFile);
+
+    const lines = [
+        `@IF EXIST "%~dp0\\node.exe" (`,
+        `    "%~dp0\\node.exe"  "%~dp0\\${targetRelPath.toString()}" %*`,
+        `) ELSE (`,
+        `    @SETLOCAL`,
+        `    @SET PATHEXT=%PATHEXT:;.JS;=;%`,
+        `    node  "%~dp0\\${targetRelPath.toString() }" %*`,
+        `)`
+    ];
+
+    return new SucceededResult({
+        scriptFile: new File(launchScriptDir, `${targetJsFile.baseName}.cmd` ),
+        scriptCode: lines.join(EOL)
+    });
 }
