@@ -50,6 +50,6 @@
 
         "build": "npm-run-all --aggregate-output --serial packages-tsc --parallel lint ut app-build",
 
-        "createSymlinks": "ts-node --esm --project ./build/tsconfig.json ./build/createAppBinSymlinks.ts"
+        "createAppLaunchers": "ts-node --esm --project ./build/tsconfig.json ./build/createAppLaunchers.ts"
     }
 }
