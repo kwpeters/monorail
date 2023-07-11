@@ -26,7 +26,13 @@ function runningThisScript(): boolean {
 
 
 async function main(): Promise<Result<number, string>> {
-    const argv = await yargs(process.argv.slice(2)).argv;
+    const argv =
+        await yargs(process.argv.slice(2))
+        .usage('Usage: evaluate "<expression>"')
+        .demandCommand()
+        .help()
+        .wrap(80)
+        .argv;
 
     if (argv._.length === 0) {
         return new FailedResult("No arguments specified.");
