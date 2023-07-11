@@ -9,10 +9,23 @@
 - All applications contained in the `apps` directory, and npm workspaces are
   used to build them.
 
-  When running `npm install` all npm workspace directories will get symlinked
-  from the root `node_modules` directory so they can be easily imported.
+  When running `npm install` all npm workspace directories will get symbolically
+  linked from the root `node_modules` directory so they can be easily imported.
   Although, it looks like I am not using this, but rather importing using a
   relative path into the packages folder.  Not sure why I chose that.
+
+## Using npm Workspaces
+
+For an overview of how to use npm workspaces, refer to:
+<https://docs.npmjs.com/cli/v7/using-npm/workspaces>
+
+
+In general, you just need to add `-w <path_to_workspace` onto the commands that
+you're probably already used to.  For example:
+
+```powershell
+npm install abbrev -w a
+```
 
 ## Building
 
@@ -20,10 +33,20 @@
 rmrf .\out\ && hr && rmrf .\snapshot && hr && npm run build && npm run createAppLaunchers
 ```
 
+## Apps
+
+### Running an App
+
+```powershell
+.\node_modules\.bin\ts-node --esm .\apps\evaluate\src\evaluate.ts "1/2 + 3/4"
+```
+
 ## Where I Left Off/Todo
 
 - Do I want to get rid of root package.json script complexities in favor of
   build scripts?
+
+- Rename `packages-tsc:post` to something better, because apps use this too.
 
 - Create a script that will copy the `out` directory to the `snapshot` directory.
 
