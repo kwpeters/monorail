@@ -13,6 +13,9 @@
         },
         {
             "path": "./apps/sample"
+        },
+        {
+            "path": "./apps/evaluate"
         }
     ]
 }
