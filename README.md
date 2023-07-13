@@ -19,7 +19,6 @@
 For an overview of how to use npm workspaces, refer to:
 <https://docs.npmjs.com/cli/v7/using-npm/workspaces>
 
-
 In general, you just need to add `-w <path_to_workspace` onto the commands that
 you're probably already used to.  For example:
 
@@ -30,7 +29,7 @@ npm install abbrev -w a
 ## Building
 
 ```powershell
-rmrf .\out\ && hr && rmrf .\snapshot && hr && npm run build && npm run createAppLaunchers
+npm run build
 ```
 
 ## Apps
