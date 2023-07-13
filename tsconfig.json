@@ -12,7 +12,7 @@
             "path": "./packages/depot-node"
         },
         {
-            "path": "./apps/sample"
+            "path": "./apps/sampleAppXyzzy"
         },
         {
             "path": "./apps/evaluate"

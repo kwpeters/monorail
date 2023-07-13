@@ -1,19 +1,19 @@
 {
-    "name": "sample",
+    "name": "sampleAppXyzzy",
     "version": "1.0.0",
     "type": "module",
     "description": "A sample client that uses packages",
-    "main": "../../out/apps/sample/src/index.js",
-    "types": "../../out/apps/sample/src/index.d.ts",
+    "main": "../../out/apps/sampleAppXyzzy/src/index.js",
+    "types": "../../out/apps/sampleAppXyzzy/src/index.d.ts",
     "bin": {
-        "sample": "./src/sample.js"
+        "sampleAppXyzzy": "./src/sampleAppXyzzy.js"
     },
     "scripts": {
         "ut": "ts-node --esm --project ./tsconfig.json ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
-        "packages-tsc:post": "cp package.json ../../out/apps/sample"
+        "packages-tsc:post": "cp package.json ../../out/apps/sampleAppXyzzy"
     },
     "files": [
-        "../../out/apps/sample"
+        "../../out/apps/sampleAppXyzzy"
     ],
     "dependencies": {},
     "devDependencies": {
