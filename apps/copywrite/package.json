@@ -1,0 +1,28 @@
+{
+    "name": "copywrite",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "CLI application that copies files in unique ways",
+    "main": "../../out/apps/copywrite/src/copywrite.js",
+    "types": "../../out/apps/copywrite/src/copywrite.d.ts",
+    "bin": {
+        "copywrite": "./src/copywrite.js"
+    },
+    "scripts": {
+        "ut": "ts-node --esm --project ./tsconfig.json ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
+        "packages-tsc:post": "cp package.json ../../out/apps/copywrite"
+    },
+    "files": [
+        "../../out/apps/copywrite"
+    ],
+    "dependencies": {
+        "text-table": "^0.2.0",
+        "yargs": "^17.7.2"
+    },
+    "devDependencies": {
+        "@types/jasmine": "^4.3.1",
+        "@types/text-table": "^0.2.2",
+        "@types/yargs": "^17.0.24",
+        "jasmine": "^4.6.0"
+    }
+}

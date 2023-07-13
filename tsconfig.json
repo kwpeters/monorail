@@ -16,6 +16,9 @@
         },
         {
             "path": "./apps/evaluate"
+        },
+        {
+            "path": "./apps/copywrite"
         }
     ]
 }
