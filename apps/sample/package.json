@@ -13,7 +13,7 @@
         "packages-tsc:post": "cp package.json ../../out/apps/sample"
     },
     "files": [
-        "dist"
+        "../../out/apps/sample"
     ],
     "dependencies": {},
     "devDependencies": {
