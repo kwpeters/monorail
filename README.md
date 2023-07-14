@@ -40,7 +40,12 @@ npm run build
 .\node_modules\.bin\ts-node --esm .\apps\evaluate\src\evaluate.ts "1/2 + 3/4"
 ```
 
-## Where I Left Off/Todo
+## TODO/Where I Left Off
+
+- Script that will create the "snapshot" directory.
+
+- Script that will build apps in parallel.  I believe npm workspaces is building
+  them serially.
 
 - Do I want to get rid of root package.json script complexities in favor of
   build scripts?

@@ -46,10 +46,14 @@
 
         "packages-tsc:clean": "tsc --build --clean",
 
-        "app-build": "npm run app-build --workspaces --if-present",
+        "app-build": "npm-run-all --serial app-build:build app-build:post",
+        "app-build:build": "npm run app-build --workspaces --if-present",
+        "app-build:post": "npm run createAppLaunchers",
 
-        "build": "npm-run-all --aggregate-output --serial packages-tsc --parallel lint app-build --serial createAppLaunchers",
+        "createAppLaunchers": "ts-node --esm --project ./build/tsconfig.json ./build/createAppLaunchers.ts",
 
-        "createAppLaunchers": "ts-node --esm --project ./build/tsconfig.json ./build/createAppLaunchers.ts"
+        "build": "npm-run-all --serial packages-tsc app-build",
+
+        "all": "npm-run-all --aggregate-output --parallel build ut lint"
     }
 }

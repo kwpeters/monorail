@@ -3,8 +3,8 @@
     "version": "1.0.0",
     "type": "module",
     "description": "A sample client that uses packages",
-    "main": "../../out/apps/sampleAppXyzzy/src/index.js",
-    "types": "../../out/apps/sampleAppXyzzy/src/index.d.ts",
+    "main": "../../out/apps/sampleAppXyzzy/src/sampleAppXyzzy.js",
+    "types": "../../out/apps/sampleAppXyzzy/src/sampleAppXyzzy.d.ts",
     "bin": {
         "sampleAppXyzzy": "./src/sampleAppXyzzy.js"
     },
