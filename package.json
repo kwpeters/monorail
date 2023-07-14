@@ -48,7 +48,7 @@
 
         "app-build": "npm run app-build --workspaces --if-present",
 
-        "build": "npm-run-all --aggregate-output --serial packages-tsc --parallel lint ut app-build --serial createAppLaunchers",
+        "build": "npm-run-all --aggregate-output --serial packages-tsc --parallel lint app-build --serial createAppLaunchers",
 
         "createAppLaunchers": "ts-node --esm --project ./build/tsconfig.json ./build/createAppLaunchers.ts"
     }

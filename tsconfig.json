@@ -12,13 +12,16 @@
             "path": "./packages/depot-node"
         },
         {
-            "path": "./apps/sampleAppXyzzy"
+            "path": "./apps/capcom"
+        },
+        {
+            "path": "./apps/copywrite"
         },
         {
             "path": "./apps/evaluate"
         },
         {
-            "path": "./apps/copywrite"
+            "path": "./apps/sampleAppXyzzy"
         }
     ]
 }
