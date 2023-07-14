@@ -34,15 +34,40 @@ npm run build
 
 ## Apps
 
-### Running an App
+### Common Operations
+
+Lint this codebase:
+
+```powershell
+npm run lint
+```
+
+Run all unit tests:
+
+```powershell
+npm run ut
+```
+
+Build all packages and apps:
+
+```powershell
+npm run build
+```
+
+To save a snapshot of this repo's built files (so that you can use a known good
+version of the apps contained herein):
+
+```powershell
+npm run createSnapshot
+```
+
+Running an app without building:
 
 ```powershell
 .\node_modules\.bin\ts-node --esm .\apps\evaluate\src\evaluate.ts "1/2 + 3/4"
 ```
 
 ## TODO/Where I Left Off
-
-- Script that will create the "snapshot" directory.
 
 - Script that will build apps in parallel.  I believe npm workspaces is building
   them serially.

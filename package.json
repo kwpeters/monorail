@@ -54,6 +54,8 @@
 
         "build": "npm-run-all --serial packages-tsc app-build",
 
-        "all": "npm-run-all --aggregate-output --parallel build ut lint"
+        "createSnapshot": "ts-node --esm --project ./build/tsconfig.json ./build/createSnapshot.ts",
+
+        "all": "npm-run-all --aggregate-output --parallel build ut lint --serial createSnapshot"
     }
 }
