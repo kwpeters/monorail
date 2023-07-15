@@ -24,6 +24,9 @@
             "path": "./apps/evaluate"
         },
         {
+            "path": "./apps/findgrep"
+        },
+        {
             "path": "./apps/sampleAppXyzzy"
         }
     ]
