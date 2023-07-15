@@ -30,6 +30,9 @@
             "path": "./apps/hr"
         },
         {
+            "path": "./apps/ideaDiff"
+        },
+        {
             "path": "./apps/sampleAppXyzzy"
         }
     ]
