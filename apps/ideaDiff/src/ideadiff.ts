@@ -88,15 +88,14 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
             argToDirOrFile(argv._[1] as string | undefined)
         ]
     ))
-    .pipe((res) => Result.augment(
+    .pipe((res) => Result.bind(
         ([left, right]) => {
             return left.constructor.name === right.constructor.name ?
-                    new SucceededResult({}) :
+                    new SucceededResult({left, right}) :
                     new FailedResult("Both arguments must be either a directory or a file.");
         },
         res
     ))
-    .pipe((res) => Result.mapSuccess(([left, right]) => ({left, right}), res))
     .end();
 }
 
