@@ -1,0 +1,26 @@
+{
+    "name": "mergedBranches",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "A sample client that uses packages",
+    "main": "../../out/apps/mergedBranches/src/mergedBranches.js",
+    "types": "../../out/apps/mergedBranches/src/mergedBranches.d.ts",
+    "bin": {
+        "mergedBranches": "./src/mergedBranches.js"
+    },
+    "scripts": {
+        "ut": "ts-node --esm --project ./tsconfig.json ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
+        "packages-tsc:post": "cp package.json ../../out/apps/mergedBranches"
+    },
+    "files": [
+        "../../out/apps/mergedBranches"
+    ],
+    "dependencies": {
+        "yargs": "^17.7.2"
+    },
+    "devDependencies": {
+        "@types/jasmine": "^4.3.1",
+        "@types/yargs": "^17.0.24",
+        "jasmine": "^4.6.0"
+    }
+}

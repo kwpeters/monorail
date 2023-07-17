@@ -36,6 +36,9 @@
             "path": "./apps/localWork"
         },
         {
+            "path": "./apps/mergedBranches"
+        },
+        {
             "path": "./apps/sampleAppXyzzy"
         }
     ]
