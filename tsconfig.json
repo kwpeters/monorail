@@ -40,6 +40,9 @@
         },
         {
             "path": "./apps/sampleAppXyzzy"
+        },
+        {
+            "path": "./apps/unique"
         }
     ]
 }
