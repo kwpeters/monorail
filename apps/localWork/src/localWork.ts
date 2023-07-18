@@ -60,7 +60,13 @@ async function main(): Promise<Result<number, string>> {
 
 async function getConfiguration(): Promise<Result<IConfig, string>> {
     const argv = await yargs(process.argv.slice(2))
-    .usage("Searches for local Git work that has not been committed or pushed.")
+    .usage(
+        [
+            "Searches for local Git work that has not been committed or pushed.",
+            "",
+            "localWork"
+        ].join(os.EOL)
+    )
     .help()
     .wrap(80)
     .argv;

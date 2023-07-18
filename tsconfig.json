@@ -43,6 +43,9 @@
         },
         {
             "path": "./apps/unique"
+        },
+        {
+            "path": "./apps/windowsSpotlightImages"
         }
     ]
 }

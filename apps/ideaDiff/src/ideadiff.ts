@@ -1,3 +1,4 @@
+import * as os from "os";
 import * as url from "url";
 import yargs from "yargs/yargs";
 import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
@@ -60,7 +61,13 @@ async function main(): Promise<Result<number, string>> {
 
 async function getConfiguration(): Promise<Result<IConfig, string>> {
     const argv = await yargs(process.argv.slice(2))
-    .usage("Diffs two directories or two files.")
+    .usage(
+        [
+            "Diffs two directories or two files.",
+            "",
+            "ideadiff <file_or_dir_1> <file_or_dir_2>"
+        ].join(os.EOL)
+    )
     .help()
     .wrap(80)
     .argv;

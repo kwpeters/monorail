@@ -1,3 +1,4 @@
+import * as os from "os";
 import * as url from "url";
 import yargs from "yargs/yargs";
 import { Result, SucceededResult } from "../../../packages/depot/src/result.js";
@@ -34,7 +35,18 @@ function runningThisScript(): boolean {
 
 async function main(): Promise<Result<number, string>> {
 
-    const argv = await yargs(process.argv.slice(2)).argv;
+    const argv = await yargs(process.argv.slice(2))
+    .usage(
+        [
+            "Lists the branches that have been merged into the specified target branch.",
+            "Optionally, the merged branches can be deleted.",
+            "",
+            "mergedBranches <target_branch>"
+        ].join(os.EOL)
+    )
+    .help()
+    .wrap(80)
+    .argv;
 
     const destBranch = argv._[0] as string;
     if (!destBranch) {

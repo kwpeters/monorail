@@ -1,0 +1,28 @@
+{
+    "name": "windowsSpotlightImages",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "A sample client that uses packages",
+    "main": "../../out/apps/windowsSpotlightImages/src/windowsSpotlightImages.js",
+    "types": "../../out/apps/windowsSpotlightImages/src/windowsSpotlightImages.d.ts",
+    "bin": {
+        "windowsSpotlightImages": "./src/windowsSpotlightImages.js"
+    },
+    "scripts": {
+        "ut": "ts-node --esm --project ./tsconfig.json ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
+        "packages-tsc:post": "cp package.json ../../out/apps/windowsSpotlightImages"
+    },
+    "files": [
+        "../../out/apps/windowsSpotlightImages"
+    ],
+    "dependencies": {
+        "lodash-es": "^4.17.21",
+        "yargs": "^17.7.2"
+    },
+    "devDependencies": {
+        "@types/jasmine": "^4.3.1",
+        "lodash-es": "^4.17.21",
+        "@types/yargs": "^17.0.24",
+        "jasmine": "^4.6.0"
+    }
+}

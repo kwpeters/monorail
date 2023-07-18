@@ -32,7 +32,6 @@ function runningThisScript(): boolean {
 async function main(): Promise<Result<number, string>> {
 
     await yargs(process.argv.slice(2))
-    // .usage("Usage: copywrite <command>")
     .command(commandUpdate)
     .command(commandFull)
     .command(commandDiff)

@@ -1,3 +1,4 @@
+import * as os from "os";
 import * as url from "url";
 import yargs from "yargs/yargs";
 import { evaluate } from "../../../packages/depot/src/expression.js";
@@ -28,7 +29,13 @@ function runningThisScript(): boolean {
 async function main(): Promise<Result<number, string>> {
     const argv =
         await yargs(process.argv.slice(2))
-        .usage('Usage: evaluate "<expression>"')
+        .usage(
+            [
+                "Evaluates the specified mathematical expression.  Supports fractions.",
+                "",
+                'evaluate "<expression>"'
+            ].join(os.EOL)
+        )
         .demandCommand()
         .help()
         .wrap(80)
