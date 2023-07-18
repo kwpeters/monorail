@@ -14,7 +14,7 @@ beforeAll(() => {
 describe("jasmine", () => {
 
     it("version will be printed while running the unit tests", () => {
-        expect(getJasmineVersion()).toBe("3.10.1");
+        expect(getJasmineVersion()).toBe("4.6.0");
     });
 
 });

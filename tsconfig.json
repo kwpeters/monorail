@@ -54,6 +54,9 @@
             "path": "./apps/unique"
         },
         {
+            "path": "./apps/watch"
+        },
+        {
             "path": "./apps/windowsSpotlightImages"
         },
         {
