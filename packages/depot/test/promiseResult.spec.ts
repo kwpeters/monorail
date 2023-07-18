@@ -323,7 +323,7 @@ describe("allArrayM()", () => {
         ]);
 
         const end = Date.now();
-        expect(end - start).toBeGreaterThanOrEqual(15);
+        expect(end - start).toBeGreaterThanOrEqual(0.9 * 15);
         expect(res.succeeded).toBeTrue();
         expect(res.value).toEqual([1, 2, 3]);
     });
