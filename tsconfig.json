@@ -45,6 +45,9 @@
             "path": "./apps/mergedBranches"
         },
         {
+            "path": "./apps/randomFile"
+        },
+        {
             "path": "./apps/sampleAppXyzzy"
         },
         {
