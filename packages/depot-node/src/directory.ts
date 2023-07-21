@@ -785,23 +785,30 @@ export class Directory {
      * @param cb - A callback function that will be called for each contained
      *   file and subdirectory.  When invoked for a Directory, this callback
      *   should specify whether to recurse into the directory.
+     * @param includeRootFiles - Whether to include the file in this root
+     *   directory
      * @returns A Promise that is resolved with all of the items for which _cb_
      *   returned a truthy _include_ property.
      */
-    public async filter(cb: FilterCallback): Promise<Array<File | Directory>> {
+    public async filter(
+        cb: FilterCallback,
+        includeRootFiles: boolean
+    ): Promise<Array<File | Directory>> {
         let selected: Array<File | Directory> = [];
         const thisDirectoryContents = await this.contents(false);
 
-        // Process the files in this directory.
-        await mapAsync(
-            thisDirectoryContents.files,
-            async (curFile) => {
-                const res = await Promise.resolve(cb(curFile));
-                if (res.include) {
-                    selected.push(curFile);
+        if (includeRootFiles) {
+            // Process the files in this directory.
+            await mapAsync(
+                thisDirectoryContents.files,
+                async (curFile) => {
+                    const res = await Promise.resolve(cb(curFile));
+                    if (res.include) {
+                        selected.push(curFile);
+                    }
                 }
-            }
-        );
+            );
+        }
 
         await mapAsync(
             thisDirectoryContents.subdirs,
@@ -811,7 +818,7 @@ export class Directory {
                     selected.push(curSubdir);
                 }
                 if (res.recurse) {
-                    const subdirFsItems = await curSubdir.filter(cb);
+                    const subdirFsItems = await curSubdir.filter(cb, true);
                     selected = selected.concat(subdirFsItems);
                 }
             }

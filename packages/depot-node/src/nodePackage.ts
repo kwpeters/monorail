@@ -26,7 +26,18 @@ export interface IPackageJson {
 
 export class NodePackage {
 
-    public static async find(dir: Directory): Promise<Result<Array<NodePackage>, string>> {
+    /**
+     *
+     *
+     * @param dir - The directory to search for Node packages
+     * @param includeRootDir - Whether to include a Node package contained in
+     *   the root directory _dir_.
+     * @return Description
+     */
+    public static async find(
+        dir: Directory,
+        includeRootDir: boolean
+    ): Promise<Result<Array<NodePackage>, string>> {
 
         // TODO: Write unit tests for this method.
 
@@ -35,7 +46,7 @@ export class NodePackage {
                 recurse: true,
                 include: (fsItem instanceof File) && (fsItem.fileName === "package.json")
             };
-        }) as Array<File>;
+        }, includeRootDir) as Array<File>;
 
         const packagesPromise = mapAsync(
             packageJsonFiles,

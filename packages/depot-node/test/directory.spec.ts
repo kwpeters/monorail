@@ -1482,13 +1482,23 @@ describe("Directory", () => {
             });
 
 
-            it("invokes the callback for every file and directory", async () => {
+            it("invokes the callback for every file and directory when told to include root", async () => {
                 function filterFn(fsItem: File | Directory): IFilterResult {
                     return { include: true, recurse: true };
                 }
 
-                const fsItems = await tmpDir.filter(filterFn);
+                const fsItems = await tmpDir.filter(filterFn, true);
                 expect(fsItems.length).toEqual(12);
+            });
+
+
+            it("does not invoke callback for root directory files when told to do so", async () => {
+                function filterFn(fsItem: File | Directory): IFilterResult {
+                    return { include: true, recurse: true };
+                }
+
+                const fsItems = await tmpDir.filter(filterFn, false);
+                expect(fsItems.length).toEqual(10);
             });
 
 
@@ -1501,7 +1511,7 @@ describe("Directory", () => {
                     return { include: true, recurse: !shouldExclude };
                 }
 
-                const fsItems = await tmpDir.filter(filterFn);
+                const fsItems = await tmpDir.filter(filterFn, true);
                 expect(fsItems.length).toEqual(10);
             });
         });

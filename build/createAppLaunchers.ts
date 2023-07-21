@@ -45,7 +45,7 @@ async function main(): Promise<Result<number, string>> {
     //
     // Find all of the packages in the output directory.
     //
-    const packagesRes = await NodePackage.find(outDirRes.value);
+    const packagesRes = await NodePackage.find(outDirRes.value, false);
 
     if (packagesRes.failed) {
         return packagesRes;
