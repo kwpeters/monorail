@@ -167,7 +167,7 @@ export class NodePackage {
     }
 
 
-    public get scripts(): Result<readonly NodePackageScript[], string> {
+    public getScripts(): Result<readonly NodePackageScript[], string> {
 
         const entries = this.config.scripts === undefined ?
             [] :

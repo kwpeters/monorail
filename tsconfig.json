@@ -48,6 +48,9 @@
             "path": "./apps/movePhotos"
         },
         {
+            "path": "./apps/npmRunParallel"
+        },
+        {
             "path": "./apps/randomFile"
         },
         {

@@ -38,7 +38,7 @@
         "lint:eslint": "eslint . --ext .js --ext .ts",
         "lint": "npm-run-all --aggregate-output --parallel lint:*",
 
-        "ut": "npm run ut --workspaces",
+        "ut": "ts-node --esm --project ./apps/npmRunParallel/tsconfig.json ./apps/npmRunParallel/src/npmRunParallel.ts --searchDir ./packages --searchDir ./apps ut",
 
         "build:x": "tsc --build --verbose",
         "build:post": "npm run tsc:post --workspaces --if-present",

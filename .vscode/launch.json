@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "ideaDiff",
+            "name": "npmRunParallel",
             "type": "node",
             "request": "launch",
             "program": "${workspaceRoot}/node_modules/ts-node/dist/bin.js",
@@ -13,10 +13,13 @@
             "args": [
                 "--esm",
                 "--project",
-                "${workspaceRoot}/apps/ideaDiff/tsconfig.json",
-                "${workspaceRoot}/apps/ideaDiff/src/ideadiff.ts",
-                "apps/evaluate/package.json",
-                "apps/ideaDiff/package.json"
+                "${workspaceRoot}/apps/npmRunParallel/tsconfig.json",
+                "${workspaceRoot}/apps/npmRunParallel/src/npmRunParallel.ts",
+                "--searchDir",
+                ".\\packages",
+                "--searchDir",
+                ".\\apps",
+                "scriptName"
             ],
             "cwd": "${workspaceRoot}",
             "runtimeArgs": [

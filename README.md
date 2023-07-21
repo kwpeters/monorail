@@ -69,8 +69,8 @@ Running an app without building:
 
 ## TODO/Where I Left Off
 
-- Run all unit tests in parallel. By running them with `--workspaces` they are
-  running in series and they take 2:42.
+- Change npmRunParallel so that it prints output from each script as soon as it finishes.
+  This will help reduce waiting when there is a failure.
 
 - Should unit test be their own separate projects (with their own tsconfig.json)?
 

@@ -2,7 +2,7 @@
     "name": "depot-node",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/kwpeters/monorail.git"
+        "url": "git+https://github.com/kwpeters/depot-node.git"
     },
     "version": "1.0.0",
     "description": "A bunch of utilties",
