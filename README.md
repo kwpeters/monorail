@@ -69,13 +69,13 @@ Running an app without building:
 
 ## TODO/Where I Left Off
 
+- Run all unit tests in parallel.
+
 - Script that will build apps in parallel.  I believe npm workspaces is building
   them serially.
 
 - Do I want to get rid of root package.json script complexities in favor of
   build scripts?
-
-- Rename `packages-tsc:post` to something better, because apps use this too.
 
 - Create a script that will copy the `out` directory to the `snapshot` directory.
 

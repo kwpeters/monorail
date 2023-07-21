@@ -11,7 +11,7 @@
     "types": "../../out/packages/depot-node/src/index.d.ts",
     "scripts": {
         "ut": "ts-node --esm --project ./tsconfig.json ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
-        "packages-tsc:post": "cp package.json ../../out/packages/depot-node"
+        "tsc:post": "cp package.json ../../out/packages/depot-node"
     },
     "files": [
         "../../out/packages/depot-node"

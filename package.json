@@ -34,25 +34,16 @@
         "typescript": "^5.0.4"
     },
     "scripts": {
-        "lint:dep-consistency": "check-dependency-version-consistency || exit 0",
+        "lint:dep-consistency": "check-dependency-version-consistency",
         "lint:eslint": "eslint . --ext .js --ext .ts",
         "lint": "npm-run-all --aggregate-output --parallel lint:*",
 
         "ut": "npm run ut --workspaces",
 
-        "packages-tsc": "npm-run-all --serial packages-tsc:x packages-tsc:post",
-        "packages-tsc:x": "tsc --build --verbose",
-        "packages-tsc:post": "npm run packages-tsc:post --workspaces --if-present",
-
-        "packages-tsc:clean": "tsc --build --clean",
-
-        "app-build": "npm-run-all --serial app-build:build app-build:post",
-        "app-build:build": "npm run app-build --workspaces --if-present",
-        "app-build:post": "npm run createAppLaunchers",
-
+        "build:x": "tsc --build --verbose",
+        "build:post": "npm run tsc:post --workspaces --if-present",
         "createAppLaunchers": "ts-node --esm --project ./build/tsconfig.json ./build/createAppLaunchers.ts",
-
-        "build": "npm-run-all --serial packages-tsc app-build",
+        "build": "npm-run-all --serial build:x build:post createAppLaunchers",
 
         "createSnapshot": "ts-node --esm --project ./build/tsconfig.json ./build/createSnapshot.ts",
 

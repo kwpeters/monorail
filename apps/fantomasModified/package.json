@@ -10,7 +10,7 @@
     },
     "scripts": {
         "ut": "ts-node --esm --project ./tsconfig.json ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
-        "packages-tsc:post": "cp package.json ../../out/apps/fantomasModified"
+        "tsc:post": "cp package.json ../../out/apps/fantomasModified"
     },
     "files": [
         "../../out/apps/fantomasModified"
