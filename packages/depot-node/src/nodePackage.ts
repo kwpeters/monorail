@@ -10,6 +10,7 @@ import {spawn} from "./spawn.js";
 import {gitUrlToProjectName} from "./gitHelpers.js";
 import {getOs, OperatingSystem} from "./os.js";
 import { addShebang, makeFileExecutable } from "./nodeUtil.js";
+import { NodePackageScript } from "./nodePackageScript.js";
 
 
 export interface IPackageJson {
@@ -21,13 +22,14 @@ export interface IPackageJson {
     devDependencies: {[packageName: string]: string};
     dependencies: {[packageName: string]: string};
     bin: { [binName: string]: string; };
+    scripts: { [scriptName: string]: string } | undefined;
 }
 
 
 export class NodePackage {
 
     /**
-     *
+     * Finds Node packages within the specified directory.
      *
      * @param dir - The directory to search for Node packages
      * @param includeRootDir - Whether to include a Node package contained in
@@ -58,6 +60,7 @@ export class NodePackage {
 
     /**
      * Creates a NodePackage representing the package in the specified directory.
+     *
      * @param pkgDir - The directory containing the Node.js package
      * @return A promise for the resulting NodePackage.  This promise will be
      * rejected if the specified directory does not exist or does not contain a
@@ -91,7 +94,10 @@ export class NodePackage {
 
     // region Data members
     private readonly _pkgDir: Directory;
+
+    // Package configuration.  Lazily read, so it may initially be undefined.
     private _config: undefined | IPackageJson;
+
     // endregion
 
 
@@ -158,6 +164,17 @@ export class NodePackage {
             Object.entries(this.config.bin)
             .map(([name, path]) => [name, new File(this._pkgDir, path)] as const);
         return new Map<string, File>(entries);
+    }
+
+
+    public get scripts(): Result<readonly NodePackageScript[], string> {
+
+        const entries = this.config.scripts === undefined ?
+            [] :
+            Object.entries(this.config.scripts);
+
+        const results = entries.map(([name, cmdLine]) => NodePackageScript.create(this, name, cmdLine));
+        return Result.allArrayM(results);
     }
 
 
@@ -234,6 +251,7 @@ export class NodePackage {
 
     /**
      * Publishes this Node.js package to the specified directory.
+     *
      * @param publishDir - The directory that will contain the published version
      * of this package
      * @param emptyPublishDir - A flag indicating whether publishDir should be
@@ -301,6 +319,5 @@ export class NodePackage {
             return publishDir;
         });
     }
-
 
 }
