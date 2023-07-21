@@ -69,20 +69,8 @@ Running an app without building:
 
 ## TODO/Where I Left Off
 
-- Run all unit tests in parallel.
-
-- Script that will build apps in parallel.  I believe npm workspaces is building
-  them serially.
-
-- Do I want to get rid of root package.json script complexities in favor of
-  build scripts?
-
-- Create a script that will copy the `out` directory to the `snapshot` directory.
-
-- Pull watcher app into this project as an app.
-
-  - Will need to set the watcher app's package.json "bin" to the app so that
-    a launcher script will be created for it.
+- Run all unit tests in parallel. By running them with `--workspaces` they are
+  running in series and they take 2:42.
 
 - Should unit test be their own separate projects (with their own tsconfig.json)?
 
