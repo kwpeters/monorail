@@ -477,7 +477,10 @@ export namespace Result {
      * @param input - The input sequence
      * @returns  The output array
      */
-    export function choose<TIn, TOut, TError>(fn: (v: TIn,) => Result<TOut, TError>, input: Iterable<TIn>): Array<TOut> {
+    export function choose<TIn, TOut, TError>(
+        fn: (v: TIn,) => Result<TOut, TError>,
+        input: Iterable<TIn>
+    ): Array<TOut> {
         const inputArr = Array.from(input);
         const output =
             inputArr.reduce<Array<TOut>>(
@@ -503,7 +506,10 @@ export namespace Result {
      * @returns The contained value if input is successful, else the default
      * value.
      */
-    export function defaultValue<TSuccess, TError>(defaultValue: TSuccess, input: Result<TSuccess, TError>): TSuccess {
+    export function defaultValue<TSuccess, TError>(
+        defaultValue: TSuccess,
+        input: Result<TSuccess, TError>
+    ): TSuccess {
         return input.succeeded ?
             input.value :
             defaultValue;
@@ -520,7 +526,10 @@ export namespace Result {
      * @returns The contained value if input is successful, else the value
      * returned by _fn_.
      */
-    export function defaultWith<TSuccess, TError>(fn: () => TSuccess, input: Result<TSuccess, TError>): TSuccess {
+    export function defaultWith<TSuccess, TError>(
+        fn: () => TSuccess,
+        input: Result<TSuccess, TError>
+    ): TSuccess {
         return input.succeeded ?
             input.value :
             fn();
@@ -814,7 +823,10 @@ export namespace Result {
      * @returns A successful Result if the input is falsy; a failure Result
      * otherwise.
      */
-    export function requireFalsy<TError, TVal>(trueErrVal: TError, val: TVal): Result<TVal, TError> {
+    export function requireFalsy<TError, TVal>(
+        trueErrVal: TError,
+        val: TVal
+    ): Result<TVal, TError> {
         return val ? new FailedResult(trueErrVal) : new SucceededResult(val);
     }
 
@@ -846,7 +858,10 @@ export namespace Result {
      * @returns A successful Result if the input is truthy; a failure Result
      * otherwise.
      */
-    export function requireTruthy<TError, TVal>(errVal: TError, val: TVal | undefined | null): Result<TVal, TError> {
+    export function requireTruthy<TError, TVal>(
+        errVal: TError,
+        val: TVal | undefined | null
+    ): Result<TVal, TError> {
         return val ? new SucceededResult(val) : new FailedResult(errVal);
     }
 
