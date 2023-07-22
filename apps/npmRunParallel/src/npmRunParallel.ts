@@ -70,7 +70,16 @@ async function main(): Promise<Result<number, string>> {
         }
     );
 
+    //
+    // Print information about packages found that contain the specified script.
+    //
     console.log(`${nodePackagesWithScript.length} of ${allNodePackages.length} packages contain a script named "${configRes.value.scriptName}".`);
+    allNodePackages.forEach((curNodePackage) => {
+        const hasScript =
+            nodePackagesWithScript.some((pkg) => pkg.directory.toString() === curNodePackage.directory.toString());
+        const icon = hasScript ? "✔" : " ";
+        console.log(`${icon}  ${curNodePackage.directory.toString()}`);
+    });
 
     const scripts = nodePackagesWithScript.reduce(
         (acc, pkg) => {
@@ -86,7 +95,14 @@ async function main(): Promise<Result<number, string>> {
         [] as Array<NodePackageScript>
     );
 
+    //
+    // Get the start time.
+    //
+    const startMs = Date.now();
     const res = await PromiseResult.allArrayA(scripts.map((script) => script.run().closePromise));
+    const stopMs = Date.now();
+    const elapsedSeconds = (stopMs - startMs) / 1000;
+
     if (res.succeeded) {
         // Print the output.
         console.log(res.value.join(sep));
@@ -102,6 +118,8 @@ async function main(): Promise<Result<number, string>> {
 
         console.error("❌ One or more failures.");
     }
+
+    console.log(`Ran ${scripts.length} scripts in ${elapsedSeconds} seconds.`);
 
     return new SucceededResult(0);
 }
