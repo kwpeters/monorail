@@ -29,12 +29,15 @@ export interface IPackageJson {
 export class NodePackage {
 
     /**
-     * Finds Node packages within the specified directory.
+     * Finds Node packages within the specified directory.  Note: all
+     * _node_modules_ folders will be ignored.
      *
      * @param dir - The directory to search for Node packages
      * @param includeRootDir - Whether to include a Node package contained in
      *   the root directory _dir_.
-     * @return Description
+     * @return A Promise that always resolves with a Result.  If successful, the
+     *   Result contains an array of the found Node packages.  Otherwise, the
+     *   Result contains an error message.
      */
     public static async find(
         dir: Directory,
@@ -45,7 +48,7 @@ export class NodePackage {
 
         const packageJsonFiles = await dir.filter((fsItem) => {
             return {
-                recurse: true,
+                recurse: (fsItem instanceof Directory) && (fsItem.dirName !== "node_modules"),
                 include: (fsItem instanceof File) && (fsItem.fileName === "package.json")
             };
         }, includeRootDir) as Array<File>;
