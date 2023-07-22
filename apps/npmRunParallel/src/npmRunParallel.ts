@@ -12,8 +12,7 @@ import { hr } from "../../../packages/depot-node/src/ttyHelpers.js";
 import { spawnErrorToString } from "../../../packages/depot-node/src/spawn2.js";
 
 
-
-const sep = os.EOL + hr("-") + os.EOL;
+const sep = hr("-");
 
 
 if (runningThisScript()) {
@@ -102,25 +101,40 @@ async function main(): Promise<Result<number, string>> {
     const stopMs = Date.now();
     const elapsedSeconds = (stopMs - startMs) / 1000;
 
-    if (res.succeeded) {
-        // Print the output.
-        console.log(res.value.join(sep));
 
-        console.log("✅ All succeeded.");
+    //
+    // Print the results.
+    //
+    if (res.succeeded) {
+        const allOutput = sep + os.EOL + res.value.join(os.EOL + sep + os.EOL) + os.EOL + sep;
+        console.log(allOutput);
     }
     else {
-
-        // Print the errors.
         const errorStrings = res.error.map((err) => spawnErrorToString(err.item));
-        const allErrorOutput = errorStrings.join(sep);
-        console.error(allErrorOutput);
-
-        console.error("❌ One or more failures.");
+        const allOutput = sep + os.EOL + errorStrings.join(os.EOL + sep + os.EOL) + os.EOL + sep;
+        console.error(allOutput);
     }
 
-    console.log(`Ran ${scripts.length} scripts in ${elapsedSeconds} seconds.`);
+    //
+    // Print a summary.
+    //
+    console.log(`Ran ${scripts.length} npm scripts in ${elapsedSeconds} seconds.`);
 
-    return new SucceededResult(0);
+    if (res.succeeded) {
+        console.log(`✅ All ${scripts.length} "${configRes.value.scriptName}" npm scripts succeeded.`);
+        return new SucceededResult(0);
+    }
+    else {
+        const failedScripts =
+            res.error
+            .map((curErr) => curErr.index)
+            .map((curIndex) => scripts[curIndex]);
+        const msg = [
+            `❌ ${failedScripts.length} of ${scripts.length} "${configRes.value.scriptName}" npm scripts failed:`,
+            ...failedScripts.map((script) => "    " + script.nodePkg.directory.toString())
+        ].join(os.EOL);
+        return new FailedResult(msg);
+    }
 }
 
 
