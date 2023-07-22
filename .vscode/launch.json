@@ -19,7 +19,7 @@
                 ".\\packages",
                 "--searchDir",
                 ".\\apps",
-                "scriptName"
+                "ut"
             ],
             "cwd": "${workspaceRoot}",
             "runtimeArgs": [
