@@ -2,6 +2,7 @@ import * as os from "os";
 import * as stream from "stream";
 import * as cp from "child_process";
 import * as _ from "lodash-es";
+import stripAnsi from "strip-ansi";
 import { assertNever } from "../../depot/src/never.js";
 import { FailedResult, Result, SucceededResult } from "../../depot/src/result.js";
 import { eventToPromise } from "./promiseHelpers.js";
@@ -159,7 +160,7 @@ export function spawn(
                             if (description) {
                                 console.log(`Child process succeeded: ${cmdLineRepresentation}`);
                             }
-                            resolve(new SucceededResult(_.trim(stdoutCollector.collected)));
+                            resolve(new SucceededResult(stripAnsi(_.trim(stdoutCollector.collected))));
                         }
                         else {
                             if (description) {
@@ -168,8 +169,8 @@ export function spawn(
                             resolve(new FailedResult({
                                 type:     "ISpawnExitError",
                                 exitCode: exitCode,
-                                stderr:   _.trim(stderrCollector.collected),
-                                stdout:   _.trim(stdoutCollector.collected)
+                                stderr:   stripAnsi(_.trim(stderrCollector.collected)),
+                                stdout:   stripAnsi(_.trim(stdoutCollector.collected))
                             }));
                         }
                     },
