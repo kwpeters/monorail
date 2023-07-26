@@ -1,6 +1,7 @@
 import * as os from "os";
 import * as url from "url";
 import yargs from "yargs/yargs";
+import { glob } from "glob";
 import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
 
@@ -45,7 +46,11 @@ async function main(): Promise<Result<number, string>> {
 
     const patterns: Array<string> = argv._ as Array<string>;
 
-    console.log(patterns.join(os.EOL));
+    const paths = (await glob(patterns)).sort();
+    paths.forEach((curPath) => {
+        console.log(curPath);
+    });
+    console.log(`\n${paths.length} items found.`);
 
     return new SucceededResult(0);
 }

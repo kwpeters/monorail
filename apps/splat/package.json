@@ -16,6 +16,7 @@
         "../../out/apps/splat"
     ],
     "dependencies": {
+        "glob": "^10.3.3",
         "yargs": "^17.7.2"
     },
     "devDependencies": {
