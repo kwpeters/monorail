@@ -10,7 +10,10 @@
     "main": "../../out/packages/depot-node/src/index.js",
     "types": "../../out/packages/depot-node/src/index.d.ts",
     "scripts": {
-        "ut": "ts-node --esm --project ./tsconfig.json ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
+        "ut:pre": "rimraf ./tmp",
+        "ut:x": "ts-node --esm --project ./tsconfig.json ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
+        "ut": "npm-run-all --serial ut:pre ut:x",
+
         "tsc:post": "cp package.json ../../out/packages/depot-node"
     },
     "files": [
