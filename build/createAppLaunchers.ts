@@ -17,7 +17,7 @@ if (import.meta.url === url.pathToFileURL(process.argv[1]).href) {
         }
         else if (res.value !== 0) {
             console.error(`Script exited with code ${res.value}.`);
-            process.exit(-1);
+            process.exit(res.value);
         }
     })
     .end();

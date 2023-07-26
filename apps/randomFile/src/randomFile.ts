@@ -19,7 +19,7 @@ if (runningThisScript()) {
     }
     else if (res.value !== 0) {
         console.error(`Script exited with code ${res.value}.`);
-        process.exit(-1);
+        process.exit(res.value);
     }
 }
 
