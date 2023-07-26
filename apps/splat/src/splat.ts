@@ -1,5 +1,6 @@
 import * as os from "os";
 import * as url from "url";
+import * as _ from "lodash-es";
 import yargs from "yargs/yargs";
 import { glob } from "glob";
 import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
@@ -44,13 +45,20 @@ async function main(): Promise<Result<number, string>> {
         return new FailedResult("Please specify at least one glob pattern.");
     }
 
-    const patterns: Array<string> = argv._ as Array<string>;
+    // Treat all globs that start with "!" as ignore globs.
+    let [ignoreGlobs, includeGlobs] =
+        _.partition(argv._ as Array<string>, (pattern) => pattern.startsWith("!"));
 
-    const paths = (await glob(patterns)).sort();
-    paths.forEach((curPath) => {
-        console.log(curPath);
-    });
-    console.log(`\n${paths.length} items found.`);
+    // For each ignore glob, remove the initial "!".
+    ignoreGlobs = ignoreGlobs.map((pattern) => pattern.slice(1));
+
+    // Do the search.
+    const paths =
+        (await glob(includeGlobs, {ignore: ignoreGlobs}))
+        .sort();
+    console.log(paths.join(os.EOL));
+    console.log("");
+    console.log(`${paths.length} items found.`);
 
     return new SucceededResult(0);
 }

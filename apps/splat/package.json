@@ -17,10 +17,12 @@
     ],
     "dependencies": {
         "glob": "^10.3.3",
+        "lodash-es": "^4.17.21",
         "yargs": "^17.7.2"
     },
     "devDependencies": {
         "@types/jasmine": "^4.3.1",
+        "@types/lodash-es": "^4.17.7",
         "@types/yargs": "^17.0.24",
         "jasmine": "^4.6.0"
     }
