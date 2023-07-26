@@ -1,0 +1,26 @@
+{
+    "name": "splat",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "A sample client that uses packages",
+    "main": "../../out/apps/splat/src/splat.js",
+    "types": "../../out/apps/splat/src/splat.d.ts",
+    "bin": {
+        "splat": "./src/splat.js"
+    },
+    "scripts": {
+        "ut": "ts-node --esm --project ./tsconfig.json ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
+        "tsc:post": "cp package.json ../../out/apps/splat"
+    },
+    "files": [
+        "../../out/apps/splat"
+    ],
+    "dependencies": {
+        "yargs": "^17.7.2"
+    },
+    "devDependencies": {
+        "@types/jasmine": "^4.3.1",
+        "@types/yargs": "^17.0.24",
+        "jasmine": "^4.6.0"
+    }
+}

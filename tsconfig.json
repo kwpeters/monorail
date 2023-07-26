@@ -57,6 +57,9 @@
             "path": "./apps/sampleAppXyzzy"
         },
         {
+            "path": "./apps/splat"
+        },
+        {
             "path": "./apps/unique"
         },
         {
