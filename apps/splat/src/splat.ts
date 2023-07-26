@@ -1,7 +1,6 @@
 import * as os from "os";
 import * as url from "url";
 import yargs from "yargs/yargs";
-import { evaluate } from "../../../packages/depot/src/expression.js";
 import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
 
@@ -31,31 +30,22 @@ async function main(): Promise<Result<number, string>> {
         await yargs(process.argv.slice(2))
         .usage(
             [
-                "Evaluates the specified mathematical expression.  Supports fractions.",
+                "Finds filesystem items matching glob patterns.",
                 "",
-                'evaluate "<expression>"'
+                "splat <glob_patterns>"
             ].join(os.EOL)
         )
-        .demandCommand()
         .help()
         .wrap(80)
         .argv;
 
     if (argv._.length === 0) {
-        return new FailedResult("No arguments specified.");
-    }
-    else if (typeof argv._[0] !== "string") {
-        return new FailedResult("Too many arguments specified.  You may need to quote your expression.");
+        return new FailedResult("Please specify at least one glob pattern.");
     }
 
-    const expression = argv._[0];
-    const result = evaluate(expression);
-    if (result.failed) {
-        return result;
-    }
+    const patterns: Array<string> = argv._ as Array<string>;
 
-    const answer = `${expression} = ${result.value.stringRepresentations().join(" = ")}`;
-    console.log(answer);
+    console.log(patterns.join(os.EOL));
 
     return new SucceededResult(0);
 }
