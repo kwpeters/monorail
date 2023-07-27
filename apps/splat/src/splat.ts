@@ -37,6 +37,24 @@ async function main(): Promise<Result<number, string>> {
                 "splat <glob_patterns>"
             ].join(os.EOL)
         )
+        .option(
+            "cwd",
+            {
+                demandOption: false,
+                type:         "string",
+                default:      ".",
+                describe:     "Current working directory to match in."
+            }
+        )
+        .option(
+            "info",
+            {
+                demandOption: false,
+                type:         "boolean",
+                default:      false,
+                describe:     "Print additional info about matches found."
+            }
+        )
         .help()
         .wrap(80)
         .argv;
@@ -54,11 +72,17 @@ async function main(): Promise<Result<number, string>> {
 
     // Do the search.
     const paths =
-        (await glob(includeGlobs, {ignore: ignoreGlobs}))
+        (await glob(includeGlobs, {ignore: ignoreGlobs, cwd: argv.cwd}))
         .sort();
+
+    // Print the matches found.
     console.log(paths.join(os.EOL));
-    console.log("");
-    console.log(`${paths.length} items found.`);
+
+    // Print additional info, if requested.
+    if (argv.info) {
+        console.log("");
+        console.log(`${paths.length} items found.`);
+    }
 
     return new SucceededResult(0);
 }
