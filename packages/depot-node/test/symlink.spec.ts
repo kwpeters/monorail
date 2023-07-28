@@ -145,25 +145,23 @@ describe("Symlink", () => {
                 });
 
 
-                // TODO: Implement this.
-                // it("both can be moved and the symlink will still be valid", async () => {
-                //
-                //     const firstDir = new Directory(tmpDir, "firstDir");
-                //     await firstDir.ensureExists();
-                //     const secondDir = new Directory(tmpDir, "secondDir");
-                //     await secondDir.ensureExists();
-                //
-                //     const targetFile = new File(firstDir, "target.txt");
-                //     await targetFile.write("text");
-                //     const symlink = new Symlink(firstDir, "link");
-                //     symlink.create(targetFile, "relative");
-                //
-                //     const dstTargetFile = await targetFile.move(secondDir);
-                //     const dstSymlink = await symlink.move(seondDir);
-                //
-                //     expect(dstSymlink.isRelative()).toBeTrue();
-                //     expect(dstSymlink.followAll()!.succeeded).toBeTrue();
-                // });
+                it("both can be moved and the symlink will still be valid", async () => {
+                    const firstDir = new Directory(tmpDir, "firstDir");
+                    await firstDir.ensureExists();
+                    const secondDir = new Directory(tmpDir, "secondDir");
+                    await secondDir.ensureExists();
+
+                    const targetFile = new File(firstDir, "target.txt");
+                    await targetFile.write("text");
+                    const symlink = new Symlink(firstDir, "link");
+                    symlink.create(targetFile, "relative");
+
+                    const dstTargetFile = await targetFile.copy(secondDir);
+                    const dstSymlinkRes = await symlink.copy(secondDir);
+                    expect(dstSymlinkRes.succeeded).toBeTrue();
+
+                    expect((await dstSymlinkRes.value!.followAll()).succeeded).toBeTrue();
+                });
 
             });
 
@@ -182,23 +180,104 @@ describe("Symlink", () => {
                     expect(linkStringRes.succeeded).toBeTrue();
 
                     const expectedPathTail = path.join("monorail", "packages", "depot-node", "tmp", "foo.txt");
-                    expect(linkStringRes.value?.endsWith(expectedPathTail)).toBeTrue();
+                    expect(linkStringRes.value!.endsWith(expectedPathTail)).toBeTrue();
                 });
 
 
-                // TODO: Create a test where the absolute symlink and its target
-                // are moved together (so the relative path from symlink to
-                // target is preserved).  This should still result in an
-                // inability to read the target file since the symlink was
-                // absolute.
-
-
                 it("when the target is moved the symlink becomes invalid", async () => {
+
+                    const dirA = new Directory(tmpDir, "dirA");
+                    await dirA.ensureExists();
+                    const dirB = new Directory(tmpDir, "dirB");
+                    await dirB.ensureExists();
+
+                    const targetFile = new File(dirA, "foo.txt");
+                    await targetFile.write("foo");
+
+                    const symlink = new Symlink(dirA, "foo-link");
+                    await symlink.create(targetFile, "absolute");
+
+                    // Make another symlink that uses the same absolute path.
+                    // When the target file is moved, this one will also become
+                    // broken, proving that the copy preserves the absolute
+                    // nature of the link.
+                    const copiedLinkRes = await symlink.copy(dirB);
+                    expect(copiedLinkRes.succeeded).toBeTrue();
+                    await targetFile.move(dirB);
+
+                    const firstLinkRes = await symlink.followOnce();
+                    expect(firstLinkRes.failed).toBeTrue();
+                    const secondLinkRes = await copiedLinkRes.value?.followOnce();
+                    expect(secondLinkRes?.failed).toBeTrue();
                 });
 
 
             });
 
+
+        });
+
+
+        describe("copy()", () => {
+
+            it("fails if the source Symlink does not exist", async () => {
+                const symlink = new Symlink(tmpDir, "nonexistent-link");
+                const destLink = new Symlink(tmpDir, "dirA", "nonexistent-link");
+                const res = await symlink.copy(destLink);
+                expect(res.failed).toBeTrue();
+            });
+
+
+            it("creates a Symlink at the specified destination", async () => {
+                const targetFile = new File(tmpDir, "targetFile.txt");
+                await targetFile.write("text");
+
+                const symlink = new Symlink(tmpDir, "linkToTargetFile");
+                const createRes = await symlink.create(targetFile, "relative");
+                expect(createRes.succeeded).toBeTrue();
+
+                const destDir = new Directory(tmpDir, "destDir");
+                const destSymlink = new Symlink(destDir, "destLink");
+                const copyRes = await symlink.copy(destSymlink);
+                expect(copyRes.succeeded).toBeTrue();
+                expect(await destSymlink.exists()).toBeTruthy();
+            });
+
+
+            it("preserves the relative nature of a source Symlink", async () => {
+                const targetFile = new File(tmpDir, "targetFile.txt");
+                await targetFile.write("text");
+
+                const symlink = new Symlink(tmpDir, "linkToTargetFile");
+                const createRes = await symlink.create(targetFile, "relative");
+
+                const destDir = new Directory(tmpDir, "destDir");
+                const destSymlink = new Symlink(destDir, "destLink");
+                const copyRes = await symlink.copy(destSymlink);
+                expect(copyRes.succeeded).toBeTrue();
+
+                const destPathToTargetRes = await destSymlink.pathToTarget();
+                expect(destPathToTargetRes.succeeded).toBeTrue();
+                expect(destPathToTargetRes.value).toEqual("targetFile.txt");
+            });
+
+
+            it("preserves the absolute nature of a source Symlink", async () => {
+                const targetFile = new File(tmpDir, "targetFile.txt");
+                await targetFile.write("text");
+
+                const symlink = new Symlink(tmpDir, "linkToTargetFile");
+                const createRes = await symlink.create(targetFile, "absolute");
+
+                const destDir = new Directory(tmpDir, "destDir");
+                const destSymlink = new Symlink(destDir, "destLink");
+                const copyRes = await symlink.copy(destSymlink);
+                expect(copyRes.succeeded).toBeTrue();
+
+                const destPathToTargetRes = await destSymlink.pathToTarget();
+                expect(destPathToTargetRes.succeeded).toBeTrue();
+                expect(destPathToTargetRes.value).toMatch(/monorail.packages.depot-node.tmp.targetFile.txt/);
+            });
 
         });
 
