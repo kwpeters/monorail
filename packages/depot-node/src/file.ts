@@ -149,7 +149,7 @@ export class File {
      * fs.Stats object if it exists.  Otherwise, it is resolved with undefined.
      */
     public exists(): Promise<fs.Stats | undefined> {
-        return new Promise<fs.Stats | undefined>((resolve: (result: fs.Stats | undefined) => void) => {
+        return new Promise<fs.Stats | undefined>((resolve) => {
             fs.stat(this._filePath, (err: unknown, stats: fs.Stats) => {
                 if (!err && stats.isFile()) {
                     resolve(stats);
