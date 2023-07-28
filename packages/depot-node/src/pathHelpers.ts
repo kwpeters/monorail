@@ -5,20 +5,29 @@ import {Directory} from "./directory.js";
 
 export type PathPart = Directory | string;
 
+const windowsDriveLetterPathRegex = /^.:/;
+
 
 export function reducePathParts(pathParts: Array<PathPart>): string {
-    return _.reduce(pathParts, (acc: string, curPathPart: PathPart): string => {
-        if (curPathPart instanceof Directory) {
-            return curPathPart.toString();
-        }
+    return _.reduce(
+        pathParts,
+        (acc: string, curPathPart: PathPart): string => {
 
-        const curPathPartStr = curPathPart.toString();
+            // If the current part is a Directory instance, reset and use only
+            // that directory.
+            if (curPathPart instanceof Directory) {
+                return curPathPart.toString();
+            }
 
-        // If we are starting with a Windows drive letter, just return it.
-        if (acc.length === 0 && _.endsWith(curPathPartStr, ":")) {
-            return curPathPart;
-        }
+            // If the current part is a string that starts with a Windows drive
+            // letter, reset and use only the current part.
+            const curPathPartStr = curPathPart.toString();
+            if (windowsDriveLetterPathRegex.test(curPathPartStr)) {
+                return curPathPartStr;
+            }
 
-        return path.join(acc, curPathPartStr);
-    }, "");
+            return path.join(acc, curPathPartStr);
+        },
+        ""
+    );
 }

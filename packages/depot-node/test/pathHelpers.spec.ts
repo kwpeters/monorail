@@ -23,4 +23,16 @@ describe("reducePathParts()", () => {
     });
 
 
+    it("discards items preceding a string that starts with a Windows drive letter", () => {
+        const result: string = pathHelpers.reducePathParts(
+            [
+                "foo",
+                "C:\\bar",
+                "baz.txt"
+            ]
+        );
+        expect(result).toEqual(path.join("C:", "bar", "baz.txt"));
+    });
+
+
 });
