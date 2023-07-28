@@ -6,6 +6,7 @@ import { errorToString } from "../../depot/src/errorHelpers.js";
 import {Directory} from "./directory.js";
 import {File} from "./file.js";
 import { Symlink  } from "./symlink.js";
+import { PathPart, reducePathParts } from "./pathHelpers.js";
 
 
 /**
@@ -14,7 +15,17 @@ import { Symlink  } from "./symlink.js";
  * @return A Promise that resolves with a Directory or File object.  The Promise
  *   is rejected if `path` does not exist.
  */
-export async function getFilesystemItem(path: string): Promise<Result<Directory | File | Symlink, string>> {
+export async function getFilesystemItem(
+    pathPart: PathPart,
+    ...pathParts: Array<PathPart>
+): Promise<Result<Directory | File | Symlink, string>> {
+
+    if (typeof pathPart === "string" && pathPart === "") {
+        return new FailedResult(`Empty path specified when getting filesystem item.`);
+    }
+
+    const allParts: Array<PathPart> = [pathPart].concat(pathParts);
+    const path = reducePathParts(allParts);
 
     let stats: fs.Stats;
     try {
