@@ -295,9 +295,11 @@ describe("File", () => {
 
 
         describe("chmod()", () => {
-            const testFile = new File(tmpDir, "test.txt");
+
+            let testFile: File;
 
             beforeEach(() => {
+                testFile = new File(tmpDir, "test.txt");
                 testFile.writeSync("This is a test file");
             });
 
@@ -380,9 +382,11 @@ describe("File", () => {
 
 
         describe("chmodSync", () => {
-            const testFile = new File(tmpDir, "test.txt");
+
+            let testFile: File;
 
             beforeEach(() => {
+                testFile = new File(tmpDir, "test.txt");
                 testFile.writeSync("This is a test file");
             });
 

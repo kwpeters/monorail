@@ -9,11 +9,11 @@ import {tmpDir} from "./specHelpers.js";
 
 describe("makeNodeScriptExecutable()", () => {
 
-    const scriptFile = new File(tmpDir, "hello.js");
+    let scriptFile: File;
     beforeEach(() => {
         tmpDir.emptySync();
 
-        // language=JavaScript
+        scriptFile = new File(tmpDir, "hello.js");
         scriptFile.writeSync("console.log(\"hello\");");
     });
 
@@ -66,11 +66,11 @@ describe("makeNodeScriptExecutable()", () => {
 
 describe("createCmdLaunchScript()", () => {
 
-    const jsScriptFile = new File(tmpDir, "nodeScript.js");
-
+    let jsScriptFile: File;
 
     beforeEach(() => {
         tmpDir.emptySync();
+        jsScriptFile = new File(tmpDir, "nodeScript.js");
         jsScriptFile.writeSync("console.log(\"hello\");");
     });
 

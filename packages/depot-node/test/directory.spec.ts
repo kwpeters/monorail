@@ -1103,19 +1103,27 @@ describe("Directory", () => {
 
         describe("copyFiltered()", () => {
 
-            const srcDir = new Directory(tmpDir, "src");
-
-            const dirA = new Directory(srcDir, "dirA");
-            const fileA = new File(dirA, "a-include.txt");
-
-            const dirB = new Directory(srcDir, "dirB");
-            const fileB = new File(dirB, "b-excluded.txt");
-
-            const dirC = new Directory(srcDir, "dirC");
-
-            const dstDir = new Directory(tmpDir, "dst");
+            let srcDir: Directory;
+            let dirA: Directory;
+            let fileA: File;
+            let dirB: Directory;
+            let fileB: File;
+            let dirC: Directory;
+            let dstDir: Directory;
 
             beforeEach(() => {
+                srcDir = new Directory(tmpDir, "src");
+
+                dirA = new Directory(srcDir, "dirA");
+                fileA = new File(dirA, "a-include.txt");
+
+                dirB = new Directory(srcDir, "dirB");
+                fileB = new File(dirB, "b-excluded.txt");
+
+                dirC = new Directory(srcDir, "dirC");
+
+                dstDir = new Directory(tmpDir, "dst");
+
                 tmpDir.emptySync();
                 srcDir.ensureExistsSync();
                 dirA.ensureExistsSync();
@@ -1165,19 +1173,27 @@ describe("Directory", () => {
 
         describe("copyFilteredWith()", () => {
 
-            const srcDir = new Directory(tmpDir, "src");
-
-            const dirA = new Directory(srcDir, "dirA");
-            const fileA = new File(dirA, "a-include.txt");
-
-            const dirB = new Directory(srcDir, "dirB");
-            const fileB = new File(dirB, "b-excluded.txt");
-
-            const dirC = new Directory(srcDir, "dirC");
-
-            const dstDir = new Directory(tmpDir, "dst");
+            let srcDir: Directory;
+            let dirA: Directory;
+            let fileA: File;
+            let dirB: Directory;
+            let fileB: File;
+            let dirC: Directory;
+            let dstDir: Directory;
 
             beforeEach(() => {
+                srcDir = new Directory(tmpDir, "src");
+
+                dirA = new Directory(srcDir, "dirA");
+                fileA = new File(dirA, "a-include.txt");
+
+                dirB = new Directory(srcDir, "dirB");
+                fileB = new File(dirB, "b-excluded.txt");
+
+                dirC = new Directory(srcDir, "dirC");
+
+                dstDir = new Directory(tmpDir, "dst");
+
                 tmpDir.emptySync();
                 srcDir.ensureExistsSync();
                 dirA.ensureExistsSync();
