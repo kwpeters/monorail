@@ -169,7 +169,7 @@ export class Directory {
 
     public exists(): Promise<fs.Stats | undefined> {
         return new Promise<fs.Stats | undefined>((resolve: (result: fs.Stats | undefined) => void) => {
-            fs.stat(this._dirPath, (err: unknown, stats: fs.Stats) => {
+            fs.lstat(this._dirPath, (err: unknown, stats: fs.Stats) => {
                 if (!err && stats.isDirectory()) {
                     resolve(stats);
                 }
@@ -184,7 +184,7 @@ export class Directory {
 
     public existsSync(): fs.Stats | undefined {
         try {
-            const stats = fs.statSync(this._dirPath);
+            const stats = fs.lstatSync(this._dirPath);
             return stats.isDirectory() ? stats : undefined;
         }
         catch (err) {

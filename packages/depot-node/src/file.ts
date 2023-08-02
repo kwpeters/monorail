@@ -150,7 +150,7 @@ export class File {
      */
     public exists(): Promise<fs.Stats | undefined> {
         return new Promise<fs.Stats | undefined>((resolve) => {
-            fs.stat(this._filePath, (err: unknown, stats: fs.Stats) => {
+            fs.lstat(this._filePath, (err: unknown, stats: fs.Stats) => {
                 if (!err && stats.isFile()) {
                     resolve(stats);
                 }
@@ -165,7 +165,7 @@ export class File {
 
     public existsSync(): fs.Stats | undefined {
         try {
-            const stats = fs.statSync(this._filePath);
+            const stats = fs.lstatSync(this._filePath);
             return stats.isFile() ? stats : undefined;
         }
         catch (err) {

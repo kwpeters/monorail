@@ -7,6 +7,7 @@ import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
 import * as commandUpdate from "./commandUpdate.js";
 import * as commandFull from "./commandFull.js";
 import * as commandDiff from "./commandDiff.js";
+import * as commandTo from "./commandTo.js";
 
 
 if (runningThisScript()) {
@@ -35,6 +36,7 @@ async function main(): Promise<Result<number, string>> {
     .command(commandUpdate)
     .command(commandFull)
     .command(commandDiff)
+    .command(commandTo)
     .help()
     .wrap(80)
     .argv;
