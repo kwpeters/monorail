@@ -15,7 +15,9 @@
         "../out/build"
     ],
     "dependencies": {
+        "yargs": "^17.7.2"
     },
     "devDependencies": {
+        "@types/yargs": "^17.0.24"
     }
 }

@@ -7,7 +7,7 @@
     "types": "../../out/packages/depot/src/index.d.ts",
     "scripts": {
         "ut": "ts-node --esm --project ./tsconfig.json ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
-        "tsc:post": "cp package.json ../../out/packages/depot"
+        "tsc:post": "ts-node --esm --project ./tsconfig.json ../../build/postBuild.ts ."
     },
     "files": [
         "../../out/packages/depot"

@@ -10,7 +10,7 @@
     },
     "scripts": {
         "ut": "ts-node --esm --project ./tsconfig.json ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
-        "tsc:post": "cp package.json ../../out/apps/splat"
+        "tsc:post": "ts-node --esm --project ./tsconfig.json ../../build/postBuild.ts ."
     },
     "files": [
         "../../out/apps/splat"

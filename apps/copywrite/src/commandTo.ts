@@ -7,7 +7,7 @@ import { Directory } from "../../../packages/depot-node/src/directory.js";
 import { FsPath } from "../../../packages/depot-node/src/fsPath.js";
 import { File } from "../../../packages/depot-node/src/file.js";
 import { readableStreamToText } from "../../../packages/depot-node/src/streamHelpers.js";
-import { fsPathToFsItem } from "../../../packages/depot-node/src/fsItem.js";
+import { FsItem, fsPathToFsItem } from "../../../packages/depot-node/src/fsItem.js";
 import { Result, FailedResult, SucceededResult } from "../../../packages/depot/src/result.js";
 import { Symlink } from "../../../packages/depot-node/src/symlink.js";
 
@@ -132,31 +132,42 @@ async function main(
         return linesRes;
     }
 
+    const copyRes = await copyTo(configRes.value, linesRes.value);
+    if (copyRes.failed) {
+        return copyRes;
+    }
+
+    return new SucceededResult(undefined);
+}
+
+export async function copyTo(config: IConfig, pathStrs: Array<string>): Promise<Result<Array<FsItem>, string>> {
+
     // Convert each line of input into an operation that needs to be performed
     // when copying.
     const createOpsRes = await PromiseResult.allArrayM(
-        linesRes.value.map(async (line) => createOp(configRes.value.srcRoot, line, configRes.value.destDir))
+        pathStrs.map(async (line) => createOp(config.srcRoot, line, config.destDir))
     );
     if (createOpsRes.failed) {
         return new FailedResult(createOpsRes.error.item);
     }
 
     // If needed, print a description of the operations.
-    if (configRes.value.verbose || configRes.value.dryRun) {
+    if (config.verbose || config.dryRun) {
         createOpsRes.value.forEach((op) => console.log(op.toString()));
         console.log(`${createOpsRes.value.length} operations.`);
     }
 
     // If --dryRun just print a message stating that operations are being skipped.
     // Otherwise, execute the operations.
-    if (configRes.value.dryRun) {
+    if (config.dryRun) {
         console.log(`Skipping operations due to --dryRun.`);
+        return new SucceededResult([]);
     }
     else {
 
-        if (configRes.value.emptyDestDir) {
-            await configRes.value.destDir.empty();
-            console.log(`Destination directory "${configRes.value.destDir.toString()}" emptied.`);
+        if (config.emptyDestDir) {
+            await config.destDir.empty();
+            console.log(`Destination directory "${config.destDir.toString()}" emptied.`);
         }
 
         const opsRes = await PromiseResult.allArrayM<File | Symlink | Directory, string>(
@@ -165,14 +176,12 @@ async function main(
 
         if (opsRes.succeeded) {
             console.log(`Completed ${opsRes.value.length} operations.`);
+            return opsRes;
         }
         else {
             return new FailedResult(opsRes.error.item);
         }
-
     }
-
-    return new SucceededResult(undefined);
 }
 
 

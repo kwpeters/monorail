@@ -14,7 +14,7 @@
         "ut:x": "ts-node --esm --project ./tsconfig.json ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
         "ut": "npm-run-all --serial ut:pre ut:x",
 
-        "tsc:post": "cp package.json ../../out/packages/depot-node"
+        "tsc:post": "ts-node --esm --project ./tsconfig.json ../../build/postBuild.ts ."
     },
     "files": [
         "../../out/packages/depot-node"
@@ -28,7 +28,8 @@
         "node-fetch": "^3.3.1",
         "semver": "^7.5.0",
         "sprintf-js": "^1.1.2",
-        "strip-ansi": "^7.1.0"
+        "strip-ansi": "^7.1.0",
+        "strip-json-comments": "^5.0.1"
     },
     "devDependencies": {
         "@types/inquirer": "^9.0.3",

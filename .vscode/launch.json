@@ -52,6 +52,28 @@
             ],
         },
         {
+            "name": "postBuild",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/ts-node/dist/bin.js",
+            "stopOnEntry": false,
+            "args": [
+                "--esm",
+                "--project",
+                "${workspaceRoot}/build/tsconfig.json",
+                "${workspaceRoot}/build/postBuild.ts",
+                "."
+            ],
+            "cwd": "${workspaceRoot}/packages/depot-node",
+            "runtimeArgs": [
+                "--nolazy"
+            ],
+            "console": "internalConsole",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+        },
+        {
             "name": "depot - ut",
             "type": "node",
             "request": "launch",
