@@ -15,7 +15,7 @@ import { Symlink } from "../../../packages/depot-node/src/symlink.js";
 
 
 export const command = "to <destDir>";
-export const describe = "Empties the specified destination directory then copies the files listed in stdin into it.";
+export const describe = "Copies files specified in stdin to a destination directory.";
 export function builder(argv: Argv): Argv {
     return argv
     .option(
