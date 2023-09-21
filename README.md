@@ -28,6 +28,18 @@ npm install abbrev -w a
 
 ## Building
 
+depot-node prerequisites:
+
+- depot-node uses a library that can get operating-system special folders.  This
+  necessitates running node-gyp, which in turn requires a compiler.  Therefore,
+  you must install Visual Studio and Python before you can build this project.
+
+- depot-node assumes it can call `openssl.exe`.  Add `C:\Program
+  Files\Git\usr\bin` to your `PATH` environment variable.
+
+- depot-node's unit tests attempt to read the tags applied to this repository.  To retrieve them, do `git fetch --all --tags`.
+
+
 ```powershell
 npm run build
 ```
