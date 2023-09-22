@@ -18,7 +18,7 @@ import * as os from "os";
 import * as _ from "lodash-es";
 import yargs from "yargs/yargs";
 import { mapAsync, filterAsync, getTimerPromise, removeAsync } from "../../../packages/depot/src/promiseHelpers.js";
-import { Result, SucceededResult } from "../../../packages/depot/src/result.js";
+import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
 import { Directory } from "../../../packages/depot-node/src/directory.js";
 import { File } from "../../../packages/depot-node/src/file.js";
@@ -57,7 +57,12 @@ async function main(): Promise<Result<number, string>> {
     .help()
     .wrap(80)
     .argv;
+
     const outDirStr = argv._[0] as string;
+    if (!outDirStr) {
+        return new FailedResult("Destination directory not specified.");
+    }
+
     const outDir = new Directory(outDirStr);
     if (outDir.existsSync()) {
         console.log(`Using existing output directory '${outDir.toString()}'`);
