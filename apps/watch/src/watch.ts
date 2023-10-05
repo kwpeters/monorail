@@ -160,7 +160,7 @@ async function main(): Promise<Result<number, string>> {
     });
 
     let isEnabled = true;
-    let timerId: NodeJS.Timer | undefined | "pending";
+    let timerId: NodeJS.Timeout | undefined | "pending";
     let spawnResult: ISpawnResult | undefined;
     let killInProgress = false;
 
