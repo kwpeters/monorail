@@ -5,6 +5,30 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "runAdmin",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/ts-node/dist/bin.js",
+            "stopOnEntry": false,
+            "args": [
+                "--esm",
+                "--project",
+                "${workspaceRoot}/apps/runAdmin/tsconfig.json",
+                "${workspaceRoot}/apps/runAdmin/src/runAdmin.ts",
+                "--cwd",
+                "c:\\",
+                "\"C:\\Program Files\\WindowsApps\\Microsoft.WindowsTerminal_1.17.11461.0_x64__8wekyb3d8bbwe\\WindowsTerminal.exe\""
+            ],
+            "cwd": "${workspaceRoot}",
+            "runtimeArgs": [
+                "--nolazy"
+            ],
+            "console": "internalConsole",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+        },
+        {
             "name": "npmRunParallel",
             "type": "node",
             "request": "launch",
