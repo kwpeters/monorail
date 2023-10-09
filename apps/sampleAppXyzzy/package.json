@@ -10,7 +10,7 @@
     },
     "scripts": {
         "ut": "ts-node --esm --project ./tsconfig.json ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
-        "tsc:post": "npx ncp package.json ../../out/apps/sampleAppXyzzy"
+        "tsc:post": "cp package.json ../../out/apps/sampleAppXyzzy"
     },
     "files": [
         "../../out/apps/sampleAppXyzzy"
