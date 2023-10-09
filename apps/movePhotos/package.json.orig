@@ -1,0 +1,30 @@
+{
+    "name": "movePhotos",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "A sample client that uses packages",
+    "main": "../../out/apps/movePhotos/src/movePhotos.js",
+    "types": "../../out/apps/movePhotos/src/movePhotos.d.ts",
+    "bin": {
+        "movePhotos": "./src/movePhotos.js"
+    },
+    "scripts": {
+        "ut": "ts-node --esm --project ./tsconfig.json ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
+<<<<<<< HEAD
+        "tsc:post": "ts-node --esm --project ./tsconfig.json ../../build/postBuild.ts ."
+=======
+        "tsc:post": "cp package.json ../../out/apps/movePhotos"
+>>>>>>> main
+    },
+    "files": [
+        "../../out/apps/movePhotos"
+    ],
+    "dependencies": {
+        "lodash-es": "^4.17.21"
+    },
+    "devDependencies": {
+        "@types/jasmine": "^4.3.1",
+        "@types/lodash-es": "^4.17.7",
+        "jasmine": "^4.6.0"
+    }
+}

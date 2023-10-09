@@ -1,0 +1,27 @@
+{
+    "name": "capcom",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "Launches my daily productivity apps",
+    "main": "../../out/apps/capcom/src/capcom.js",
+    "types": "../../out/apps/capcom/src/capcom.d.ts",
+    "bin": {
+        "capcom": "./src/capcom.js"
+    },
+    "scripts": {
+        "ut": "ts-node --esm --project ./tsconfig.json ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
+<<<<<<< HEAD
+        "tsc:post": "ts-node --esm --project ./tsconfig.json ../../build/postBuild.ts ."
+=======
+        "tsc:post": "cp package.json ../../out/apps/capcom"
+>>>>>>> main
+    },
+    "files": [
+        "../../out/apps/capcom"
+    ],
+    "dependencies": {},
+    "devDependencies": {
+        "@types/jasmine": "^4.3.1",
+        "jasmine": "^4.6.0"
+    }
+}
