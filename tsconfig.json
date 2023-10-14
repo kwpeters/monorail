@@ -51,6 +51,9 @@
             "path": "./apps/npmRunParallel"
         },
         {
+            "path": "./apps/polaris"
+        },
+        {
             "path": "./apps/randomFile"
         },
         {
