@@ -7,8 +7,9 @@ import { FailedResult, Result, SucceededResult } from "../../../packages/depot/s
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
 import { Directory } from "../../../packages/depot-node/src/directory.js";
 import { File } from "../../../packages/depot-node/src/file.js";
+import { assertNever } from "../../../packages/depot/src/never.js";
+import { spawn, spawnErrorToString } from "../../../packages/depot-node/src/spawn2.js";
 import { ICommandExecutable, ICommandUrl, isCommandUrlDto, isICommandExecutableDto } from "./commands.js";
-
 
 
 if (runningThisScript()) {
@@ -70,8 +71,12 @@ async function main(): Promise<Result<number, string>> {
     };
 
     const answers = await inquirer.prompt<{ command: Command; }>([questionCommand]);
+    const cmd = answers.command;
 
-    console.log(JSON.stringify(answers, undefined, 4));
+    const executeRes = await executeCommand(cmd);
+    if (executeRes.failed) {
+        return executeRes;
+    }
 
     return new SucceededResult(0);
 }
@@ -153,5 +158,30 @@ function dtoToCommand(commandDto: unknown): Result<Command, string> {
     }
     else {
         return new FailedResult(`Unknown command "${JSON.stringify(commandDto)}".`);
+    }
+}
+
+
+/**
+ * Executes the specified command.
+ *
+ * @param cmd - The Command to be executed.
+ * @return Status of the executed command.
+ */
+async function executeCommand(cmd: Command): Promise<Result<string, string>> {
+
+    if (cmd.type === "executable") {
+        const spawnOut = spawn(cmd.executable, cmd.args);
+        const spawnRes = await spawnOut.closePromise;
+        return Result.mapError(spawnErrorToString, spawnRes);
+    }
+    else if (cmd.type === "url") {
+        const executable = "start";
+        const spawnOut = spawn(executable, [cmd.url], {shell: true});
+        const spawnRes = await spawnOut.closePromise;
+        return Result.mapError(spawnErrorToString, spawnRes);
+    }
+    else {
+        assertNever(cmd);
     }
 }
