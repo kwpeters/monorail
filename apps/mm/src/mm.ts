@@ -9,7 +9,7 @@ import { Directory } from "../../../packages/depot-node/src/directory.js";
 import { File } from "../../../packages/depot-node/src/file.js";
 import { assertNever } from "../../../packages/depot/src/never.js";
 import { spawn, spawnErrorToString } from "../../../packages/depot-node/src/spawn2.js";
-import { ICommandExecutable, ICommandUrl, isCommandUrlDto, isICommandExecutableDto } from "./commands.js";
+import { ICommandExecutable, ICommandFileExplorer, ICommandUrl, isCommandFileExplorer, isCommandUrl, isICommandExecutable } from "./commands.js";
 
 
 if (runningThisScript()) {
@@ -37,7 +37,7 @@ function registerCustomPrompts() {
 }
 
 
-type Command = ICommandExecutable | ICommandUrl;
+type Command = ICommandExecutable | ICommandUrl | ICommandFileExplorer;
 
 
 async function main(): Promise<Result<number, string>> {
@@ -150,10 +150,13 @@ async function getConfiguration(): Promise<Result<Array<Command>, string>> {
  */
 function dtoToCommand(commandDto: unknown): Result<Command, string> {
 
-    if (isICommandExecutableDto(commandDto)) {
+    if (isICommandExecutable(commandDto)) {
         return new SucceededResult(commandDto);
     }
-    else if (isCommandUrlDto(commandDto)) {
+    else if (isCommandUrl(commandDto)) {
+        return new SucceededResult(commandDto);
+    }
+    else if (isCommandFileExplorer(commandDto)) {
         return new SucceededResult(commandDto);
     }
     else {
@@ -180,6 +183,13 @@ async function executeCommand(cmd: Command): Promise<Result<string, string>> {
         const spawnOut = spawn(executable, [cmd.url], {shell: true});
         const spawnRes = await spawnOut.closePromise;
         return Result.mapError(spawnErrorToString, spawnRes);
+    }
+    else if (cmd.type === "file explorer") {
+        const executable = "explorer";
+        const __spawnOut = spawn(executable, [cmd.path], { shell: true, windowsVerbatimArguments: true });
+        // const spawnRes = await spawnOut.closePromise;
+        // Don't trust the exit code.
+        return new SucceededResult("");
     }
     else {
         assertNever(cmd);
