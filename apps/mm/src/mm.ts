@@ -64,10 +64,11 @@ async function main(): Promise<Result<number, string>> {
     };
 
     const questionCommand = {
-        type:    "autocomplete",
-        name:    "command",
-        message: "command:",
-        source:  choiceFilterFn
+        type:     "autocomplete",
+        name:     "command",
+        message:  "command:",
+        source:   choiceFilterFn,
+        pageSize: 25
     };
 
     const answers = await inquirer.prompt<{ command: Command; }>([questionCommand]);
