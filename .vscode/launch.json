@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "polaris",
+            "name": "mm",
             "type": "node",
             "request": "launch",
             "program": "${workspaceRoot}/node_modules/ts-node/dist/bin.js",
@@ -13,8 +13,8 @@
             "args": [
                 "--esm",
                 "--project",
-                "${workspaceRoot}/apps/polaris/tsconfig.json",
-                "${workspaceRoot}/apps/polaris/src/polaris.ts"
+                "${workspaceRoot}/apps/mm/tsconfig.json",
+                "${workspaceRoot}/apps/mm/src/mm.ts"
             ],
             "cwd": "${workspaceRoot}",
             "runtimeArgs": [

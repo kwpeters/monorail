@@ -45,13 +45,13 @@
             "path": "./apps/mergedBranches"
         },
         {
+            "path": "./apps/mm"
+        },
+        {
             "path": "./apps/movePhotos"
         },
         {
             "path": "./apps/npmRunParallel"
-        },
-        {
-            "path": "./apps/polaris"
         },
         {
             "path": "./apps/randomFile"

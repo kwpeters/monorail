@@ -1,15 +1,13 @@
-import * as os from "os";
 import * as url from "url";
 import stripJsonComments from "strip-json-comments";
 import inquirer, {Answers} from "inquirer";
-import inquirerPrompt from 'inquirer-autocomplete-prompt';
+import inquirerPrompt from "inquirer-autocomplete-prompt";
 import fuzzy from "fuzzy";
 import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
-import { pipe } from "../../../packages/depot/src/pipe.js";
 import { Directory } from "../../../packages/depot-node/src/directory.js";
 import { File } from "../../../packages/depot-node/src/file.js";
-import { spawn } from "../../../packages/depot-node/src/spawn2.js";
+// import { spawn } from "../../../packages/depot-node/src/spawn2.js";
 
 
 // TODO: Use Zod to parse the external config file to make sure it is valid.
@@ -158,7 +156,7 @@ async function getConfiguration(): Promise<Result<Array<Command>, string>> {
         return new FailedResult("No CLOUDHOME or HOME environment variable is set.");
     }
 
-    const configFile = new File(new Directory(homeDirStr), "polaris.json");
+    const configFile = new File(new Directory(homeDirStr), "mm.json");
     const configFileStats = await configFile.exists();
     if (!configFileStats) {
         return new FailedResult(`Configuration file "${configFile.toString()}" does not exist.`);

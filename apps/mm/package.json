@@ -1,19 +1,19 @@
 {
-    "name": "polaris",
+    "name": "mm",
     "version": "1.0.0",
     "type": "module",
     "description": "A sample client that uses packages",
-    "main": "../../out/apps/polaris/src/polaris.js",
-    "types": "../../out/apps/polaris/src/polaris.d.ts",
+    "main": "../../out/apps/mm/src/mm.js",
+    "types": "../../out/apps/mm/src/mm.d.ts",
     "bin": {
-        "polaris": "./src/polaris.js"
+        "mm": "./src/mm.js"
     },
     "scripts": {
         "ut": "ts-node --esm --project ./tsconfig.json ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
         "tsc:post": "ts-node --esm --project ./tsconfig.json ../../build/postBuild.ts ."
     },
     "files": [
-        "../../out/apps/polaris"
+        "../../out/apps/mm"
     ],
     "dependencies": {
         "fuzzy": "^0.1.3",
