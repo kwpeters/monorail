@@ -5,6 +5,27 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "polaris",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/ts-node/dist/bin.js",
+            "stopOnEntry": false,
+            "args": [
+                "--esm",
+                "--project",
+                "${workspaceRoot}/apps/polaris/tsconfig.json",
+                "${workspaceRoot}/apps/polaris/src/polaris.ts"
+            ],
+            "cwd": "${workspaceRoot}",
+            "runtimeArgs": [
+                "--nolazy"
+            ],
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+        },
+        {
             "name": "runAdmin",
             "type": "node",
             "request": "launch",
