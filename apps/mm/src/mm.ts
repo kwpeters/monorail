@@ -7,11 +7,7 @@ import { FailedResult, Result, SucceededResult } from "../../../packages/depot/s
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
 import { Directory } from "../../../packages/depot-node/src/directory.js";
 import { File } from "../../../packages/depot-node/src/file.js";
-// import { spawn } from "../../../packages/depot-node/src/spawn2.js";
-
-
-// TODO: Use Zod to parse the external config file to make sure it is valid.
-// https://stackoverflow.com/questions/75556846/zod-parse-external-json-file
+import { ICommandExecutable, ICommandUrl, isCommandUrlDto, isICommandExecutableDto } from "./commands.js";
 
 
 
@@ -37,56 +33,6 @@ function runningThisScript(): boolean {
 
 function registerCustomPrompts() {
     inquirer.registerPrompt("autocomplete", inquirerPrompt);
-}
-
-
-interface ICommandExecutableDto {
-    type: "executable";
-    name: string;
-    description: string;
-    executable: string;
-    args: Array<string>;
-}
-
-function isICommandExecutableDto(obj: unknown): obj is ICommandExecutableDto {
-    const testObj = obj as ICommandExecutableDto;
-    return testObj.type === "executable" &&
-        typeof testObj.name === "string" &&
-        typeof testObj.description === "string" &&
-        typeof testObj.executable === "string" &&
-        testObj.args.every((cur) => typeof cur === "string");
-}
-
-interface ICommandExecutable {
-    type: "executable";
-    name: string;
-    description: string;
-    executable: string;
-    args: Array<string>;
-
-}
-
-
-interface ICommandUrlDto {
-    type: "url";
-    name: string;
-    description: string;
-    url: string;
-}
-
-function isCommandUrlDto(obj: unknown): obj is ICommandUrlDto {
-    const testObj = obj as ICommandUrlDto;
-    return testObj.type === "url" &&
-           typeof testObj.name === "string" &&
-           typeof testObj.description === "string" &&
-           typeof testObj.url === "string";
-}
-
-interface ICommandUrl {
-    type: "url";
-    name: string;
-    description: string;
-    url: string;
 }
 
 
@@ -131,6 +77,13 @@ async function main(): Promise<Result<number, string>> {
 }
 
 
+/**
+ * Converts a single Command to a Choice that can be used by the inquirer
+ * library.
+ *
+ * @param cmd - The Command to be converted.
+ * @return The resulting Choice
+ */
 function commandToChoice(cmd: Command): { name: string, value: Command} {
     return {
         name:  cmd.name,
@@ -138,11 +91,25 @@ function commandToChoice(cmd: Command): { name: string, value: Command} {
     };
 }
 
+
+/**
+ * Converts an array of Commands to an array of Choice instances that can be
+ * used by the inquirer library.
+ *
+ * @param cmds - The Commands to be converted
+ * @return The resulting Choice instances
+ */
 function commandsToChoices(cmds: Array<Command>): Array<{ name: string, value: Command}> {
     return cmds.map(commandToChoice);
 }
 
 
+/**
+ * Gets the configuration for this application.
+ *
+ * @return If the configuration file is successfully read, the array of
+ * commands defined in it.
+ */
 async function getConfiguration(): Promise<Result<Array<Command>, string>> {
 
     let homeDirStr: string;
@@ -170,15 +137,21 @@ async function getConfiguration(): Promise<Result<Array<Command>, string>> {
 }
 
 
-function dtoToCommand(obj: unknown): Result<Command, string> {
+/**
+ * Converts a command DTO from the configuration file to a Command instance.
+ *
+ * @param commandDto - The DTO from the configuration file
+ * @return If successful, the validated Command instance.
+ */
+function dtoToCommand(commandDto: unknown): Result<Command, string> {
 
-    if (isICommandExecutableDto(obj)) {
-        return new SucceededResult(obj);
+    if (isICommandExecutableDto(commandDto)) {
+        return new SucceededResult(commandDto);
     }
-    else if (isCommandUrlDto(obj)) {
-        return new SucceededResult(obj);
+    else if (isCommandUrlDto(commandDto)) {
+        return new SucceededResult(commandDto);
     }
     else {
-        return new FailedResult(`Unknown command "${JSON.stringify(obj)}".`);
+        return new FailedResult(`Unknown command "${JSON.stringify(commandDto)}".`);
     }
 }
