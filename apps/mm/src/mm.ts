@@ -12,6 +12,18 @@ import { spawn, spawnErrorToString } from "../../../packages/depot-node/src/spaw
 import { ICommandExecutable, ICommandFileExplorer, ICommandUrl, isCommandFileExplorer, isCommandUrl, isICommandExecutable } from "./commands.js";
 
 
+// TODO: Check to see if folders exist.  If they don't I can probably remove
+// those "file explorer" commands from the list. Alternative approach (which is
+// probably better)... let the user choose the command.  Check the path before
+// attempting it.  If it doesn't exist, display a message.
+// See the following post about how to show a message box:
+// https://stackoverflow.com/questions/56352600/how-can-show-alert-message-in-node-js
+
+
+// TODO: In paths read from config file, convert forward slashes to back slashes
+// so users don't have to do so much escaping in the config file.
+
+
 if (runningThisScript()) {
     registerCustomPrompts();
     const res = await PromiseResult.forceResult(main());
