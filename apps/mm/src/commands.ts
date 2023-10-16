@@ -52,3 +52,20 @@ export function isCommandFileExplorer(obj: unknown): obj is ICommandFileExplorer
         typeof testObj.name === "string" &&
         typeof testObj.path === "string";
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Clipboard
+
+export interface ICommandClipboard {
+    type: "clipboard";
+    name: string;
+    text: string;
+}
+
+export function isCommandClipboard(obj: unknown): obj is ICommandClipboard {
+    const testObj = obj as ICommandClipboard;
+    return testObj.type === "clipboard" &&
+        typeof testObj.name === "string" &&
+        typeof testObj.text === "string";
+}

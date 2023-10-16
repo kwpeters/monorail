@@ -3,13 +3,14 @@ import stripJsonComments from "strip-json-comments";
 import inquirer, {Answers} from "inquirer";
 import inquirerPrompt from "inquirer-autocomplete-prompt";
 import fuzzy from "fuzzy";
+import clipboard from "clipboardy";
 import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
 import { Directory } from "../../../packages/depot-node/src/directory.js";
 import { File } from "../../../packages/depot-node/src/file.js";
 import { assertNever } from "../../../packages/depot/src/never.js";
 import { spawn, spawnErrorToString } from "../../../packages/depot-node/src/spawn2.js";
-import { ICommandExecutable, ICommandFileExplorer, ICommandUrl, isCommandFileExplorer, isCommandUrl, isICommandExecutable } from "./commands.js";
+import { ICommandClipboard, ICommandExecutable, ICommandFileExplorer, ICommandUrl, isCommandClipboard, isCommandFileExplorer, isCommandUrl, isICommandExecutable } from "./commands.js";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -53,7 +54,11 @@ function registerCustomPrompts() {
 }
 
 
-type Command = ICommandExecutable | ICommandUrl | ICommandFileExplorer;
+type Command =
+    ICommandExecutable |
+    ICommandUrl |
+    ICommandFileExplorer |
+    ICommandClipboard;
 
 
 async function main(): Promise<Result<number, string>> {
@@ -176,6 +181,9 @@ function dtoToCommand(commandDto: unknown): Result<Command, string> {
     else if (isCommandFileExplorer(commandDto)) {
         return new SucceededResult(commandDto);
     }
+    else if (isCommandClipboard(commandDto)) {
+        return new SucceededResult(commandDto);
+    }
     else {
         return new FailedResult(`Unknown command "${JSON.stringify(commandDto)}".`);
     }
@@ -206,6 +214,10 @@ async function executeCommand(cmd: Command): Promise<Result<string, string>> {
         const __spawnOut = spawn(executable, [cmd.path], { shell: true, windowsVerbatimArguments: true });
         // const spawnRes = await spawnOut.closePromise;
         // Don't trust the exit code.
+        return new SucceededResult("");
+    }
+    else if (cmd.type === "clipboard") {
+        clipboard.writeSync(cmd.text);
         return new SucceededResult("");
     }
     else {
