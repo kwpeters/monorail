@@ -1,5 +1,8 @@
 import * as _ from "lodash-es";
 import inquirer from "inquirer";
+import { NoneOption, Option, SomeOption } from "../../depot/src/option.js";
+import { ValidatorFunc, validate, alwaysValid } from "../../depot/src/validator.js";
+import { File } from "./file.js";
 
 
 /**
@@ -135,4 +138,74 @@ export async function promptForStringInEditor(
 
     const answers = await inquirer.prompt<{ editorInput: string; }>([question]);
     return answers.editorInput;
+}
+
+
+/**
+ * Prompts the user to choose one of the provided files or to specify the path
+ * of an existing file.
+ * @param message - The prompt to display
+ * @param fileChoices - The provided choices to present along with "other"
+ * @param fileMustExist - If true, the function will keep prompting the user
+ *      until they have chosen an existing file.
+ * @return A promise that resolves with the selected File.
+ */
+export async function promptForFileWithChoices(
+    message: string,
+    fileChoices: Array<File>,
+    fileMustExist = true
+): Promise<File> {
+    const inquirerChoices =
+        _.chain(fileChoices)
+        .map((curFile) => (
+            {
+                name:  curFile.toString(),
+                value: new SomeOption(curFile) as Option<File>,
+                short: curFile.toString()
+            }
+        ))
+        // The "other" option that will result in answers.inputValue ===
+        // NoneOption.get().
+        .concat({ name: "other", value: NoneOption.get(), short: "other" })
+        .value();
+
+    const question = {
+        type:    "list",
+        name:    "inputValue",
+        message: message,
+        choices: inquirerChoices
+    };
+
+    const fileExistsValidator = async (file: File) => {
+        const exists = !!(await file.exists());
+        return exists;
+    };
+
+    const validators: Array<ValidatorFunc<File>> = fileMustExist ? [fileExistsValidator] : [alwaysValid];
+
+    // Keep prompting the user until we get a valid answer (i.e. selectedFile is
+    // a Some value).
+    let selectedFile: Option<File> = NoneOption.get();
+    while (selectedFile.isNone) {
+        const answers = await inquirer.prompt<{ inputValue: Option<File>; }>([question]);
+
+        let tmpFile: File;
+        if (answers.inputValue.isSome) {
+            // The user has chosen an item from the provided choices.
+            tmpFile = answers.inputValue.value;
+        }
+        else {
+            // The user has chosen the "other" option.  Prompt them to manually
+            // enter the File path.
+            const str = await promptForString(message);
+            tmpFile = new File(str);
+        }
+
+        // If tmpFile meets the caller's requirements, assign selectedFile to
+        // the corresponding SomeOption.
+        const isValid = await validate(tmpFile, validators);
+        selectedFile = isValid ? new SomeOption(tmpFile) : NoneOption.get();
+    }
+
+    return selectedFile.value;
 }
