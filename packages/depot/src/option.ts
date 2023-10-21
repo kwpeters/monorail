@@ -264,6 +264,20 @@ export namespace Option {
 
 
     /**
+     * Converts a value that may also be undefined or null into an Option for
+     * that value.
+     *
+     * @param nullable - A value that may also be undefined or null
+     * @return Description
+     */
+    export function fromNullable<T>(nullable: T | undefined | null): Option<T> {
+        return (nullable === undefined) || (nullable === null) ?
+            NoneOption.get() :
+            new SomeOption(nullable);
+    }
+
+
+    /**
      * When _input_ is "some", maps the wrapped value using _fn_.
      *
      * @param fn - The function that maps the wrapped value to another value.
@@ -278,6 +292,27 @@ export namespace Option {
         return input.isSome ?
             new SomeOption(fn(input.value)) :
             input;
+    }
+
+
+    /**
+     * Unwraps a SomeOption, throwing if it is a NoneOption.
+     *
+     * @param errorMsg - The error message to use when throwing in the event the
+     * Option is a NoneOption
+     * @param opt - The input Option
+     * @returns The unwrapped SomeOption value
+     */
+    export function throwIfNone<T>(
+        errorMsg: string,
+        opt: Option<T>
+    ): T {
+        if (opt.isSome) {
+            return opt.value;
+        }
+
+        // The Option is a NoneOption.  We must throw.
+        throw new Error(errorMsg);
     }
 
 }

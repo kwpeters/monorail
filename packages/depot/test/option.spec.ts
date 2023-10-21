@@ -332,6 +332,25 @@ describe("Option namespace", () => {
     });
 
 
+    describe("fromNullable()", () => {
+
+        it("returns some value when input is not undefined or null", () => {
+            expect(Option.fromNullable("hello")).toEqual(new SomeOption("hello"));
+        });
+
+
+        it("returns none value when input is undefined", () => {
+            expect(Option.fromNullable(undefined)).toEqual(NoneOption.get());
+        });
+
+
+        it("returns none value when input is null", () => {
+            expect(Option.fromNullable(null)).toEqual(NoneOption.get());
+        });
+
+    });
+
+
     describe("mapSome()", () => {
 
         it("with none input the option is passed along and the function is not invoked", () => {
@@ -368,6 +387,25 @@ describe("Option namespace", () => {
             expect(opt.isSome).toBeTruthy();
             expect(opt.value).toEqual(6);
         });
+    });
+
+
+    describe("throwIfNone()", () => {
+
+        it("unwraps the Option when it is a SomeOption", () => {
+            const opt = new SomeOption(5);
+            const unwrapped = Option.throwIfNone("error message", opt);
+            expect(unwrapped).toEqual(5);
+        });
+
+
+        it("throws when the Option is a NoneOption", () => {
+            const opt = NoneOption.get();
+            expect(() => {
+                const unwrapped = Option.throwIfNone("the error message", opt);
+            }).toThrowError("the error message");
+        });
+
     });
 
 
