@@ -3,7 +3,8 @@ import {
     removeBlankLines, splitIntoLines, splitLinesOsIndependent, padLeft, padRight,
     repeat, splice, getEol, parseDecInt, hexStr, decAndHex, hexStr8, hexStr16,
     hexStr16Array, hexStr32, toExponential, isValidIpAddress, containsNestedPairs,
-    getBufferString
+    getBufferString,
+    collapseWhitespace
 } from "../src/stringHelpers.js";
 
 describe("string helpers module", () => {
@@ -311,6 +312,18 @@ describe("string helpers module", () => {
             expect(removeWhitespace("\tfoo\t    \tbar\t\t")).toEqual("foobar");
         });
 
+    });
+
+    describe("collapseWhitespace()", () => {
+
+        it("removes consecutive whitespace", () => {
+            expect(collapseWhitespace(" \t\n\r a\t b\n c\r \t\n\r  ", "")).toEqual("abc");
+        });
+
+
+        it("replaces consecutive whitespace with the specified string", () => {
+            expect(collapseWhitespace(" \t\n\r a\t b\n c\r \t\n\r  ", "-")).toEqual("-a-b-c-");
+        });
 
     });
 
