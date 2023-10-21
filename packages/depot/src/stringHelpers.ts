@@ -275,6 +275,20 @@ export function removeWhitespace(str: string): string {
 
 
 /**
+ * Creates a new string in which all consecutive whitespace is replaced
+ * with the specified string.
+ * @param str - The original string to remove whitespace from
+ * @param replacement - the string that will replace all occurrences of
+ *     one or more whitespace characters
+ * @return A new string in which all whitespace has been collapsed.
+ */
+export function collapseWhitespace(str: string, replacement: string = " "): string {
+    const collapsed = str.replace(whitespaceRegex, replacement);
+    return collapsed;
+}
+
+
+/**
  * Splits a string into its individual lines.
  * @param text - The text to be split into individual lines
  * @param retainLineEndings - Whether each line should include the original line endings
