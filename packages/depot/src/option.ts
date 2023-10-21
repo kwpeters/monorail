@@ -185,11 +185,12 @@ export namespace Option {
 
     /**
      * Maps each input value through the specified mapping function.  If the
-     * mapping function returns a Some result, its value is added to the
-     * output array; otherwise nothing is added to the output array.
+     * mapping function returns a Some result, its value is added to the output
+     * array; otherwise nothing is added to the output array.
      *
-     * @param fn - The function that will map each input value to either a
-     * Some value that will be included in the output array or a None value.
+     * @param fn - The function that will map each input value to either a Some
+     * whose value will be included in the output array or a None that will not
+     * be included in the output array.
      * @param input - The input sequence
      * @returns  The output array
      */
