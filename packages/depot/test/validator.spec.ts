@@ -1,4 +1,4 @@
-import { Validator } from "../src/validator.js";
+import { Validator, alwaysValid } from "../src/validator.js";
 
 
 function dotNotAllowedAsync(subject: string): Promise<boolean> {
@@ -61,5 +61,25 @@ describe("Validator", () => {
 
     });
 
+
+});
+
+
+describe("Utility Validator Functions", () => {
+
+    describe("alwaysValid()", () => {
+
+        it("always returns that the subject is valid", () => {
+            expect(alwaysValid(undefined)).toEqual(true);
+            expect(alwaysValid(null)).toEqual(true);
+            expect(alwaysValid(0)).toEqual(true);
+            expect(alwaysValid([])).toEqual(true);
+            expect(alwaysValid("")).toEqual(true);
+            expect(alwaysValid(true)).toEqual(true);
+            expect(alwaysValid(1)).toEqual(true);
+            expect(alwaysValid("hello")).toEqual(true);
+        });
+
+    });
 
 });
