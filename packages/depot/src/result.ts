@@ -110,6 +110,16 @@ export type Result<TSuccess, TError> = SucceededResult<TSuccess> | FailedResult<
  */
 export namespace Result {
 
+    /**
+     * Tests if all object values are successful Results.  If not, returns the
+     * first failure.
+     *
+     * @param param - An object where the keys are strings and the values are
+     * Result objects.
+     * @return If all Results are successful, a successful Result wrapping an
+     * object having the same keys and the values are the Result values.
+     * Otherwise, the first failure Result is returned.
+     */
     export function allObj<T extends { [n: string]: Result<unknown, unknown>; }>(namedResults: T): Result<AllSuccessTypes<T>, PossibleErrors<T>> {
         const results = Object.values(namedResults);
         const firstFailureIdx = results.findIndex((res) => res.failed);
