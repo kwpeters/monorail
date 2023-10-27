@@ -177,6 +177,43 @@ describe("fromPromiseWith()", () => {
 });
 
 
+describe("allObj()", () => {
+
+    const opSuccessA = (): Promise<Result<string, number>> => getTimerPromise(50, new SucceededResult("hello"));
+    const opSuccessB = (): Promise<Result<string[], string>> => getTimerPromise(20, new SucceededResult(["one", "two", "three"]));
+    const opFailA = (): Promise<Result<number, string>> => getTimerPromise(50, new FailedResult("error 1"));
+    const opFailB = (): Promise<Result<boolean, number>> => getTimerPromise(20, new FailedResult(3));
+
+
+    it("when one or more failures exist returns a failure containing the first one found", async () => {
+        const res = await PromiseResult.allObj({
+            op1: opSuccessA(),
+            op2: opFailA(),
+            op3: opSuccessB(),
+            op4: opFailB()
+        });
+
+        expect(res.failed).toBeTrue();
+        expect(res.error).toEqual(3);
+    });
+
+
+    it("when all succeed returns an object of named sucess values", async () => {
+        const res = await PromiseResult.allObj({
+            op1: opSuccessA(),
+            op2: opSuccessB()
+        });
+
+        expect(res.succeeded).toBeTrue();
+        expect(res.value).toEqual({
+            op1: "hello",
+            op2: ["one", "two", "three"]
+        });
+    });
+
+
+});
+
 
 describe("allM()", () => {
     it("when all are successful, the returned promise resolves with a Result containing an array of all the successful values", async () => {

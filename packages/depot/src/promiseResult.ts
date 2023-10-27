@@ -8,6 +8,28 @@ import { IIndexedItem } from "./utilityTypes.js";
 import { errorToString } from "./errorHelpers.js";
 
 
+////////////////////////////////////////////////////////////////////////////////
+// Promise<Result<>> Utility Types
+
+
+// The following types extract the successful and error types from a Result.
+// Since Result is a union, distributivity must be turned off.  See this post:
+// https://stackoverflow.com/a/69164888
+export type PromiseResultSuccessType<T> = [T] extends [Promise<Result<infer X, infer __Y>>] ? X : never;
+export type PromiseResultErrorType<T> = [T] extends [Promise<Result<infer __X, infer Y>>] ? Y : never;
+
+export type AllSuccessTypes<T extends {[n: string]: Promise<Result<unknown, unknown>>; }> = {
+    [P in keyof T]: PromiseResultSuccessType<T[P]>
+};
+
+export type AllErrorTypes<T extends {[n: string]: Promise<Result<unknown, unknown>>; }> = {
+    [P in keyof T]: PromiseResultErrorType<T[P]>
+};
+
+export type PossibleErrors<T extends { [n: string]: Promise<Result<unknown, unknown>>; }> = AllErrorTypes<T>[keyof AllErrorTypes<T>];
+
+
+
 /**
  * Export a namespace similar to what is done for Result.
  */
@@ -114,6 +136,38 @@ export namespace PromiseResult {
                 return new FailedResult(mappedErr);
             }
         );
+    }
+
+
+    /**
+     * Checks if all input Promise<Result<>> objects resolve successfully.
+     *
+     * @param namedPromiseResults - An object where the keys are strings and the
+     * values are Promise<Result<>> objects.
+     * @return If all Promise<Result<>> objects resolve with successful Results,
+     * a successful Result wrapping an object having the same keys and the
+     * values are the Result values. Otherwise, the first failure Result is
+     * returned.
+     */
+    export async function allObj<T extends {[n: string]: Promise<Result<unknown, unknown>>}>(
+        namedPromiseResults: T
+    ): Promise<Result<AllSuccessTypes<T>, PossibleErrors<T>>> {
+        const promises = Object.values(namedPromiseResults);
+        const res = await PromiseResult.allArrayM(promises);
+        if (res.succeeded) {
+            // All were successful.  Return an object of the success result values.
+            const successObj = {} as {[n: string]: unknown};
+            const keys = Object.keys(namedPromiseResults);
+            for (let curIdx = 0; curIdx < keys.length; curIdx++) {
+                successObj[keys[curIdx]] = res.value[curIdx];
+            }
+            return new SucceededResult(successObj as AllSuccessTypes<T>);
+        }
+        else {
+            // There was a failure.
+            const err = res.error.item as PossibleErrors<T>;
+            return new FailedResult(err);
+        }
     }
 
 
