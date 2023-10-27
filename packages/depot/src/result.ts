@@ -110,6 +110,24 @@ export type Result<TSuccess, TError> = SucceededResult<TSuccess> | FailedResult<
  */
 export namespace Result {
 
+    export function allObj<T extends { [n: string]: Result<unknown, unknown>; }>(namedResults: T): Result<AllSuccessTypes<T>, PossibleErrors<T>> {
+        const results = Object.values(namedResults);
+        const firstFailureIdx = results.findIndex((res) => res.failed);
+        if (firstFailureIdx === -1) {
+            // All were successful.  Return an object of the success result values.
+            const successObj: {[k: string]: unknown} = {};
+            for (const [name, res] of Object.entries(namedResults)) {
+                successObj[name] = res.value;
+            }
+            return new SucceededResult(successObj as AllSuccessTypes<T>);
+        }
+        else {
+            // A failure was found.  Return it.
+            const failedResult = results[firstFailureIdx] as FailedResult<PossibleErrors<T>>;
+            return failedResult;
+        }
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     // allM()
     ////////////////////////////////////////////////////////////////////////////////
@@ -1009,3 +1027,65 @@ export namespace Result {
     }
 
 }
+
+
+// The following types extract the successful and error types from a Result.
+// Since Result is a union, distributivity must be turned off.  See this post:
+// https://stackoverflow.com/a/69164888
+
+export type ResultSuccessType<T> = [T] extends [Result<infer X, infer __Y>] ? X : never;
+export type ResultErrorType<T> = [T] extends [Result<infer __X, infer Y>] ? Y : never;
+
+
+/**
+ * When given an object with type {[k: string]: Result<S, E>}, the following
+ * type will give you an object type where the keys are taken from T and the
+ * values have the associated Result success types.
+ *
+ * For example:
+ *     const operations = {
+ *         op1: new SucceededResult("hello"),
+ *         op2: new SucceededResult(5)
+ *     };
+ *
+ *     type S1 = AllSuccessTypes<typeof operations>;
+ *     // type S1 = {
+ *     //     op1: string;
+ *     //     op2: number;
+ *     // };
+ */
+export type AllSuccessTypes<T extends { [n: string]: Result<unknown, unknown>; }> = {
+    [P in keyof T]: ResultSuccessType<T[P]>
+};
+
+/**
+ * When given an object with type {[k: string]: Result<S, E>}, the following
+ * type will give you an object type where the keys are taken from T and the
+ * values have the associated Result error types.
+ */
+export type AllErrorTypes<T extends { [n: string]: Result<unknown, unknown>; }> = {
+    [P in keyof T]: ResultErrorType<T[P]>
+};
+
+
+/**
+ * When given an object with type {[k: string]: Result<S, E>}, the following
+ * type will give you a union of all possible Result error types.
+ *
+ * For example:
+ *
+ *     function op1(): Result<number, boolean> { return new SucceededResult(3); }
+ *     function op2(): Result<number, string> { return new FailedResult("error1"); }
+ *
+ *     const operations = {
+ *         op1: op1(),
+ *         op2: op2(),
+ *     };
+ *
+ *     type Error1 = PossibleErrors<typeof operations>;
+ *     // type Error1 = string | boolean
+ *
+ * @param param - Description
+ * @return Description
+ */
+export type PossibleErrors<T extends { [n: string]: Result<unknown, unknown>; }> = AllErrorTypes<T>[keyof AllErrorTypes<T>];

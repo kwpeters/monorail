@@ -162,6 +162,41 @@ describe("Result type", () => {
 describe("Result namespace", () => {
 
 
+    describe("allObj()", () => {
+
+        const opSuccessA = (): Result<string, number> => new SucceededResult("hello");
+        const opSuccessB = (): Result<string[], string> => new SucceededResult(["one", "two", "three"]);
+        const opFailA = (): Result<number, string> => new FailedResult("error 1");
+        const opFailB = (): Result<boolean, number> => new FailedResult(3);
+
+        it("when one or more failures exists returns a failure containing the first one found", () => {
+            const res = Result.allObj({
+                op1: opSuccessA(),
+                op2: opFailA(),
+                op3: opSuccessB()
+            });
+
+            expect(res.failed).toBeTrue();
+            expect(res.error).toEqual("error 1");
+        });
+
+
+        it("when all succeed returns an object of named success values", () => {
+            const res = Result.allObj({
+                op1: opSuccessA(),
+                op2: opSuccessB()
+            });
+
+            expect(res.succeeded).toBeTrue();
+            expect(res.value).toEqual({
+                op1: "hello",
+                op2: ["one", "two", "three"]
+            });
+        });
+
+    });
+
+
     describe("allM()", () => {
 
         it("return the first failed Result among the parameters", () => {
