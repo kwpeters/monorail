@@ -591,3 +591,19 @@ export function containsNestedPairs(pairings: Array<IPairing>, str: string): boo
     // end token, the curState stack should be empty.
     return curState.length === 0;
 }
+
+
+/**
+ * Attempts to parse _str_ as an integer.
+ *
+ * @param str - The string to be parsed
+ * @param radix - The radix used in _str_.
+ * @return A successful Result containing the parsed integer or a failed Result
+ * containing a descriptive error message.
+ */
+export function tryParseInt(str: string, radix?: number): Result<number, string> {
+    const parsed = parseInt(str, radix);
+    return Number.isNaN(parsed) ?
+        new FailedResult(`The string "${str}" cannot be parsed as an integer.`) :
+        new SucceededResult(parsed);
+}

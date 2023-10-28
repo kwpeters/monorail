@@ -4,7 +4,8 @@ import {
     repeat, splice, getEol, parseDecInt, hexStr, decAndHex, hexStr8, hexStr16,
     hexStr16Array, hexStr32, toExponential, isValidIpAddress, containsNestedPairs,
     getBufferString,
-    collapseWhitespace
+    collapseWhitespace,
+    tryParseInt
 } from "../src/stringHelpers.js";
 
 describe("string helpers module", () => {
@@ -680,4 +681,37 @@ describe("string helpers module", () => {
 
 
     });
+
+
+    describe("tyrParseInt()", () => {
+
+        it("uses base 16 when radix is not specified and the string starts with '0x'", () => {
+            const res = tryParseInt("0x10");
+            expect(res.succeeded).toBeTrue();
+            expect(res.value).toEqual(16);
+        });
+
+
+        it("uses base 10 when radix is not specified and the string does not start with '0x'", () => {
+            const res = tryParseInt("101");
+            expect(res.succeeded).toBeTrue();
+            expect(res.value).toEqual(101);
+        });
+
+
+        it("uses base 16 when told to do so", () => {
+            const res = tryParseInt("10", 16);
+            expect(res.succeeded).toBeTrue();
+            expect(res.value).toEqual(16);
+        });
+
+
+        it("returns a failure if the string cannot be parsed as an integer", () => {
+            const res = tryParseInt("foo");
+            expect(res.failed).toBeTrue();
+            expect(typeof res.error).toEqual("string");
+            expect(res.error!.length).toBeGreaterThan(0);
+        });
+    });
+
 });
