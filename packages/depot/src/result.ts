@@ -2,7 +2,7 @@
 /* eslint-disable max-len */
 
 import { isIToString } from "./primitives.js";
-
+import { Option } from "./option.js";
 
 interface IResult<TSuccess, TError> {
     /**
@@ -826,6 +826,23 @@ export namespace Result {
         return condition ?
             new SucceededResult(trueSuccessVal) :
             new FailedResult(falseErrorVal);
+    }
+
+
+    /**
+     * Converts an Option to a Result.
+     *
+     * @param opt - The Option to be converted
+     * @param err - The error value to use when _opt_ is None
+     * @return The converted Result
+     */
+    export function fromOption<TSuccess, TError>(
+        opt: Option<TSuccess>,
+        err: TError
+    ): Result<TSuccess, TError> {
+        return opt.isSome ?
+            new SucceededResult(opt.value):
+            new FailedResult(err);
     }
 
 

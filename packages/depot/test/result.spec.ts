@@ -1,4 +1,5 @@
 import { assertNever } from "../src/never.js";
+import { NoneOption, SomeOption } from "../src/option.js";
 import { pipe } from "../src/pipe.js";
 import { FailedResult, Result, SucceededResult } from "../src/result.js";
 
@@ -606,6 +607,23 @@ describe("Result namespace", () => {
             const result = Result.fromBool(0, "yes", "no");
             expect(result.failed).toBeTrue();
             expect(result.error).toEqual("no");
+        });
+    });
+
+
+    describe("fromOption()", () => {
+
+        it("when the option is some returns a successful Result wrapping the value", () => {
+            const res = Result.fromOption(new SomeOption(5), "error 1");
+            expect(res.succeeded).toBeTrue();
+            expect(res.value).toEqual(5);
+        });
+
+
+        it("when the option is none returns a failure Result wrapping the specified error", () => {
+            const res = Result.fromOption(NoneOption.get(), "error 3");
+            expect(res.failed).toBeTrue();
+            expect(res.error).toEqual("error 3");
         });
     });
 
