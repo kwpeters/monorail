@@ -841,7 +841,7 @@ export namespace Result {
         err: TError
     ): Result<TSuccess, TError> {
         return opt.isSome ?
-            new SucceededResult(opt.value):
+            new SucceededResult(opt.value) :
             new FailedResult(err);
     }
 
