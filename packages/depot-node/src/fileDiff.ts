@@ -11,7 +11,7 @@ export async function showVsCodeDiff(fileA: File, fileB: File, useExisting = fal
     const args = [
         ...insertIf(!useExisting, "-n"),
         ...insertIf(wait, "--wait"),
-        "-d",
+        "--diff",
         fileA.toString(),
         fileB.toString()
     ];
