@@ -400,6 +400,12 @@
         "@typescript-eslint/type-annotation-spacing": [
             "error"
         ],
+        "@typescript-eslint/unbound-method": [
+            "error",
+            {
+                "ignoreStatic": true
+            }
+        ],
         // When using Angular it is common to have @ViewChildren that only have a setter.
         "accessor-pairs": "off",
         "array-bracket-newline": [
