@@ -1,0 +1,23 @@
+{
+    "name": "tsGenerator",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "A sample client that uses packages",
+    "main": "../../out/apps/tsGenerator/src/tsGenerator.js",
+    "types": "../../out/apps/tsGenerator/src/tsGenerator.d.ts",
+    "bin": {
+        "tsGenerator": "./src/tsGenerator.js"
+    },
+    "scripts": {
+        "ut": "ts-node --esm --project ./tsconfig.json ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
+        "tsc:post": "ts-node --esm --project ./tsconfig.json ../../build/postBuild.ts ."
+    },
+    "files": [
+        "../../out/apps/tsGenerator"
+    ],
+    "dependencies": {},
+    "devDependencies": {
+        "@types/jasmine": "^4.3.1",
+        "jasmine": "^4.6.0"
+    }
+}

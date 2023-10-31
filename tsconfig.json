@@ -66,6 +66,9 @@
             "path": "./apps/splat"
         },
         {
+            "path": "./apps/tsGenerator"
+        },
+        {
             "path": "./apps/unique"
         },
         {
