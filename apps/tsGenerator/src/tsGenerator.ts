@@ -1,9 +1,12 @@
 import * as os from "os";
 import { IntRange } from "../../../packages/depot/src/intRange.js";
 import { padLeft } from "../../../packages/depot/src/stringHelpers.js";
+import { File } from "../../../packages/depot-node/src/file.js";
 
 
-for (let curEndIdx = 2; curEndIdx < 4; curEndIdx++) {
+const signatures = [] as string[];
+
+for (let curEndIdx = 2; curEndIdx < 201; curEndIdx++) {
     const genericParams = getGenericParams(curEndIdx);
     const paramsStr = getParameters(curEndIdx);
     const retTypeStr = `Promise<T${padLeft(curEndIdx.toString(), "0", 3)}>`;
@@ -11,13 +14,15 @@ for (let curEndIdx = 2; curEndIdx < 4; curEndIdx++) {
     const signature = [
         `export function pipe${genericParams}(`,
         paramsStr,
-        `): ${retTypeStr}`
+        `): ${retTypeStr};`
     ]
     .join(os.EOL);
 
-    console.log(signature);
-
+    signatures.push(signature);
 }
+
+const outFile = new File("output.ts");
+outFile.writeSync(signatures.join(os.EOL));
 
 
 function getParameters(curEndIdx: number) {
@@ -37,6 +42,7 @@ function getParameters(curEndIdx: number) {
     const paramsStr = params.join(`,${os.EOL}`);
     return paramsStr;
 }
+
 
 function getGenericParams(curEndIdx: number) {
     let genericParams = Array.from(new IntRange(1, curEndIdx + 1))

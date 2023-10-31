@@ -7,6 +7,9 @@
     "references": [
         {
             "path": "../../packages/depot"
+        },
+        {
+            "path": "../../packages/depot-node"
         }
     ]
 }
