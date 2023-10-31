@@ -12,7 +12,7 @@ for (let curEndIdx = 2; curEndIdx < 201; curEndIdx++) {
     const retTypeStr = `Promise<T${padLeft(curEndIdx.toString(), "0", 3)}>`;
 
     const signature = [
-        `export function pipe${genericParams}(`,
+        `export function pipeAsync${genericParams}(`,
         paramsStr,
         `): ${retTypeStr};`
     ]
