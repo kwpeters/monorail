@@ -2,7 +2,7 @@ import { z } from "zod";
 import clipboard from "clipboardy";
 import { Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { pipeAsync } from "../../../packages/depot/src/pipeAsync2.js";
-import { spawn as spawn2, spawnErrorToString } from "../../../packages/depot-node/src/spawn2.js";
+import { spawn, spawnErrorToString } from "../../../packages/depot-node/src/spawn2.js";
 import { launch } from "../../../packages/depot-node/src/launch.js";
 
 
@@ -89,8 +89,6 @@ export const executableCommandDefinitions = [
                     launch(s.executable, s.args);
                     return new SucceededResult("");
                 }
-                // (spawnOut) => spawnOut.closePromise,
-                // (res) => Result.mapError(spawnErrorToString, res)
             );
         }
     },
@@ -99,7 +97,7 @@ export const executableCommandDefinitions = [
         fn:   (subject) => {
             return pipeAsync(
                 subject,
-                (s) => spawn2(s.executable, s.args, { cwd: s.cwd ?? "." }),
+                (s) => spawn(s.executable, s.args, { cwd: s.cwd ?? "." }),
                 (spawnOut) => spawnOut.closePromise,
                 (res) => Result.mapError(spawnErrorToString, res),
                 (res) => Result.tapSuccess((outputText) => clipboard.writeSync(outputText), res)
@@ -125,6 +123,18 @@ export const executableCommandDefinitions = [
 
 export const fsItemCommandDefinitions = [
     {
+        name: "open in file explorer",
+        fn:   (subject) => {
+            return pipeAsync(
+                subject,
+                (s) => {
+                    launch("explorer", [s.path], { shell: true, windowsVerbatimArguments: true });
+                    return new SucceededResult("");
+                }
+            );
+        }
+    },
+    {
         name: "copy path",
         fn:   (subject) => {
             return pipeAsync(
@@ -141,6 +151,18 @@ export const fsItemCommandDefinitions = [
 
 
 export const urlCommandDefinitions = [
+    {
+        name: "open in browser",
+        fn:   (subject) => {
+            return pipeAsync(
+                subject,
+                (s) => {
+                    launch("start", [s.url], {shell: true});
+                    return new SucceededResult(s.url);
+                }
+            );
+        }
+    },
     {
         name: "copy",
         fn:   (subject) => {
