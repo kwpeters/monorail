@@ -1,4 +1,4 @@
-import { spawn } from "child_process";
+import * as cp from "child_process";
 
 
 /**
@@ -7,24 +7,27 @@ import { spawn } from "child_process";
  *
  * @param cmd - The command to execute
  * @param args - The command arguments
- * @param cwd - The current working directory
+ * @param spawnOptions - Additional spawn options.
  */
-export function launch(cmd: string, args: Array<string>, cwd?: string): void {
+export function launch(cmd: string, args: Array<string>, spawnOptions?: cp.SpawnOptions): void {
 
     // TODO: Add the ability to set the shell option to true to use the shell
     // specified by the ComSpec environment variable.  Probably do this on
     // Windows only.
 
-    const childProc = spawn(
-        cmd,
-        args,
-        {
-            detached: true,
-            // I/O streams must not be inherited to be disconnected from the parent process.
-            stdio:    "ignore",
-            cwd:      cwd
-        }
-    );
+    // Setup default spawn options needed to launch a detached child process.
+    let options: cp.SpawnOptions = {
+        detached: true,
+        // I/O streams must not be inherited to be disconnected from the parent process.
+        stdio:    "ignore"
+    };
+
+    // If the caller has specified spawn options, use them.
+    if (spawnOptions) {
+        options = Object.assign(options, spawnOptions);
+    }
+
+    const childProc = cp.spawn(cmd, args, options);
 
     // Unreference the child process so that it will not prevent this process
     // from exiting.
