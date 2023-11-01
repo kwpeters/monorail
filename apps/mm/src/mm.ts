@@ -1,16 +1,12 @@
 import * as url from "url";
-import stripJsonComments from "strip-json-comments";
 import inquirer, {Answers} from "inquirer";
 import inquirerPrompt from "inquirer-autocomplete-prompt";
 import fuzzy from "fuzzy";
-import clipboard from "clipboardy";
-import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
+import { Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
-import { Directory } from "../../../packages/depot-node/src/directory.js";
-import { File } from "../../../packages/depot-node/src/file.js";
 import { assertNever } from "../../../packages/depot/src/never.js";
-import { spawn, spawnErrorToString } from "../../../packages/depot-node/src/spawn2.js";
-import { ICommandClipboard, ICommandExecutable, ICommandFileExplorer, ICommandUrl, isCommandClipboard, isCommandFileExplorer, isCommandUrl, isICommandExecutable } from "./commands.js";
+import { ICommandDefinition, Subject, clipboardCommandDefinitions, executableCommandDefinitions, fsItemCommandDefinitions, urlCommandDefinitions } from "./subjects.js";
+import { getConfiguration } from "./configuration.js";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -54,13 +50,6 @@ function registerCustomPrompts() {
 }
 
 
-type Command =
-    ICommandExecutable |
-    ICommandUrl |
-    ICommandFileExplorer |
-    ICommandClipboard;
-
-
 async function main(): Promise<Result<number, string>> {
 
     const configRes = await getConfiguration();
@@ -68,159 +57,150 @@ async function main(): Promise<Result<number, string>> {
         return configRes;
     }
 
-    const commands = configRes.value;
+    const chosenSubject = await promptForSubject(configRes.value);
+    let res: Result<string, string>;
 
-    const fuzzyOpts = {
-        extract: (cmd: Command) => cmd.name
-    };
+    if (chosenSubject.type === "ISubjectExecutable") {
 
-    const choiceFilterFn = (previousAnswers: Answers, searchStr: string) => {
-        if (!searchStr) {
-            return commandsToChoices(commands);
-        }
+        const chosenCommand = await promptForCommand(executableCommandDefinitions);
+        res = await Promise.resolve(chosenCommand.fn(chosenSubject));
+    }
+    else if (chosenSubject.type === "ISubjectFsItem") {
+        const chosenCommand = await promptForCommand(fsItemCommandDefinitions);
+        res = await Promise.resolve(chosenCommand.fn(chosenSubject));
+    }
+    else if (chosenSubject.type === "ISubjectUrl") {
+        const chosenCommand = await promptForCommand(urlCommandDefinitions);
+        res = await Promise.resolve(chosenCommand.fn(chosenSubject));
+    }
+    else if (chosenSubject.type === "ISubjectClipboardText") {
+        const chosenCommand = await promptForCommand(clipboardCommandDefinitions);
+        res = await Promise.resolve(chosenCommand.fn(chosenSubject));
+    }
+    else {
+        assertNever(chosenSubject);
+    }
 
-        const fuzzyMatches = fuzzy.filter(searchStr, commands, fuzzyOpts);
-        const matchingCommands = fuzzyMatches.map((fuzzyMatch) => fuzzyMatch.original);
-        return Promise.resolve(commandsToChoices(matchingCommands));
-    };
-
-    const questionCommand = {
-        type:     "autocomplete",
-        name:     "command",
-        message:  "command:",
-        source:   choiceFilterFn,
-        pageSize: 25
-    };
-
-    const answers = await inquirer.prompt<{ command: Command; }>([questionCommand]);
-    const cmd = answers.command;
-
-    const executeRes = await executeCommand(cmd);
-    if (executeRes.failed) {
-        return executeRes;
+    if (res.failed) {
+        console.error(`Command failed: ${res.error}`);
     }
 
     return new SucceededResult(0);
 }
 
 
-/**
- * Converts a single Command to a Choice that can be used by the inquirer
- * library.
- *
- * @param cmd - The Command to be converted.
- * @return The resulting Choice
- */
-function commandToChoice(cmd: Command): { name: string, value: Command} {
-    return {
-        name:  cmd.name,
-        value: cmd
+async function promptForSubject(subjects: Subject[]): Promise<Subject> {
+
+    const choiceFilterFn = (previousAnswers: Answers, searchStr: string) => {
+        if (!searchStr) {
+            return subjectsToChoices(subjects);
+        }
+
+        const fuzzyMatches = fuzzy.filter(searchStr, subjects, { extract: (subject: Subject) => subject.name });
+        const matchingSubjects = fuzzyMatches.map((fuzzyMatch) => fuzzyMatch.original);
+        return Promise.resolve(subjectsToChoices(matchingSubjects));
     };
+
+    const questionSubject = {
+        type:     "autocomplete",
+        name:     "subject",
+        message:  "subject:",
+        source:   choiceFilterFn,
+        pageSize: 25
+    };
+
+    const answers = await inquirer.prompt<{ subject: Subject; }>([questionSubject]);
+    return answers.subject;
+}
+
+
+async function promptForCommand<TSubject>(
+    commandDefs: Array<ICommandDefinition<TSubject>>
+): Promise<ICommandDefinition<TSubject>> {
+    const choiceFilterFn = (previousAnswers: Answers, searchStr: string) => {
+        if (!searchStr) {
+            return commandDefsToChoices(commandDefs);
+        }
+
+        const fuzzyMatches = fuzzy.filter(
+            searchStr,
+            commandDefs,
+            {
+                extract: (commandDef: ICommandDefinition<TSubject>) => commandDef.name
+            }
+        );
+        const matchingCommands = fuzzyMatches.map((fuzzyMatch) => fuzzyMatch.original);
+        return Promise.resolve(commandDefsToChoices(matchingCommands));
+    };
+
+    const questionCommand = {
+        type:     "autocomplete",
+        name:     "commandDef",
+        message:  "command:",
+        source:   choiceFilterFn,
+        pageSize: 25
+    };
+
+    const answers = await inquirer.prompt<{ commandDef: ICommandDefinition<TSubject>; }>([questionCommand]);
+    return answers.commandDef;
+}
+
+function commandDefsToChoices<TSubject>(
+    commandDefs: Array<ICommandDefinition<TSubject>>
+): Array<{name: string, value: ICommandDefinition<TSubject>}> {
+    return commandDefs.map((curCommandDef) => ({ name: curCommandDef.name, value: curCommandDef}));
 }
 
 
 /**
- * Converts an array of Commands to an array of Choice instances that can be
+ * Converts an array of Subjects to an array of Choice instances that can be
  * used by the inquirer library.
  *
- * @param cmds - The Commands to be converted
+ * @param subjects - The Subjects to be converted
  * @return The resulting Choice instances
  */
-function commandsToChoices(cmds: Array<Command>): Array<{ name: string, value: Command}> {
-    return cmds.map(commandToChoice);
+function subjectsToChoices(subjects: Array<Subject>): Array<{ name: string, value: Subject}> {
+    return subjects.map((curSubject) => ({name: curSubject.name, value: curSubject}));
 }
 
 
-/**
- * Gets the configuration for this application.
- *
- * @return If the configuration file is successfully read, the array of
- * commands defined in it.
- */
-async function getConfiguration(): Promise<Result<Array<Command>, string>> {
-
-    let homeDirStr: string;
-    if (process.env.CLOUDHOME) {
-        homeDirStr = process.env.CLOUDHOME;
-    }
-    else if (process.env.HOME) {
-        homeDirStr = process.env.HOME;
-    }
-    else {
-        return new FailedResult("No CLOUDHOME or HOME environment variable is set.");
-    }
-
-    const configFile = new File(new Directory(homeDirStr), "mm.json");
-    const configFileStats = await configFile.exists();
-    if (!configFileStats) {
-        return new FailedResult(`Configuration file "${configFile.toString()}" does not exist.`);
-    }
-
-    const configJsonStr = await configFile.read();
-    const configJson = JSON.parse(stripJsonComments(configJsonStr)) as {commands: Array<unknown>};
-
-    const res = Result.allArrayM(configJson.commands.map(dtoToCommand));
-    return res;
-}
 
 
-/**
- * Converts a command DTO from the configuration file to a Command instance.
- *
- * @param commandDto - The DTO from the configuration file
- * @return If successful, the validated Command instance.
- */
-function dtoToCommand(commandDto: unknown): Result<Command, string> {
 
-    if (isICommandExecutable(commandDto)) {
-        return new SucceededResult(commandDto);
-    }
-    else if (isCommandUrl(commandDto)) {
-        return new SucceededResult(commandDto);
-    }
-    else if (isCommandFileExplorer(commandDto)) {
-        return new SucceededResult(commandDto);
-    }
-    else if (isCommandClipboard(commandDto)) {
-        return new SucceededResult(commandDto);
-    }
-    else {
-        return new FailedResult(`Unknown command "${JSON.stringify(commandDto)}".`);
-    }
-}
+
 
 
 /**
  * Executes the specified command.
  *
- * @param cmd - The Command to be executed.
+ * @param subject - The Subject to be executed.
  * @return Status of the executed command.
  */
-async function executeCommand(cmd: Command): Promise<Result<string, string>> {
-
-    if (cmd.type === "executable") {
-        const spawnOut = spawn(cmd.executable, cmd.args);
-        const spawnRes = await spawnOut.closePromise;
-        return Result.mapError(spawnErrorToString, spawnRes);
-    }
-    else if (cmd.type === "url") {
-        const executable = "start";
-        const spawnOut = spawn(executable, [cmd.url], {shell: true});
-        const spawnRes = await spawnOut.closePromise;
-        return Result.mapError(spawnErrorToString, spawnRes);
-    }
-    else if (cmd.type === "file explorer") {
-        const executable = "explorer";
-        const __spawnOut = spawn(executable, [cmd.path], { shell: true, windowsVerbatimArguments: true });
-        // const spawnRes = await spawnOut.closePromise;
-        // Don't trust the exit code.
-        return new SucceededResult("");
-    }
-    else if (cmd.type === "clipboard") {
-        clipboard.writeSync(cmd.text);
-        return new SucceededResult("");
-    }
-    else {
-        assertNever(cmd);
-    }
-}
+// async function executeCommand(subject: Command): Promise<Result<string, string>> {
+//
+//     if (subject.type === "executable") {
+//         const spawnOut = spawn(subject.executable, subject.args);
+//         const spawnRes = await spawnOut.closePromise;
+//         return Result.mapError(spawnErrorToString, spawnRes);
+//     }
+//     else if (subject.type === "url") {
+//         const executable = "start";
+//         const spawnOut = spawn(executable, [subject.url], {shell: true});
+//         const spawnRes = await spawnOut.closePromise;
+//         return Result.mapError(spawnErrorToString, spawnRes);
+//     }
+//     else if (subject.type === "file explorer") {
+//         const executable = "explorer";
+//         const __spawnOut = spawn(executable, [subject.path], { shell: true, windowsVerbatimArguments: true });
+//         // const spawnRes = await spawnOut.closePromise;
+//         // Don't trust the exit code.
+//         return new SucceededResult("");
+//     }
+//     else if (subject.type === "clipboard") {
+//         clipboard.writeSync(subject.text);
+//         return new SucceededResult("");
+//     }
+//     else {
+//         assertNever(subject);
+//     }
+// }
