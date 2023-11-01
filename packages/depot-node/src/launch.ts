@@ -1,4 +1,4 @@
-import {spawn} from "child_process";
+import { spawn } from "child_process";
 
 
 /**
@@ -7,8 +7,9 @@ import {spawn} from "child_process";
  *
  * @param cmd - The command to execute
  * @param args - The command arguments
+ * @param cwd - The current working directory
  */
-export function launch(cmd: string, args: Array<string>): void {
+export function launch(cmd: string, args: Array<string>, cwd?: string): void {
 
     // TODO: Add the ability to set the shell option to true to use the shell
     // specified by the ComSpec environment variable.  Probably do this on
@@ -20,7 +21,8 @@ export function launch(cmd: string, args: Array<string>): void {
         {
             detached: true,
             // I/O streams must not be inherited to be disconnected from the parent process.
-            stdio:    "ignore"
+            stdio:    "ignore",
+            cwd:      cwd
         }
     );
 
