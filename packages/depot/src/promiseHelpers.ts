@@ -61,12 +61,18 @@ export function getTimerPromise<TResolve>(
 }
 
 
-export function getTimedRejection(ms: number, err: Error): Promise<number> {
+/**
+ * Gets a Promise that will reject after the specified number of milliseconds.
+ *
+ * @param ms - The number of milliseconds to delay before the returned Promise
+ * will reject.
+ * @param err - The rejection value
+ * @return A Promise that will reject with the specified value after the
+ * specified delay.
+ */
+export function getDelayedRejection(ms: number, err: unknown): Promise<never> {
     return new Promise((resolve, reject) => {
-        setTimeout(
-            () => reject(err),
-            ms
-        );
+        setTimeout(() => reject(err), ms);
     });
 }
 

@@ -3,7 +3,7 @@ import {
     sequence, getTimerPromise, retry, retryWhile, promiseWhile,
     conditionalTask, sequentialSettle, delaySettle,
     mapAsync, zipWithAsyncValues, filterAsync, removeAsync, partitionAsync,
-    allObj, getTimedRejection
+    allObj, getDelayedRejection
 } from "../src/promiseHelpers.js";
 
 
@@ -107,6 +107,25 @@ describe("getTimerPromise()", () => {
         });
     });
 
+});
+
+
+describe("getDelayedRejection()", () => {
+
+    it("rejects with the specified value after the specified delay", (done) => {
+        const start = Date.now();
+        const delayMs = 200;
+
+        getDelayedRejection(delayMs, new Error("bar"))
+        .then(() => {
+            fail("Should never get here.");
+        })
+        .catch((err) => {
+            expect(isError(err)).toBeTrue();
+            expect((err as Error).message).toEqual("bar");
+            done();
+        });
+    });
 
 });
 
@@ -808,8 +827,8 @@ describe("allObj()", () => {
     const asyncOpResolve1 = () => getTimerPromise(5, "Anders Hejlsberg is my idol!");
     const asyncOpResolve2 = () => getTimerPromise(15, 3.14159);
     const asyncOpResolve3 = () => getTimerPromise(25, false);
-    const asyncOpReject1 = () => getTimedRejection(10, new Error("error 1"));
-    const asyncOpReject2 = () => getTimedRejection(20, new Error("error 2"));
+    const asyncOpReject1 = () => getDelayedRejection(10, new Error("error 1"));
+    const asyncOpReject2 = () => getDelayedRejection(20, new Error("error 2"));
 
 
     it("when one or more Promises reject the returned Promise rejects with the first one", async () => {
