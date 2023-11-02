@@ -58,7 +58,16 @@ export function getTimerPromise<TResolve>(
             );
         }
     );
+}
 
+
+export function getTimedRejection(ms: number, err: Error): Promise<number> {
+    return new Promise((resolve, reject) => {
+        setTimeout(
+            () => reject(err),
+            ms
+        );
+    });
 }
 
 
@@ -429,4 +438,44 @@ export async function removeAsync<T>(
     }
 
     return removed;
+}
+
+
+
+
+/**
+ * When given an object with type {[k: string]: Promise<T>}, the following type
+ * will give you an object type where the keys are taken from T and the values
+ * have their associated resolved type.
+ */
+export type AllResolveTypes<T extends {[n: string]: Promise<unknown>}> = {
+    [P in keyof T]: Awaited<T[P]>
+};
+
+
+/**
+ * Accepts an object whose values are Promises.  This method waits for all of
+ * them to resolve or the first rejection.  If they all resolve, an object with
+ * the same keys is returned and the values are the resolved values.
+ *
+ * @param namedPromises - An object where the keys are strings and the values
+ * are promises.
+ * @return If all Promises resolve, the returned Promise will resolve with an
+ * object containing their resolved values.  Otherwise, the first rejection is
+ * returned.
+ */
+export function allObj<T extends {[n: string]: Promise<unknown>}>(
+    namedPromises: T
+): Promise<AllResolveTypes<T>> {
+    const promises = Object.values(namedPromises);
+    return Promise.all(promises)
+    .then(
+        (resolvedValues) => {
+            const entries =
+                Object.keys(namedPromises)
+                .map((curKey, idx) => [curKey, resolvedValues[idx]] as [string, unknown]);
+            const retObj = Object.fromEntries(entries) as AllResolveTypes<T>;
+            return retObj;
+        }
+    );
 }

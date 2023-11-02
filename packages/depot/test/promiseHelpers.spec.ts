@@ -1,7 +1,9 @@
+import { isError } from "lodash-es";
 import {
     sequence, getTimerPromise, retry, retryWhile, promiseWhile,
     conditionalTask, sequentialSettle, delaySettle,
-    mapAsync, zipWithAsyncValues, filterAsync, removeAsync, partitionAsync
+    mapAsync, zipWithAsyncValues, filterAsync, removeAsync, partitionAsync,
+    allObj, getTimedRejection
 } from "../src/promiseHelpers.js";
 
 
@@ -796,6 +798,56 @@ describe("removeAsync", () => {
             expect(src.length).toEqual(3);
             done();
         });
+    });
+
+});
+
+
+describe("allObj()", () => {
+
+    const asyncOpResolve1 = () => getTimerPromise(5, "Anders Hejlsberg is my idol!");
+    const asyncOpResolve2 = () => getTimerPromise(15, 3.14159);
+    const asyncOpResolve3 = () => getTimerPromise(25, false);
+    const asyncOpReject1 = () => getTimedRejection(10, new Error("error 1"));
+    const asyncOpReject2 = () => getTimedRejection(20, new Error("error 2"));
+
+
+    it("when one or more Promises reject the returned Promise rejects with the first one", async () => {
+        const operations = {
+            op1: asyncOpResolve1(),
+            op2: asyncOpResolve2(),
+            op3: asyncOpResolve3(),
+            op4: asyncOpReject1(),
+            op5: asyncOpReject2()
+        };
+
+        try {
+            await allObj(operations);
+            fail("The above should reject and we should never get here.");
+        }
+        catch (err) {
+            expect(isError(err)).toBeTruthy();
+            expect((err as Error).message).toEqual("error 1");
+        }
+    });
+
+
+    it("when all Promises resolve, the returned Promise resolves with an object containing all resolved values", async () => {
+        const operations = {
+            op1: asyncOpResolve1(),
+            op2: asyncOpResolve2(),
+            op3: asyncOpResolve3()
+        };
+
+        try {
+            const resolvedValues = await allObj(operations);
+            expect(resolvedValues.op1).toEqual("Anders Hejlsberg is my idol!");
+            expect(resolvedValues.op2).toEqual(3.14159);
+            expect(resolvedValues.op3).toEqual(false);
+        }
+        catch (err) {
+            fail("The above should not reject so we should never get here.");
+        }
     });
 
 });
