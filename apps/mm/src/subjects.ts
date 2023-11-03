@@ -118,6 +118,10 @@ export const executableCommandDefinitions = [
 
 export const fsItemCommandDefinitions = [
     {
+        name: "open in file explorer",
+        fn:   (subject) => showInExplorer(subject.path)
+    },
+    {
         name: "start/open with default application",
         fn:   (subject) => start(subject.path)
     },
