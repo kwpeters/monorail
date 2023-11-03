@@ -73,6 +73,8 @@ export type Subject = z.infer<typeof subjectSchema>;
 
 export type CommandFn<TSubject> = (subject: TSubject) => Result<string, string> | Promise<Result<string, string>>;
 
+
+
 export interface ICommandDefinition<TSubject> {
     name: string,
     fn:   CommandFn<TSubject>
@@ -83,13 +85,8 @@ export const executableCommandDefinitions = [
     {
         name: "run",
         fn:   (subject) => {
-            return pipeAsync(
-                subject,
-                (s) => {
-                    launch(s.executable, s.args);
-                    return new SucceededResult("");
-                }
-            );
+            launch(subject.executable, subject.args);
+            return new SucceededResult(`${subject.executable} ${subject.args.join(" ")}`);
         }
     },
     {
@@ -107,16 +104,14 @@ export const executableCommandDefinitions = [
     {
         name: "copy command line",
         fn:   (subject) => {
-            return pipeAsync(
-                subject,
-                (s) => {
-                    const text = `${s.executable} ${s.args.join(" ")}`;
-                    clipboard.writeSync(text);
-                    return text;
-                },
-                (text) => new SucceededResult(text)
-            );
+            const text = `${subject.executable} ${subject.args.join(" ")}`;
+            clipboard.writeSync(text);
+            return new SucceededResult(text);
         }
+    },
+    {
+        name: "show executable in Explorer",
+        fn:   (subject) => showInExplorer(subject.executable)
     }
 ] as Array<ICommandDefinition<ExecutableSubject>>;
 
@@ -124,28 +119,18 @@ export const executableCommandDefinitions = [
 export const fsItemCommandDefinitions = [
     {
         name: "open in file explorer",
-        fn:   (subject) => {
-            return pipeAsync(
-                subject,
-                (s) => {
-                    launch("explorer", [s.path], { shell: true, windowsVerbatimArguments: true });
-                    return new SucceededResult("");
-                }
-            );
-        }
+        fn:   (subject) => showInExplorer(subject.path)
     },
     {
         name: "copy path",
         fn:   (subject) => {
-            return pipeAsync(
-                subject,
-                (s) => {
-                    clipboard.writeSync(s.path);
-                    return s.path;
-                },
-                (path) => new SucceededResult(path)
-            );
+            clipboard.writeSync(subject.path);
+            return new SucceededResult(subject.path);
         }
+    },
+    {
+        name: "open in vscode",
+        fn:   (subject) => openInVisualStudioCode(subject.path)
     }
 ] as Array<ICommandDefinition<FsItemSubject>>;
 
@@ -154,26 +139,15 @@ export const urlCommandDefinitions = [
     {
         name: "open in browser",
         fn:   (subject) => {
-            return pipeAsync(
-                subject,
-                (s) => {
-                    launch("start", [s.url], {shell: true});
-                    return new SucceededResult(s.url);
-                }
-            );
+            launch("start", [subject.url], {shell: true});
+            return new SucceededResult(subject.url);
         }
     },
     {
         name: "copy",
         fn:   (subject) => {
-            return pipeAsync(
-                subject,
-                (s) => {
-                    clipboard.writeSync(s.url);
-                    return s.url;
-                },
-                (url) => new SucceededResult(url)
-            );
+            clipboard.writeSync(subject.url);
+            return new SucceededResult(subject.url);
         }
     }
 ] as Array<ICommandDefinition<UrlSubject>>;
@@ -183,14 +157,19 @@ export const clipboardCommandDefinitions = [
     {
         name: "copy",
         fn:   (subject) => {
-            return pipeAsync(
-                subject,
-                (s) => {
-                    clipboard.writeSync(s.text);
-                    return s.text;
-                },
-                (text) => new SucceededResult(text)
-            );
+            clipboard.writeSync(subject.text);
+            return new SucceededResult(subject.text);
         }
     }
 ] as Array<ICommandDefinition<ClipboardSubject>>;
+
+
+function showInExplorer(path: string): Result<string, string> {
+    launch("explorer", [path], { shell: true, windowsVerbatimArguments: true });
+    return new SucceededResult("path");
+}
+
+function openInVisualStudioCode(path: string): Result<string, string> {
+    launch("code", [path], {shell: true});
+    return new SucceededResult(`Opening "${path}" in vscode...`);
+}
