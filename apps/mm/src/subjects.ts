@@ -118,8 +118,8 @@ export const executableCommandDefinitions = [
 
 export const fsItemCommandDefinitions = [
     {
-        name: "open in file explorer",
-        fn:   (subject) => showInExplorer(subject.path)
+        name: "start/open with default application",
+        fn:   (subject) => start(subject.path)
     },
     {
         name: "copy path",
@@ -138,10 +138,7 @@ export const fsItemCommandDefinitions = [
 export const urlCommandDefinitions = [
     {
         name: "open in browser",
-        fn:   (subject) => {
-            launch("start", [subject.url], {shell: true});
-            return new SucceededResult(subject.url);
-        }
+        fn:   (subject) => start(subject.url)
     },
     {
         name: "copy",
@@ -172,4 +169,9 @@ function showInExplorer(path: string): Result<string, string> {
 function openInVisualStudioCode(path: string): Result<string, string> {
     launch("code", [path], {shell: true});
     return new SucceededResult(`Opening "${path}" in vscode...`);
+}
+
+function start(path: string): Result<string, string> {
+    launch("start", [path], { shell: true });
+    return new SucceededResult(`Starting file in default application: "${path}"`);
 }
