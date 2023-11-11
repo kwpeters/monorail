@@ -1,4 +1,9 @@
+import {partial} from "lodash-es";
 import { pipe } from "../src/pipe2.js";
+
+
+const _ = partial.placeholder;
+
 
 describe("pipe()", () => {
 
@@ -14,6 +19,19 @@ describe("pipe()", () => {
                 (str) => str + "!"
             );
         expect(result).toEqual("16!");
+    });
+
+
+    it("can be used easily with lodash's partial()", () => {
+
+        const result =
+            pipe(
+                "5",
+                partial(parseInt, _, 10),
+                (n) => n * 3
+            );
+
+        expect(result).toEqual(15);
     });
 
 
