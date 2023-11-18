@@ -551,13 +551,13 @@ export namespace Result {
      * @return Either the passed-through failure Result or the Result returned from
      * _fn_.
      */
-    export function bind<TInputSuccess, TOutputSuccess, TError>(
-        fn: (x: TInputSuccess) => Result<TOutputSuccess, TError>,
-        input: Result<TInputSuccess, TError>
-    ): Result<TOutputSuccess, TError> {
+    export function bind<TInputSuccess, TInputError, TOutputSuccess, TOutputError>(
+        fn: (x: TInputSuccess) => Result<TOutputSuccess, TOutputError>,
+        input: Result<TInputSuccess, TInputError>
+    ): Result<TOutputSuccess, TInputError | TOutputError> {
         if (input.succeeded) {
-            const funcResult = fn(input.value);
-            return funcResult;
+            const boundResult = fn(input.value);
+            return boundResult;
         }
         else {
             return input;

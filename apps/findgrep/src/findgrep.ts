@@ -120,7 +120,7 @@ async function getConfiguration(): Promise<Result<IFindGrepConfig, string>> {
     .argv;
 
     // Get the path regex positional argument.
-    const pathRegexResult = pipe(new SucceededResult(argv._[0] as string))
+    const pathRegexResult = pipe(new SucceededResult(argv._[0] as string) as Result<string, string>)
     .pipe((r) => Result.bind((v) => Result.fromBool(_.isString(v), v, "Path regex not specified."), r))
     .pipe((r) => Result.bind(strToRegExp, r))
     .end();
@@ -140,7 +140,9 @@ async function getConfiguration(): Promise<Result<IFindGrepConfig, string>> {
     }
 
     // Get the path ignore regexes from the --pathIgnore arguments.
-    const pathIgnoresResult = pipe(new SucceededResult(toArray<string>(argv.pathIgnore as string | Array<string> )))
+    const pathIgnoreArrRes =
+    new SucceededResult(toArray<string>(argv.pathIgnore as string | Array<string>)) as Result<string[], string>;
+    const pathIgnoresResult = pipe(pathIgnoreArrRes)
     .pipe((r) => Result.bind((v) => Result.mapWhileSuccessful(v, strToRegExp), r))
     .end();
     if (pathIgnoresResult.failed) {
