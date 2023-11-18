@@ -28,15 +28,6 @@ describe("SucceededResult", () => {
 
         });
 
-        describe("failed property", () => {
-
-            it("returns false", () => {
-                const res = new SucceededResult(12);
-                expect(res.failed).toBeFalse();
-            });
-
-        });
-
 
         describe("failed property", () => {
 
@@ -80,16 +71,6 @@ describe("FailedResult", () => {
             it("returns false", () => {
                 const res = new FailedResult("Error message");
                 expect(res.succeeded).toBeFalse();
-            });
-
-        });
-
-
-        describe("failed property", () => {
-
-            it("returns true", () => {
-                const res = new FailedResult("Error message");
-                expect(res.failed).toBeTrue();
             });
 
         });
@@ -470,6 +451,35 @@ describe("Result namespace", () => {
 
             expect(resultA.succeeded).toBeTruthy();
             expect(resultA.value).toEqual("4");
+        });
+
+
+        it("returns Result<TOutSuccess, TInError, TOutError>", () => {
+            enum ErrorCode {
+                ERROR_1 = 101,
+                ERROR_2 = 102
+            }
+
+            function op1(): Result<number, ErrorCode> {
+                return new FailedResult(ErrorCode.ERROR_2);
+            }
+
+            function op2(x: number): Result<boolean, string> {
+                return new SucceededResult(!!(x % 2));
+            }
+
+            const res =
+                pipe(op1())
+                .pipe((res) => Result.bind(op2, res))
+                .end();
+            if (res.failed) {
+                if (typeof res.error === "string") {
+                    // Here res.error has type string.
+                }
+                else {
+                    // here res.error has type ErrorCode.
+                }
+            }
         });
 
     });
