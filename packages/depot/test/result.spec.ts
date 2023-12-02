@@ -151,7 +151,7 @@ describe("Result namespace", () => {
         const opFailA = (): Result<number, string> => new FailedResult("error 1");
         const opFailB = (): Result<boolean, number> => new FailedResult(3);
 
-        it("when one or more failures exists returns a failure containing the first one found", () => {
+        it("when one or more failures exist returns a failure containing the first one found", () => {
             const res = Result.allObj({
                 op1: opSuccessA(),
                 op2: opFailA(),
