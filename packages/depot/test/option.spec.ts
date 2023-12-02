@@ -103,6 +103,40 @@ describe("Option namespace", () => {
     });
 
 
+    fdescribe("allObj()", () => {
+
+        const optSomeA = new SomeOption("hello");
+        const optSomeB = new SomeOption(5);
+        const optNoneA = NoneOption.get() as Option<boolean>;
+        const optNoneB = NoneOption.get() as Option<string>;
+
+        it("when one or more nones exist returns a none", () => {
+            const optObj = {
+                one:   optSomeA,
+                two:   optSomeB,
+                three: optNoneA,
+                four:  optNoneB
+            };
+            expect(Option.allObj(optObj).isNone).toBeTrue();
+        });
+
+
+        it("when all are some Options an object is returned containing their unwrapped values", () => {
+            const optObj = {
+                one: optSomeA,
+                two: optSomeB,
+            };
+            const opt = Option.allObj(optObj);
+            expect(opt.isSome).toBeTrue();
+            expect(opt.value).toEqual({
+                one: "hello",
+                two: 5
+            });
+        });
+
+    });
+
+
     describe("augment()", () => {
 
         it("if the input is None, returns None without invoking the function", () => {

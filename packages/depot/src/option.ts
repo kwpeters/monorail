@@ -101,6 +101,37 @@ export class NoneOption implements IOption<undefined> {
 export type Option<T> = SomeOption<T> | NoneOption;
 
 
+////////////////////////////////////////////////////////////////////////////////
+// Option Utility Types
+
+// The following types extract the some type from an Option<T>.
+// Since Option is a union, distributivity must be turned off.  See this post:
+// https://stackoverflow.com/a/69164888
+
+export type OptionSomeType<T> = [T] extends [Option<infer X>] ? X : never;
+
+/**
+ * When given an object with type {[k: string]: Option<S>}, the following
+ * type will give you an object type where the keys are taken from T and the
+ * values have the associated Option some types.
+ *
+ * For example:
+ *     const options = {
+ *         opt1: new SomeOption("hello"),
+ *         opt2: NoneOption.get() as Option<number>
+ *     };
+ *
+ *     type S1 = AllSomeTypes<typeof options>;
+ *     // type S1 = {
+ *     //     opt1: string;
+ *     //     opt2: number;
+ *     // };
+ */
+export type AllSomeTypes<T extends { [n: string]: Option<unknown>; }> = {
+    [P in keyof T]: OptionSomeType<T[P]>
+};
+
+
 /**
  * A namespace that will be merged with the Option type.  Serves as a useful
  * place to create functions that operate on Option objects.
@@ -122,6 +153,35 @@ export namespace Option {
         return firstNone ?
             firstNone :
             new SomeOption(collection.map((curOpt) => curOpt.value!));
+    }
+
+
+    /**
+     * Tests if all object values are some options.
+     *
+     * @param namedOptions - An object where the keys are strings and the values are
+     * Option objects.
+     * @return If all Options are some, a some Option wrapping an
+     * object having the same keys and the values are the Option values.
+     * Otherwise, a none Option is returned.
+     */
+    export function allObj<T extends { [n: string]: Option<unknown>; }>(
+        namedOptions: T
+    ): Option<AllSomeTypes<T>> {
+        const options = Object.values(namedOptions);
+        const firstNoneIdx = options.findIndex((opt) => opt.isNone);
+        if (firstNoneIdx === -1) {
+            // All were some.  Return an object of the some values.
+            const someValuesObj: { [k: string]: unknown; } = {};
+            for (const [name, opt] of Object.entries(namedOptions)) {
+                someValuesObj[name] = opt.value;
+            }
+            return new SomeOption(someValuesObj as AllSomeTypes<T>);
+        }
+        else {
+            // A none was found.  Return it.
+            return NoneOption.get();
+        }
     }
 
 
