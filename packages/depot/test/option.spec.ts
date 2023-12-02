@@ -351,6 +351,19 @@ describe("Option namespace", () => {
     });
 
 
+    describe("fromArray()", () => {
+
+        it("returns none value when the array is empty", () => {
+            expect(Option.fromArray([])).toEqual(NoneOption.get());
+        });
+
+
+        it("returns some value when the array contains items", () => {
+            expect(Option.fromArray([5])).toEqual(new SomeOption([5]));
+        });
+    });
+
+
     describe("mapSome()", () => {
 
         it("with none input the option is passed along and the function is not invoked", () => {

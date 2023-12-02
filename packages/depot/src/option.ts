@@ -268,12 +268,27 @@ export namespace Option {
      * that value.
      *
      * @param nullable - A value that may also be undefined or null
-     * @return Description
+     * @return The resulting Option
      */
     export function fromNullable<T>(nullable: T | undefined | null): Option<T> {
         return (nullable === undefined) || (nullable === null) ?
             NoneOption.get() :
             new SomeOption(nullable);
+    }
+
+
+    /**
+     * Converts a possibly empty array to an Option for the array.
+     *
+     * @param arr - The possibly empty array
+     * @return The resulting Option.  If _arr_ was empty, NoneOption is
+     * returned.  If _arr_ contained some items, a SomeOption containing _arr_
+     * is returned.
+     */
+    export function fromArray<T>(arr: Array<T>): Option<Array<T>> {
+        return arr.length === 0 ?
+            NoneOption.get() :
+            new SomeOption(arr);
     }
 
 
