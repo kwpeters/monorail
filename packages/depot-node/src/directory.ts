@@ -840,6 +840,32 @@ export class Directory {
 
 
     /**
+     * Finds files within this Directory whose absolute path matches the
+     * specified pattern.
+     *
+     * @param pattern - The pattern that the Directory's files will be tested
+     * with.
+     * @return A Promise that resolves with the result array.  The array will be
+     * empty if no files were found.
+     */
+    public async findMatchingFiles(pattern: RegExp, recurse: boolean = false): Promise<Array<File>> {
+
+        function isFileWithMatchingAbsPath(fsItem: Directory | File): IFilterResult {
+            if (!(fsItem instanceof File)) {
+                return { include: false, recurse };
+            }
+
+            const isMatch = pattern.test(fsItem.absPath());
+            return { include: isMatch, recurse: false };
+        }
+
+
+        const filesFound = await this.filter(isFileWithMatchingAbsPath, true) as Array<File>;
+        return filesFound;
+    }
+
+
+    /**
      * Calculates the size of this Directory.
      *
      * @returns The size of all files (recursively) in this Directory.

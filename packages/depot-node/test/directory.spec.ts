@@ -1533,6 +1533,73 @@ describe("Directory", () => {
         });
 
 
+        describe("findMatchingFiles()", () => {
+
+            beforeEach(() => {
+                /* eslint-disable no-irregular-whitespace */
+                tmpDir.emptySync();
+
+                // Create the following directory structure under tmpDir.
+                // tmp
+                // ├── dirA
+                // │   ├── dirAA
+                // │   │   ├── aa1foo.txt
+                // │   │   └── aa2foo.txt
+                // │   └── dirAB
+                // │       ├── ab1foo.txt
+                // │       └── ab2foo.txt
+                // ├── dirB
+                // │   ├── b1foo.txt
+                // │   └── b2foo.txt
+                // ├── root1foo.txt
+                // └── root2foo.txt
+
+                // Create the directories.
+                const dirA = new Directory(tmpDir, "dirA").ensureExistsSync();
+                const dirAA = new Directory(dirA, "dirAA").ensureExistsSync();
+                const dirAB = new Directory(dirA, "dirAB").ensureExistsSync();
+                const dirB = new Directory(tmpDir, "dirB").ensureExistsSync();
+
+                // Create the files.
+                const root1 = new File(tmpDir, "root1foo.txt");
+                root1.writeSync("root1");
+                const root2 = new File(tmpDir, "root2foo.txt");
+                root2.writeSync("root2");
+                const aa1 = new File(dirAA, "aa1foo.txt");
+                aa1.writeSync("aa1");
+                const aa2 = new File(dirAA, "aa2foo.txt");
+                aa2.writeSync("aa2");
+                const ab1 = new File(dirAB, "ab1foo.txt");
+                ab1.writeSync("ab1");
+                const ab2 = new File(dirAB, "ab2foo.txt");
+                ab2.writeSync("ab2");
+                const b1 = new File(dirB, "b1foo.txt");
+                b1.writeSync("b1");
+                const b2 = new File(dirB, "b2foo.txt");
+                b2.writeSync("b2");
+            });
+
+
+            it("returns empty array when no files are found", async () => {
+                const found = await tmpDir.findMatchingFiles(/bar/, true);
+                expect(found.length).toEqual(0);
+            });
+
+
+            it("returns only root level files when not recursing", async () => {
+                const found = await tmpDir.findMatchingFiles(/foo/, false);
+                expect(found.length).toEqual(2);
+            });
+
+
+            it("returns nested files when recursing", async () => {
+                const found = await tmpDir.findMatchingFiles(/foo/, true);
+                expect(found.length).toEqual(8);
+            });
+
+        });
+
+
         describe("getSize()", () => {
 
             beforeEach(() => {
