@@ -341,11 +341,10 @@ export namespace Option {
      * Converts a possibly empty array to an Option for the array.
      *
      * @param arr - The possibly empty array
-     * @return The resulting Option.  If _arr_ was empty, NoneOption is
-     * returned.  If _arr_ contained some items, a SomeOption containing _arr_
-     * is returned.
+     * @return If _arr_ was empty, NoneOption.  If _arr_ contained some items, a
+     * SomeOption containing _arr_.
      */
-    export function requireNonZeroLengthArray<T>(arr: Array<T>): Option<Array<T>> {
+    export function requireNonEmptyArray<T>(arr: Array<T>): Option<Array<T>> {
         return arr.length === 0 ?
             NoneOption.get() :
             new SomeOption(arr);
@@ -356,8 +355,8 @@ export namespace Option {
      * Converts an array to an Option for the array.
      *
      * @param arr - The input array
-     * @return The resulting Option.  If _arr_ has one element, a SomeOption
-     * containing that item is returned.  Otherwise, a NoneOption is returned.
+     * @return If _arr_ has one element, a SomeOption containing the one element
+     * of _arr_. Otherwise, a NoneOption.
      */
     export function requireOneElementArray<T>(arr: Array<T>): Option<T> {
         return arr.length === 1 ?
