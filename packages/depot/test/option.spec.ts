@@ -103,7 +103,7 @@ describe("Option namespace", () => {
     });
 
 
-    fdescribe("allObj()", () => {
+    describe("allObj()", () => {
 
         const optSomeA = new SomeOption("hello");
         const optSomeB = new SomeOption(5);
@@ -385,15 +385,15 @@ describe("Option namespace", () => {
     });
 
 
-    describe("requireNonZeroLengthArray()", () => {
+    describe("requireNonEmptyArray()", () => {
 
         it("returns none value when the array is empty", () => {
-            expect(Option.requireNonZeroLengthArray([])).toEqual(NoneOption.get());
+            expect(Option.requireNonEmptyArray([])).toEqual(NoneOption.get());
         });
 
 
         it("returns some value when the array contains items", () => {
-            expect(Option.requireNonZeroLengthArray([5])).toEqual(new SomeOption([5]));
+            expect(Option.requireNonEmptyArray([5])).toEqual(new SomeOption([5]));
         });
     });
 
