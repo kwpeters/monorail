@@ -983,6 +983,43 @@ export namespace Result {
 
 
     /**
+     * Converts a possibly empty array to a Result for the array.
+     *
+     * @param arr - The possibly empty array
+     * @param errVal - The error value returned if _arr_ is empty
+     * @return If _arr_ is empty, a failure result containing _emptyErrVal_.
+     * Otherwise, a successful Result containing _arr_.
+     */
+    export function requireNonEmptyArray<TElem, TError>(
+        arr: Array<TElem>,
+        errVal: TError
+    ): Result<Array<TElem>, TError> {
+        return arr.length === 0 ?
+            new FailedResult(errVal) :
+            new SucceededResult(arr);
+    }
+
+
+    /**
+     * Converts an array to a Result for the array.
+     *
+     * @param arr - The input array
+     * @param errVal - The error value returned if _arr_ does not have exactly
+     * one element
+     * @return If _arr_ has one element, a successful Result containing the one
+     * element of _arr_. Otherwise, a failure Result containing _errVal_.
+     */
+    export function requireOneElementArray<TElem, TError>(
+        arr: Array<TElem>,
+        errVal: TError
+    ): Result<TElem, TError> {
+        return arr.length === 1 ?
+            new SucceededResult(arr[0]) :
+            new FailedResult(errVal);
+    }
+
+
+    /**
      * Performs side-effects for the given Result
      *
      * @param fn - The function to invoke, passing the Result

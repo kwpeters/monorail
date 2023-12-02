@@ -812,6 +812,49 @@ describe("Result namespace", () => {
     });
 
 
+    describe("requireNonEmptyArray()", () => {
+
+        it("returns error value when the array is empty", () => {
+            const res = Result.requireNonEmptyArray([], "Error message");
+            expect(res.failed).toBeTrue();
+            expect(res.error).toEqual("Error message");
+        });
+
+
+        it("returns success value when the array contains items", () => {
+            const res = Result.requireNonEmptyArray([5], "Error message");
+            expect(res.succeeded).toBeTrue();
+            expect(res.value).toEqual([5]);
+        });
+
+    });
+
+
+    describe("requireOneElementArray()", () => {
+
+        it("returns error when given an array with no elements", () => {
+            const res = Result.requireOneElementArray([], "Error message");
+            expect(res.failed).toBeTrue();
+            expect(res.error).toEqual("Error message");
+        });
+
+
+        it("returns error when given an array with multiple elements", () => {
+            const res = Result.requireOneElementArray([1, 2], "Error message");
+            expect(res.failed).toBeTrue();
+            expect(res.error).toEqual("Error message");
+        });
+
+
+        it("returns success value when the array contains one element", () => {
+            const res = Result.requireOneElementArray([5], "Error message");
+            expect(res.succeeded).toBeTrue();
+            expect(res.value).toEqual(5);
+        });
+
+    });
+
+
     describe("tap()", () => {
 
         it("calls the function when the input Result is a failure", () => {
