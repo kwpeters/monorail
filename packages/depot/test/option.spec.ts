@@ -351,15 +351,33 @@ describe("Option namespace", () => {
     });
 
 
-    describe("fromArray()", () => {
+    describe("requireNonZeroLengthArray()", () => {
 
         it("returns none value when the array is empty", () => {
-            expect(Option.fromArray([])).toEqual(NoneOption.get());
+            expect(Option.requireNonZeroLengthArray([])).toEqual(NoneOption.get());
         });
 
 
         it("returns some value when the array contains items", () => {
-            expect(Option.fromArray([5])).toEqual(new SomeOption([5]));
+            expect(Option.requireNonZeroLengthArray([5])).toEqual(new SomeOption([5]));
+        });
+    });
+
+
+    describe("requireOneElementArray()", () => {
+
+        it("returns none when given an array with no elements", () => {
+            expect(Option.requireOneElementArray([])).toEqual(NoneOption.get());
+        });
+
+
+        it("returns none when given an array with multiple elements", () => {
+            expect(Option.requireOneElementArray([1, 2])).toEqual(NoneOption.get());
+        });
+
+
+        it("returns some when given an array with one element", () => {
+            expect(Option.requireOneElementArray([5])).toEqual(new SomeOption(5));
         });
     });
 

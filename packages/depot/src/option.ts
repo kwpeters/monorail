@@ -285,10 +285,24 @@ export namespace Option {
      * returned.  If _arr_ contained some items, a SomeOption containing _arr_
      * is returned.
      */
-    export function fromArray<T>(arr: Array<T>): Option<Array<T>> {
+    export function requireNonZeroLengthArray<T>(arr: Array<T>): Option<Array<T>> {
         return arr.length === 0 ?
             NoneOption.get() :
             new SomeOption(arr);
+    }
+
+
+    /**
+     * Converts an array to an Option for the array.
+     *
+     * @param arr - The input array
+     * @return The resulting Option.  If _arr_ has one element, a SomeOption
+     * containing that item is returned.  Otherwise, a NoneOption is returned.
+     */
+    export function requireOneElementArray<T>(arr: Array<T>): Option<T> {
+        return arr.length === 1 ?
+            new SomeOption(arr[0]) :
+            NoneOption.get();
     }
 
 
