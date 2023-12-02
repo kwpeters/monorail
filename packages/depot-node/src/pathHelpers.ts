@@ -26,7 +26,12 @@ export function reducePathParts(pathParts: Array<PathPart>): string {
                 return curPathPartStr;
             }
 
-            return path.join(acc, curPathPartStr);
+            // If we are dealing with the first part of a UNC path (that starts
+            // with "\\"), then don't let path.join() process it, because it
+            // will remove it.
+            return acc.length === 0 && curPathPart.startsWith("\\\\") ?
+                curPathPartStr :
+                path.join(acc, curPathPartStr);
         },
         ""
     );

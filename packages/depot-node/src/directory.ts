@@ -115,7 +115,18 @@ export class Directory {
      */
     public parentDir(): undefined | Directory {
         const absPath = this.absPath();
-        const parts = absPath.split(path.sep);
+        let parts = absPath.split(path.sep);
+
+        // If we are dealing with a UNC path (that starts with "\\"), the
+        // previous split() operation will result in the first two items in the
+        // output array being empty strings.  If that is the case, remove them
+        // and replace the "\\" at the beginning of the first part.
+        if (parts.length >= 2 &&
+            parts[0].length === 0 &&
+            parts[1].length === 0) {
+            parts = parts.slice(2);
+            parts[0] = "\\\\" + parts[0];
+        }
 
         // If the directory separator was not found, the split will result in a
         // 1-element array.  If this is the case, this directory is the root of
