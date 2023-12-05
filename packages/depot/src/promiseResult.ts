@@ -140,13 +140,14 @@ export namespace PromiseResult {
 
 
     /**
-     * Checks if all input Promise<Result<>> objects resolve successfully.
+     * Checks if all input Promise<Result<>> objects resolve with successful
+     * Results.
      *
      * @param namedPromiseResults - An object where the keys are strings and the
      * values are Promise<Result<>> objects.
      * @return If all Promise<Result<>> objects resolve with successful Results,
      * a successful Result wrapping an object having the same keys and the
-     * values are the Result values. Otherwise, the first failure Result is
+     * values are the unwrapped success values. Otherwise, the first failure Result is
      * returned.
      */
     export async function allObj<T extends {[n: string]: Promise<Result<unknown, unknown>>}>(
