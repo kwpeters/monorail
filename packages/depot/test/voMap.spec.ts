@@ -1,4 +1,4 @@
-import { hash } from "../src/hash.js";
+import { hashSync } from "../src/hash.js";
 import { VoMap } from "../src/voMap.js";
 
 
@@ -23,7 +23,7 @@ function createPersonMap(iterable?: Iterable<[Person, number]>): VoMap<Person, n
             first: p.first.toLocaleLowerCase(),
             last:  p.last.toLocaleLowerCase()
         };
-        return hash(JSON.stringify(intrinsics), "base64");
+        return hashSync(JSON.stringify(intrinsics), "base64");
     }
 }
 

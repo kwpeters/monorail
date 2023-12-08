@@ -1,4 +1,4 @@
-import { hash } from "../src/hash.js";
+import { hashSync } from "../src/hash.js";
 import { VoSet } from "../src/voSet.js";
 
 
@@ -27,7 +27,7 @@ function createPersonSet(iterable?: Iterable<Person>): VoSet<Person> {
             first: p.first.toLocaleLowerCase(),
             last:  p.last.toLocaleLowerCase()
         };
-        return hash(JSON.stringify(intrinsics), "base64");
+        return hashSync(JSON.stringify(intrinsics), "base64");
     }
 }
 
