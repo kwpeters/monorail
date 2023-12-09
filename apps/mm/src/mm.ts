@@ -1,11 +1,9 @@
 import * as url from "url";
-import inquirer, {Answers} from "inquirer";
-import inquirerPrompt from "inquirer-autocomplete-prompt";
-import fuzzy from "fuzzy";
 import { Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
 import { assertNever } from "../../../packages/depot/src/never.js";
-import { ICommandDefinition, Subject, clipboardCommandDefinitions, executableCommandDefinitions, fsItemCommandDefinitions, urlCommandDefinitions } from "./subjects.js";
+import { promptForChoiceFuzzy, registerFuzzyPrompt } from "../../../packages/depot-node/src/promptAutocomplete.js";
+import { clipboardCommandDefinitions, executableCommandDefinitions, fsItemCommandDefinitions, urlCommandDefinitions } from "./subjects.js";
 import { getConfiguration } from "./configuration.js";
 
 
@@ -26,7 +24,7 @@ import { getConfiguration } from "./configuration.js";
 
 
 if (runningThisScript()) {
-    registerCustomPrompts();
+    registerFuzzyPrompt();
     const res = await PromiseResult.forceResult(main());
     if (res.failed) {
         console.error(res.error);
@@ -45,11 +43,6 @@ function runningThisScript(): boolean {
 }
 
 
-function registerCustomPrompts() {
-    inquirer.registerPrompt("autocomplete", inquirerPrompt);
-}
-
-
 async function main(): Promise<Result<number, string>> {
 
     const configRes = await getConfiguration();
@@ -57,24 +50,23 @@ async function main(): Promise<Result<number, string>> {
         return configRes;
     }
 
-    const chosenSubject = await promptForSubject(configRes.value);
+    const chosenSubject = await promptForChoiceFuzzy("subject:", configRes.value, (subject) => subject.name);
     let res: Result<string, string>;
 
     if (chosenSubject.type === "ISubjectExecutable") {
-
-        const chosenCommand = await promptForCommand(executableCommandDefinitions);
+        const chosenCommand = await promptForChoiceFuzzy("command:", executableCommandDefinitions, (commandDef) => commandDef.name);
         res = await Promise.resolve(chosenCommand.fn(chosenSubject));
     }
     else if (chosenSubject.type === "ISubjectFsItem") {
-        const chosenCommand = await promptForCommand(fsItemCommandDefinitions);
+        const chosenCommand = await promptForChoiceFuzzy("command:", fsItemCommandDefinitions, (commandDef) => commandDef.name);
         res = await Promise.resolve(chosenCommand.fn(chosenSubject));
     }
     else if (chosenSubject.type === "ISubjectUrl") {
-        const chosenCommand = await promptForCommand(urlCommandDefinitions);
+        const chosenCommand = await promptForChoiceFuzzy("command:", urlCommandDefinitions, (commandDef) => commandDef.name);
         res = await Promise.resolve(chosenCommand.fn(chosenSubject));
     }
     else if (chosenSubject.type === "ISubjectClipboardText") {
-        const chosenCommand = await promptForCommand(clipboardCommandDefinitions);
+        const chosenCommand = await promptForChoiceFuzzy("command:", clipboardCommandDefinitions, (commandDef) => commandDef.name);
         res = await Promise.resolve(chosenCommand.fn(chosenSubject));
     }
     else {
@@ -86,79 +78,4 @@ async function main(): Promise<Result<number, string>> {
     }
 
     return new SucceededResult(0);
-}
-
-
-async function promptForSubject(subjects: Subject[]): Promise<Subject> {
-
-    const choiceFilterFn = (previousAnswers: Answers, searchStr: string) => {
-        if (!searchStr) {
-            return subjectsToChoices(subjects);
-        }
-
-        const fuzzyMatches = fuzzy.filter(searchStr, subjects, { extract: (subject: Subject) => subject.name });
-        const matchingSubjects = fuzzyMatches.map((fuzzyMatch) => fuzzyMatch.original);
-        return Promise.resolve(subjectsToChoices(matchingSubjects));
-    };
-
-    const questionSubject = {
-        type:     "autocomplete",
-        name:     "subject",
-        message:  "subject:",
-        source:   choiceFilterFn,
-        pageSize: 25
-    };
-
-    const answers = await inquirer.prompt<{ subject: Subject; }>([questionSubject]);
-    return answers.subject;
-}
-
-
-async function promptForCommand<TSubject>(
-    commandDefs: Array<ICommandDefinition<TSubject>>
-): Promise<ICommandDefinition<TSubject>> {
-    const choiceFilterFn = (previousAnswers: Answers, searchStr: string) => {
-        if (!searchStr) {
-            return commandDefsToChoices(commandDefs);
-        }
-
-        const fuzzyMatches = fuzzy.filter(
-            searchStr,
-            commandDefs,
-            {
-                extract: (commandDef: ICommandDefinition<TSubject>) => commandDef.name
-            }
-        );
-        const matchingCommands = fuzzyMatches.map((fuzzyMatch) => fuzzyMatch.original);
-        return Promise.resolve(commandDefsToChoices(matchingCommands));
-    };
-
-    const questionCommand = {
-        type:     "autocomplete",
-        name:     "commandDef",
-        message:  "command:",
-        source:   choiceFilterFn,
-        pageSize: 25
-    };
-
-    const answers = await inquirer.prompt<{ commandDef: ICommandDefinition<TSubject>; }>([questionCommand]);
-    return answers.commandDef;
-}
-
-function commandDefsToChoices<TSubject>(
-    commandDefs: Array<ICommandDefinition<TSubject>>
-): Array<{name: string, value: ICommandDefinition<TSubject>}> {
-    return commandDefs.map((curCommandDef) => ({ name: curCommandDef.name, value: curCommandDef}));
-}
-
-
-/**
- * Converts an array of Subjects to an array of Choice instances that can be
- * used by the inquirer library.
- *
- * @param subjects - The Subjects to be converted
- * @return The resulting Choice instances
- */
-function subjectsToChoices(subjects: Array<Subject>): Array<{ name: string, value: Subject}> {
-    return subjects.map((curSubject) => ({name: curSubject.name, value: curSubject}));
 }
