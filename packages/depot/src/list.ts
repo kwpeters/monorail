@@ -145,7 +145,7 @@ export class List<TValue> implements Iterable<TValue> {
 
 
     /**
-     * Creates a new List object.
+     * Creates an empty List.
      */
     constructor() {
         this._end = new DLNodeEnd<TValue>();
@@ -188,8 +188,8 @@ export class List<TValue> implements Iterable<TValue> {
      */
     public begin(): Iterator<TValue> {
         return this._length === 0 ?
-               new Iterator(this._end, this._end) :
-               new Iterator(this._end.next, this._end);
+               new Iterator(this._end) :
+               new Iterator(this._end.next);
     }
 
 
@@ -200,7 +200,7 @@ export class List<TValue> implements Iterable<TValue> {
      * list.
      */
     public end(): Iterator<TValue> {
-        return new Iterator(this._end, this._end);
+        return new Iterator(this._end);
     }
 
 
@@ -429,13 +429,14 @@ export class List<TValue> implements Iterable<TValue> {
 
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Iterators
 
 /**
  * Implements the iterator protocol for List.
  */
 export class Iterator<TValue> implements Iterator<TValue> {
-    private          _curNode: DLNode<TValue>;
-    private readonly _endNode: DLNodeEnd<TValue>;
+    private _curNode: DLNode<TValue>;
 
 
     /**
@@ -443,9 +444,8 @@ export class Iterator<TValue> implements Iterator<TValue> {
      * @param curNode - The node the Iterator should be pointing to
      * @param endNode - The end node of the linked list
      */
-    constructor(curNode: DLNode<TValue>, endNode: DLNodeEnd<TValue>) {
+    constructor(curNode: DLNode<TValue>) {
         this._curNode = curNode;
-        this._endNode = endNode;
     }
 
 
@@ -516,7 +516,7 @@ export class Iterator<TValue> implements Iterator<TValue> {
     */
     public offset(offset: number): Iterator<TValue> {
         // Make a copy of this iterator and then advance it.
-        const it: Iterator<TValue> = new Iterator<TValue>(this._curNode, this._endNode);
+        const it: Iterator<TValue> = new Iterator<TValue>(this._curNode);
         advance(it, offset);
         return it;
     }
