@@ -71,3 +71,23 @@ export type RecursivePartial<T> = {
 export function createStub<T>(partial: RecursivePartial<T>): T {
     return partial as T;
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Immutable
+// https://stackoverflow.com/questions/41879327/deepreadonly-object-typescript
+
+// eslint-disable-next-line @typescript-eslint/ban-types
+type ImmutablePrimitive = undefined | null | boolean | string | number | Function;
+
+export type ImmutableArray<T> = ReadonlyArray<Immutable<T>>;
+export type ImmutableMap<TKey, TValue> = ReadonlyMap<Immutable<TKey>, Immutable<TValue>>;
+export type ImmutableSet<T> = ReadonlySet<Immutable<T>>;
+export type ImmutableObject<T> = { readonly [K in keyof T]: Immutable<T[K]> };
+
+export type Immutable<T> =
+    T extends ImmutablePrimitive ? T :
+    T extends Array<infer U> ? ImmutableArray<U> :
+    T extends Map<infer K, infer V> ? ImmutableMap<K, V> :
+    T extends Set<infer M> ? ImmutableSet<M> :
+    ImmutableObject<T>;
