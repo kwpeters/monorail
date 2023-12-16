@@ -147,7 +147,7 @@ export class List<TValue> implements Iterable<TValue> {
     /**
      * Creates an empty List.
      */
-    constructor() {
+    public constructor() {
         this._end = new DLNodeEnd<TValue>();
         this._length = 0;
     }
