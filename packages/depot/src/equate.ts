@@ -6,3 +6,15 @@
 export interface IEquatable<T> {
     equals(other: T): boolean;
 }
+
+/**
+ * The same as IEquatable, but named in a way to communicate that the type
+ * implements structural equality.
+ */
+export type IValueObject<T> = IEquatable<T>;
+
+/**
+ * The same as IEquatable, but named in a way to communicate that the type
+ * implements equality based on an identifier.
+ */
+export type IEntity<T> = IEquatable<T>;
