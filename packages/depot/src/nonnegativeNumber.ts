@@ -33,7 +33,7 @@ export namespace NonnegativeNumber {
      */
     export function create(x: number): NonnegativeNumber {
         if (x < 0) {
-            throw new Error(`Illegal negative value ${x}.`);
+            throw new Error(`The value "${x}" is not a valid NonnegativeNumber.`);
         }
 
         return x as NonnegativeNumber;
