@@ -1,6 +1,6 @@
 import { NonnegativeNumber } from "../src/nonnegativeNumber.js";
 
-fdescribe("NonnegativeNumber namespace", () => {
+describe("NonnegativeNumber namespace", () => {
 
 
     describe("tryCreate()", () => {
