@@ -279,9 +279,10 @@
             },
             {
                 "selector": "interface",
-                "prefix": [
-                    "I"
-                ],
+                // No longer requiring the "I" prefix, because a type is a type.
+                // "prefix": [
+                //     "I"
+                // ],
                 "format": [
                     "PascalCase"
                 ]
@@ -328,6 +329,7 @@
         "@typescript-eslint/no-loop-func": [
             "error"
         ],
+        "@typescript-eslint/no-namespace": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/no-unnecessary-boolean-literal-compare": [
             "error"
@@ -415,7 +417,10 @@
             "error",
             "never"
         ],
-        "array-callback-return": "error",
+        // Turned off because this rule triggers false positives when it sees a
+        // lambda that is not returning something in all branches.  In reality,
+        // the one branch that doesn't have a "return" has an assertNever().
+        "array-callback-return": "off",
         // Sometimes adding curly braces to an arrow function can help, especially when the returned expression is complicated.
         "arrow-body-style": "off",
         "arrow-parens": [
