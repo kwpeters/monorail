@@ -22,9 +22,6 @@ export class VoMap<TKey, TVal> implements Iterable<[TKey, TVal]>, Map<TKey, TVal
     private readonly _backingStore: Map<string, IMapData<TKey, TVal>>;
 
 
-    [Symbol.toStringTag] = "VoMap";
-
-
     /**
      * Constructor
      *
@@ -41,6 +38,9 @@ export class VoMap<TKey, TVal> implements Iterable<[TKey, TVal]>, Map<TKey, TVal
             }
         }
     }
+
+
+    [Symbol.toStringTag] = "VoMap";
 
 
     /**

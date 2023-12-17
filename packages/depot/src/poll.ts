@@ -85,12 +85,13 @@ export async function poll<TReturn, TResult>(
  * A class for representing polling timeout errors.
  */
 export class PollingTimeoutError<TSuccess, TError> extends Error {
-    public readonly lastResult: Result<TSuccess, TError>;
 
     public constructor(message: string, lastResult: Result<TSuccess, TError>) {
         super(message);
         this.lastResult = lastResult;
     }
+
+    public readonly lastResult: Result<TSuccess, TError>;
 }
 
 

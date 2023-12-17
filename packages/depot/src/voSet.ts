@@ -16,9 +16,6 @@ export class VoSet<TVal> implements Iterable<TVal>, ReadonlySet<TVal> {
     private readonly _hashFn: HashFn<TVal>;
 
 
-    [Symbol.toStringTag] = "VoSet";
-
-
     public constructor(hashFn: HashFn<TVal>, iterable?: Iterable<TVal>) {
         this._hashFn = hashFn;
         this._backingStore = new Map<string, TVal>();
@@ -29,6 +26,9 @@ export class VoSet<TVal> implements Iterable<TVal>, ReadonlySet<TVal> {
             }
         }
     }
+
+
+    [Symbol.toStringTag] = "VoSet";
 
 
     /**

@@ -4,9 +4,6 @@
  * type of the resolved value.
  */
 export class Deferred<TResolve> {
-    public readonly promise: Promise<TResolve>;
-    public resolve!: (result: TResolve) => void;
-    public reject!: (err: unknown) => void;
 
     constructor() {
         this.promise = new Promise((resolve: (result: TResolve) => void, reject: (err: unknown) => void) => {
@@ -17,6 +14,10 @@ export class Deferred<TResolve> {
         // Make this object immutable.
         Object.freeze(this);
     }
+
+    public readonly promise: Promise<TResolve>;
+    public resolve!: (result: TResolve) => void;
+    public reject!: (err: unknown) => void;
 }
 
 
