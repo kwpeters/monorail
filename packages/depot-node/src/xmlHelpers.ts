@@ -245,6 +245,34 @@ export function tryToElementArray(selectRetVal: xpath.SelectReturnType): Option<
 }
 
 
+export function tryToElement(subject: Node | null): Option<Element>;
+export function tryToElement(subject: xpath.SelectReturnType): Option<Element>;
+export function tryToElement(subject: null | xpath.SelectReturnType): Option<Element> {
+    if (!subject) {
+        return NoneOption.get();
+    }
+    else if (isElement(subject)) {
+        return new SomeOption(subject);
+    }
+    else {
+        return NoneOption.get();
+    }
+}
+
+
+export function toElement(subject: Node | null): Element;
+export function toElement(subject: xpath.SelectReturnType): Element;
+export function toElement(subject: null | xpath.SelectReturnType): Element {
+    const opt = tryToElement(subject);
+    if (opt.isSome) {
+        return opt.value;
+    }
+    else {
+        throw new Error(`Failed to convert xpath selection to an Element.`);
+    }
+}
+
+
 /**
  * Converts a selection result to an array of Elements.  Throws an Error if the
  * selection result did not include Elements.
