@@ -1,3 +1,4 @@
+import * as os from "os";
 import * as _ from "lodash-es";
 import { sprintf } from "sprintf-js";
 import {createEolRegex} from "./regexpHelpers.js";
@@ -477,7 +478,7 @@ export function isValidIpAddress(str: string): boolean {
 
 
 /**
- * Returns a string representation of a Buffer
+ * Converts a Buffer to a string of space separated hexadecimal bytes.
  * @param buf - The Buffer to create a string for
  * @returns A string representation of buf
  */
