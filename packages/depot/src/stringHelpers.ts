@@ -595,7 +595,7 @@ export function containsNestedPairs(pairings: Array<IPairing>, str: string): boo
 
 
 /**
- * Attempts to parse _str_ as an integer.
+ * Attempts to parse _str_ as an integer in the specified radix.
  *
  * @param str - The string to be parsed
  * @param radix - The radix used in _str_.
