@@ -280,10 +280,12 @@ export function toElement(subject: null | xpath.SelectReturnType): Element {
  * @param selectRetVal - The selection result that will be converted
  * @return The array of Elements.
  */
-export function toElementArray(selectRetVal: xpath.SelectReturnType): Array<Element> {
+export function toElementArray<TElem extends Element = Element>(
+    selectRetVal: xpath.SelectReturnType
+): Array<TElem> {
     const opt = tryToElementArray(selectRetVal);
     if (opt.isSome) {
-        return opt.value;
+        return opt.value as Array<TElem>;
     }
     else {
         throw new Error("Failed to convert xpath selection to an element array.");
