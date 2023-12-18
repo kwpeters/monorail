@@ -600,7 +600,10 @@
         ],
         "no-useless-rename": "error",
         "no-var": "error",
-        "no-void": "error",
+        // When curly braceless labmdas are passed to immer's produce(), the
+        // return value confuses produce into thinking the next state is being
+        // returned.  Using the void operator is a good way to prevent this.
+        "no-void": "off",
         "no-whitespace-before-property": "error",
         "object-curly-newline": [
             "error",
