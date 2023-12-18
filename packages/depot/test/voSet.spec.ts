@@ -20,12 +20,16 @@ class Person {
  * @returns The new Person set.
  */
 function createPersonSet(iterable?: Iterable<Person>): VoSet<Person> {
-    return new VoSet<Person>(personNameHash, iterable);
+    return new VoSet<Person>(hashPerson, iterable);
 
-    function personNameHash(p: Person) {
+    function hashPerson(p: Person) {
+        // Include the name of the type so that it can't compare equal to
+        // other types that coincidentally have the same properties.
         const intrinsics = {
-            first: p.first.toLocaleLowerCase(),
-            last:  p.last.toLocaleLowerCase()
+            person: {
+                first: p.first.toLocaleLowerCase(),
+                last:  p.last.toLocaleLowerCase()
+            }
         };
         return hashSync(JSON.stringify(intrinsics), "base64");
     }

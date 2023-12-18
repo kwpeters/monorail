@@ -16,12 +16,16 @@ class Person {
  * @returns The new Person map.
  */
 function createPersonMap(iterable?: Iterable<[Person, number]>): VoMap<Person, number> {
-    return new VoMap<Person, number>(personNameHash, iterable);
+    return new VoMap<Person, number>(hashPerson, iterable);
 
-    function personNameHash(p: Person) {
+    function hashPerson(p: Person) {
         const intrinsics = {
-            first: p.first.toLocaleLowerCase(),
-            last:  p.last.toLocaleLowerCase()
+            // Include the name of the type so that it can't compare equal to
+            // other types that coincidentally have the same properties.
+            person: {
+                first: p.first.toLocaleLowerCase(),
+                last:  p.last.toLocaleLowerCase()
+            }
         };
         return hashSync(JSON.stringify(intrinsics), "base64");
     }
