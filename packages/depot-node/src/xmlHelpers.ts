@@ -223,6 +223,34 @@ export function toNode(subject: null | xpath.SelectReturnType): Node {
 }
 
 
+export function tryToElement<TElem extends Element = Element>(subject: Node | null): Option<TElem>;
+export function tryToElement<TElem extends Element = Element>(subject: xpath.SelectReturnType): Option<TElem>;
+export function tryToElement<TElem extends Element = Element>(subject: null | xpath.SelectReturnType): Option<TElem> {
+    if (!subject) {
+        return NoneOption.get();
+    }
+    else if (isElement(subject)) {
+        return new SomeOption(subject as TElem);
+    }
+    else {
+        return NoneOption.get();
+    }
+}
+
+
+export function toElement<TElem extends Element = Element>(subject: Node | null): TElem;
+export function toElement<TElem extends Element = Element>(subject: xpath.SelectReturnType): TElem;
+export function toElement<TElem extends Element = Element>(subject: null | xpath.SelectReturnType): TElem {
+    const opt = tryToElement(subject);
+    if (opt.isSome) {
+        return opt.value as TElem;
+    }
+    else {
+        throw new Error(`Failed to convert xpath selection to an Element.`);
+    }
+}
+
+
 /**
  * Attempts to convert a selection result to an array of Elements.
  *
@@ -230,7 +258,9 @@ export function toNode(subject: null | xpath.SelectReturnType): Node {
  * @return If successful, a Some containing the array of Elements.  Otherwise, a
  * None.
  */
-export function tryToElementArray(selectRetVal: xpath.SelectReturnType): Option<Array<Element>> {
+export function tryToElementArray<TElem extends Element = Element>(
+    selectRetVal: xpath.SelectReturnType
+): Option<Array<TElem>> {
     const nodesOpt = tryToNodeArray(selectRetVal);
     if (nodesOpt.isNone) {
         return nodesOpt;
@@ -241,35 +271,9 @@ export function tryToElementArray(selectRetVal: xpath.SelectReturnType): Option<
         nodesOpt.value
     );
 
-    return elems.length === nodesOpt.value.length ? new SomeOption(elems) : NoneOption.get();
-}
-
-
-export function tryToElement(subject: Node | null): Option<Element>;
-export function tryToElement(subject: xpath.SelectReturnType): Option<Element>;
-export function tryToElement(subject: null | xpath.SelectReturnType): Option<Element> {
-    if (!subject) {
-        return NoneOption.get();
-    }
-    else if (isElement(subject)) {
-        return new SomeOption(subject);
-    }
-    else {
-        return NoneOption.get();
-    }
-}
-
-
-export function toElement(subject: Node | null): Element;
-export function toElement(subject: xpath.SelectReturnType): Element;
-export function toElement(subject: null | xpath.SelectReturnType): Element {
-    const opt = tryToElement(subject);
-    if (opt.isSome) {
-        return opt.value;
-    }
-    else {
-        throw new Error(`Failed to convert xpath selection to an Element.`);
-    }
+    return elems.length === nodesOpt.value.length ?
+        new SomeOption(elems as Array<TElem>) :
+        NoneOption.get();
 }
 
 
