@@ -64,6 +64,24 @@ describe("StringI", () => {
 
         });
 
+
+        describe("getHash()", () => {
+
+            it("identical strings hash to the same value", () => {
+                expect(new StringI("hello").getHash()).toEqual(new StringI("hello").getHash());
+            });
+
+
+            it("strings that differ by case hash to the same value", () => {
+                expect(new StringI("hElLo").getHash()).toEqual(new StringI("hello").getHash());
+            });
+
+
+            it("different string hash to different values", () => {
+                expect(new StringI("one").getHash()).not.toEqual(new StringI("on").getHash());
+            });
+        });
+
     });
 
 });
