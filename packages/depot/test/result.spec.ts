@@ -485,7 +485,7 @@ describe("Result namespace", () => {
     });
 
 
-    fdescribe("bindError()", () => {
+    describe("bindError()", () => {
 
         it("with successful input the Result is passed along and the function is not invoked", () => {
 

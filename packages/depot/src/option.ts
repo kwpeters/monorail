@@ -244,6 +244,28 @@ export namespace Option {
 
 
     /**
+     * If _input_ is "none", calls _fn_, returning its returned Option.  If
+     * _input_ is "some", returns it.
+     *
+     * This function effectively allows you to "fallback" if a previous
+     * operation returned none.
+     *
+     * @param fn - The function to invoke when _input_ is none.
+     * @param input - The input Option
+     * @return Either the passed-through "some" Option or the Option returned
+     * from _fn_.
+     */
+    export function bindError<TIn, TOut>(
+        fn: () => Option<TOut>,
+        input: Option<TIn>
+    ): Option<TIn | TOut> {
+        return input.isSome ?
+            input :
+            fn();
+    }
+
+
+    /**
      * Maps each input value through the specified mapping function.  If the
      * mapping function returns a Some result, its value is added to the output
      * array; otherwise nothing is added to the output array.

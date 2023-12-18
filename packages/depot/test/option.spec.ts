@@ -289,6 +289,51 @@ describe("Option namespace", () => {
     });
 
 
+    describe("bindError()", () => {
+
+        it("with some input the Option is passed along and the function is not invoked", () => {
+
+            let numInvocations = 0;
+
+            const opt =
+                pipe(new SomeOption(1))
+                .pipe((opt) => Option.bindError(
+                    () => {
+                        numInvocations++;
+                        return new SomeOption(2);
+                    },
+                    opt
+                ))
+                .end();
+
+            expect(opt.isSome).toBeTrue();
+            expect(opt.value).toEqual(1);
+            expect(numInvocations).toEqual(0);
+        });
+
+
+        it("with none input the function is invoked and its Option is returned", () => {
+            let numInvocations = 0;
+
+            const opt =
+                pipe(NoneOption.get())
+                .pipe((opt) => Option.bindError(
+                    () => {
+                        numInvocations++;
+                        return new SomeOption(2);
+                    },
+                    opt
+                ))
+                .end();
+
+            expect(opt.isSome).toBeTrue();
+            expect(opt.value).toEqual(2);
+            expect(numInvocations).toEqual(1);
+        });
+
+    });
+
+
     describe("choose()", () => {
 
 
