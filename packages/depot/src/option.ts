@@ -346,10 +346,10 @@ export namespace Option {
 
 
     /**
-     * Converts a value that may also be undefined or null into an Option for
+     * Converts a value that may be undefined or null into an Option for
      * that value.
      *
-     * @param nullable - A value that may also be undefined or null
+     * @param nullable - A value that may be undefined or null
      * @return The resulting Option
      */
     export function fromNullable<T>(nullable: T | undefined | null): Option<T> {
