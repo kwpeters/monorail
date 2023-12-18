@@ -73,6 +73,13 @@ export function createStub<T>(partial: RecursivePartial<T>): T {
 }
 
 
+/**
+ * Declares that the type being passed is a class.  Useful in the mixin pattern.
+ * See:  https://www.typescriptlang.org/docs/handbook/mixins.html
+ */
+export type Constructor = new (...args: any[]) => object;
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // Immutable
 // https://stackoverflow.com/questions/41879327/deepreadonly-object-typescript
