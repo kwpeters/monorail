@@ -666,6 +666,30 @@ describe("Result namespace", () => {
     });
 
 
+    describe("fromNullable()", () => {
+
+        it("returns failure Result when the input is undefined", () => {
+            const res = Result.fromNullable(undefined as undefined | number, "error message");
+            expect(res.failed).toBeTrue();
+            expect(res.error).toEqual("error message");
+        });
+
+
+        it("returns failure Result when the input is null", () => {
+            const res = Result.fromNullable(null as null | number, "error message");
+            expect(res.failed).toBeTrue();
+            expect(res.error).toEqual("error message");
+        });
+
+
+        it("returns successful Result when input is neither undefine or null", () => {
+            const res = Result.fromNullable(5 as undefined | number, "error message");
+            expect(res.succeeded).toBeTrue();
+            expect(res.value).toEqual(5);
+        });
+    });
+
+
     describe("fromOption()", () => {
 
         it("when the option is some returns a successful Result wrapping the value", () => {

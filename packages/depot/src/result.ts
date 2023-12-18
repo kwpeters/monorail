@@ -857,6 +857,25 @@ export namespace Result {
 
 
     /**
+     * Converts a value that may be undefined or null into a Result for that
+     * value.
+     *
+     * @param nullable - A value that may be undefined or null
+     * @param err - Error value to be used if _nullable_ is undefined or null
+     * @return A successful Result containing _nullable_ if it was neither
+     * undefined or null.  Otherwise, a failure Result containing _err_.
+     */
+    export function fromNullable<T, TError>(
+        nullable: T | undefined | null,
+        err: TError
+    ): Result<T, TError> {
+        return (nullable === undefined) || (nullable === null) ?
+            new FailedResult(err) :
+            new SucceededResult(nullable);
+    }
+
+
+    /**
      * Converts an Option to a Result.
      *
      * @param opt - The Option to be converted
