@@ -1,3 +1,5 @@
+import { HashString } from "./hash.js";
+
  /**
   * Interface to be implemented by types that support the ability to produce a
   * unique hash that can be used to identify instances.  When implementing this
@@ -16,5 +18,5 @@
   * }
   */
 export interface IHashable {
-    getHash(): string;
+    getHash(): HashString;
 }
