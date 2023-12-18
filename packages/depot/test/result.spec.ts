@@ -410,7 +410,7 @@ describe("Result namespace", () => {
         });
 
 
-        it("with successful input the function is invoked and its result returned", () => {
+        it("with successful input the function is invoked and its Result returned", () => {
             let numInvocations = 0;
             function sqrt(x: number): Result<number, string> {
                 numInvocations += 1;
@@ -480,6 +480,51 @@ describe("Result namespace", () => {
                     // here res.error has type ErrorCode.
                 }
             }
+        });
+
+    });
+
+
+    fdescribe("bindError()", () => {
+
+        it("with successful input the Result is passed along and the function is not invoked", () => {
+
+            let numInvocations = 0;
+
+            const res =
+                pipe(new SucceededResult(1))
+                .pipe((res) => Result.bindError(
+                    (err) => {
+                        numInvocations++;
+                        return new SucceededResult(2);
+                    },
+                    res
+                ))
+                .end();
+
+            expect(res.succeeded).toBeTrue();
+            expect(res.value).toEqual(1);
+            expect(numInvocations).toEqual(0);
+        });
+
+
+        it("with failed input the function is invoked and its Result is returned", () => {
+            let numInvocations = 0;
+
+            const res =
+                pipe(new FailedResult(1))
+                .pipe((res) => Result.bindError(
+                    (err) => {
+                        numInvocations++;
+                        return new SucceededResult(2);
+                    },
+                    res
+                ))
+                .end();
+
+            expect(res.succeeded).toBeTrue();
+            expect(res.value).toEqual(2);
+            expect(numInvocations).toEqual(1);
         });
 
     });

@@ -566,6 +566,33 @@ export namespace Result {
 
 
     /**
+     * If _input_ is an error, unwraps the error and passes it into _fn_,
+     * returning its returned Result.  If _input_ is successful, returns it.
+     *
+     * This function effectively allows you to "fallback" if a previous
+     * operation errored.
+     *
+     * @param fn - The function to invoke when _input_ is an error.  It is
+     * passed the error.
+     * @param input - The input Result.
+     * @return Either the passed-through successful Result or the Result
+     * returned from _fn_.
+     */
+    export function bindError<TInputSuccess, TInputError, TOutputSuccess, TOutputError>(
+        fn: (err: TInputError) => Result<TOutputSuccess, TOutputError>,
+        input: Result<TInputSuccess, TInputError>
+    ): Result<TInputSuccess | TOutputSuccess, TOutputError> {
+        if (input.failed) {
+            const boundResult = fn(input.error);
+            return boundResult;
+        }
+        else {
+            return input;
+        }
+    }
+
+
+    /**
      * Maps each input value through the specified mapping function.  If the
      * mapping function returns a successful result, its value is added to the
      * output array; otherwise nothing is added to the output array.
