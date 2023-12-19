@@ -707,6 +707,60 @@ describe("Result namespace", () => {
     });
 
 
+    describe("gate()", () => {
+
+        it("when input is an error it is returned", () => {
+            let numInvocations = 0;
+            const gateFn = (n: number) => {
+                numInvocations++;
+                return new SucceededResult(n + 1);
+            };
+
+            const res =
+                pipe(new FailedResult("error 1") as Result<number, string>)
+                .pipe((res) => Result.gate(gateFn, res))
+                .end();
+            expect(res.failed).toBeTrue();
+            expect(res.error).toEqual("error 1");
+            expect(numInvocations).toEqual(0);
+        });
+
+
+        it("when input is a success fn is invoked and its failure value is returned", () => {
+            let numInvocations = 0;
+            const gateFn = (n: number) => {
+                numInvocations++;
+                return new FailedResult("error 2");
+            };
+
+            const res =
+                pipe(new SucceededResult(1) as Result<number, string>)
+                .pipe((res) => Result.gate(gateFn, res))
+                .end();
+            expect(res.failed).toBeTrue();
+            expect(res.error).toEqual("error 2");
+            expect(numInvocations).toEqual(1);
+        });
+
+
+        it("when input is a success fn is invoked and its succes causes the original successful Result to be returned", () => {
+            let numInvocations = 0;
+            const gateFn = (n: number) => {
+                numInvocations++;
+                return new SucceededResult(n + 1);
+            };
+
+            const res =
+                pipe(new SucceededResult(1) as Result<number, string>)
+                .pipe((res) => Result.gate(gateFn, res))
+                .end();
+            expect(res.succeeded).toBeTrue();
+            expect(res.value).toEqual(1);
+            expect(numInvocations).toEqual(1);
+        });
+    });
+
+
     describe("mapError()", () => {
 
         it("with successful input the value is passed along and the function is not invoked", () => {

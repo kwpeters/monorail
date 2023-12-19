@@ -893,6 +893,27 @@ export namespace Result {
 
 
     /**
+     * If
+     *
+     * @param param - Description
+     * @return Description
+     */
+    export function gate<TInSuccess, TInError, TOutSuccess, TOutError>(
+        fn: (successVal: TInSuccess) => Result<TOutSuccess, TOutError>,
+        input: Result<TInSuccess, TInError>
+    ): Result<TInSuccess, TInError | TOutError> {
+        if (input.failed) {
+            return input;
+        }
+
+        const resGate = fn(input.value);
+        return resGate.succeeded ?
+            input :
+            resGate;
+    }
+
+
+    /**
      * When _input_ is a failure, maps the wrapped error using _fn_.
      *
      * @param fn - Function that maps the wrapped error value to another value.
