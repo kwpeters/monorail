@@ -893,10 +893,16 @@ export namespace Result {
 
 
     /**
-     * If
+     * If _input_ is successful, invokes _fn_ with the value.  If a successful
+     * Result is returned, _input_ is returned.
      *
-     * @param param - Description
-     * @return Description
+     * @param fn - Function that is invoked to determine whether the original
+     *  successful input is returned.  If this function returns a failure, that
+     *  failed Result is returned.
+     * @param input - The input Result
+     * @return _input_ is returned if it is a failed Result.  Otherwise, if _fn_
+     * is successful, _input_ is returned.  If _fn_ is a failure, that failed
+     * result is returned.
      */
     export function gate<TInSuccess, TInError, TOutSuccess, TOutError>(
         fn: (successVal: TInSuccess) => Result<TOutSuccess, TOutError>,
