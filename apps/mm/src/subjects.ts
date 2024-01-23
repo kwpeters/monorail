@@ -199,6 +199,6 @@ function start(path: string): Result<string, string> {
         return new SucceededResult(`Starting file in default application: "${path}"`);
     }
     else {
-        return new FailedResult(`The path "path" is neither a file or directory.`);
+        return new FailedResult(`The path "${path}" is neither a file or directory.`);
     }
 }
