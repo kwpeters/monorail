@@ -1,11 +1,12 @@
 import { z } from "zod";
 import clipboard from "clipboardy";
-import { Result, SucceededResult } from "../../../packages/depot/src/result.js";
+import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { pipeAsync } from "../../../packages/depot/src/pipeAsync2.js";
 import { File } from "../../../packages/depot-node/src/file.js";
 import { spawn, spawnErrorToString } from "../../../packages/depot-node/src/spawn2.js";
-import { OperatingSystem, getOs } from "../../../packages/depot-node/src/os.js";
 import { launch } from "../../../packages/depot-node/src/launch.js";
+import { Directory } from "../../../packages/depot-node/src/directory.js";
+
 
 
 //
@@ -168,37 +169,36 @@ export const clipboardCommandDefinitions = [
 
 
 function showInExplorer(path: string): Result<string, string> {
-    launch("explorer", [path], { shell: true, windowsVerbatimArguments: true });
+    const pathAsFile = new File(path);
+    const dir = pathAsFile.existsSync() ? pathAsFile.directory : new Directory(path);
+
+    launch("start", ["explorer", `"${dir.toString()}"`], { shell: true, windowsVerbatimArguments: true });
     return new SucceededResult("path");
 }
 
 
 function openInVisualStudioCode(path: string): Result<string, string> {
-    launch("code", [path], {shell: true});
+    launch("code", ["--new-window", `"${path}"`], {shell: true});
     return new SucceededResult(`Opening "${path}" in vscode...`);
 }
 
 function start(path: string): Result<string, string> {
-
-    const filePath = new File(path);
-    const os = getOs();
-
-    // By default, we will try to use "start" on Windows and "open" on OS X.
-    let executable = os === OperatingSystem.Windows ? "start" : "open";
-
-    // Change the executable to the appropriate application for certain
-    // problematic cases.
-    if (os === OperatingSystem.Windows &&
-        filePath.existsSync() &&
-        filePath.extName.toLowerCase() === ".rdp") {
-        executable = "mstsc.exe";
+    const asDirectory = new Directory(path);
+    if (asDirectory.existsSync()) {
+        return showInExplorer(path);
     }
 
-    const pathStr = `"${filePath.toString()}"`;
-    console.log("Attempting to start:");
-    console.log(pathStr);
-    console.log(`using: ${executable}`);
+    const asFile = new File(path);
+    if (asFile.existsSync()) {
 
-    launch(executable, [pathStr], { shell: true });
-    return new SucceededResult(`Starting file in default application: "${path}"`);
+        // Seems like I ought to be able to use "start" here, but that doesn't
+        // work for all applications (such as Remote Desktop mstsc.exe).
+        // Instead, ask Windows explorer to open the file and it will open it
+        // using the default application.
+        launch("explorer", [`"${asFile.toString()}"`], {shell: true, windowsVerbatimArguments: true});
+        return new SucceededResult(`Starting file in default application: "${path}"`);
+    }
+    else {
+        return new FailedResult(`The path "path" is neither a file or directory.`);
+    }
 }
