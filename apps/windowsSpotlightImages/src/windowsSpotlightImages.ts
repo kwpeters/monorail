@@ -72,17 +72,16 @@ async function main(): Promise<Result<number, string>> {
         console.log(`Created output directory '${outDir.toString()}'.`);
     }
 
-    const spotlightAssetsDir = new Directory(
-        os.homedir(),
-        "AppData",
-        "Local",
-        "Packages",
-        "Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy",
-        "LocalState",
-        "Assets"
+    const spotlightAssetsDir1 = new Directory(
+        os.homedir(), "AppData", "Local", "Packages", "Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy", "LocalState", "Assets"
+    );
+    const spotlightAssetsDir2 = new Directory(
+        "C:", "Windows", "SystemApps", "MicrosoftWindows.Client.CBS_cw5n1h2txyewy", "DesktopSpotlight", "Assets", "Images"
     );
 
-    let assetFiles = spotlightAssetsDir.contentsSync(false).files;
+    let assetFiles = spotlightAssetsDir1.contentsSync(false).files.concat(
+        spotlightAssetsDir2.contentsSync(false).files
+    );
 
     // Keep only the files greater than a certain size.  This gets rid of icons
     // that are also kept in this directory.

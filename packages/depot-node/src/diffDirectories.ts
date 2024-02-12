@@ -255,9 +255,9 @@ async function filesAreIdentical(
         return false;
     }
 
-    if (leftStats.mtimeMs !== rightStats.mtimeMs) {
-        return false;
-    }
+    // if (leftStats.mtimeMs !== rightStats.mtimeMs) {
+    //     return false;
+    // }
 
     const [leftHash, rightHash] = await Promise.all([leftFile.getHash(), rightFile.getHash()]);
     if (leftHash !== rightHash) {

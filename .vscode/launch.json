@@ -5,6 +5,28 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "windowsSpotlightImages",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/ts-node/dist/bin.js",
+            "stopOnEntry": false,
+            "args": [
+                "--esm",
+                "--project",
+                "${workspaceRoot}/apps/windowsSpotlightImages/tsconfig.json",
+                "${workspaceRoot}/apps/windowsSpotlightImages/src/windowsSpotlightImages.ts",
+                "C:/Users/kwpeters/SynologyDrive/Drive/home/data/wallpaper/Windows_Spotlight"
+            ],
+            "cwd": "${workspaceRoot}",
+            "runtimeArgs": [
+                "--nolazy"
+            ],
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+        },
+        {
             "name": "mm",
             "type": "node",
             "request": "launch",
