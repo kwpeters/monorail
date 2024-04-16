@@ -11,10 +11,6 @@ import * as cp from "child_process";
  */
 export function launch(cmd: string, args: Array<string>, spawnOptions?: cp.SpawnOptions): void {
 
-    // TODO: Add the ability to set the shell option to true to use the shell
-    // specified by the ComSpec environment variable.  Probably do this on
-    // Windows only.
-
     // Setup default spawn options needed to launch a detached child process.
     let options: cp.SpawnOptions = {
         detached: true,

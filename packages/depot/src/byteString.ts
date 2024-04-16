@@ -6,7 +6,7 @@ const byteRegexStr = "\\s*(?<byteval>[0-9a-fA-F]{1,2})\\s*";
 
 
 /**
- * A function to get a the regex that matches a single byte.  Getting this regex
+ * A function to get a regex that matches a single byte.  Getting this regex
  * is wrapped by this function, because the returned RegExp object has state.
  *
  * @return The regex used to match a hexadecimal byte in string form.
