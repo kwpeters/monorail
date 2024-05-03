@@ -795,8 +795,8 @@ export class Directory {
      *
      * @param cb - A callback function that will be called for each contained
      *   file and subdirectory.  When invoked for a Directory, this callback
-     *   should specify whether to recurse into the directory.
-     * @param includeRootFiles - Whether to include the file in this root
+     *   returns whether to recurse into the directory.
+     * @param includeRootFiles - Whether to include the files in this root
      *   directory
      * @returns A Promise that is resolved with all of the items for which _cb_
      *   returned a truthy _include_ property.
