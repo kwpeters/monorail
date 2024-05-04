@@ -51,13 +51,13 @@ export async function getFilesystemItem(
 
 
 /**
- * Locates a file in the specified directory or a parent directory.
+ * Locates a file in the specified directory or a ancestor directory.
  * @param searchFileName - The file being searched for
  * @param startingDir - The directory where to start searching
- * @return A promise that resolves with a result of the search.  If the search
- * succeeded, the result is successful and contains the found file.  If the
- * search failed, the result is a failure and contains a descriptive string.
- * The returned promise only rejects if the search could not be performed.
+ * @return A promise that resolves with a Result of the search.  If the search
+ * succeeded, the Result is successful and contains the found file.  If the
+ * search failed, the Result is a failure and contains a descriptive string.
+ * The returned Promise only rejects if the search could not be performed.
  */
 export async function resolveFileLocation(
     searchFileName: string,
@@ -97,6 +97,15 @@ export async function resolveFileLocation(
 }
 
 
+/**
+ * Locates a directory in the specified directory or an ancestor directory.
+ * @param searchDirName - The directory being searched for
+ * @param startingDir - The directory where to start searching
+ * @return A promise that resolves with a Result of the search.  If the search
+ * succeeded, the Result is successful and contains the found directory.  If the
+ * search failed, the Result is a failure and contains a descriptive string.
+ * The returned Promise only rejects if the search could not be performed.
+ */
 export async function resolveDirectoryLocation(
     searchDirName: string,
     startingDir: Directory
