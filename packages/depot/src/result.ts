@@ -835,6 +835,40 @@ export namespace Result {
 
 
     /**
+     * Filters an array of Results, taking only the failure ones and then
+     * unwraps them.
+     *
+     * @param results - The input Results
+     * @return An array containing the unwrapped values of the failure
+     * Results.
+     */
+    export function filterErrors<TSuccess, TError>(
+        results: Array<Result<TSuccess, TError>>
+    ): Array<TError> {
+        return results
+        .filter((curRes): curRes is FailedResult<TError> => curRes.failed)
+        .map((curRes) => curRes.error);
+    }
+
+
+    /**
+     * Filters an array of Results, taking only the successful ones and then
+     * unwraps them.
+     *
+     * @param results - The input Results
+     * @return An array containing the unwrapped values of the successful
+     * Results.
+     */
+    export function filterSuccesses<TSuccess, TError>(
+        results: Array<Result<TSuccess, TError>>
+    ): Array<TSuccess> {
+        return results
+        .filter((curRes): curRes is SucceededResult<TSuccess> => curRes.succeeded)
+        .map((curRes) => curRes.value);
+    }
+
+
+    /**
      * Converts a boolean value into a successful or failure Result.
      *
      * @param condition - The condition.

@@ -649,6 +649,52 @@ describe("Result namespace", () => {
     });
 
 
+    describe("filterErrors()", () => {
+
+        const results = [
+            new SucceededResult(0),
+            new FailedResult(1),
+            new SucceededResult(2),
+            new FailedResult(3),
+            new SucceededResult(4)
+        ];
+
+        it("filters taking only the failure results", () => {
+            const errors = Result.filterErrors(results);
+            expect(errors.length).toEqual(2);
+        });
+
+
+        it("unwraps the failure errors", () => {
+            const errors = Result.filterErrors(results);
+            expect(errors).toEqual([1, 3]);
+        });
+    });
+
+
+    describe("filterSuccesses()", () => {
+
+        const results = [
+            new SucceededResult(0),
+            new FailedResult(1),
+            new SucceededResult(2),
+            new FailedResult(3),
+            new SucceededResult(4)
+        ];
+
+        it("filters taking only the successful results", () => {
+            const successes = Result.filterSuccesses(results);
+            expect(successes.length).toEqual(3);
+        });
+
+
+        it("unwraps the successful values", () => {
+            const successes = Result.filterSuccesses(results);
+            expect(successes).toEqual([0, 2, 4]);
+        });
+    });
+
+
     describe("fromBool()", () => {
 
         it("returns a Result wrapping the truthy value when the condition is truthy", () => {
