@@ -1,4 +1,5 @@
-import {matchesAny, setFlags, clearFlags, strToRegExp} from "../src/regexpHelpers.js";
+import { SomeOption } from "../src/option.js";
+import {matchesAny, setFlags, clearFlags, strToRegExp, extractNamedGroup} from "../src/regexpHelpers.js";
 
 
 describe("matchesAny()", () => {
@@ -64,5 +65,33 @@ describe("strToRegExp()", () => {
         const result = strToRegExp("foo\\");
         expect(result.failed).toBeTrue();
         expect(result.error?.length).toBeGreaterThan(0);
+    });
+});
+
+
+describe("extractNamedGroup()", () => {
+
+    it("returns NoneOption when the regex does not contain any named groups", () => {
+
+        const extractedOpt = extractNamedGroup(/foo/, "bar", "foo");
+        expect(extractedOpt.isNone).toBeTrue();
+    });
+
+
+    it("returns NoneOption when named groups exist but not the specified named group", () => {
+        const extractedOpt = extractNamedGroup(/(?<begin>foo)/, "bar", "foo");
+        expect(extractedOpt.isNone).toBeTrue();
+    });
+
+
+    it("returns a SomeOption containing matched text", () => {
+        const extractedOpt = extractNamedGroup(/(?<begin>.{3})/, "begin", "foobarbaz");
+        expect(extractedOpt).toEqual(new SomeOption("foo"));
+    });
+
+
+    it("returns a SomeOption even when matched text is an empty string", () => {
+        const extractedOpt = extractNamedGroup(/(?<begin>.{0,3})foo/, "begin", "foobarbaz");
+        expect(extractedOpt).toEqual(new SomeOption(""));
     });
 });

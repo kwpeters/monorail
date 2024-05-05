@@ -1,5 +1,6 @@
 import * as _ from "lodash-es";
 import { FailedResult, Result, SucceededResult } from "./result.js";
+import { NoneOption, Option, SomeOption } from "./option.js";
 
 
 /**
@@ -96,4 +97,28 @@ export function strToRegExp(str: string): Result<RegExp, string> {
     catch (err) {
         return new FailedResult((err as Error).message);
     }
+}
+
+
+export function extractNamedGroup(
+    regex: RegExp,
+    groupName: string,
+    text: string
+): Option<string> {
+    const matches = regex.exec(text);
+    if (!matches) {
+        return NoneOption.get();
+    }
+
+    const groups = matches.groups;
+    if (groups === undefined) {
+        return NoneOption.get();
+    }
+
+    const groupText = groups[groupName];
+    if (groupText === undefined) {
+        return NoneOption.get();
+    }
+
+    return new SomeOption(groupText);
 }
