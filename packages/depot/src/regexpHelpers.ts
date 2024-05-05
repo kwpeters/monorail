@@ -100,6 +100,16 @@ export function strToRegExp(str: string): Result<RegExp, string> {
 }
 
 
+/**
+ * Matches _regex_ against _text_ and returns the text matched by the specified
+ * named capture group.
+ *
+ * @param regex - The pattern to match
+ * @param param - The group name that is to be extracted upon a successful match
+ * @param text - The text to match against
+ * @return If the match was successful, a SomeOption containing the text matched
+ *     by the specified named group.  Otherwise, a NoneOption.
+ */
 export function extractNamedGroup(
     regex: RegExp,
     groupName: string,
