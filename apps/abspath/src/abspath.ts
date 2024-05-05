@@ -2,11 +2,8 @@ import * as os from "os";
 import yargs from "yargs/yargs";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
 import { pipeAsync } from "../../../packages/depot/src/pipeAsync2.js";
-import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
+import { Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { File } from "../../../packages/depot-node/src/file.js";
-import { mapAsync } from "../../../packages/depot/src/promiseHelpers.js";
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
