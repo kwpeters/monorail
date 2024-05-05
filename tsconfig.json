@@ -12,6 +12,9 @@
             "path": "./packages/depot-node"
         },
         {
+            "path": "./apps/abspath"
+        },
+        {
             "path": "./apps/capcom"
         },
         {
