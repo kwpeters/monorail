@@ -45,6 +45,13 @@ interface IConfig {
 }
 
 
+/**
+ * Gets the configuration for this script from the command line arguments.
+ *
+ * @return A Promise that always resolves with a Result.  If successful, the
+ * Result contains the app configuration.  Otherwise the Result contains an
+ * error message.
+ */
 async function getConfiguration(): Promise<Result<IConfig, string>> {
     const argv =
         await yargs(process.argv.slice(2))
