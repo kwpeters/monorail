@@ -57,3 +57,27 @@ export function* dateRange(startInclusive: Date, endExclusive: Date): Generator<
         curDate = new Date(curDate.getFullYear(), curDate.getMonth(), curDate.getDate() + 1);
     }
 }
+
+
+/**
+ * Converts a month number (1 - 12) to a month index (0 - 11).
+ *
+ * @param month - The month number to be converted
+ * @return Converts a month number as it is typically displayed for users to
+ *      a month index that is used by the Date constructor.
+ */
+export function monthToMonthIndex(month: number): number {
+    return month - 1;
+}
+
+
+/**
+ * Converts a month index (0 - 11) to a month number (1 - 12).
+ *
+ * @param monthIndex - The month index to be converted
+ * @return Converts a month index (used by Date class) to a month number that is
+ *      typically displayed for users.
+ */
+export function monthIndexToMonth(monthIndex: number): number {
+    return monthIndex + 1;
+}
