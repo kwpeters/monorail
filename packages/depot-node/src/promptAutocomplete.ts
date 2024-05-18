@@ -54,7 +54,8 @@ export async function promptForChoiceFuzzy<TItem>(
         name:     "fuzzyPrompt",
         message:  message,
         source:   choiceFilterFn,
-        pageSize: 25
+        pageSize: 25,
+        loop:     false
     };
 
     const answers = await inquirer.prompt<{ fuzzyPrompt: TItem}>([questionCommand]);
