@@ -331,7 +331,7 @@ export function delaySettle<TResolve>(
  *
  * @param collection - The collection of items to iterate over.
  * @param asyncValueFunc - The async mapping function.
- * @return A promise for an array of the resulting mapped values.
+ * @return A Promise for an array of the resulting mapped values.
  */
 export async function mapAsync<TInput, TOutput>(
     collection:     Array<TInput>,
@@ -340,6 +340,26 @@ export async function mapAsync<TInput, TOutput>(
     const promises = collection.map((curItem) => asyncValueFunc(curItem));
     const values = await Promise.all(promises);
     return values;
+}
+
+
+/**
+ * Augments values in `collection` with the value returned by the specified
+ * async function.
+ *
+ * @param collection - The collection of items to be augmented
+ * @param asyncValueFn - The async function that returns the data that will
+ *      augment the original data
+ * @return A Promise for an array of the augmented items.
+ */
+export async function augmentAsync<TInput, TAugment>(
+    collection:     Array<TInput>,
+    asyncValueFn:   (curItem: TInput) => Promise<TAugment>
+): Promise<Array<TInput & TAugment>> {
+    return mapAsync(collection, async (item) => {
+        const augment = await asyncValueFn(item);
+        return {...item, ...augment};
+    });
 }
 
 

@@ -4,7 +4,8 @@ import {
     conditionalTask, sequentialSettle, delaySettle,
     mapAsync, zipWithAsyncValues, filterAsync, removeAsync, partitionAsync,
     allObj, getDelayedRejection,
-    reduceAsync
+    reduceAsync,
+    augmentAsync
 } from "../src/promiseHelpers.js";
 
 
@@ -649,6 +650,45 @@ describe("mapAsync()", () => {
             done();
         });
     });
+});
+
+
+describe("augmentAsync()", () => {
+
+    it("will resolve with the expected augmented values when all async values are successfully gotten", async () => {
+
+        const col = [{value: 1}, {value: 2}, {value: 3}];
+
+        const augmentFn = (input: {value: number}) => Promise.resolve({isEven: input.value % 2 === 0});
+
+        const augmented = await augmentAsync(col, augmentFn);
+        expect(augmented).toEqual([
+            {value: 1, isEven: false},
+            {value: 2, isEven: true},
+            {value: 3, isEven: false}
+        ]);
+    });
+
+
+    it("will reject if obtaining any of the asynchronous values rejects", async () => {
+        const col = [{ value: 1 }, { value: 2 }, { value: 3 }];
+
+        const augmentFn = (input: { value: number; }) => {
+            const isEven = { isEven: input.value % 2 === 0 };
+            return isEven ? Promise.reject("error message") :
+                            Promise.resolve({isEven: isEven as boolean});
+        };
+
+        try {
+            const augmented = await augmentAsync(col, augmentFn);
+            // We should never get here.
+            expect(false).toBeTrue();
+        }
+        catch (err) {
+            expect(err).toEqual("error message");
+        }
+    });
+
 });
 
 

@@ -593,36 +593,6 @@ export namespace Result {
 
 
     /**
-     * Maps each input value through the specified mapping function.  If the
-     * mapping function returns a successful result, its value is added to the
-     * output array; otherwise nothing is added to the output array.
-     *
-     * @param fn - The function that will map each input value to either a
-     * successful value that will be included in the output array or a failure
-     * if no value will be contributed to the output array.
-     * @param input - The input sequence
-     * @returns  The output array
-     */
-    export function choose<TIn, TOut, TError>(
-        fn: (v: TIn,) => Result<TOut, TError>,
-        input: Iterable<TIn>
-    ): Array<TOut> {
-        const inputArr = Array.from(input);
-        const output =
-            inputArr.reduce<Array<TOut>>(
-                (acc, cur) => {
-                    const res = fn(cur);
-                    if (res.succeeded) {
-                        acc.push(res.value);
-                    }
-                    return acc;
-                },
-                []
-            );
-        return output;
-    }
-
-    /**
      * If the input is a successful value, returns the contained value, else
      * returns the default value.
      *

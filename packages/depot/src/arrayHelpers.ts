@@ -1,4 +1,6 @@
 import * as _ from "lodash-es";
+import { Result } from "./result.js";
+
 
 /**
  * Tests the strings in `strings` and returns the first non-null match.
@@ -142,4 +144,82 @@ export function groupConsecutiveBy<T>(items: T[], isSimilarFn: (a: T, b: T) => b
         groups.push(currentGroup);
     }
     return groups;
+}
+
+
+/**
+ * Filters an array and keeps only those items that are not null or undefined.
+ *
+ * @param collection - The collection to be filtered
+ * @return A new array containing the items from `collection` that are not null
+ *      or undefined
+ */
+export function filterDefined<TItem>(
+    collection: Array<TItem | null | undefined>
+): Array<TItem> {
+    return collection.filter(
+        (item): item is TItem => item !== null && item !== undefined
+    );
+}
+
+
+/**
+ * Maps each input value through the specified mapping function.  If the
+ * mapping function returns a successful result, its value is added to the
+ * output array; otherwise nothing is added to the output array.
+ *
+ * @param fn - The function that will map each input value to either a
+ * successful value that will be included in the output array or a failure
+ * if no value will be contributed to the output array.
+ * @param collection - The input sequence
+ * @returns  The output array of chosen items
+ */
+export function choose<TIn, TOut, TError>(
+    fn:         (v: TIn) => Result<TOut, TError>,
+    collection: Iterable<TIn>
+): Array<TOut> {
+
+    const outputCol = [] as Array<TOut>;
+    for (const cur of collection) {
+        const res = fn(cur);
+        if (res.succeeded) {
+            outputCol.push(res.value);
+        }
+    }
+
+    return outputCol;
+}
+
+
+/**
+ * Maps each input value through the specified mapping function (which can be
+ * async).  If the mapping function returns a successful Result, its value is
+ * added to the output array; otherwise nothing is added to the output array.
+ *
+ * @param fn - The function that will map each input value to either a
+ * successful value that will be included in the output array or a failure if no
+ * value will be contributed to the output array.
+ * @param collection - The input sequence
+ * @return The output array of chosen items
+ */
+export async function chooseAsync<TIn, TOut, TError>(
+    fn: (v: TIn) => Result<TOut, TError> | Promise<Result<TOut, TError>>,
+    collection: Iterable<TIn>
+): Promise<Array<TOut>> {
+
+    const promises = [] as Array<Result<TOut, TError> | Promise<Result<TOut, TError>>>;
+    for (const curVal of collection) {
+        promises.push(fn(curVal));
+    }
+
+    const mappedResults = await Promise.all(promises);
+
+    const outputCol = [] as Array<TOut>;
+    for (const curRes of mappedResults) {
+        if (curRes.succeeded) {
+            outputCol.push(curRes.value);
+        }
+    }
+    return outputCol;
+
 }

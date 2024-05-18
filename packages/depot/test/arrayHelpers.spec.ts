@@ -1,4 +1,5 @@
-import {anyMatchRegex, groupConsecutiveBy, insertIf, permutations, split, toArray} from "../src/arrayHelpers.js";
+import {anyMatchRegex, choose, chooseAsync, filterDefined, groupConsecutiveBy, insertIf, permutations, split, toArray} from "../src/arrayHelpers.js";
+import { FailedResult, SucceededResult } from "../src/result.js";
 
 describe("anyMatchRegex()", () => {
 
@@ -218,5 +219,50 @@ describe("groupAdjacentBy()", () => {
         );
     });
 
+
+});
+
+
+describe("filterDefined()", () => {
+
+    it("returns an array containing only the items that are not null or undefined", () => {
+        const input = [1, undefined, "two", null, true];
+        expect(filterDefined(input)).toEqual([1, "two", true]);
+    });
+
+
+    it("returns an empty array if all values are null or undefined", () => {
+        const input = [null, null, undefined, null, undefined, undefined];
+        expect(filterDefined(input)).toEqual([]);
+    });
+
+
+    it("falsy values such as false, 0 and empty string are not filtered out", () => {
+        const input = [false, 0, "", 1];
+        expect(filterDefined(input)).toEqual([false, 0, "", 1]);
+    });
+});
+
+
+describe("choose()", () => {
+
+    it("includes only the return values that are successful", () => {
+        const chooseEven = (x: number) => x % 2 === 0 ? new SucceededResult({ val: x }) : new FailedResult(undefined);
+        const out = choose(chooseEven, [1, 2, 3, 4, 5, 6]);
+        expect(out).toEqual([{ val: 2 }, { val: 4 }, { val: 6 }]);
+    });
+
+});
+
+
+describe("chooseAsync()", () => {
+
+    it("includes only the async return values that are successful", async () => {
+        const chooseEvenAsync = (x: number) => x % 2 === 0 ?
+            Promise.resolve(new SucceededResult({ val: x })) :
+            Promise.resolve(new FailedResult(undefined));
+        const out = await chooseAsync(chooseEvenAsync, [1, 2, 3, 4, 5, 6]);
+        expect(out).toEqual([{ val: 2 }, { val: 4 }, { val: 6 }]);
+    });
 
 });
