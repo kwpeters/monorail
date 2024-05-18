@@ -392,6 +392,32 @@ export async function filterAsync<T>(
 
 
 /**
+ * Reduces a collection based on the results of an asynchronous accumulator
+ * function.
+ *
+ * @param collection - The collection to be reduced
+ * @param asyncAccFn - Accumulator function that returns a Promise for the next
+ * accumulator value
+ * @param acc - The initial value for the accumulator
+ * @return Description
+ */
+export async function reduceAsync<TColItem, TAcc>(
+    collection: Array<TColItem>,
+    asyncAccFn: (acc: TAcc, curVal: TColItem, curIndex: number, col: Array<TColItem>) => Promise<TAcc>,
+    acc: TAcc
+): Promise<TAcc> {
+
+    let curIndex = 0;
+    for (const curItem of collection) {
+        acc = await asyncAccFn(acc, curItem, curIndex, collection);
+        curIndex += 1;
+    }
+
+    return acc;
+}
+
+
+/**
  * Partitions a collection into two collections based on the result of invoking
  * an asynchronous predicate on each item.
  *

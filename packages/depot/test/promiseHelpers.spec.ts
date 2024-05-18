@@ -3,7 +3,8 @@ import {
     sequence, getTimerPromise, retry, retryWhile, promiseWhile,
     conditionalTask, sequentialSettle, delaySettle,
     mapAsync, zipWithAsyncValues, filterAsync, removeAsync, partitionAsync,
-    allObj, getDelayedRejection
+    allObj, getDelayedRejection,
+    reduceAsync
 } from "../src/promiseHelpers.js";
 
 
@@ -727,6 +728,45 @@ describe("filterAsync", () => {
             done();
         });
     });
+
+});
+
+
+describe("reduceAsync()", () => {
+
+    it("returns the expected reduced value", async () => {
+        const reduced = await reduceAsync(
+            [1, 2, 3],
+            (acc, curVal) => {
+                return Promise.resolve([...acc, curVal + 1]);
+            },
+            [] as number[]
+        );
+        expect(reduced).toEqual([2, 3, 4]);
+    });
+
+
+    it("rejects if the accumulator function rejects", async () => {
+        try {
+            const reduced = await reduceAsync(
+                [1, 2, 3],
+                (acc, curVal) => {
+                    return curVal % 2 === 0 ?
+                        Promise.reject("error message") :
+                        Promise.resolve([...acc, curVal + 1]);
+                },
+                [] as number[]
+            );
+
+            // The above should reject.  We should never get here.
+            expect(false).toBeTrue();
+        }
+        catch (err) {
+            expect(true).toBeTrue();
+            expect(err).toEqual("error message");
+        }
+    });
+
 
 });
 
