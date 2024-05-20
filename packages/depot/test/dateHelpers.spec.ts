@@ -1,4 +1,4 @@
-import { dateRange, dayOfWeek } from "../src/dateHelpers.js";
+import { dateRange, dayOfWeek, durationString } from "../src/dateHelpers.js";
 
 
 describe("dayOfWeek()", () => {
@@ -59,4 +59,17 @@ describe("dateRange()", () => {
         ]);
     });
 
+});
+
+
+
+describe("durationString()", () => {
+
+    it("returns the expected string", () => {
+        const t1 = Date.now();
+
+        expect(durationString(t1, t1 + 1000)).toEqual("0:01");
+        expect(durationString(t1, t1 + 1 * 60 * 1000 + 2 * 1000)).toEqual("1:02");
+        expect(durationString(t1, t1 + 1 * 60 * 60 * 1000 + 2 * 60 * 1000 + 3 * 1000)).toEqual("1:02:03");
+    });
 });
