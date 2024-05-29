@@ -262,7 +262,7 @@ export class Directory {
                 }, []);
 
                 // Don't attempt to create the root of the filesystem.
-                if ((dirsToCreate.length > 0) && (dirsToCreate[0] === path.sep)) {
+                if ((dirsToCreate.length > 0) && ((new Directory(dirsToCreate[0])).parentDir() === undefined)) {
                     dirsToCreate.shift();
                 }
 
