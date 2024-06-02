@@ -3,6 +3,7 @@ import { spawn } from "./spawn2.js";
 import { File } from "./file.js";
 import { Directory } from "./directory.js";
 import { FsItem } from "./fsItem.js";
+import { OperatingSystem, getOs } from "./os.js";
 
 
 export async function launchAdmin(executable: File, cwd: Directory | undefined = undefined): Promise<boolean> {
@@ -20,7 +21,21 @@ export async function launchAdmin(executable: File, cwd: Directory | undefined =
 }
 
 
+/**
+ * Gets the UNC path to an item in the filesystem.
+ *
+ * @param fsItem - The item to get the UNC path to
+ * @return A Promise that always resolves with a Result.  Successful results
+ * contain the UNC path of fsItem.  Failed results contain an error message.
+ */
 export async function getUncPath(fsItem: FsItem): Promise<Result<string, string>> {
+
+    // Because this function uses the "net use" command, this functionality is
+    // currently only supported on Windows.
+    if (getOs() !== OperatingSystem.Windows) {
+        return new FailedResult(`getUncPath() only supports Windows.`);
+    }
+
     const abspath = fsItem.absPath();
 
     const driveLetterRegex = /^(?<driveLetter>[a-z]):/i;

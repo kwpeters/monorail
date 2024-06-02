@@ -9,4 +9,8 @@ describe("getUncPath()", () => {
     //     expect(uncRes.value!).toContain("floyd");
     // });
 
+    it("dummy", () => {
+        expect(true).toBeTrue();
+    });
+
 });

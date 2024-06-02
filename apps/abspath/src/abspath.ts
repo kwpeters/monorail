@@ -4,6 +4,7 @@ import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
 import { pipeAsync } from "../../../packages/depot/src/pipeAsync2.js";
 import { Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { File } from "../../../packages/depot-node/src/file.js";
+import { getUncPath } from "../../../packages/depot-node/src/windowsHelpers.js";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -24,17 +25,44 @@ else if (res.value !== 0) {
 async function main(): Promise<Result<number, string>> {
     return pipeAsync(
         getConfiguration(),
-        (configRes) => PromiseResult.bind(
-            (config) => {
-                const absPaths = config.files.map((file) => file.absPath());
-                return new SucceededResult(absPaths);
+
+        (configRes) => Result.tapSuccess(
+            async (config) => {
+                // Loop through the files in the configuration and print
+                // their information.
+                for (const curFile of config.files) {
+                    // Print the file's absolute path.
+                    console.log(curFile.absPath());
+
+                    // If we can get a UNC path for the file, print that too.
+                    const uncRes = await getUncPath(curFile);
+                    if (uncRes.succeeded) {
+                        console.log(uncRes.value);
+                    }
+                }
             },
             configRes
         ),
-        (absPathsRes) => Result.tapSuccess(
-            (absPaths) => console.log(absPaths.join("\n")),
-            absPathsRes
-        ),
+
+
+        // (configRes) => PromiseResult.bind(
+        //     (config) => {
+        //         const absPaths = config.files.map((file) => file.absPath());
+        //         return new SucceededResult(absPaths);
+        //     },
+        //     configRes
+        // ),
+        // (absPathsRes) => Result.tapSuccess(
+        //     (absPaths) => {
+        //         // Print the absolute path.
+        //         console.log(absPaths.join("\n"));
+        //
+        //         // If we can get a UNC path, print it too.
+        //         const uncRes = getUncPath()
+        //
+        //     },
+        //     absPathsRes
+        // ),
         (res) => Result.mapSuccess(() => 0, res)
     );
 }
