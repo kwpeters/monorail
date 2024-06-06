@@ -1,6 +1,7 @@
 import { z } from "zod";
 import clipboard from "clipboardy";
 import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
+import { ternary } from "../../../packages/depot/src/algorithm.js";
 import { pipeAsync } from "../../../packages/depot/src/pipeAsync2.js";
 import { File } from "../../../packages/depot-node/src/file.js";
 import { spawn, spawnErrorToString } from "../../../packages/depot-node/src/spawn2.js";
@@ -131,8 +132,10 @@ export const fsItemCommandDefinitions = [
     {
         name: "copy path",
         fn:   (subject) => {
-            clipboard.writeSync(subject.path);
-            return new SucceededResult(subject.path);
+            // If the path contains any spaces, wrap it in double quotes.
+            const text = ternary(subject.path, (v) => v.includes(""), (v) => `"${v}"`);
+            clipboard.writeSync(text);
+            return new SucceededResult(text);
         }
     },
     {

@@ -114,3 +114,43 @@ export function partition<TValue>(
         itB.value = tmpVal;
     }
 }
+
+
+/**
+ * A more sophisticated ternary expression.
+ *
+ * @param val - The value to be examined
+ * @param predicate - A predicate that uses _val_ to determine whether the true
+ *      branch or false branch will be taken.
+ * @param trueFn - When the predicate returns a truthy value, this function is
+ *      invoked with _val_ to determine the return value.  If undefined, _val_
+ *      will be returned.
+ * @param falseFn - When the predicate returns a falsy value, this function is
+ *      invoked with _val_ to determine the return value.  If undefined, _val_
+ *      will be returned.
+ * @return The value returned from _trueFn_ or _falseFn_.
+ */
+export function ternary<T>(
+    val: T,
+    predicate: (val: T) => unknown,
+    trueFn: ((val: T) => T) | undefined,
+    falseFn: ((val: T) => T) | undefined = undefined
+): T {
+
+    trueFn ??= id;
+    falseFn ??= id;
+    return predicate(val) ?
+        trueFn(val) :
+        falseFn(val);
+}
+
+
+/**
+ * Identity function.
+ *
+ * @param v - The value that will be returned.
+ * @return The value passed in.
+ */
+export function id<T>(v: T): T {
+    return v;
+}
