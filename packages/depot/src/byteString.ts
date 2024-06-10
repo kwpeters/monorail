@@ -54,7 +54,7 @@ export class ByteString {
 
 
     private readonly _origStr: string;
-    private readonly _bytes: Array<number> = [];
+    private readonly _bytes: ReadonlyArray<number> = [];
 
 
     private constructor(origStr: string, bytes: Array<number>) {
