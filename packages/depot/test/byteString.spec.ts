@@ -127,15 +127,26 @@ describe("ByteString", () => {
 
 
             it("converts single digit bytes to double digit bytes", () => {
+                const input = "01 2 03 4 05";
+                const res = ByteString.create(input);
+                expect(res.succeeded).toBeTrue();
+                expect(res.value!.toNormalizedString()).toEqual("01 02 03 04 05");
             });
 
 
             it("reduces whitespace to a single space", () => {
-
+                const input = "   01\t\t2      03  \t   4 05  \t  ";
+                const res = ByteString.create(input);
+                expect(res.succeeded).toBeTrue();
+                expect(res.value!.toNormalizedString()).toEqual("01 02 03 04 05");
             });
 
 
             it("converts uppercase A through F to lowercase", () => {
+                const input = "0A B 0C D 0E";
+                const res = ByteString.create(input);
+                expect(res.succeeded).toBeTrue();
+                expect(res.value!.toNormalizedString()).toEqual("0a 0b 0c 0d 0e");
             });
 
         });
