@@ -179,7 +179,7 @@ describe("Symlink", () => {
                     const linkStringRes = await symlink.pathToTarget();
                     expect(linkStringRes.succeeded).toBeTrue();
 
-                    const expectedPathTail = path.join("monorail", "packages", "depot-node", "tmp", "foo.txt");
+                    const expectedPathTail = path.join("packages", "depot-node", "tmp", "foo.txt");
                     expect(linkStringRes.value!.endsWith(expectedPathTail)).toBeTrue();
                 });
 
@@ -276,7 +276,7 @@ describe("Symlink", () => {
 
                 const destPathToTargetRes = await destSymlink.pathToTarget();
                 expect(destPathToTargetRes.succeeded).toBeTrue();
-                expect(destPathToTargetRes.value).toMatch(/monorail.packages.depot-node.tmp.targetFile.txt/);
+                expect(destPathToTargetRes.value).toMatch(/packages.depot-node.tmp.targetFile.txt/);
             });
 
         });
