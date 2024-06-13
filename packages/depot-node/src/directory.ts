@@ -383,7 +383,11 @@ export class Directory {
                 return;
             }
             else {
-                return fsp.rm(this._dirPath, {recursive: true, force: true});
+                // With retries, the following may take up to 12 seconds.
+                return fsp.rm(
+                    this._dirPath,
+                    { recursive: true, force: true, maxRetries: 15, retryDelay: 100}
+                );
             }
         });
     }
@@ -398,7 +402,11 @@ export class Directory {
             return;
         }
 
-        fs.rmSync(this._dirPath, {recursive: true, force: true});
+        // With retries, the following may take up to 12 seconds.
+        fs.rmSync(
+            this._dirPath,
+            { recursive: true, force: true, maxRetries: 15, retryDelay: 100 }
+        );
     }
 
 
