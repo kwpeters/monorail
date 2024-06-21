@@ -1,6 +1,7 @@
 import * as url from "url";
 import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
+import { pipe } from "../../../packages/depot/src/pipe2.js";
 import { Directory } from "../../../packages//depot-node/src/directory.js";
 import { File } from "../../../packages/depot-node/src/file.js";
 import { openInEmacs } from "../../../packages/depot-node/src/editor.js";
@@ -35,12 +36,15 @@ async function main(): Promise<Result<number, string>> {
     const todoFileRes = getTodoFile();
     const clipPaletteFileRes = getClipPaletteFile();
     const notesDirRes = getNotesFolder();
+    const logixFileRes = getLogixFile();
+
 
     const allRes = Result.allM(
         fortyThreeFoldersRes,
         todoFileRes,
         clipPaletteFileRes,
         notesDirRes,
+        logixFileRes,
         // Last item will be the one on top in Emacs
         captlogRes
     );
@@ -81,4 +85,12 @@ function getNotesFolder(): Result<Directory, string> {
     }
 
     return new SucceededResult(new Directory(cloudHome, "data", "notes"));
+}
+
+
+function getLogixFile(): Result<File, string> {
+    return pipe(
+        getNotesFolder(),
+        (dirRes) => Result.mapSuccess((dir) => new File(dir, "rockwell", "logix.org"), dirRes)
+    );
 }
