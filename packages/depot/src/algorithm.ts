@@ -1,4 +1,5 @@
-import {Iterator} from "./list.js";
+import { Iterator } from "./list.js";
+import { id } from "./functional.js";
 
 
 /**
@@ -142,15 +143,4 @@ export function ternary<T>(
     return predicate(val) ?
         trueFn(val) :
         falseFn(val);
-}
-
-
-/**
- * Identity function.
- *
- * @param v - The value that will be returned.
- * @return The value passed in.
- */
-export function id<T>(v: T): T {
-    return v;
 }
