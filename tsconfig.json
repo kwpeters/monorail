@@ -45,6 +45,9 @@
             "path": "./apps/ideaDiff"
         },
         {
+            "path": "./apps/importPhotos"
+        },
+        {
             "path": "./apps/localWork"
         },
         {
