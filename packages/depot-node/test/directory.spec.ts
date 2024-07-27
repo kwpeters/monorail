@@ -119,7 +119,6 @@ describe("Directory", () => {
         describe("parentDir()", () => {
 
             beforeEach(() => {
-                tmpDir.ensureExistsSync();
                 tmpDir.emptySync();
             });
 
@@ -164,7 +163,6 @@ describe("Directory", () => {
         describe("isRoot()", () => {
 
             beforeEach(() => {
-                tmpDir.ensureExistsSync();
                 tmpDir.emptySync();
             });
 
