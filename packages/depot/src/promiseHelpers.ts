@@ -335,9 +335,9 @@ export function delaySettle<TResolve>(
  */
 export async function mapAsync<TInput, TOutput>(
     collection:     Array<TInput>,
-    asyncValueFunc: (curItem: TInput) => Promise<TOutput>
+    asyncValueFunc: (curItem: TInput, index: number, col: Array<TInput>) => Promise<TOutput>
 ): Promise<Array<TOutput>> {
-    const promises = collection.map((curItem) => asyncValueFunc(curItem));
+    const promises = collection.map((curItem, idx, col) => asyncValueFunc(curItem, idx, col));
     const values = await Promise.all(promises);
     return values;
 }
@@ -354,10 +354,10 @@ export async function mapAsync<TInput, TOutput>(
  */
 export async function augmentAsync<TInput, TAugment>(
     collection:     Array<TInput>,
-    asyncValueFn:   (curItem: TInput) => Promise<TAugment>
+    asyncValueFn:   (curItem: TInput, idx: number, col: Array<TInput>) => Promise<TAugment> | TAugment
 ): Promise<Array<TInput & TAugment>> {
-    return mapAsync(collection, async (item) => {
-        const augment = await asyncValueFn(item);
+    return mapAsync(collection, async (item, idx, col) => {
+        const augment = await Promise.resolve(asyncValueFn(item, idx, col));
         return {...item, ...augment};
     });
 }
