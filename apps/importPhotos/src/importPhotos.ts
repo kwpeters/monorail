@@ -6,6 +6,7 @@ import { FailedResult, Result, SucceededResult } from "../../../packages/depot/s
 import { pipeAsync } from "../../../packages/depot/src/pipeAsync2.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
 import { Directory } from "../../../packages/depot-node/src/directory.js";
+import { promptToContinue } from "../../../packages/depot-node/src/prompts.js";
 import { datestampStrategyFilePath } from "./datestampStrategy.js";
 import { ConfidenceLevel, IDatestampDeductionSuccess } from "./datestampDeduction.js";
 
@@ -62,6 +63,11 @@ async function main(): Promise<Result<number, string>> {
     }
 
     const successfulDeductions = deductions as Array<IDatestampDeductionSuccess>;
+
+    const shouldContinue = await promptToContinue(`Ready to import ${successfulDeductions.length} files.  Continue?`, false);
+    if (!shouldContinue) {
+        return new FailedResult("Import aborted by user.");
+    }
 
     //
     // Move the files.
