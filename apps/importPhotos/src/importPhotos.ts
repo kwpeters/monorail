@@ -1,12 +1,13 @@
 import * as os from "os";
 import * as url from "url";
+import * as _ from "lodash-es";
 import yargs from "yargs/yargs";
 import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { pipeAsync } from "../../../packages/depot/src/pipeAsync2.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
 import { Directory } from "../../../packages/depot-node/src/directory.js";
 import { datestampStrategyFilePath } from "./datestampStrategy.js";
-import { ConfidenceLevel } from "./datestampDeduction.js";
+import { ConfidenceLevel, IDatestampDeductionSuccess } from "./datestampDeduction.js";
 
 if (runningThisScript()) {
 
@@ -34,9 +35,18 @@ async function main(): Promise<Result<number, string>> {
         return configRes;
     }
 
-    const deductions = await pipeAsync(
+    const importFiles = await pipeAsync(
         configRes.value.importDir.contents(true),
-        (dirContents) => dirContents.files,
+        (contents) => contents.files
+    );
+
+    console.log(`Found ${importFiles.length} files to import.`);
+    if (importFiles.length === 0) {
+        return new SucceededResult(0);
+    }
+
+    const deductions = await pipeAsync(
+        importFiles,
         (files) => Promise.all(files.map((curFile) => datestampStrategyFilePath(curFile, configRes.value.photoLibDir)))
     );
 
@@ -51,7 +61,22 @@ async function main(): Promise<Result<number, string>> {
         return new FailedResult(lines.join(os.EOL));
     }
 
-    // Left off here.
+    const successfulDeductions = deductions as Array<IDatestampDeductionSuccess>;
+
+    //
+    // Move the files.
+    //
+    const importedFiles = await pipeAsync(
+        _.zipWith(importFiles, successfulDeductions, (first, second) => [first, second] as const),
+        (tuples) => Promise.all(tuples.map(([importFile, deduction]) => {
+            return importFile.move(deduction.destFile);
+        }))
+    );
+
+    console.log(`Successfully imported ${importedFiles.length} files:`);
+    for (const curImportedFile of importedFiles) {
+        console.log("    " + curImportedFile.toString());
+    }
 
     return new SucceededResult(0);
 }
