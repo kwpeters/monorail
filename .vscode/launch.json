@@ -5,6 +5,29 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "importPhotos",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/ts-node/dist/bin.js",
+            "stopOnEntry": false,
+            "args": [
+                "--esm",
+                "--project",
+                "${workspaceRoot}/apps/importPhotos/tsconfig.json",
+                "${workspaceRoot}/apps/importPhotos/src/importPhotos.ts",
+                "C:\\kwptmp\\photo\\mobile-uploads\\pam",
+                "C:\\kwptmp\\photo\\photoLib"
+            ],
+            "cwd": "${workspaceRoot}",
+            "runtimeArgs": [
+                "--nolazy"
+            ],
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+        },
+        {
             "name": "windowsSpotlightImages",
             "type": "node",
             "request": "launch",
