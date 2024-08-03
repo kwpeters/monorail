@@ -5,10 +5,17 @@ import yargs from "yargs/yargs";
 import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { pipeAsync } from "../../../packages/depot/src/pipeAsync2.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
+import { matchesAny } from "../../../packages/depot/src/regexpHelpers.js";
 import { Directory } from "../../../packages/depot-node/src/directory.js";
 import { promptToContinue } from "../../../packages/depot-node/src/prompts.js";
 import { datestampStrategyFilePath } from "./datestampStrategy.js";
 import { ConfidenceLevel, IDatestampDeductionSuccess } from "./datestampDeduction.js";
+
+
+const skipFileRegexes = [
+    /Thumbs.db/i
+] as Array<RegExp>;
+
 
 if (runningThisScript()) {
 
@@ -38,7 +45,8 @@ async function main(): Promise<Result<number, string>> {
 
     const importFiles = await pipeAsync(
         configRes.value.importDir.contents(true),
-        (contents) => contents.files
+        (contents) => contents.files,
+        (files) => files.filter((curFile) => !matchesAny(curFile.absPath(), skipFileRegexes))
     );
 
     console.log(`Found ${importFiles.length} files to import.`);
