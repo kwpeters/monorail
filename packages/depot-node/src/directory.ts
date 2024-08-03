@@ -114,19 +114,7 @@ export class Directory {
      * directory is the root of a drive.
      */
     public parentDir(): undefined | Directory {
-        const absPath = this.absPath();
-        let parts = absPath.split(path.sep);
-
-        // If we are dealing with a UNC path (that starts with "\\"), the
-        // previous split() operation will result in the first two items in the
-        // output array being empty strings.  If that is the case, remove them
-        // and replace the "\\" at the beginning of the first part.
-        if (parts.length >= 2 &&
-            parts[0].length === 0 &&
-            parts[1].length === 0) {
-            parts = parts.slice(2);
-            parts[0] = "\\\\" + parts[0];
-        }
+        const parts = this.split();
 
         // If the directory separator was not found, the split will result in a
         // 1-element array.  If this is the case, this directory is the root of
@@ -236,7 +224,7 @@ export class Directory {
                 return;
             }
             else {
-                const parts = this._dirPath.split(path.sep);
+                const parts = this.split();
 
                 // Create an array of successively longer paths, each one adding a
                 // new directory onto the end.
@@ -256,7 +244,8 @@ export class Directory {
                     }
                     else {
                         const last = acc[acc.length - 1]!;
-                        acc.push(path.join(last, curPart));
+                        const newDirPath = path.join(last, curPart);
+                        acc.push(newDirPath);
                     }
                     return acc;
                 }, []);
@@ -300,7 +289,7 @@ export class Directory {
             return this;
         }
 
-        const parts = this._dirPath.split(path.sep);
+        const parts = this.split();
 
         // Create an array of successively longer paths, each one adding a
         // new directory onto the end.
@@ -909,4 +898,35 @@ export class Directory {
             .reduce((acc, stat) => acc + stat.size, 0);
         return StorageSize.fromBytes(totalBytes);
     }
+
+
+    /**
+     * Helper method that splits this Directory's path into parts, adjusting
+     * for UNC paths.
+     *
+     * @return The path parts
+     */
+    private split(): string[] {
+        const absPath = this.absPath();
+        let parts = absPath.split(path.sep);
+
+        // If the path is a UNC path, there will be 4 or more parts:
+        // 1. empty
+        // 2. empty
+        // 3. server name
+        // 4. share name
+        // etc.
+        if (parts.length >= 4 &&
+            parts[0].length === 0 &&
+            parts[1].length === 0) {
+            // Adjust the parts.  Get rid of the first two empty parts and
+            // prefix the new first part with "\\".
+            parts = parts.slice(2);
+            parts[0] = "\\\\" + parts[0];
+        }
+
+        return parts;
+    }
+
+
 }
