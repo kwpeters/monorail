@@ -86,6 +86,14 @@ export class Datestamp {
 
 
     /**
+     * @return The month (1-12) of this Datestamp
+     */
+    public get month(): number {
+        return this._month;
+    }
+
+
+    /**
      * Compares two Datestamp instances.
      * @param other - The other Datestamp instance to compare to.
      * @return true if equal; false otherwise.

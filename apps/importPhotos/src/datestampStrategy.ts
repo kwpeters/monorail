@@ -1,4 +1,5 @@
 import { mapAsync } from "../../../packages/depot/src/promiseHelpers.js";
+import { padLeft } from "../../../packages/depot/src/stringHelpers.js";
 import { File } from "../../../packages/depot-node/src/file.js";
 import { Directory } from "../../../packages/depot-node/src/directory.js";
 import { Datestamp } from "./datestamp.js";
@@ -44,11 +45,22 @@ export function datestampStrategyFilePath(source: File, destDir: Directory): Pro
 
     const datestamp = datestampResult.value;
 
+    // Old destination file path where there is no month directory.
+    // const dest = new File(destDir, datestamp.year.toString(), datestamp.toString(), source.fileName);
+
+    const destFile = new File(
+        destDir,
+        datestamp.year.toString(),
+        padLeft(datestamp.month.toString(), "0", 2),
+        datestamp.toString(),
+        source.fileName
+    );
+
     return Promise.resolve({
         confidence:  ConfidenceLevel.Medium,
         datestamp:   datestampResult.value,
         explanation: `The file path '${absPath}' contains the date '${dateStr}'.`,
-        destFile:    new File(destDir, datestamp.year.toString(), datestamp.toString(), source.fileName)
+        destFile
     });
 }
 
