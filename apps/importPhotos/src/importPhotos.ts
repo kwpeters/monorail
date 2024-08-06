@@ -8,12 +8,15 @@ import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
 import { matchesAny } from "../../../packages/depot/src/regexpHelpers.js";
 import { Directory } from "../../../packages/depot-node/src/directory.js";
 import { promptToContinue } from "../../../packages/depot-node/src/prompts.js";
+import { TaskQueue } from "../../../packages/depot-node/src/taskQueue.js";
 import { datestampStrategyFilePath } from "./datestampStrategy.js";
 import { ConfidenceLevel, IDatestampDeductionSuccess } from "./datestampDeduction.js";
 
 
 const skipFileRegexes = [
-    /Thumbs.db/i
+    /Thumbs.db/i,
+    /ZbThumbnail.info/i,
+    /picasa.ini/i,
 ] as Array<RegExp>;
 
 
@@ -80,17 +83,29 @@ async function main(): Promise<Result<number, string>> {
     //
     // Move the files.
     //
-    const importedFiles = await pipeAsync(
-        _.zipWith(importFiles, successfulDeductions, (first, second) => [first, second] as const),
-        (tuples) => Promise.all(tuples.map(([importFile, deduction]) => {
-            return importFile.move(deduction.destFile);
-        }))
+
+    // TODO: Check for destination folder existence once and then use fs.rename to move the files.
+
+    // Use a task queue to move the files, because when I try to do this in an
+    // unthrottled way I get errors that there are too many open files.
+    const taskQueue = new TaskQueue(20, false);
+
+    const tuples = _.zipWith(
+        importFiles,
+        successfulDeductions,
+        (importFile, deduction) => [importFile, deduction] as const
     );
 
-    console.log(`Successfully imported ${importedFiles.length} files:`);
-    for (const curImportedFile of importedFiles) {
-        console.log("    " + curImportedFile.toString());
-    }
+    const taskPromises = tuples.map(([importFile, deduction]) => {
+        const task = async () => {
+            await importFile.move(deduction.destFile);
+            console.log(`${importFile.toString()} --> ${deduction.destFile.toString()}`);
+        };
+        return taskQueue.push(task);
+    });
+    await Promise.all(taskPromises);
+
+    console.log(`Successfully imported ${tuples.length} files.`);
 
     return new SucceededResult(0);
 }

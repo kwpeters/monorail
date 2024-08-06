@@ -17,6 +17,8 @@
                 "${workspaceRoot}/apps/importPhotos/src/importPhotos.ts",
                 "C:\\kwptmp\\photo\\mobile-uploads\\pam",
                 "C:\\kwptmp\\photo\\photoLib"
+                // "\\\\floyd\\photo\\mobile-uploads\\test",
+                // "\\\\floyd\\photo"
             ],
             "cwd": "${workspaceRoot}",
             "runtimeArgs": [
