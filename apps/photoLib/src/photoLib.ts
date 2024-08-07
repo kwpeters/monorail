@@ -131,7 +131,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
             [
                 "Moves photos and videos into my preferred photo directory structure.",
                 "",
-                "importPhotos <importDir> <photoLibDir>"
+                "photoLib <importDir> <photoLibDir>"
             ].join(os.EOL)
         )
         .help()

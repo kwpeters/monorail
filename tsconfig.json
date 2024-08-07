@@ -45,9 +45,6 @@
             "path": "./apps/ideaDiff"
         },
         {
-            "path": "./apps/importPhotos"
-        },
-        {
             "path": "./apps/localWork"
         },
         {
@@ -61,6 +58,9 @@
         },
         {
             "path": "./apps/npmRunParallel"
+        },
+        {
+            "path": "./apps/photoLib"
         },
         {
             "path": "./apps/randomFile"

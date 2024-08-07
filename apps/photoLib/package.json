@@ -1,19 +1,19 @@
 {
-    "name": "importPhotos",
+    "name": "photoLib",
     "version": "1.0.0",
     "type": "module",
     "description": "A sample client that uses packages",
-    "main": "../../out/apps/importPhotos/src/importPhotos.js",
-    "types": "../../out/apps/importPhotos/src/importPhotos.d.ts",
+    "main": "../../out/apps/photoLib/src/photoLib.js",
+    "types": "../../out/apps/photoLib/src/photoLib.d.ts",
     "bin": {
-        "importPhotos": "./src/importPhotos.js"
+        "photoLib": "./src/photoLib.js"
     },
     "scripts": {
         "ut": "ts-node --esm --project ./tsconfig.json ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
         "tsc:post": "ts-node --esm --project ./tsconfig.json ../../build/postBuild.ts ."
     },
     "files": [
-        "../../out/apps/importPhotos"
+        "../../out/apps/photoLib"
     ],
     "dependencies": {
         "lodash-es": "^4.17.21",
