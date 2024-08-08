@@ -15,7 +15,10 @@
                 "--project",
                 "${workspaceRoot}/apps/photoLib/tsconfig.json",
                 "${workspaceRoot}/apps/photoLib/src/photoLib.ts",
+                "import",
+                "--importPath",
                 "C:\\kwptmp\\photo\\mobile-uploads\\pam",
+                "--photoLibPath",
                 "C:\\kwptmp\\photo\\photoLib"
                 // "\\\\floyd\\photo\\mobile-uploads\\test",
                 // "\\\\floyd\\photo"
