@@ -11,6 +11,9 @@ import { datestampStrategyFilePath } from "./datestampStrategy.js";
 import { ConfidenceLevel, IDatestampDeductionSuccess } from "./datestampDeduction.js";
 
 
+/**
+ * Files that will be ignored when searching for files to be imported.
+ */
 const skipFileRegexes = [
     /Thumbs.db/i,
     /ZbThumbnail.info/i,
@@ -18,18 +21,18 @@ const skipFileRegexes = [
 ] as Array<RegExp>;
 
 
+
+
+
+/**
+ * A type that describes the properties that are added to the Yargs arguments
+ * object once the command line has been parsed.  This must be kept in sync with
+ * the builder.
+ */
 export interface IArgsImport {
     importDir: string;
     photoLibDir: string;
 }
-
-interface IImportConfig {
-    importDir: Directory;
-    photoLibDir: Directory;
-}
-
-
-
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 const builder = (yargs: Argv<NonNullable<unknown>>) => {
@@ -53,11 +56,8 @@ const builder = (yargs: Argv<NonNullable<unknown>>) => {
 };
 
 
-// export type ArgvImport = ReturnType<typeof builder>;
-
-
 async function handler(argv: ArgumentsCamelCase<IArgsImport>): Promise<Result<number, string>> {
-    const configRes = await validateArgs(argv);
+    const configRes = await argsToConfig(argv);
     if (configRes.failed) {
         return configRes;
     }
@@ -127,9 +127,24 @@ async function handler(argv: ArgumentsCamelCase<IArgsImport>): Promise<Result<nu
 }
 
 
+/**
+ * Config object for this subcommand.
+ */
+interface IImportConfig {
+    importDir: Directory;
+    photoLibDir: Directory;
+}
 
 
-async function validateArgs(argv: ArgumentsCamelCase<IArgsImport>): Promise<Result<IImportConfig, string>> {
+/**
+ * Converts this subcommands arguments to its configuration object.
+ *
+ * @param argv - This subcommand's arguments
+ * @return If successful, a successful Result containing the config object.
+ */
+async function argsToConfig(
+    argv: ArgumentsCamelCase<IArgsImport>
+): Promise<Result<IImportConfig, string>> {
 
     const importDir = new Directory(argv.importDir);
     const photoLibDir = new Directory(argv.photoLibDir);
@@ -148,10 +163,12 @@ async function validateArgs(argv: ArgumentsCamelCase<IArgsImport>): Promise<Resu
 }
 
 
+/**
+ * Definition of this subcommand.
+ */
 export const def = {
     command:     "import",
     description: "Imports files into the specified photo library.",
     builder:     builder,
     handler:     handler
-
 };
