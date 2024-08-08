@@ -389,6 +389,13 @@ describe("Directory", () => {
             });
 
 
+            it("works with a UNC directory", async () => {
+                const dir1 = new Directory("\\\\floyd\\home\\tmp\\monorail_ut");
+                const dir2 = await dir1.ensureExists();
+                expect(dir2.toString()).toEqual("\\\\floyd\\home\\tmp\\monorail_ut");
+                await dir1.delete();
+            });
+
         });
 
 
@@ -417,6 +424,12 @@ describe("Directory", () => {
             });
 
 
+            it("works with a UNC directory", () => {
+                const dir1 = new Directory("\\\\floyd\\home\\tmp\\monorail_ut");
+                const dir2 = dir1.ensureExistsSync();
+                expect(dir2.toString()).toEqual("\\\\floyd\\home\\tmp\\monorail_ut");
+                dir1.deleteSync();
+            });
         });
 
 

@@ -5,6 +5,34 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "photoLib",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/ts-node/dist/bin.js",
+            "stopOnEntry": false,
+            "args": [
+                "--esm",
+                "--project",
+                "${workspaceRoot}/apps/photoLib/tsconfig.json",
+                "${workspaceRoot}/apps/photoLib/src/photoLib.ts",
+                "import",
+                "--importPath",
+                "C:\\kwptmp\\photo\\mobile-uploads\\pam",
+                "--photoLibPath",
+                "C:\\kwptmp\\photo\\photoLib"
+                // "\\\\floyd\\photo\\mobile-uploads\\test",
+                // "\\\\floyd\\photo"
+            ],
+            "cwd": "${workspaceRoot}",
+            "runtimeArgs": [
+                "--nolazy"
+            ],
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+        },
+        {
             "name": "windowsSpotlightImages",
             "type": "node",
             "request": "launch",

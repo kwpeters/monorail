@@ -60,6 +60,9 @@
             "path": "./apps/npmRunParallel"
         },
         {
+            "path": "./apps/photoLib"
+        },
+        {
             "path": "./apps/randomFile"
         },
         {

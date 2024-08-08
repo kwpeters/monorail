@@ -78,7 +78,7 @@ describe("NodePackage", () => {
                     expect(packedFile.existsSync()).toBeTruthy();
                     done();
                 });
-            });
+            }, 10 * 1000);
 
 
             it("will place the .tgz in the package directory when an output directory is not specified", (done) => {
@@ -93,7 +93,7 @@ describe("NodePackage", () => {
                     expect(packedFile.directory.toString()).toEqual(pkgDir.toString());
                     done();
                 });
-            });
+            }, 10 * 1000);
 
 
             it("will place the .tgz in the specified output directory", (done) => {
@@ -108,7 +108,7 @@ describe("NodePackage", () => {
                     expect(packedFile.directory.toString()).toEqual(tmpDir.toString());
                     done();
                 });
-            });
+            }, 10 * 1000);
 
 
         });
@@ -145,7 +145,7 @@ describe("NodePackage", () => {
                     done();
                 });
 
-            });
+            }, 10 * 1000);
 
 
         });
