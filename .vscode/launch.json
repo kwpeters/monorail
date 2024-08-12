@@ -33,6 +33,29 @@
             ],
         },
         {
+            "name": "photoLib - ut",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/ts-node/dist/bin.js",
+            "stopOnEntry": false,
+            "args": [
+                "--esm",
+                "--project",
+                "./tsconfig.json",
+                "${workspaceRoot}/node_modules/jasmine/bin/jasmine.js",
+                "--color",
+                "--config=./jasmine.json"
+            ],
+            "cwd": "${workspaceRoot}/apps/photoLib",
+            "runtimeArgs": [
+                "--nolazy"
+            ],
+            "console": "internalConsole",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+        },
+        {
             "name": "windowsSpotlightImages",
             "type": "node",
             "request": "launch",

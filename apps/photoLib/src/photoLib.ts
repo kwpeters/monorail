@@ -4,6 +4,7 @@ import yargs from "yargs/yargs";
 import { Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
 import {def as defImport} from "./importCommand.js";
+import {def as defFix} from "./fixCommand.js";
 
 
 if (runningThisScript()) {
@@ -42,6 +43,14 @@ async function main(): Promise<Result<number, string>> {
         defImport.builder,
         async (argv) => {
             retVal = await defImport.handler(argv);
+        }
+    )
+    .command(
+        defFix.command,
+        defFix.description,
+        defFix.builder,
+        async (argv) => {
+            retVal = await defFix.handler(argv);
         }
     )
     .help()
