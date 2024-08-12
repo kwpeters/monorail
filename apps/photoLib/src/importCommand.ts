@@ -137,7 +137,7 @@ interface IImportConfig {
 
 
 /**
- * Converts this subcommands arguments to its configuration object.
+ * Converts this subcommand's arguments to its configuration object.
  *
  * @param argv - This subcommand's arguments
  * @return If successful, a successful Result containing the config object.
