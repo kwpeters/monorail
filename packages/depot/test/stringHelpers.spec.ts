@@ -5,7 +5,8 @@ import {
     hexStr16Array, hexStr32, toExponential, isValidIpAddress, containsNestedPairs,
     getBufferString,
     collapseWhitespace,
-    tryParseInt
+    tryParseInt,
+    includesCaseInsensitive
 } from "../src/stringHelpers.js";
 
 describe("string helpers module", () => {
@@ -714,4 +715,25 @@ describe("string helpers module", () => {
         });
     });
 
+});
+
+
+describe("includesCaseInsensitive()", () => {
+
+    it("return true when the search string appears exactly", () => {
+        const arr = ["one", "two", "three"];
+        expect(includesCaseInsensitive(arr, "two")).toBeTrue();
+    });
+
+
+    it("returns true when the search string appears with different case", () => {
+        const arr = ["one", "two", "three"];
+        expect(includesCaseInsensitive(arr, "tWo")).toBeTrue();
+    });
+
+
+    it("returns false when the search string does not exist", () => {
+        const arr = ["one", "two", "three"];
+        expect(includesCaseInsensitive(arr, "four")).toBeFalse();
+    });
 });
