@@ -901,6 +901,57 @@ describe("Result namespace", () => {
     });
 
 
+    describe("partition()", () => {
+
+        it("when the input array is empty, returns two empty arrays", () => {
+            const arr = [] as Array<Result<number, string>>;
+            const { succeeded, failed } = Result.partition(arr);
+            expect(succeeded.length).toEqual(0);
+            expect(failed.length).toEqual(0);
+        });
+
+
+        it("when all results are successful, returns all results in the succeeded array", () => {
+            const arr = [
+                new SucceededResult(1),
+                new SucceededResult(2),
+                new SucceededResult(3)
+            ] as Array<Result<number, string>>;
+            const { succeeded, failed } = Result.partition(arr);
+            expect(succeeded.length).toEqual(3);
+            expect(failed.length).toEqual(0);
+        });
+
+
+        it("when all results are failures, returns all results in the failed array", () => {
+            const arr = [
+                new FailedResult("eror 1"),
+                new FailedResult("eror 2"),
+                new FailedResult("eror 3")
+            ] as Array<Result<number, string>>;
+            const { succeeded, failed } = Result.partition(arr);
+            expect(succeeded.length).toEqual(0);
+            expect(failed.length).toEqual(3);
+        });
+
+
+        it("when input contains a mix of successes and failures, returns expected results", () => {
+            const arr = [
+                new SucceededResult(1),
+                new FailedResult("eror 1"),
+                new SucceededResult(2),
+                new FailedResult("eror 2"),
+                new SucceededResult(3),
+                new FailedResult("eror 3")
+            ] as Array<Result<number, string>>;
+            const { succeeded, failed } = Result.partition(arr);
+            expect(succeeded.length).toEqual(3);
+            expect(failed.length).toEqual(3);
+        });
+
+    });
+
+
     describe("requireFalsy()", () => {
 
         it("converts a falsy value to a successful Result containing the value", () => {

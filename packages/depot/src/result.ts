@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 /* eslint-disable max-len */
 
+import * as _ from "lodash-es";
 import { isIToString } from "./primitives.js";
 import { Option } from "./option.js";
 
@@ -1003,6 +1004,26 @@ export namespace Result {
             },
             new SucceededResult([])
         );
+    }
+
+
+    /**
+     * Separates the specified results into an arrays of those that succeeded
+     * and those that failed.
+     *
+     * @param results - The results to be partitioned
+     * @return An object with a succeeded property containing the succeeded
+     * results and a failed property containing the failed results
+     */
+    export function partition<TSuccess, TError>(
+        results: Array<Result<TSuccess, TError>>
+    ): { succeeded: Array<TSuccess>, failed: Array<TError>; } {
+
+        const [succeeded, failed] = _.partition(results, (res) => res.succeeded);
+        return {
+            succeeded: succeeded.map((res) => res.value!),
+            failed:    failed.map((res) => res.error!)
+        };
     }
 
 
