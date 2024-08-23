@@ -276,7 +276,10 @@ export namespace Option {
      * @param input - The input sequence
      * @returns  The output array
      */
-    export function choose<TIn, TOut>(fn: (v: TIn,) => Option<TOut>, input: Iterable<TIn>): Array<TOut> {
+    export function choose<TIn, TOut>(
+        fn: (v: TIn,) => Option<TOut>,
+        input: Iterable<TIn>
+    ): Array<TOut> {
         const inputArr = Array.from(input);
         const output =
             inputArr.reduce<Array<TOut>>(
