@@ -114,7 +114,14 @@ async function removeDuplicates(config: IFixConfig): Promise<Result<number, stri
         (dupes) => dupes.flat()
     );
 
+    if (dupeInfos.length === 0) {
+        console.log("No duplicate files found.");
+        return new SucceededResult(0);
+    }
+
+    //
     // Generate a table containing one row for each duplicate found.
+    //
     let totalBytes = 0;
     const rows = dupeInfos.map((dupeInfo) => {
         totalBytes += dupeInfo.duplicateSize.bytes;
@@ -129,6 +136,9 @@ async function removeDuplicates(config: IFixConfig): Promise<Result<number, stri
     rows.push([`total duplicate files: ${dupeInfos.length}`, `${totalSize} ${totalUnits}`]);
     console.log(table(rows));
 
+    //
+    // Ask the user to confirm duplicate file deletion.
+    //
     const confirmed = await promptToContinue(`Delete these duplicate files?`, false);
     if (!confirmed) {
         return new FailedResult("Duplicate removal cancelled by user.");
