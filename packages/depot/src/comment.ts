@@ -111,7 +111,6 @@ export function uncomment(linesToUncomment: string): string | undefined {
     }
 
     const sourceLines = splitIntoLines(linesToUncomment, true);
-    // TODO: Convert the following regex to use named capture groups.
     // eslint-disable-next-line prefer-named-capture-group
     const commentedLineRegex = /^(?<begin_ws>\s*)(?<comment_token>(\/\/)|(#))(?<post_comment_ws>\s*)(?<text>.*)/;
 
@@ -128,7 +127,7 @@ export function uncomment(linesToUncomment: string): string | undefined {
         // was add with the comment token itself.
         const postCommentWs = match.groups!.post_comment_ws;
         const newPostCommentWs =
-            isBlank(postCommentWs) ?
+            isBlank(postCommentWs) && isBlank(match.groups!.text) ?
             "" :
             postCommentWs.slice(1);
         const text             = match.groups!.text;

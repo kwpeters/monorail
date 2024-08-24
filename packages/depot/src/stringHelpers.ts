@@ -240,7 +240,7 @@ export function removeBlankLines(str: string): string {
  * @return true if `text` is nothing but whitespace; false otherwise.
  */
 export function isBlank(text: string): boolean {
-    return blankLineRegex.test(text);
+    return text.length === 0 || blankLineRegex.test(text);
 }
 
 

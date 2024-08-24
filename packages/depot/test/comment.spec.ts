@@ -213,7 +213,7 @@ describe("toggleComment()", () => {
     });
 
 
-    it("will uncomment code this is commented", () => {
+    it("will uncomment code that is commented", () => {
         const orig = [
             "    //     blah",
             "    //     blah",
