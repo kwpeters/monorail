@@ -1,15 +1,28 @@
 
-# Running with ts-node
+
+# Example command lines
 
 To import photos:
 
-```powershell
-photoLib import --importDir \\floyd\photo\mobile-uploads --photoLibDir \\floyd\photo\ && hr && photoLib import --importDir \\floyd\photo\MobileBackup --photoLibDir \\floyd\photo
+```text
+photoLib import --importDir \\floyd\photo\mobile-uploads --photoLibDir \\floyd\photo\
+photoLib import --importDir \\floyd\photo\MobileBackup --photoLibDir \\floyd\photo
 ```
-
 
 To fix a photo library:
 
-```powershell
-npx ts-node --esm --project .\apps\photoLib\tsconfig.json .\apps\photoLib\src\photoLib.ts fix --photoLibDir \\floyd\photo\
+```text
+photoLib fix --photoLibDir \\floyd\photo\
+```
+
+
+
+
+
+# Running with ts-node
+
+To run any of the above examples with ts-node, simply replace the `photoLib` executable in the above examples with:
+
+```text
+npx ts-node --esm --project .\apps\photoLib\tsconfig.json .\apps\photoLib\src\photoLib.ts
 ```
