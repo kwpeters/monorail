@@ -2,7 +2,7 @@ import * as _ from "lodash-es";
 import { sprintf } from "sprintf-js";
 import {createEolRegex} from "./regexpHelpers.js";
 import { FailedResult, Result, SucceededResult } from "./result.js";
-
+import { compareStrI, CompareResult } from "./compare.js";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -606,4 +606,18 @@ export function tryParseInt(str: string, radix?: number): Result<number, string>
     return Number.isNaN(parsed) ?
         new FailedResult(`The string "${str}" cannot be parsed as an integer.`) :
         new SucceededResult(parsed);
+}
+
+
+/**
+ * Searches the specified array for the specified string in a case insensitive
+ * way.
+ *
+ * @param arr - The array to search
+ * @param searchStr - The value to search for
+ * @return Description
+ */
+export function includesCaseInsensitive(arr: string[], searchStr: string): boolean {
+    const found = arr.find((curStr) => compareStrI(curStr, searchStr) === CompareResult.EQUAL);
+    return found !== undefined;
 }
