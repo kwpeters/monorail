@@ -1,20 +1,21 @@
+import * as os from "os";
 import * as fsp from "fs/promises";
+import * as _ from "lodash-es";
 import { ArgumentsCamelCase, Argv } from "yargs";
+import { glob } from "glob";
+import table from "text-table";
 import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
+import { NoneOption, Option, SomeOption } from "../../../packages/depot/src/option.js";
 import { pipeAsync } from "../../../packages/depot/src/pipeAsync2.js";
-import { matchesAny, strToRegExp } from "../../../packages/depot/src/regexpHelpers.js";
+import { mapAsync, Task } from "../../../packages/depot/src/promiseHelpers.js";
+import { strToRegExp } from "../../../packages/depot/src/regexpHelpers.js";
+import { StorageSize } from "../../../packages/depot/src/storageSize.js";
+import { id } from "../../../packages/depot/src/functional.js";
+import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
 import { Directory } from "../../../packages/depot-node/src/directory.js";
 import { File } from "../../../packages/depot-node/src/file.js";
-
-
-/**
- * Files that will be ignored when searching for files to be imported.
- */
-const skipFileRegexes = [
-    /Thumbs.db/i,
-    /ZbThumbnail.info/i,
-    /picasa.ini/i,
-] as Array<RegExp>;
+import { promptToContinue } from "../../../packages/depot-node/src/prompts.js";
+import { TaskQueue } from "../../../packages/depot-node/src/taskQueue.js";
 
 
 /**
@@ -46,10 +47,9 @@ async function handler(argv: ArgumentsCamelCase<IArgsFix>): Promise<Result<numbe
         return configRes;
     }
 
-    const res = pipeAsync(
+    return pipeAsync(
         removeDuplicates(configRes.value)
     );
-    return res;
 }
 
 
@@ -97,70 +97,168 @@ export const def = {
 
 async function removeDuplicates(config: IFixConfig): Promise<Result<number, string>> {
 
+    // Find all directories in the photo library.  All backslashes need to be
+    // replaced with forward slashes so that UNC paths will work correctly.
+    const taskQueue = new TaskQueue(20);
+    const globPattern = config.photoLibDir.toString().replace(/\\/g, "/") + "/**/";
 
-    const files = await pipeAsync(
-        config.photoLibDir.contents(true),
-        (contents) => contents.files,
-        (files) => files.filter((curFile) => !matchesAny(curFile.absPath(), skipFileRegexes))
+    const dirs = await pipeAsync(
+        globPattern,
+        (pattern) => glob(pattern),
+        (dirPathStrings) => dirPathStrings.map((curPathStr) => new Directory(curPathStr))
     );
 
-    console.log(`Found ${files.length} files in photo library.`);
-    if (files.length === 0) {
-        return new SucceededResult(0);
+    const dupeInfos = await pipeAsync(
+        dirs,
+        (dirs) => mapAsync(dirs, async (curDir) => taskQueue.push(() => getDuplicateFiles(curDir))),
+        (dupes) => dupes.flat()
+    );
+
+    // Generate a table containing one row for each duplicate found.
+    let totalBytes = 0;
+    const rows = dupeInfos.map((dupeInfo) => {
+        totalBytes += dupeInfo.duplicateSize.bytes;
+        const [size, units] = dupeInfo.duplicateSize.normalized();
+        return [
+            dupeInfo.duplicateFile.toString(),
+            `${size} ${units}`
+        ];
+    });
+    // Add the total row.
+    const [totalSize, totalUnits] = StorageSize.fromBytes(totalBytes).normalized();
+    rows.push([`total duplicate files: ${dupeInfos.length}`, `${totalSize} ${totalUnits}`]);
+    console.log(table(rows));
+
+    const confirmed = await promptToContinue(`Delete these duplicate files?`, false);
+    if (!confirmed) {
+        return new FailedResult("Duplicate removal cancelled by user.");
+    }
+
+    const {succeeded, failed} = await pipeAsync(
+        dupeInfos.map((curDupeInfo) => curDupeInfo.duplicateFile),
+        (dupeFiles) => mapAsync(dupeFiles, async (dupeFile) => taskQueue.push(getDeleteFileTask(dupeFile))),
+        (results) => Result.partition(results)
+    );
+
+    if (failed.length > 0) {
+        const msg = [
+            "Some duplicates could not be deleted:",
+            ...failed.map((failedDupeFile) => failedDupeFile.toString())
+        ];
+        return new FailedResult(msg.join(os.EOL));
+    }
+    else {
+        console.log(`Successfully removed ${succeeded.length} duplicate files.`);
     }
 
     return new SucceededResult(0);
 
+    function getDeleteFileTask(theFile: File): Task<Result<File, File>> {
+        return async () => {
+            const res = await PromiseResult.fromPromise(theFile.delete());
+            return res.succeeded ? new SucceededResult(theFile) : new FailedResult(theFile);
+        };
+    }
+
 }
 
 
-export async function isDuplicateFile(file1: File, file2: File): Promise<boolean> {
+export async function getDuplicateFiles(dir: Directory): Promise<IDuplicateFileInfo[]> {
+    return pipeAsync(
+        dir.contents(false),
+        (contents) => contents.files,
+        (files) => mapAsync(files, async (curFile, idx, files) => {
+            return pipeAsync(
+                _.without(files, curFile),
+                (otherFiles) => mapAsync(otherFiles, async (curOtherFile) => isDuplicateFile(curFile, curOtherFile)),
+                (opts) => Option.choose(id, opts)
+            );
+        }),
+        (dupes) => dupes.flat()
+    );
+}
 
-    // Check the names for similarity.
-    const isSimilarName = isSimilarFileName(file1, file2) || isSimilarFileName(file2, file1);
-    if (!isSimilarName) {
-        return false;
+
+export interface IDuplicateFileInfo {
+    originalFile: File;
+    originalSize: StorageSize;
+    duplicateFile: File;
+    duplicateSize: StorageSize;
+}
+
+
+/**
+ * Determines whether possibleDuplicateFile is a duplicate of referenceFile.
+ *
+ * @param referenceFile - The reference file
+ * @param potentialDuplicateFile - The possible duplicate file
+ * @return true if possibleDuplicateFile is a duplicate of referenceFile;
+ * otherwise false.
+ */
+export async function isDuplicateFile(
+    referenceFile: File,
+    potentialDuplicateFile: File
+): Promise<Option<IDuplicateFileInfo>> {
+
+    // Check the file names
+    if (!isSimilarFileName(referenceFile, potentialDuplicateFile)) {
+        return NoneOption.get();
     }
 
     // Check the file sizes for equality.
-    const [stat1, stat2] = await Promise.all([
-        fsp.stat(file1.toString()),
-        fsp.stat(file2.toString())
+    const [refStats, dupeStats] = await Promise.all([
+        fsp.stat(referenceFile.toString()),
+        fsp.stat(potentialDuplicateFile.toString())
     ]);
 
-    if (stat1.size === 0 || stat2.size === 0) {
+    if (refStats.size === 0 || dupeStats.size === 0) {
         // The underlying file system does not support getting the size of the
         // file (see Node.js documentation).
-        return false;
+        return NoneOption.get();
     }
-    if (stat1.size !== stat2.size) {
+    if (refStats.size !== dupeStats.size) {
         // The files have different sizes.  They are not duplicates.
-        return false;
+        return NoneOption.get();
     }
 
     // The files have the same size.  See if they also have the same content.
     try {
         const [hash1, hash2] = await Promise.all([
-            file1.getHash(),
-            file2.getHash()
+            referenceFile.getHash(),
+            potentialDuplicateFile.getHash()
         ]);
-        return hash1 === hash2;
+        return hash1 === hash2 ?
+            new SomeOption({
+                originalFile:  referenceFile,
+                originalSize:  StorageSize.fromBytes(refStats.size),
+                duplicateFile: potentialDuplicateFile,
+                duplicateSize: StorageSize.fromBytes(dupeStats.size)
+            }) :
+            NoneOption.get();
     }
     catch (err) {
-        return false;
+        return NoneOption.get();
     }
 }
 
 
-export function isSimilarFileName(referenceFile: File, otherFile: File): boolean {
+/**
+ * Determines if possibleDuplicateFile has a name indicating that it is a
+ * duplicate of referenceFile.
+ *
+ * @param referenceFile - The reference file
+ * @param possibleDuplicateFile - The possible duplicate file
+ * @return true if possibleDuplicateFile has a name indicating that it is a
+ * possible duplicate of referenceFile.
+ */
+export function isSimilarFileName(referenceFile: File, possibleDuplicateFile: File): boolean {
 
     const similarRegexpRes = regexpForSimilar(referenceFile);
     if (similarRegexpRes.failed) {
         return false;
     }
 
-    return similarRegexpRes.value.test(otherFile.toString());
-
+    return similarRegexpRes.value.test(possibleDuplicateFile.toString());
 
     function regexpForSimilar(file: File): Result<RegExp, string> {
         let ext = referenceFile.extName;
