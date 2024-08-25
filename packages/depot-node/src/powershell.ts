@@ -1,8 +1,10 @@
 import { glob } from "glob";
 import { pipeAsync } from "../../depot/src/pipeAsync2.js";
-import { Result } from "../../depot/src/result.js";
+import { FailedResult, Result } from "../../depot/src/result.js";
 import { PromiseResult } from "../../depot/src/promiseResult.js";
+import { insertIf } from "../../depot/src/arrayHelpers.js";
 import { File } from "./file.js";
+import { spawn, spawnErrorToString } from "./spawn2.js";
 
 
 /**
@@ -67,4 +69,43 @@ export async function getPowerShellExecutable(): Promise<Result<File, string>> {
         getModernPowerShellExecutable(),
         (resExecutable) => PromiseResult.bindError(() => getLegacyPowerShellExecutable(), resExecutable)
     );
+}
+
+
+export interface IPowerShellCommandOptions {
+    loadProfile: boolean;
+}
+
+const defaultPowerShellCommandOptions: IPowerShellCommandOptions = {
+    loadProfile: false
+};
+
+
+
+export async function runPowerShell(
+    command: string,
+    opts: Partial<IPowerShellCommandOptions> = {}
+): Promise<Result<string, string>> {
+
+    const resExec = await getPowerShellExecutable();
+    if (resExec.failed) {
+        return resExec;
+    }
+
+    // Fill in the options with default values.
+    const newOpts = { ...defaultPowerShellCommandOptions, ...opts };
+
+    const args = [
+        ...insertIf(!newOpts.loadProfile, "-NoProfile"),
+        "-Command",
+        command
+    ];
+
+    const spawnOutput = spawn(resExec.value.absPath(), args);
+    const resFinalOutput = await spawnOutput.closePromise;
+    if (resFinalOutput.failed) {
+        return new FailedResult(spawnErrorToString(resFinalOutput.error));
+    }
+
+    return resFinalOutput;
 }

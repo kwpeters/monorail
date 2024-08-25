@@ -1,4 +1,9 @@
-import { getLegacyPowerShellExecutable, getModernPowerShellExecutable, getPowerShellExecutable } from "../src/powershell.js";
+import * as url from "url";
+import { getLegacyPowerShellExecutable, getModernPowerShellExecutable, getPowerShellExecutable, runPowerShell } from "../src/powershell.js";
+
+
+const __filename = url.fileURLToPath(import.meta.url);
+// const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 
 
 describe("getLegacyPowerShellExecutable()", () => {
@@ -31,4 +36,22 @@ describe("getPowerShellExecutable()", () => {
         expect(resExec.value!.toString()).toContain("pwsh.exe");
     });
 
+});
+
+
+describe("runPowerShell()", () => {
+
+    it("can run a PowerShell command with no arguments", async () => {
+        const resOutput = await runPowerShell("Get-Process");
+        expect(resOutput.succeeded).toBeTrue();
+        expect(resOutput.value!).toContain("svchost");
+    });
+
+
+    it("can run a PowerShell command with arguments", async () => {
+        // (Get-Item ".\README.md").CreationTime
+        const resOutput = await runPowerShell(`(Get-Item "${__filename}").CreationTime`);
+        expect(resOutput.succeeded).toBeTrue();
+        expect(resOutput.value!).toContain("20");
+    });
 });
