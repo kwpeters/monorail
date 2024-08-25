@@ -1,6 +1,6 @@
 import { File } from "../../../packages/depot-node/src/file.js";
 import { NoneOption } from "../../../packages/depot/src/option.js";
-import { getDuplicateFiles, isDuplicateFile, isSimilarFileName } from "../src/fixCommand.js";
+import { getDuplicateFiles, isDuplicateFile, isSimilarFileName } from "../src/fixCommandDeleteDuplicates.js";
 import { tmpDir } from "./specHelpers.js";
 
 
