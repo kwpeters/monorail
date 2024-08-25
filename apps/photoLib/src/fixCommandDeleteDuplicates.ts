@@ -77,8 +77,8 @@ export async function isDuplicateFile(
         ]);
         return hash1 === hash2 ?
             new SomeOption({
-                originalFile: referenceFile,
-                originalSize: StorageSize.fromBytes(refStats.size),
+                originalFile:  referenceFile,
+                originalSize:  StorageSize.fromBytes(refStats.size),
                 duplicateFile: potentialDuplicateFile,
                 duplicateSize: StorageSize.fromBytes(dupeStats.size)
             }) :
