@@ -441,6 +441,35 @@ export namespace PromiseResult {
 
 
     /**
+     * If _input_ is an error, unwraps the error and passes it into _fn_,
+     * returning its returned Result.  If _input_ is successful, returns it.
+     *
+     * This function effectively allows you to "fallback" if a previous
+     * operation errored.
+     *
+     * @param fn - The function to invoke when _input_ is an error.  It is
+     * passed the error.
+     * @param input - The input Result.
+     * @return Either the passed-through successful Result or the Result
+     * returned from _fn_.
+     */
+    export async function bindError<TInSuccess, TInError, TOutSuccess, TOutError>(
+        fn: (err: TInError) => Result<TOutSuccess, TOutError> | Promise<Result<TOutSuccess, TOutError>>,
+        input: Result<TInSuccess, TInError> | Promise<Result<TInSuccess, TInError>>
+    ): Promise<Result<TInSuccess | TOutSuccess, TOutError>> {
+        const awaitedInputRes = await Promise.resolve(input);
+        if (awaitedInputRes.succeeded) {
+            return awaitedInputRes;
+        }
+        else {
+            // Execute the specified fn.
+            const output = fn(awaitedInputRes.error);
+            return output;
+        }
+    }
+
+
+    /**
      * Awaits the input Result.  If failure, maps the error using _fn_ (the mapping
      * may also be async).  When the input is a successful Result, it is returned.
      * Note:  If using pipeAsync(), you can use Result.mapError() instead.
