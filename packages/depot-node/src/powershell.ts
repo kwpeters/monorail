@@ -55,6 +55,13 @@ export async function getModernPowerShellExecutable(): Promise<Result<File, stri
 }
 
 
+/**
+ * Finds the most recent PowerShell executable.
+ *
+ * @return If any PowerShell executables could be found, a successful Result
+ * containing the found File.  Otherwise, an error Result containing an error
+ * message.
+ */
 export async function getPowerShellExecutable(): Promise<Result<File, string>> {
     return pipeAsync(
         getModernPowerShellExecutable(),
