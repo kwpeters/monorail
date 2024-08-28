@@ -1,6 +1,7 @@
 import * as url from "url";
 import * as os from "os";
 import yargs from "yargs/yargs";
+import { hideBin } from "yargs/helpers";
 import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
 import { indent } from "../../../packages/depot/src/stringHelpers.js";
@@ -59,7 +60,7 @@ async function main(): Promise<Result<number, string>> {
 
 
 async function getConfiguration(): Promise<Result<IConfig, string>> {
-    const argv = await yargs(process.argv.slice(2))
+    const argv = await yargs(hideBin(process.argv))
     .usage(
         [
             "Searches for local Git work that has not been committed or pushed.",

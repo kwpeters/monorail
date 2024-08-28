@@ -1,6 +1,7 @@
 import * as url from "url";
 import * as os from "os";
 import yargs from "yargs/yargs";
+import { hideBin } from "yargs/helpers";
 import { getDocumentsFolder } from "platform-folders";
 import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
@@ -66,7 +67,7 @@ interface IConfig {
 async function getConfiguration(): Promise<Result<IConfig, string>> {
 
     const argv =
-        await yargs(process.argv.slice(2))
+        await yargs(hideBin(process.argv))
         .usage(
             [
                 "Copies the most recently captured ShareX file to the specified",

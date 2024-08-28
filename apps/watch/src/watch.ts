@@ -5,6 +5,7 @@ import { emitKeypressEvents, Key } from "readline";
 import * as _ from "lodash-es";
 import chalk from "chalk";
 import yargs from "yargs/yargs";
+import { hideBin } from "yargs/helpers";
 import treeKill from "tree-kill";
 import { Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
@@ -75,7 +76,7 @@ async function getConfiguration(): Promise<IWatchConfig> {
         'watch --watch <dir>... --ignore <regex>... "command"',
     ];
 
-    const argv = await yargs(process.argv.slice(2))
+    const argv = await yargs(hideBin(process.argv))
     .usage(usage.join("\n"))
     .help()
     .option(

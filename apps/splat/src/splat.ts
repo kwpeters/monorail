@@ -2,6 +2,7 @@ import * as os from "os";
 import * as url from "url";
 import * as _ from "lodash-es";
 import yargs from "yargs/yargs";
+import { hideBin } from "yargs/helpers";
 import { glob } from "glob";
 import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
@@ -29,7 +30,7 @@ function runningThisScript(): boolean {
 
 async function main(): Promise<Result<number, string>> {
     const argv =
-        await yargs(process.argv.slice(2))
+        await yargs(hideBin(process.argv))
         .usage(
             [
                 "Finds filesystem items matching glob patterns.",

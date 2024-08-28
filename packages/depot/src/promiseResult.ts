@@ -327,7 +327,7 @@ export namespace PromiseResult {
 
         if (results.every((res) => res.succeeded)) {
             // Return a successful Result wrapping all of the successful values.
-            return new SucceededResult(results.map((res) => res.value!));
+            return new SucceededResult(results.map((res) => res.value));
         }
         else {
             // Returns a failure Result wrapping an array of IIndexedItems

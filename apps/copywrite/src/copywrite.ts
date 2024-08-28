@@ -2,6 +2,7 @@
 
 import * as url from "url";
 import yargs from "yargs/yargs";
+import { hideBin } from "yargs/helpers";
 import { Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
 import * as commandUpdate from "./commandUpdate.js";
@@ -32,7 +33,7 @@ function runningThisScript(): boolean {
 
 async function main(): Promise<Result<number, string>> {
 
-    await yargs(process.argv.slice(2))
+    await yargs(hideBin(process.argv))
     .command(commandUpdate)
     .command(commandFull)
     .command(commandDiff)

@@ -1,6 +1,7 @@
 import * as os from "os";
 import * as url from "url";
 import yargs from "yargs/yargs";
+import { hideBin } from "yargs/helpers";
 import { sInt8Min, uInt8Max } from "../../../packages/depot/src/numericRange.js";
 import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
@@ -34,7 +35,7 @@ interface IConfig {
 
 
 async function getConfiguration(): Promise<IConfig> {
-    const argv = await yargs(process.argv.slice(2))
+    const argv = await yargs(hideBin(process.argv))
     .usage(
         [
             "Converts a value to other representations.",

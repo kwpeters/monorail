@@ -2,6 +2,7 @@
 import * as url from "url";
 import * as os from "os";
 import yargs from "yargs/yargs";
+import { hideBin } from "yargs/helpers";
 import { getRandomInt } from "../../../packages/depot/src/random.js";
 import { Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
@@ -37,7 +38,7 @@ interface IConfig {
 
 
 async function getConfiguration(): Promise<IConfig> {
-    const argv = await yargs(process.argv.slice(2))
+    const argv = await yargs(hideBin(process.argv))
     .usage(
         [
             "Selects a random file from within the current working directory.",

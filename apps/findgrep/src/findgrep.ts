@@ -11,6 +11,7 @@ import * as os from "os";
 import * as url from "url";
 import chalk from "chalk";
 import yargs from "yargs/yargs";
+import { hideBin } from "yargs/helpers";
 import * as _ from "lodash-es";
 import { toArray } from "../../../packages/depot/src/arrayHelpers.js";
 import { matchesAny, strToRegExp } from "../../../packages/depot/src/regexpHelpers.js";
@@ -85,7 +86,7 @@ interface IFindGrepConfig {
  * @return The configuration parameters for this script
  */
 async function getConfiguration(): Promise<Result<IFindGrepConfig, string>> {
-    const argv = await yargs(process.argv.slice(2))
+    const argv = await yargs(hideBin(process.argv))
     .usage(
         [
             "Finds text within files.",
