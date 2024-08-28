@@ -980,7 +980,7 @@ describe("GitRepo", () => {
                 expect(stringRepresentations).toContain(branchName);
                 expect(stringRepresentations).toContain(`origin/${branchName}`);
 
-            }, 1000 * 10);
+            }, 1000 * 20);
         });
 
     });

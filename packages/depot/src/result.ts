@@ -473,7 +473,7 @@ export namespace Result {
     ): Result<Array<TSuccess>, Array<TError>> {
         const failureResults = resultsCollection.filter((res) => res.failed);
         if (failureResults.length > 0) {
-            return new FailedResult(failureResults.map((res) => res.error!));
+            return new FailedResult(failureResults.map((res) => res.error));
         }
         else {
             return new SucceededResult(resultsCollection.map((res) => res.value!));
@@ -1021,8 +1021,8 @@ export namespace Result {
 
         const [succeeded, failed] = _.partition(results, (res) => res.succeeded);
         return {
-            succeeded: succeeded.map((res) => res.value!),
-            failed:    failed.map((res) => res.error!)
+            succeeded: succeeded.map((res) => res.value),
+            failed:    failed.map((res) => res.error)
         };
     }
 

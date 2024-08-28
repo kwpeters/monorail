@@ -101,7 +101,7 @@ async function main(): Promise<Result<number, string>> {
 
     // Print info about the successful mappings.
     successes.forEach((curSuccess) => {
-        console.log(`Successfully mapped ${curSuccess.value!.driveLetter} to "${curSuccess.value!.dir.toString()}".`);
+        console.log(`Successfully mapped ${curSuccess.value.driveLetter} to "${curSuccess.value.dir.toString()}".`);
     });
 
     // Print info about failed mappings.
@@ -110,7 +110,7 @@ async function main(): Promise<Result<number, string>> {
     });
 
     if (failures.length > 0) {
-        return failures[0] as FailedResult<string>;
+        return failures[0];
     }
     else {
         return new SucceededResult(0);
