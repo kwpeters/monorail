@@ -9,6 +9,7 @@ import * as url from "url";
 import * as _ from "lodash-es";
 import table from "text-table";
 import yargs from "yargs/yargs";
+import { hideBin } from "yargs/helpers";
 import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
 import { Directory } from "../../../packages/depot-node/src/directory.js";
@@ -71,7 +72,7 @@ async function main(): Promise<Result<number, string>> {
 
     // This app doesn't use any command line arguments.  This is here for usage
     // information only.
-    await yargs(process.argv.slice(2))
+    await yargs(hideBin(process.argv))
     .usage(
         [
             "Maps frequently used folders to drive letters.",

@@ -1,5 +1,6 @@
 import * as os from "os";
 import yargs from "yargs/yargs";
+import { hideBin } from "yargs/helpers";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
 import { pipeAsync } from "../../../packages/depot/src/pipeAsync2.js";
 import { Result, SucceededResult } from "../../../packages/depot/src/result.js";
@@ -82,7 +83,7 @@ interface IConfig {
  */
 async function getConfiguration(): Promise<Result<IConfig, string>> {
     const argv =
-        await yargs(process.argv.slice(2))
+        await yargs(hideBin(process.argv))
         .usage(
             [
                 "Converts the specified paths to absolute paths.",

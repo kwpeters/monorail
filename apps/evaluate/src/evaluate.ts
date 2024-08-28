@@ -1,6 +1,7 @@
 import * as os from "os";
 import * as url from "url";
 import yargs from "yargs/yargs";
+import { hideBin } from "yargs/helpers";
 import { evaluate } from "../../../packages/depot/src/expression.js";
 import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
@@ -28,7 +29,7 @@ function runningThisScript(): boolean {
 
 async function main(): Promise<Result<number, string>> {
     const argv =
-        await yargs(process.argv.slice(2))
+        await yargs(hideBin(process.argv))
         .usage(
             [
                 "Evaluates the specified mathematical expression.  Supports fractions.",

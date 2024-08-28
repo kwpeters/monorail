@@ -17,6 +17,7 @@ import * as url from "url";
 import * as os from "os";
 import * as _ from "lodash-es";
 import yargs from "yargs/yargs";
+import { hideBin } from "yargs/helpers";
 import { mapAsync, filterAsync, getTimerPromise, removeAsync } from "../../../packages/depot/src/promiseHelpers.js";
 import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
@@ -46,7 +47,7 @@ function runningThisScript(): boolean {
 
 
 async function main(): Promise<Result<number, string>> {
-    const argv = await yargs(process.argv.slice(2))
+    const argv = await yargs(hideBin(process.argv))
     .usage(
         [
             "Copies the images used by Windows Spotlight to the specified directory.",

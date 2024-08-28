@@ -1,6 +1,7 @@
 import * as os from "os";
 import * as url from "url";
 import yargs from "yargs/yargs";
+import { hideBin } from "yargs/helpers";
 import { toArray } from "../../../packages/depot/src/arrayHelpers.js";
 import { mapAsync } from "../../../packages/depot/src/promiseHelpers.js";
 import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
@@ -140,7 +141,7 @@ async function main(): Promise<Result<number, string>> {
 
 async function getConfig(): Promise<Result<IConfig, string>> {
 
-    const argv = await yargs(process.argv.slice(2))
+    const argv = await yargs(hideBin(process.argv))
     .usage(
         [
             "Executes the specified npm script in each package within the specified directories.",

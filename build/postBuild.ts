@@ -1,6 +1,7 @@
 import * as os from "os";
 import * as url from "url";
 import yargs from "yargs/yargs";
+import { hideBin } from "yargs/helpers";
 import { FailedResult, Result, SucceededResult } from "../packages/depot/src/result.js";
 import { PromiseResult } from "../packages/depot/src/promiseResult.js";
 import { Directory } from "../packages/depot-node/src/directory.js";
@@ -79,7 +80,7 @@ async function main(): Promise<Result<number, string>> {
 
 
 async function getConfiguration(): Promise<Result<IConfig, string>> {
-    const argv = await yargs(process.argv.slice(2))
+    const argv = await yargs(hideBin(process.argv))
     .usage(
         [
             "Performs post-build steps.",

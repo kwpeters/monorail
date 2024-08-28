@@ -1,6 +1,7 @@
 import * as os from "os";
 import * as url from "url";
 import yargs from "yargs/yargs";
+import { hideBin } from "yargs/helpers";
 import { Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
 import {def as defImport} from "./importCommand.js";
@@ -31,7 +32,7 @@ async function main(): Promise<Result<number, string>> {
 
     let retVal: Result<number, string> = new SucceededResult(0);
 
-    const __argv = await yargs(process.argv.slice(2))
+    const __argv = await yargs(hideBin(process.argv))
     .usage(
         [
             "Provides several commands related to maintaining a photo library."
