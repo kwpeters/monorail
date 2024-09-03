@@ -440,6 +440,35 @@ export namespace PromiseResult {
     }
 
 
+     /**
+      * If _input_ is successful, invokes _fn_ with the value.  If a successful
+      * Result is returned, the original _input_ is returned.
+      *
+      * @param fn - Function that is invoked to determine whether the original
+      *  successful input is returned.  If this function returns a failure, that
+      *  failed Result is returned.
+      * @param input - The input PromiseResult
+      * @return _input_ is returned if it is a failed Result.  Otherwise, if _fn_
+      * is successful, _input_ is returned.  If _fn_ is a failure, that failed
+      * result is returned.
+      */
+    export async function gate<TInSuccess, TInError, TOutSuccess, TOutError>(
+        fn: (successVal: TInSuccess) => Result<TOutSuccess, TOutError> | Promise<Result<TOutSuccess, TOutError>>,
+        input: Result<TInSuccess, TInError> | Promise<Result<TInSuccess, TInError>>
+    ): Promise<Result<TInSuccess, TInError | TOutError>> {
+        const awaitedInputRes = await Promise.resolve(input);
+
+        if (awaitedInputRes.failed) {
+            return input;
+        }
+
+        const resGate = await Promise.resolve(fn(awaitedInputRes.value));
+        return resGate.succeeded ?
+            input :
+            resGate;
+    }
+
+
     /**
      * Awaits the input Result.  If failure, maps the error using _fn_ (the mapping
      * may also be async).  When the input is a successful Result, it is returned.

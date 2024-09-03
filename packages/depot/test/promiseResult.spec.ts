@@ -415,6 +415,79 @@ describe("bind()", () => {
 });
 
 
+describe("gate()", () => {
+
+    it("when the input is a failed Result it is passed through", async () => {
+        let numInvocations = 0;
+        const gateFn = async (x: number) => {
+            await Promise.resolve(0);
+            numInvocations++;
+            return x % 2 === 0 ?
+                new SucceededResult(x * 10) :
+                new FailedResult("odd");
+        };
+
+        const resInitial = new FailedResult("initial error");
+        const res = await PromiseResult.gate(gateFn, resInitial);
+        expect(res.failed).toBeTrue();
+        expect(res.error).toEqual("initial error");
+        expect(numInvocations).toEqual(0);
+    });
+
+
+    it("when the input is a successful result the function is invoked", async () => {
+        let numInvocations = 0;
+        const gateFn = async (x: number) => {
+            await Promise.resolve(0);
+            numInvocations++;
+            return x % 2 === 0 ?
+                new SucceededResult(x * 10) :
+                new FailedResult("odd");
+        };
+
+        const resInitial = new SucceededResult(5);
+        const res = await PromiseResult.gate(gateFn, resInitial);
+        expect(numInvocations).toEqual(1);
+    });
+
+
+    it("when the input is successful and the gate function succeeds the original input is returned", async () => {
+        let numInvocations = 0;
+        const gateFn = async (x: number) => {
+            await Promise.resolve(0);
+            numInvocations++;
+            return x % 2 === 0 ?
+                new SucceededResult(x * 10) :
+                new FailedResult("odd");
+        };
+
+        const resInitial = new SucceededResult(2);
+        const res = await PromiseResult.gate(gateFn, resInitial);
+        expect(res.succeeded).toBeTrue();
+        expect(res.value).toEqual(2);
+        expect(numInvocations).toEqual(1);
+    });
+
+
+    it("when the input is successful and the gate function fails the failure is returned", async () => {
+        let numInvocations = 0;
+        const gateFn = async (x: number) => {
+            await Promise.resolve(0);
+            numInvocations++;
+            return x % 2 === 0 ?
+                new SucceededResult(x * 10) :
+                new FailedResult("odd");
+        };
+
+        const resInitial = new SucceededResult(3);
+        const res = await PromiseResult.gate(gateFn, resInitial);
+        expect(res.failed).toBeTrue();
+        expect(res.error).toEqual("odd");
+        expect(numInvocations).toEqual(1);
+    });
+});
+
+
 describe("mapError()", () => {
 
     it("allows the input to be a Result<>", async () => {
