@@ -879,6 +879,22 @@ export namespace Result {
             new SucceededResult(nullable);
     }
 
+    // The order of the following overloads is important.  The most general one
+    // must come last, because the TS compiler will check for compatibility in
+    // the order they are specified.
+
+    /**
+     * Converts an Option to a Result.
+     *
+     * @param opt - The Option to be converted
+     * @param errFn - A function that will be invoked if _opt_ is None.  This
+     * function must return the failed error value.
+     * @return The converted Result
+     */
+    export function fromOption<TSuccess, TError>(
+        opt: Option<TSuccess>,
+        errFn: () => TError
+    ): Result<TSuccess, TError>;
 
     /**
      * Converts an Option to a Result.
@@ -890,10 +906,22 @@ export namespace Result {
     export function fromOption<TSuccess, TError>(
         opt: Option<TSuccess>,
         err: TError
+    ): Result<TSuccess, TError>;
+
+    export function fromOption<TSuccess, TError>(
+        opt: Option<TSuccess>,
+        errFnOrErr:  () => TError | TError
     ): Result<TSuccess, TError> {
-        return opt.isSome ?
-            new SucceededResult(opt.value) :
-            new FailedResult(err);
+        if (opt.isSome) {
+            return new SucceededResult(opt.value);
+        }
+
+        // The input is a None.  We must return a failed Result.
+        const err =
+            typeof errFnOrErr === "function" ?
+            errFnOrErr() :
+            errFnOrErr;
+        return new FailedResult(err);
     }
 
 
@@ -1205,7 +1233,6 @@ export namespace Result {
         }
 
         // The Result is a failure.  We must throw.
-
         const errorMsg =
             typeof errorMsgOrFn === "function" ?
             errorMsgOrFn(result.error) :
