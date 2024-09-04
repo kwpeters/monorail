@@ -1,6 +1,9 @@
 import { assertNever } from "../src/never.js";
 import { NoneOption, SomeOption } from "../src/option.js";
 import { pipe } from "../src/pipe.js";
+import { pipe as pipe2 } from "../src/pipe2.js";
+import { pipeAsync } from "../src/pipeAsync.js";
+import { pipeAsync as pipeAsync2 } from "../src/pipeAsync2.js";
 import { FailedResult, Result, SucceededResult } from "../src/result.js";
 
 
@@ -1231,6 +1234,44 @@ describe("Result namespace", () => {
                 const val = Result.throwIfFailed(errorCodeToMessage, res);
             }).toThrowError("Error: 5");
             expect(numInvocations).toEqual(1);
+        });
+
+
+        it("can be used in a pipe()", () => {
+            expect(() => {
+                pipe(new FailedResult("error 1") as Result<number, string>)
+                .pipe((res) => Result.throwIfFailed("error 2", res))
+                .end();
+            }).toThrow();
+        });
+
+
+        it("can be used in a pipe2()", () => {
+            expect(() => {
+                pipe2(
+                    new FailedResult("error 1") as Result<number, string>,
+                    (res) => Result.throwIfFailed("error 2", res)
+                );
+            }).toThrow();
+        });
+
+
+        it("can be used in a pipeAsync()", async () => {
+            await expectAsync(
+                pipeAsync(Promise.resolve(new FailedResult("error 1") as Result<number, string>))
+                .pipe((res) => Result.throwIfFailed("error 2", res))
+                .end()
+            ).toBeRejected();
+        });
+
+
+        it("can be used in a pipeAsync2()", async () => {
+            await expectAsync(
+                pipeAsync2(
+                    Promise.resolve(new FailedResult("error 1") as Result<number, string>),
+                    (res) => Result.throwIfFailed("error 2", res)
+                )
+            ).toBeRejected();
         });
     });
 
