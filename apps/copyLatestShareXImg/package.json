@@ -16,7 +16,6 @@
         "../../out/apps/copyLatestShareXImg"
     ],
     "dependencies": {
-        "platform-folders": "^0.6.0",
         "yargs": "^17.7.2"
     },
     "devDependencies": {
