@@ -88,7 +88,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
 async function getMostRecentSharexScreenCapture(): Promise<Result<File, string>> {
 
     // Get the directory where ShareX saves its files.
-    const homeDir = new Directory(process.env.HOME!);
+    const homeDir = new Directory(process.env.USERPROFILE!);
     if (!homeDir.existsSync()) {
         return new FailedResult(`Home directory "${homeDir.toString() }" does not exist.`);
     }
