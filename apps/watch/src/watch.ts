@@ -95,7 +95,7 @@ async function getConfiguration(): Promise<IWatchConfig> {
             describe:     "Ignore activity for files matching the specified regex (can be used multiple times)"
         }
     )
-    .wrap(80)
+    .wrap(process.stdout.columns ?? 80)
     .argv;
 
     //

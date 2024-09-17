@@ -56,7 +56,7 @@ async function main(): Promise<Result<number, string>> {
         ].join(os.EOL)
     )
     .help()
-    .wrap(80)
+    .wrap(process.stdout.columns ?? 80)
     .argv;
 
     const outDirStr = argv._[0] as string;

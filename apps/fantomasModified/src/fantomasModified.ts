@@ -53,7 +53,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
             describe:     "Only check the files.  Do not fix them."
         }
     )
-    .wrap(80)
+    .wrap(process.stdout.columns ?? 80)
     .argv;
 
     return new SucceededResult({check: argv.check});

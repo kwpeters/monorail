@@ -93,7 +93,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
         type:     "string"
     })
     .help()
-    .wrap(80)
+    .wrap(process.stdout.columns ?? 80)
     .argv;
 
     if (!argv._[0]) {

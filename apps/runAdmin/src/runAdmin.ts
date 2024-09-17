@@ -52,7 +52,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
         }
     )
     .help()
-    .wrap(80)
+    .wrap(process.stdout.columns ?? 80)
     .argv;
 
     const executableStr = argv._[0] as string | undefined;

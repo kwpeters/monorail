@@ -65,7 +65,7 @@ async function getConfiguration(): Promise<IConfig> {
             describe:     "show the file"
         }
     )
-    .wrap(80)
+    .wrap(process.stdout.columns ?? 80)
     .argv;
 
     return {
