@@ -1236,11 +1236,11 @@ describe("Directory", () => {
 
             it("if a parent directory is excluded no subdirectories or files should be copied", async () => {
                 await srcDir.copyFilteredWith(dstDir, false, (item) => {
-                    // "$" used in the following regex to make sure the file in
-                    // this directory is not a match.  The file should not be
+                    // "$" used in the following regex is to make sure the file
+                    // in this directory is not a match.  The file should not be
                     // included because its parent directory is not included,
-                    // non because the file also matched the exclude regexes.
-                    return !/dirA$/;
+                    // not because the file also matched the exclude regexes.
+                    return !/dirA$/.test(item.toString());
                 });
                 expect(new Directory(dstDir, "dirA").existsSync()).toBeFalsy();
             });
