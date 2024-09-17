@@ -164,7 +164,7 @@ async function getConfig(): Promise<Result<IConfig, string>> {
         describe: "The name of the npm script to run",
         type:     "string"
     })
-    .wrap(80)
+    .wrap(process.stdout.columns ?? 80)
     .argv;
 
     //

@@ -44,7 +44,7 @@ async function getConfiguration(): Promise<IConfig> {
         ].join(os.EOL)
     )
     .help()
-    .wrap(80)
+    .wrap(process.stdout.columns ?? 80)
     .argv;
 
     return {

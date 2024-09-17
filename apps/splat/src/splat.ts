@@ -57,7 +57,7 @@ async function main(): Promise<Result<number, string>> {
             }
         )
         .help()
-        .wrap(80)
+        .wrap(process.stdout.columns ?? 80)
         .argv;
 
     if (argv._.length === 0) {

@@ -44,10 +44,10 @@ export function makeNodeScriptExecutable(file: File): Promise<File> {
 
 
 /**
- * Adds a Node.js shebang line to the scpecified script file.
+ * Adds a Node.js shebang line to the specified script file.
  *
  * @param file - The file to be modified
- * @return A failed result containning an error message if the specified file
+ * @return A failed result containing an error message if the specified file
  *   does not exist or if it already contains a shebang line.  A successful
  *   result if the file already contains a Node.js shebang line or if it was
  *   successfully inserted.

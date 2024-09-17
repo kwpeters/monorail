@@ -66,6 +66,9 @@
             "path": "./apps/randomFile"
         },
         {
+            "path": "./apps/rmrf"
+        },
+        {
             "path": "./apps/runAdmin"
         },
         {

@@ -30,18 +30,20 @@ npm install abbrev -w a
 
 depot-node prerequisites:
 
-- depot-node uses a library that can get operating-system special folders.  This
-  necessitates running node-gyp, which in turn requires a compiler.  Therefore,
-  you must install Visual Studio and Python before you can build this project.
-
 - depot-node assumes it can call `openssl.exe`.  Add `C:\Program
   Files\Git\usr\bin` to your `PATH` environment variable.
 
-- depot-node's unit tests attempt to read the tags applied to this repository.  To retrieve them, do `git fetch --all --tags`.
+- depot-node's unit tests attempt to read the tags applied to this repository.
+  To retrieve them, do `git fetch --all --tags`.
 
+- For some reason ESLint sometimes runs our of memory.  I have found that
+  setting the following environment variable fixes it.
+
+  Name: `NODE_OPTIONS`
+  Value: `--max-old-space-size=4096`
 
 ```powershell
-npm run build
+npm run all
 ```
 
 ## Apps

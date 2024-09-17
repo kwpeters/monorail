@@ -39,7 +39,7 @@ async function main(): Promise<Result<number, string>> {
     .command(commandDiff)
     .command(commandTo)
     .help()
-    .wrap(80)
+    .wrap(process.stdout.columns ?? 80)
     .argv;
 
     return new SucceededResult(0);

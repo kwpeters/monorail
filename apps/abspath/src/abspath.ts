@@ -92,7 +92,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
             ].join(os.EOL)
         )
         .help()
-        .wrap(80)
+        .wrap(process.stdout.columns ?? 80)
         .argv;
 
     const files = await pipeAsync(

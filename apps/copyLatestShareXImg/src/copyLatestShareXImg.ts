@@ -2,7 +2,6 @@ import * as url from "url";
 import * as os from "os";
 import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
-import { getDocumentsFolder } from "platform-folders";
 import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
 import { CompareResult, compareStrI } from "../../../packages/depot/src/compare.js";
@@ -77,7 +76,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
             ].join(os.EOL)
         )
         .help()
-        .wrap(80)
+        .wrap(process.stdout.columns ?? 80)
         .argv;
 
     // Get the destination image file positional parameter.
@@ -89,7 +88,16 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
 async function getMostRecentSharexScreenCapture(): Promise<Result<File, string>> {
 
     // Get the directory where ShareX saves its files.
-    const docsDir = new Directory(getDocumentsFolder());
+    const homeDir = new Directory(process.env.USERPROFILE!);
+    if (!homeDir.existsSync()) {
+        return new FailedResult(`Home directory "${homeDir.toString() }" does not exist.`);
+    }
+
+    const docsDir = new Directory(homeDir, "Documents");
+    if (!docsDir.existsSync()) {
+        return new FailedResult(`Documents directory ${docsDir.toString()} does not exist.`);
+    }
+
     const screenshotsDir = new Directory(docsDir, "ShareX", "Screenshots");
 
     if (!screenshotsDir.existsSync()) {

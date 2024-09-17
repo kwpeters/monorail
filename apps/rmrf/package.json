@@ -1,19 +1,19 @@
 {
-    "name": "copyLatestShareXImg",
+    "name": "rmrf",
     "version": "1.0.0",
     "type": "module",
-    "description": "Copies images captured by ShareX",
-    "main": "../../out/apps/copyLatestShareXImg/src/copyLatestShareXImg.js",
-    "types": "../../out/apps/copyLatestShareXImg/src/copyLatestShareXImg.d.ts",
+    "description": "A sample client that uses packages",
+    "main": "../../out/apps/rmrf/src/rmrf.js",
+    "types": "../../out/apps/rmrf/src/rmrf.d.ts",
     "bin": {
-        "copyLatestShareXImg": "./src/copyLatestShareXImg.js"
+        "rmrf": "./src/rmrf.js"
     },
     "scripts": {
         "ut": "ts-node --esm --project ./tsconfig.json ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
         "tsc:post": "ts-node --esm --project ./tsconfig.json ../../build/postBuild.ts ."
     },
     "files": [
-        "../../out/apps/copyLatestShareXImg"
+        "../../out/apps/rmrf"
     ],
     "dependencies": {
         "yargs": "^17.7.2"

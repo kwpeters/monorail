@@ -117,7 +117,7 @@ async function getConfiguration(): Promise<Result<IFindGrepConfig, string>> {
             describe:     "Ignore paths that match the specified regex"
         }
     )
-    .wrap(80)
+    .wrap(process.stdout.columns ?? 80)
     .argv;
 
     // Get the path regex positional argument.
