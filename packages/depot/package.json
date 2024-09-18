@@ -1,33 +1,92 @@
 {
-    "name": "depot",
-    "version": "1.0.0",
-    "description": "A bunch of utilties",
-    "type": "module",
-    "main": "../../out/packages/depot/src/index.js",
-    "types": "../../out/packages/depot/src/index.d.ts",
+    "name": "@repo/depot",
+    "version": "0.0.0",
+    "private": true,
     "scripts": {
-        "ut": "ts-node --esm --project ./tsconfig.json ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
-        "tsc:post": "ts-node --esm --project ./tsconfig.json ../../build/postBuild.ts ."
+        "dev": "echo 'Add dev script here'",
+        "build": "tsc --build",
+        "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
+        "lint": "eslint ./src"
     },
-    "files": [
-        "../../out/packages/depot"
-    ],
+    "exports": {
+        "./deferred": {
+            "types": "./src/deferred.mts",
+            "default": "./dist/deferred.mjs"
+        },
+        "./errorHelpers": {
+            "types": "./src/errorHelpers.mts",
+            "default": "./dist/errorHelpers.mjs"
+        },
+        "./inspect": {
+            "types": "./src/inspect.mts",
+            "default": "./dist/inspect.mjs"
+        },
+        "./never": {
+            "types": "./src/never.mts",
+            "default": "./dist/never.mjs"
+        },
+        "./option": {
+            "types": "./src/option.mts",
+            "default": "./dist/option.mjs"
+        },
+        "./pipe": {
+            "types": "./src/pipe.mts",
+            "default": "./dist/pipe.mjs"
+        },
+        "./pipe2": {
+            "types": "./src/pipe2.mts",
+            "default": "./dist/pipe2.mjs"
+        },
+        "./pipeAsync": {
+            "types": "./src/pipeAsync.mts",
+            "default": "./dist/pipeAsync.mjs"
+        },
+        "./pipeAsync2": {
+            "types": "./src/pipeAsync2.mts",
+            "default": "./dist/pipeAsync2.mjs"
+        },
+        "./primitives": {
+            "types": "./src/primitives.mts",
+            "default": "./dist/primitives.mjs"
+        },
+        "./promiseHelpers": {
+            "types": "./src/promiseHelpers.mts",
+            "default": "./dist/promiseHelpers.mjs"
+        },
+        "./promiseResult": {
+            "types": "./src/promiseResult.mts",
+            "default": "./dist/promiseResult.mjs"
+        },
+        "./regexpHelpers": {
+            "types": "./src/regexpHelpers.mts",
+            "default": "./dist/regexpHelpers.mjs"
+        },
+        "./result": {
+            "types": "./src/result.mts",
+            "default": "./dist/result.mjs"
+        },
+        "./storageSize": {
+            "types": "./src/storageSize.mts",
+            "default": "./dist/storageSize.mjs"
+        },
+        "./utilityTypes": {
+            "types": "./src/utilityTypes.mts",
+            "default": "./dist/utilityTypes.mjs"
+        }
+    },
     "dependencies": {
         "lodash-es": "^4.17.21",
-        "object-inspect": "^1.12.3",
-        "sprintf-js": "^1.1.2",
-        "tweetnacl": "^1.0.3",
-        "url-join": "^5.0.0",
-        "url-parse": "^1.5.10",
-        "uuid": "^9.0.0"
+        "object-inspect": "^1.12.3"
     },
     "devDependencies": {
-        "@types/jasmine": "^4.3.1",
+        "@repo/eslint-config": "*",
+        "@repo/typescript-config": "*",
+        "@types/jasmine": "^5.1.4",
         "@types/lodash-es": "^4.17.7",
         "@types/object-inspect": "^1.8.1",
-        "@types/sprintf-js": "^1.1.2",
-        "@types/url-parse": "^1.4.8",
-        "@types/uuid": "^9.0.1",
-        "jasmine": "^4.6.0"
+        "@typescript-eslint/eslint-plugin": "^7.1.0",
+        "@typescript-eslint/parser": "^7.1.0",
+        "eslint": "^8",
+        "jasmine": "^5.3.0"
     }
 }

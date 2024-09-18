@@ -1,7 +1,14 @@
 {
-    "extends": "../../tsconfig.compileroptions.json",
+    "extends": "@repo/typescript-config/tsconfig.package.json",
     "compilerOptions": {
-        // Can't inherit outDir because it is relative to the containing file.
-        "outDir": "../../out/packages/depot"
-    }
+        "outDir": "dist"
+    },
+    "include": [
+        "src"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "src/**/*.test.mts"
+    ]
 }

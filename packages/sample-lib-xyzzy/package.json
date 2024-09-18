@@ -1,0 +1,26 @@
+{
+    "name": "@repo/sample-lib-xyzzy",
+    "version": "0.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "echo 'Add dev script here'",
+        "build": "tsc --build",
+        "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
+        "lint": "eslint ./src"
+    },
+    "exports": {
+        "./sampleModule": {
+            "types": "./src/sampleModule.mts",
+            "default": "./dist/sampleModule.mjs"
+        }
+    },
+    "devDependencies": {
+        "@repo/eslint-config": "*",
+        "@repo/typescript-config": "*",
+        "@types/jasmine": "^5.1.4",
+        "@typescript-eslint/eslint-plugin": "^7.1.0",
+        "@typescript-eslint/parser": "^7.1.0",
+        "eslint": "^8",
+        "jasmine": "^5.3.0"
+    }
+}

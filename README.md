@@ -1,84 +1,116 @@
 # monorail
 
-## Design of this monorepo
+This monorepo contains packages and applications that use the following tools:
 
-- All packages are contained in the `packages` directory and are built using a
-  single `tsc --build` command.  This is desirable because `tsc`` will figure
-  out the dependencies and and do a minimal rebuild.
+- This repo uses [TypeScript](https://www.typescriptlang.org/) for static type
+  checking.
+- This repo uses [ESLint](https://eslint.org/) for code linting.
+- This repo uses [Jasmine](https://jasmine.github.io/) for its unit tests.
+- This repo uses [Turborepo](https://turbo.build/) for its build system.
+  - Turborepo provides both local and remote caching of build artifacts.  Remote
+    caching requires a Vercel account, so only local caching is currently done.
+  - Learn more about the power of Turborepo:
+    - [Tasks](https://turbo.build/repo/docs/core-concepts/monorepos/running-tasks)
+    - [Caching](https://turbo.build/repo/docs/core-concepts/caching)
+    - [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching)
+    - [Filtering](https://turbo.build/repo/docs/core-concepts/monorepos/filtering)
+    - [Configuration Options](https://turbo.build/repo/docs/reference/configuration)
+    - [CLI Usage](https://turbo.build/repo/docs/reference/command-line-reference)
+- Apps that require distribution as standalone executables are created using
+  Node.js's [single executable
+  application](https://nodejs.org/dist/latest-v20.x/docs/api/single-executable-applications.html)
+  feature.  This is currently an experimental feature that is in active
+  development.
 
-- All applications contained in the `apps` directory, and npm workspaces are
-  used to build them.
+## Developing in this monorepo
 
-  When running `npm install` all npm workspace directories will get symbolically
-  linked from the root `node_modules` directory so they can be easily imported.
-  Although, it looks like I am not using this, but rather importing using a
-  relative path into the packages folder.  Not sure why I chose that.
+### Prerequisites
 
-## Using npm Workspaces
+1. Node.js must be installed.  For the specific version required, refer to the
+   `engines` property within [package.json](./package.json).  To allow for the
+   installation of multiple Node.js versions, use of `nvm` is highly recommended
+   ([Windows](https://github.com/coreybutler/nvm-windows),
+   [Mac](https://github.com/nvm-sh/nvm)).
 
-For an overview of how to use npm workspaces, refer to:
-<https://docs.npmjs.com/cli/v7/using-npm/workspaces>
+2. Some applications in this repo are packaged as [single executable
+   applications](https://nodejs.org/dist/latest-v20.x/docs/api/single-executable-applications.html).
+   This packaging requires use of `signtool`, which is part of the [Windows
+   SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-sdk/).
 
-In general, you just need to add `-w <path_to_workspace` onto the commands that
-you're probably already used to.  For example:
+   To confirm that it is installed on your Windows PC and that it can be found
+   using the `PATH` environment variable, run the following PowerShell command:
 
-```powershell
-npm install abbrev -w a
-```
+   ```powershell
+   get-command signtool
+   ```
 
-## Building
-
-depot-node prerequisites:
-
-- depot-node assumes it can call `openssl.exe`.  Add `C:\Program
-  Files\Git\usr\bin` to your `PATH` environment variable.
-
-- depot-node's unit tests attempt to read the tags applied to this repository.
-  To retrieve them, do `git fetch --all --tags`.
-
-- For some reason ESLint sometimes runs our of memory.  I have found that
-  setting the following environment variable fixes it.
-
-  Name: `NODE_OPTIONS`
-  Value: `--max-old-space-size=4096`
-
-```powershell
-npm run all
-```
-
-## Apps
-
-### Common Operations
-
-Lint this codebase:
+### Install dependencies
 
 ```powershell
-npm run lint
+npm install
 ```
 
-Run all unit tests:
+### Run the unit tests
 
 ```powershell
-npm run ut
+npm run test
 ```
 
-Build all packages and apps:
+### Build all packages and apps
 
 ```powershell
 npm run build
 ```
 
-To save a snapshot of this repo's built files (so that you can use a known good
-version of the apps contained herein):
+### Lint the source code
 
 ```powershell
-npm run createSnapshot
+npm run lint
 ```
 
-Running an app without building:
+Note:
+
+- This monorepo uses ESLint to lint source code.  Therefore, use of the Visual
+  Studio Code [ESLint
+  extension](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
+  is recommended.  You must change the following extension setting so that the
+  correct ESLint configuration file can be resolved for source code files:
+
+  ```text
+  "eslint.workingDirectories": [
+          {
+              "mode": "auto"
+          }
+      ]
+  ```
+
+## Generating a Dependency Graph
+
+Turborepo can generate a dependency graph to help visualize the dependencies
+between the packages and apps within this monorepo.  This can be helpful in
+understanding the package build order and can help ensure the
+build process maximizes parallel task execution.
+
+To generate the Graphviz dependency graph:
 
 ```powershell
-.\node_modules\.bin\ts-node --esm .\apps\evaluate\src\evaluate.ts "1/2 + 3/4"
+npx turbo run build --graph
+```
+
+If you do not have Graphviz installed, you can copy the output and paste it into
+an online tool such as [Graphviz
+Online](https://dreampuf.github.io/GraphvizOnline/) or
+[Edotor](https://edotor.net/).
+
+If you do have Graphviz installed, be sure that your `PATH` environment variable
+has been updated to include the installation path of the installed binaries.
+You can test this by running `dot -V`.  If this prints dot's version
+information, then `PATH` is configured properly.
+
+Now, you can generate the dependency graph, pipe it into `dot` and open the output image:
+
+```powershell
+npx turbo run build --graph | dot -T png > deps.png && start deps.png
 ```
 
 ## TODO/Where I Left Off

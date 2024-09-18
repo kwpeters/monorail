@@ -1,5 +1,5 @@
 {
-    "extends": "@repo/typescript-config/tsconfig.package.json",
+    "extends": "@repo/typescript-config/tsconfig.app.json",
     "compilerOptions": {
         "outDir": "dist"
     },
@@ -8,7 +8,6 @@
     ],
     "exclude": [
         "node_modules",
-        "dist",
-        "src/**/*.test.mts"
+        "dist"
     ]
 }

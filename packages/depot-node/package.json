@@ -1,47 +1,70 @@
 {
-    "name": "depot-node",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/kwpeters/depot-node.git"
-    },
-    "version": "1.0.0",
-    "description": "A bunch of utilties",
-    "type": "module",
-    "main": "../../out/packages/depot-node/src/index.js",
-    "types": "../../out/packages/depot-node/src/index.d.ts",
+    "name": "@repo/depot-node",
+    "version": "0.0.0",
+    "private": true,
     "scripts": {
-        "ut:pre": "rimraf ./tmp",
-        "ut:x": "ts-node --esm --project ./tsconfig.json ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
-        "ut": "npm-run-all --serial ut:pre ut:x",
-        "tsc:post": "ts-node --esm --project ./tsconfig.json ../../build/postBuild.ts ."
+        "dev": "echo 'Add dev script here'",
+        "build": "tsc --build",
+        "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
+        "lint": "eslint ./src"
     },
-    "files": [
-        "../../out/packages/depot-node"
-    ],
+    "exports": {
+        "./collectorStream": {
+            "types": "./src/collectorStream.mts",
+            "default": "./dist/collectorStream.mjs"
+        },
+        "./directory": {
+            "types": "./src/directory.mts",
+            "default": "./dist/directory.mjs"
+        },
+        "./file": {
+            "types": "./src/file.mts",
+            "default": "./dist/file.mjs"
+        },
+        "./listenerTracker": {
+            "types": "./src/listenerTracker.mts",
+            "default": "./dist/listenerTracker.mjs"
+        },
+        "./nodeTypes": {
+            "types": "./src/nodeTypes.mts",
+            "default": "./dist/nodeTypes.mjs"
+        },
+        "./nullStream": {
+            "types": "./src/nullStream.mts",
+            "default": "./dist/nullStream.mjs"
+        },
+        "./os": {
+            "types": "./src/os.mts",
+            "default": "./dist/os.mjs"
+        },
+        "./pathHelpers": {
+            "types": "./src/pathHelpers.mts",
+            "default": "./dist/pathHelpers.mjs"
+        },
+        "./promiseHelpers": {
+            "types": "./src/promiseHelpers.mts",
+            "default": "./dist/promiseHelpers.mjs"
+        },
+        "./spawn2": {
+            "types": "./src/spawn2.mts",
+            "default": "./dist/spawn2.mjs"
+        }
+    },
     "dependencies": {
-        "@xmldom/xmldom": "^0.8.10",
-        "chalk": "^5.3.0",
-        "compressing": "^1.10.0",
-        "fuzzy": "^0.1.3",
-        "glob": "^10.3.3",
-        "inquirer": "^9.1.5",
-        "inquirer-autocomplete-prompt": "^3.0.1",
+        "@repo/depot": "*",
         "lodash-es": "^4.17.21",
-        "long": "^5.2.3",
-        "node-fetch": "^3.3.1",
-        "semver": "^7.5.0",
-        "sprintf-js": "^1.1.2",
         "strip-ansi": "^7.1.0",
-        "strip-json-comments": "^5.0.1",
-        "xpath": "^0.0.33"
+        "strip-json-comments": "^5.0.1"
     },
     "devDependencies": {
-        "@types/inquirer": "^9.0.4",
-        "@types/inquirer-autocomplete-prompt": "^3.0.1",
-        "@types/jasmine": "^4.3.1",
+        "@repo/eslint-config": "*",
+        "@repo/typescript-config": "*",
+        "@types/jasmine": "^5.1.4",
         "@types/lodash-es": "^4.17.7",
-        "@types/semver": "^7.3.13",
-        "@types/sprintf-js": "^1.1.2",
-        "jasmine": "^4.6.0"
+        "@types/node": "^20.16.5",
+        "@typescript-eslint/eslint-plugin": "^7.1.0",
+        "@typescript-eslint/parser": "^7.1.0",
+        "eslint": "^8",
+        "jasmine": "^5.3.0"
     }
 }

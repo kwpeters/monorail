@@ -1,0 +1,27 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  // turbo's daemon runs constantly and makes it impossible to delete the
+  // node_modules folder.  The daemon can be stopped by running "npx turbo
+  // daemon clean" or rebooting, but it's easier to not allow it to run.
+  // See: https://github.com/vercel/turborepo/issues/3455
+  "daemon": false,
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": ["dist"]
+    },
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "test": {
+        "dependsOn": [ "^test" ],
+        "outputs": []
+    }
+  }
+}

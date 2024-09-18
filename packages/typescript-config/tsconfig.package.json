@@ -1,0 +1,8 @@
+{
+    //
+    // TypeScript configuration libraries/packages.
+    //
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "extends": "./tsconfig.compileroptions.json",
+    "compilerOptions": {}
+}
