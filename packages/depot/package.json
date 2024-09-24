@@ -10,6 +10,18 @@
         "lint": "eslint ./src"
     },
     "exports": {
+        "./action": {
+            "types": "./src/action.mts",
+            "default": "./dist/action.mjs"
+        },
+        "./actionComposite": {
+            "types": "./src/actionComposite.mts",
+            "default": "./dist/actionComposite.mjs"
+        },
+        "./algorithm": {
+            "types": "./src/algorithm.mts",
+            "default": "./dist/algorithm.mjs"
+        },
         "./deferred": {
             "types": "./src/deferred.mts",
             "default": "./dist/deferred.mjs"
@@ -18,9 +30,17 @@
             "types": "./src/errorHelpers.mts",
             "default": "./dist/errorHelpers.mjs"
         },
+        "./functional": {
+            "types": "./src/functional.mts",
+            "default": "./dist/functional.mjs"
+        },
         "./inspect": {
             "types": "./src/inspect.mts",
             "default": "./dist/inspect.mjs"
+        },
+        "./list": {
+            "types": "./src/list.mts",
+            "default": "./dist/list.mjs"
         },
         "./never": {
             "types": "./src/never.mts",
