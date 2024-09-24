@@ -1,6 +1,6 @@
-import * as url from "url";
-import * as path from "path";
-import {constants} from "fs";
+import * as url from "node:url";
+import * as path from "node:path";
+import {constants} from "node:fs";
 import { File } from "./file.mjs";
 import { Directory } from "./directory.mjs";
 import { getOs, OperatingSystem } from "./os.mjs";

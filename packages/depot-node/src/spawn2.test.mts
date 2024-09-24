@@ -1,6 +1,6 @@
-import * as path from "path";
-import * as cp from "child_process";
-import * as fs from "fs";
+import * as path from "node:path";
+import * as cp from "node:child_process";
+import * as fs from "node:fs";
 import * as _ from "lodash-es";
 import { isISpawnExitError, isISpawnSystemError, spawn } from "./spawn2.mjs";
 import { getOs, OperatingSystem } from "./os.mjs";

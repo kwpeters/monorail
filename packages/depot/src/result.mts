@@ -776,7 +776,7 @@ export namespace Result {
     ): Result<[TAS, TBS, TCS, TDS, TES, TFS, TGS, THS, TIS, TJS, TKS, TLS, TMS], TAE | TBE | TCE | TDE | TEE | TFE | TGE | THE | TIE | TJE | TKE | TLE | TME>;
 
     export function executeWhileSuccessful(
-        // eslint-disable-next-line @typescript-eslint/ban-types
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
         ...funcs: Array<Function>
     ): Result<Array<unknown>, unknown> {
         return funcs.reduce<Result<Array<unknown>, unknown>>(
@@ -787,6 +787,7 @@ export namespace Result {
                 }
 
                 // We have not failed yet, so execute the current function.
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
                 const res = curFn() as Result<unknown, unknown>;
                 if (res.succeeded) {
                     // Note:  Do not use array.concat() here, because if the current

@@ -1,6 +1,6 @@
 import { promisify } from "node:util";
 import * as childProcess from "node:child_process";
-import { ArgumentsCamelCase, Argv } from "yargs";
+import { type ArgumentsCamelCase, type Argv } from "yargs";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { File } from "@repo/depot-node/file";

@@ -1,4 +1,4 @@
-import {EventEmitter} from "events";
+import {EventEmitter} from "node:events";
 import {getTimerPromise} from "@repo/depot/promiseHelpers";
 import {eventToPromise} from "./promiseHelpers.mjs";
 

@@ -1,5 +1,4 @@
 /* eslint-disable max-len */
-/* eslint-disable @typescript-eslint/ban-types */
 
 /**
  * Passes a value through a series of potentially asynchronous functions.  The
@@ -20526,11 +20525,13 @@ export function pipeAsync<T001, T002, T003, T004, T005, T006, T007, T008, T009, 
 export function pipeAsync(
     // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
     v001: unknown | Promise<unknown>,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     ...fns: Array<Function>
 ): Promise<unknown> {
     return fns.reduce(
         (acc, curFn) => {
             return acc.then((accVal: unknown) => {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
                 return Promise.resolve(curFn(accVal));
             });
         },

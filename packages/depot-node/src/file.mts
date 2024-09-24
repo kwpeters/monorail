@@ -1,14 +1,14 @@
-import * as fs from "fs";
-import * as fsp from "fs/promises";
-import * as path from "path";
-import * as crypto from "crypto";
+import * as fs from "node:fs";
+import * as fsp from "node:fs/promises";
+import * as path from "node:path";
+import * as crypto from "node:crypto";
 import * as readline from "readline";
 import * as _ from "lodash-es";
 import stripJsonComments from "strip-json-comments";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
-import {ListenerTracker} from "./listenerTracker.mjs";
-import {Directory} from "./directory.mjs";
-import {PathPart, reducePathParts} from "./pathHelpers.mjs";
+import { ListenerTracker } from "./listenerTracker.mjs";
+import { Directory } from "./directory.mjs";
+import { type PathPart, reducePathParts } from "./pathHelpers.mjs";
 
 
 /**
@@ -642,7 +642,7 @@ export class File {
      * @return A Promise that is resolved when the file has been written
      */
     public writeJson(
-        data: object  // eslint-disable-line @typescript-eslint/ban-types
+        data: object
     ): Promise<void> {
         const jsonText = JSON.stringify(data, undefined, 4);
         return this.write(jsonText);
@@ -656,7 +656,7 @@ export class File {
      * @param data - The data to be stringified and written
      */
     public writeJsonSync(
-        data: object  // eslint-disable-line @typescript-eslint/ban-types
+        data: object
     ): void {
         const jsonText = JSON.stringify(data, undefined, 4);
         return this.writeSync(jsonText);

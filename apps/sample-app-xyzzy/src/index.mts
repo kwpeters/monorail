@@ -1,4 +1,4 @@
-import * as url from "url";
+import * as url from "node:url";
 import { Result, SucceededResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
 

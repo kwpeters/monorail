@@ -40,6 +40,7 @@
         "noImplicitReturns": true,
         "noFallthroughCasesInSwitch": true,
         "noImplicitOverride": true,
-        "target": "ES2022"
+        "target": "ES2022",
+        "verbatimModuleSyntax": true
     }
 }

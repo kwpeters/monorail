@@ -7,7 +7,6 @@ export interface ISystemError {
     code?: string;  // The string error code
     dest?: string;  // If present, the file path destination when reporting a file system error
     errno?: number;  // The system-provided error number
-    // eslint-disable-next-line @typescript-eslint/ban-types
     info?: object;  // If present, extra details about the error condition
     message?: string;  // A system-provided human - readable description of the error
     path?: string;  // If present, the file path when reporting a file system error

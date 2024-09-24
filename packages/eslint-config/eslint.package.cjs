@@ -9,9 +9,14 @@ module.exports = {
         "tsconfigRootDir": ".",
         "project": [
             project
-            // "./packages/*/tsconfig.json",
-            // "./apps/*/tsconfig.json",
-            // "./build/tsconfig.json"
+
+            // TODO: Given that the current working directory is correct, we
+            // could specify the project as follows:
+            //
+            // "./tsconfig.ut.json"
+            //
+            // Doing so would make this file easier to convert to a flat config
+            // json file that ESLint 9 uses.
         ]
     },
     extends: [
@@ -25,6 +30,9 @@ module.exports = {
     env: {
         node: true,
     },
+    "plugins": [
+        "@stylistic"
+    ],
     settings: {
         "import/resolver": {
             typescript: {
@@ -56,21 +64,68 @@ module.exports = {
         }
     ],
     rules: {
-        "@typescript-eslint/comma-dangle": [
-            "error",
-            "only-multiline"
-        ],
-        "@typescript-eslint/ban-types": [
-            "error"
-        ],
-        "@typescript-eslint/brace-style": [
+
+        "@stylistic/brace-style": [
             "error",
             "stroustrup",
             {
                 "allowSingleLine": true
             }
         ],
-        "@typescript-eslint/comma-spacing": "error",
+        "@stylistic/comma-dangle": [
+            "error",
+            "only-multiline"
+        ],
+        "@stylistic/comma-spacing": "error",
+        "@stylistic/func-call-spacing": [
+            "error"
+        ],
+        "@stylistic/keyword-spacing": [
+            "error",
+            {
+                "before": true,
+                "after": true
+            }
+        ],
+        "@stylistic/lines-between-class-members": [
+            "error",
+            "always",
+            {
+                "exceptAfterSingleLine": true,
+                "exceptAfterOverload": true
+            }
+        ],
+        "@stylistic/quotes": [
+            "error",
+            "double",
+            {
+                "avoidEscape": true,
+                "allowTemplateLiterals": true
+            }
+        ],
+        "@stylistic/semi": [
+            "error",
+            "always"
+        ],
+        "@stylistic/space-before-function-paren": [
+            "error",
+            {
+                "anonymous": "always",
+                "named": "never",
+                "asyncArrow": "always"
+            }
+        ],
+        "@stylistic/type-annotation-spacing": [
+            "error"
+        ],
+
+
+        //----------------------------------------------------------------------
+
+
+        "@typescript-eslint/no-empty-object-type": "error",
+        "@typescript-eslint/no-unsafe-function-type": "error",
+        "@typescript-eslint/no-wrapper-object-types": "error",
         "@typescript-eslint/consistent-type-definitions": [
             "error",
             "interface"
@@ -89,28 +144,10 @@ module.exports = {
         "@typescript-eslint/explicit-module-boundary-types": [
             "error"
         ],
-        "@typescript-eslint/func-call-spacing": [
-            "error"
-        ],
         "@typescript-eslint/indent": [
             // Don't use this rule.  It is broken.
             // See: https://github.com/typescript-eslint/typescript-eslint/issues/1824
             "off"
-        ],
-        "@typescript-eslint/keyword-spacing": [
-            "error",
-            {
-                "before": true,
-                "after": true
-            }
-        ],
-        "@typescript-eslint/lines-between-class-members": [
-            "error",
-            "always",
-            {
-                "exceptAfterSingleLine": true,
-                "exceptAfterOverload": true
-            }
         ],
         "@typescript-eslint/member-ordering": [
             "error",
@@ -390,6 +427,13 @@ module.exports = {
         "@typescript-eslint/prefer-optional-chain": [
             "error"
         ],
+        // The following rule is turned off because it has a bug in it that
+        // causes it to throw.  It should be fixed very soon.
+        //
+        // See: https://github.com/typescript-eslint/typescript-eslint/issues/9999
+        //
+        // TODO: Enable this rule when there is a new version of typescript-eslint.
+        "@typescript-eslint/prefer-promise-reject-errors": "off",
         "@typescript-eslint/prefer-readonly": [
             "error"
         ],
@@ -405,36 +449,16 @@ module.exports = {
         "@typescript-eslint/prefer-ts-expect-error": [
             "error"
         ],
-        "@typescript-eslint/quotes": [
-            "error",
-            "double",
-            {
-                "avoidEscape": true,
-                "allowTemplateLiterals": true
-            }
-        ],
         "@typescript-eslint/require-await": "error",
-        "@typescript-eslint/semi": [
-            "error",
-            "always"
-        ],
-        "@typescript-eslint/space-before-function-paren": [
-            "error",
-            {
-                "anonymous": "always",
-                "named": "never",
-                "asyncArrow": "always"
-            }
-        ],
-        "@typescript-eslint/type-annotation-spacing": [
-            "error"
-        ],
         "@typescript-eslint/unbound-method": [
             "error",
             {
                 "ignoreStatic": true
             }
         ],
+
+        //----------------------------------------------------------------------
+
         // When using Angular it is common to have @ViewChildren that only have a setter.
         "accessor-pairs": "off",
         "array-bracket-newline": [
@@ -464,12 +488,7 @@ module.exports = {
         ],
         "block-scoped-var": "error",
         "block-spacing": "error",
-        "brace-style": [
-            "off"
-        ],
         "camelcase": "error",
-        "comma-dangle": "off", // Must be off when @typescript-eslint/comma-dangle is on
-        "comma-spacing": "off", // Must be off when @typescript-eslint/comma-spacing is on
         "comma-style": [
             "error",
             "last"
@@ -495,7 +514,6 @@ module.exports = {
             "error",
             "always"
         ],
-        "func-call-spacing": "off", // Must be off when @typescript-eslint/func-call-spacing is on
         "func-name-matching": [
             "error",
             "always",
@@ -557,9 +575,7 @@ module.exports = {
                 }
             }
         ],
-        "keyword-spacing": "off", // Must be off when @typescript-eslint/keyword-spacing is on
         "linebreak-style": "off",
-        "lines-between-class-members": "off", // Must be off when @typescript-eslint/lines-between-class-members is on
         "max-len": [
             "error",
             {
@@ -628,7 +644,7 @@ module.exports = {
         ],
         "no-useless-rename": "error",
         "no-var": "error",
-        // When curly braceless labmdas are passed to immer's produce(), the
+        // When curly braceless lambdas are passed to immer's produce(), the
         // return value confuses produce into thinking the next state is being
         // returned.  Using the void operator is a good way to prevent this.
         "no-void": "off",
@@ -673,7 +689,6 @@ module.exports = {
         "prefer-object-spread": "error",
         "prefer-rest-params": "error",
         "prefer-spread": "error",
-        "quotes": "off", // Needs to be off when @typescript-eslint/quotes is on
         "radix": [
             "error",
             "always"
@@ -683,7 +698,6 @@ module.exports = {
         ],
         "require-await": "off", // Must be off when @typescript-eslint/require-await is on
         "rest-spread-spacing": "error",
-        "semi": "off", // Must be off when @typescript-eslint/semi is on
         "semi-spacing": [
             "error",
             {
@@ -699,7 +713,6 @@ module.exports = {
             "error",
             "always"
         ],
-        "space-before-function-paren": "off", // Must be off when @typescript-eslint/space-before-function-paren is on
         "space-in-parens": [
             // Sometimes space is inserted in order for similar lines to line up.
             "off"

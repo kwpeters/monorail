@@ -1,13 +1,13 @@
-import * as fs from "fs";
-import * as fsp from "fs/promises";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as fsp from "node:fs/promises";
+import * as path from "node:path";
 import * as _ from "lodash-es";
 import { sequence, mapAsync } from "@repo/depot/promiseHelpers";
 import { StorageSize } from "@repo/depot/storageSize";
 import { matchesAny } from "@repo/depot/regexpHelpers";
-import {File} from "./file.mjs";
-import {PathPart, reducePathParts} from "./pathHelpers.mjs";
-import { ISystemError } from "./nodeTypes.mjs";
+import { File } from "./file.mjs";
+import { type PathPart, reducePathParts } from "./pathHelpers.mjs";
+import { type ISystemError } from "./nodeTypes.mjs";
 
 
 export interface IDirectoryContents {
@@ -263,6 +263,7 @@ export class Directory {
                         .catch((err: ISystemError) => {
                             // If the directory already exists, just keep going.
                             if (err.code !== "EEXIST") {
+                                // eslint-disable-next-line @typescript-eslint/only-throw-error
                                 throw err;
                             }
                         });

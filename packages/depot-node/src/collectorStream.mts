@@ -1,4 +1,4 @@
-import {Transform} from "stream";
+import {Transform} from "node:stream";
 import {Deferred} from "@repo/depot/deferred";
 
 

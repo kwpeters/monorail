@@ -1,5 +1,4 @@
 /* eslint-disable max-len */
-/* eslint-disable @typescript-eslint/ban-types */
 
 /**
  * Passes a value through a series of functions.  The value returned from each
@@ -20523,10 +20522,12 @@ export function pipe<T001, T002, T003, T004, T005, T006, T007, T008, T009, T010,
 // ): T200;
 export function pipe(
     v001: unknown,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     ...fns: Array<Function>
 ): unknown {
     return fns.reduce(
         (acc, curFn) => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
             return curFn(acc);
         },
         v001

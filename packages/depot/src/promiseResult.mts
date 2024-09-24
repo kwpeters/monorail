@@ -4,7 +4,7 @@
 
 import * as _ from "lodash-es";
 import { FailedResult, Result, SucceededResult } from "./result.mjs";
-import { IIndexedItem } from "./utilityTypes.mjs";
+import { type IIndexedItem } from "./utilityTypes.mjs";
 import { errorToString } from "./errorHelpers.mjs";
 
 

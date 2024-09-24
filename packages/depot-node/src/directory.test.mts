@@ -1,6 +1,6 @@
 
-import * as url from "url";
-import * as path from "path";
+import * as url from "node:url";
+import * as path from "node:path";
 import * as _ from "lodash-es";
 import { File } from "./file.mjs";
 import { Directory, IDirectoryContents, IFilterResult } from "./directory.mjs";
