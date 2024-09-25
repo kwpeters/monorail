@@ -26,9 +26,21 @@
             "types": "./src/bufUtils.mts",
             "default": "./dist/bufUtils.mjs"
         },
+        "./chalkHelpers": {
+            "types": "./src/chalkHelpers.mts",
+            "default": "./dist/chalkHelpers.mjs"
+        },
         "./collectorStream": {
             "types": "./src/collectorStream.mts",
             "default": "./dist/collectorStream.mjs"
+        },
+        "./combinedStream": {
+            "types": "./src/combinedStream.mts",
+            "default": "./dist/combinedStream.mjs"
+        },
+        "./diffDirectories": {
+            "types": "./src/diffDirectories.mts",
+            "default": "./dist/diffDirectories.mjs"
         },
         "./directory": {
             "types": "./src/directory.mts",
@@ -77,6 +89,7 @@
     },
     "dependencies": {
         "@repo/depot": "*",
+        "chalk": "^5.3.0",
         "lodash-es": "^4.17.21",
         "long": "^5.2.3",
         "sprintf-js": "^1.1.2",
