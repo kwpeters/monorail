@@ -86,6 +86,14 @@
             "types": "./src/errorHelpers.mts",
             "default": "./dist/errorHelpers.mjs"
         },
+        "./expression": {
+            "types": "./src/expression.mts",
+            "default": "./dist/expression.mjs"
+        },
+        "./fraction": {
+            "types": "./src/fraction.mts",
+            "default": "./dist/fraction.mjs"
+        },
         "./functional": {
             "types": "./src/functional.mts",
             "default": "./dist/functional.mjs"
