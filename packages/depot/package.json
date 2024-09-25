@@ -46,6 +46,10 @@
             "types": "./src/comment.mts",
             "default": "./dist/comment.mjs"
         },
+        "./commitHash": {
+            "types": "./src/commitHash.mts",
+            "default": "./dist/commitHash.mjs"
+        },
         "./compare": {
             "types": "./src/compare.mts",
             "default": "./dist/compare.mjs"
