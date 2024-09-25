@@ -102,6 +102,10 @@
             "types": "./src/hash.mts",
             "default": "./dist/hash.mjs"
         },
+        "./hashtable": {
+            "types": "./src/hashtable.mts",
+            "default": "./dist/hashtable.mjs"
+        },
         "./inspect": {
             "types": "./src/inspect.mts",
             "default": "./dist/inspect.mjs"
