@@ -38,6 +38,10 @@
             "types": "./src/cdataHelpers.mts",
             "default": "./dist/cdataHelpers.mjs"
         },
+        "./collection": {
+            "types": "./src/collection.mts",
+            "default": "./dist/collection.mjs"
+        },
         "./deferred": {
             "types": "./src/deferred.mts",
             "default": "./dist/deferred.mjs"
