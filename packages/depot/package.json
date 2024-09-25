@@ -106,9 +106,25 @@
             "types": "./src/hashtable.mts",
             "default": "./dist/hashtable.mjs"
         },
+        "./heap": {
+            "types": "./src/heap.mts",
+            "default": "./dist/heap.mjs"
+        },
+        "./httpConstants": {
+            "types": "./src/httpConstants.mts",
+            "default": "./dist/httpConstants.mjs"
+        },
+        "./indentingWriter": {
+            "types": "./src/indentingWriter.mts",
+            "default": "./dist/indentingWriter.mjs"
+        },
         "./inspect": {
             "types": "./src/inspect.mts",
             "default": "./dist/inspect.mjs"
+        },
+        "./intRange": {
+            "types": "./src/intRange.mts",
+            "default": "./dist/intRange.mjs"
         },
         "./list": {
             "types": "./src/list.mts",
