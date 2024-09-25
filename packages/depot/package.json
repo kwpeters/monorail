@@ -66,6 +66,10 @@
             "types": "./src/directedGraph.mts",
             "default": "./dist/directedGraph.mjs"
         },
+        "./discriminatedUnion": {
+            "types": "./src/discriminatedUnion.mts",
+            "default": "./dist/discriminatedUnion.mjs"
+        },
         "./equate": {
             "types": "./src/equate.mts",
             "default": "./dist/equate.mjs"
