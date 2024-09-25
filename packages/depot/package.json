@@ -126,6 +126,18 @@
             "types": "./src/intRange.mts",
             "default": "./dist/intRange.mjs"
         },
+        "./iterableHelpers": {
+            "types": "./src/iterableHelpers.mts",
+            "default": "./dist/iterableHelpers.mjs"
+        },
+        "./lazyValue": {
+            "types": "./src/lazyValue.mts",
+            "default": "./dist/lazyValue.mjs"
+        },
+        "./lcs": {
+            "types": "./src/lcs.mts",
+            "default": "./dist/lcs.mjs"
+        },
         "./list": {
             "types": "./src/list.mts",
             "default": "./dist/list.mjs"
