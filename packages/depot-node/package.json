@@ -10,6 +10,22 @@
         "lint": "eslint ./src"
     },
     "exports": {
+        "./angular": {
+            "types": "./src/angular.mts",
+            "default": "./dist/angular.mjs"
+        },
+        "./bufBuilder": {
+            "types": "./src/bufBuilder.mts",
+            "default": "./dist/bufBuilder.mjs"
+        },
+        "./bufReader": {
+            "types": "./src/bufReader.mts",
+            "default": "./dist/bufReader.mjs"
+        },
+        "./bufUtils": {
+            "types": "./src/bufUtils.mts",
+            "default": "./dist/bufUtils.mjs"
+        },
         "./collectorStream": {
             "types": "./src/collectorStream.mts",
             "default": "./dist/collectorStream.mjs"
@@ -22,6 +38,10 @@
             "types": "./src/file.mts",
             "default": "./dist/file.mjs"
         },
+        "./lint": {
+            "types": "./src/lint.mts",
+            "default": "./dist/lint.mjs"
+        },
         "./listenerTracker": {
             "types": "./src/listenerTracker.mts",
             "default": "./dist/listenerTracker.mjs"
@@ -29,6 +49,10 @@
         "./nodeTypes": {
             "types": "./src/nodeTypes.mts",
             "default": "./dist/nodeTypes.mjs"
+        },
+        "./nodeUtil": {
+            "types": "./src/nodeUtil.mts",
+            "default": "./dist/nodeUtil.mjs"
         },
         "./nullStream": {
             "types": "./src/nullStream.mts",
@@ -54,6 +78,8 @@
     "dependencies": {
         "@repo/depot": "*",
         "lodash-es": "^4.17.21",
+        "long": "^5.2.3",
+        "sprintf-js": "^1.1.2",
         "strip-ansi": "^7.1.0",
         "strip-json-comments": "^5.0.1"
     },
@@ -64,6 +90,7 @@
         "@types/jasmine": "^5.1.4",
         "@types/lodash-es": "^4.17.7",
         "@types/node": "^20.16.5",
+        "@types/sprintf-js": "^1.1.2",
         "@typescript-eslint/eslint-plugin": "^8.6.0",
         "@typescript-eslint/parser": "^8.6.0",
         "eslint": "^8.57.1",
