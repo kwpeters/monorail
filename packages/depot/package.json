@@ -34,6 +34,10 @@
             "types": "./src/byteString.mts",
             "default": "./dist/byteString.mjs"
         },
+        "./cdataHelpers": {
+            "types": "./src/cdataHelpers.mts",
+            "default": "./dist/cdataHelpers.mjs"
+        },
         "./deferred": {
             "types": "./src/deferred.mts",
             "default": "./dist/deferred.mjs"

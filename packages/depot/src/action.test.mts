@@ -1,5 +1,5 @@
-import {Action} from "../src/action.mjs";
-import { getTimerPromise } from "../src/promiseHelpers.mjs";
+import {Action} from "./action.mjs";
+import { getTimerPromise } from "./promiseHelpers.mjs";
 
 
 describe("Action", () => {

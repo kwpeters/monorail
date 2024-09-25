@@ -1,5 +1,5 @@
-import {List, Iterator} from "../src/list.mjs";
-import {advance, find, distance, partition} from "../src/algorithm.mjs";
+import {List, Iterator} from "./list.mjs";
+import {advance, find, distance, partition} from "./algorithm.mjs";
 
 
 describe("advance()", () => {

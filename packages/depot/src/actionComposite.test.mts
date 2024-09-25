@@ -1,6 +1,6 @@
-import {Action} from "../src/action.mjs";
-import {ActionComposite} from "../src/actionComposite.mjs";
-import { getTimerPromise } from "../src/promiseHelpers.mjs";
+import {Action} from "./action.mjs";
+import {ActionComposite} from "./actionComposite.mjs";
+import { getTimerPromise } from "./promiseHelpers.mjs";
 
 
 describe("ActionComposite", () => {

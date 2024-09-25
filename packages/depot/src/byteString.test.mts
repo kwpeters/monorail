@@ -1,4 +1,4 @@
-import { ByteString } from "../src/byteString.mjs";
+import { ByteString } from "./byteString.mjs";
 
 
 describe("ByteString", () => {

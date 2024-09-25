@@ -1,4 +1,4 @@
-import { List, Iterator } from "../src/list.mjs";
+import { List, Iterator } from "./list.mjs";
 import { randomizedArray } from "./random_data.test.mjs";
 
 

@@ -1,5 +1,5 @@
 import * as _ from "lodash-es";
-import { UuidFormat, reStrUuidFormatD, reStrUuidFormatN, Uuid, generateUuid } from "../src/uuid.mjs";
+import { UuidFormat, reStrUuidFormatD, reStrUuidFormatN, Uuid, generateUuid } from "./uuid.mjs";
 
 
 describe("generateUuid()", () => {

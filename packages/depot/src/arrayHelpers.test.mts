@@ -1,5 +1,5 @@
-import {anyMatchRegex, choose, chooseAsync, filterDefined, groupConsecutiveBy, insertIf, permutations, split, toArray} from "../src/arrayHelpers.mjs";
-import { FailedResult, SucceededResult } from "../src/result.mjs";
+import {anyMatchRegex, choose, chooseAsync, filterDefined, groupConsecutiveBy, insertIf, permutations, split, toArray} from "./arrayHelpers.mjs";
+import { FailedResult, SucceededResult } from "./result.mjs";
 
 describe("anyMatchRegex()", () => {
 
