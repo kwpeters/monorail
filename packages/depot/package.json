@@ -142,9 +142,25 @@
             "types": "./src/list.mts",
             "default": "./dist/list.mjs"
         },
+        "./mapHelpers": {
+            "types": "./src/mapHelpers.mts",
+            "default": "./dist/mapHelpers.mjs"
+        },
+        "./mathHelpers": {
+            "types": "./src/mathHelpers.mts",
+            "default": "./dist/mathHelpers.mjs"
+        },
         "./never": {
             "types": "./src/never.mts",
             "default": "./dist/never.mjs"
+        },
+        "./nonnegativeNumber": {
+            "types": "./src/nonnegativeNumber.mts",
+            "default": "./dist/nonnegativeNumber.mjs"
+        },
+        "./numericRange": {
+            "types": "./src/numericRange.mts",
+            "default": "./dist/numericRange.mjs"
         },
         "./option": {
             "types": "./src/option.mts",
