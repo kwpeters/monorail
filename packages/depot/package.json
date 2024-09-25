@@ -62,6 +62,10 @@
             "types": "./src/deferred.mts",
             "default": "./dist/deferred.mjs"
         },
+        "./directedGraph": {
+            "types": "./src/directedGraph.mts",
+            "default": "./dist/directedGraph.mjs"
+        },
         "./equate": {
             "types": "./src/equate.mts",
             "default": "./dist/equate.mjs"
@@ -125,6 +129,10 @@
         "./result": {
             "types": "./src/result.mts",
             "default": "./dist/result.mjs"
+        },
+        "./setHelpers": {
+            "types": "./src/setHelpers.mts",
+            "default": "./dist/setHelpers.mjs"
         },
         "./storageSize": {
             "types": "./src/storageSize.mts",
