@@ -74,6 +74,10 @@
             "types": "./src/enumHelpers.mts",
             "default": "./dist/enumHelpers.mjs"
         },
+        "./environmentDetection": {
+            "types": "./src/environmentDetection.mts",
+            "default": "./dist/environmentDetection.mjs"
+        },
         "./equate": {
             "types": "./src/equate.mts",
             "default": "./dist/equate.mjs"
