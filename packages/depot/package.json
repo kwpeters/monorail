@@ -238,13 +238,41 @@
             "types": "./src/stringHelpers.mts",
             "default": "./dist/stringHelpers.mjs"
         },
+        "./stringI": {
+            "types": "./src/stringI.mts",
+            "default": "./dist/stringI.mjs"
+        },
+        "./timestampId": {
+            "types": "./src/timestampId.mts",
+            "default": "./dist/timestampId.mjs"
+        },
+        "./typeUtils": {
+            "types": "./src/typeUtils.mts",
+            "default": "./dist/typeUtils.mjs"
+        },
         "./utilityTypes": {
             "types": "./src/utilityTypes.mts",
             "default": "./dist/utilityTypes.mjs"
         },
+        "./url": {
+            "types": "./src/url.mts",
+            "default": "./dist/url.mjs"
+        },
         "./uuid": {
             "types": "./src/uuid.mts",
             "default": "./dist/uuid.mjs"
+        },
+        "./validator": {
+            "types": "./src/validator.mts",
+            "default": "./dist/validator.mjs"
+        },
+        "./voMap": {
+            "types": "./src/voMap.mts",
+            "default": "./dist/voMap.mjs"
+        },
+        "./voSet": {
+            "types": "./src/voSet.mts",
+            "default": "./dist/voSet.mjs"
         }
     },
     "dependencies": {
@@ -252,6 +280,8 @@
         "object-inspect": "^1.12.3",
         "sprintf-js": "^1.1.2",
         "tweetnacl": "^1.0.3",
+        "url-join": "^5.0.0",
+        "url-parse": "^1.5.10",
         "uuid": "^9.0.0"
     },
     "devDependencies": {
@@ -262,6 +292,7 @@
         "@types/lodash-es": "^4.17.7",
         "@types/object-inspect": "^1.8.1",
         "@types/sprintf-js": "^1.1.2",
+        "@types/url-parse": "^1.4.8",
         "@types/uuid": "^9.0.1",
         "@typescript-eslint/eslint-plugin": "^8.6.0",
         "@typescript-eslint/parser": "^8.6.0",
