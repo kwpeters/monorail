@@ -42,6 +42,14 @@
             "types": "./src/collection.mts",
             "default": "./dist/collection.mjs"
         },
+        "./comment": {
+            "types": "./src/comment.mts",
+            "default": "./dist/comment.mjs"
+        },
+        "./compare": {
+            "types": "./src/compare.mts",
+            "default": "./dist/compare.mjs"
+        },
         "./deferred": {
             "types": "./src/deferred.mts",
             "default": "./dist/deferred.mjs"
@@ -113,6 +121,10 @@
         "./storageSize": {
             "types": "./src/storageSize.mts",
             "default": "./dist/storageSize.mjs"
+        },
+        "./stringHelpers": {
+            "types": "./src/stringHelpers.mts",
+            "default": "./dist/stringHelpers.mjs"
         },
         "./utilityTypes": {
             "types": "./src/utilityTypes.mts",
