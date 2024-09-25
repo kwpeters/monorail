@@ -182,9 +182,17 @@
             "types": "./src/pipeAsync2.mts",
             "default": "./dist/pipeAsync2.mjs"
         },
+        "./poll": {
+            "types": "./src/poll.mts",
+            "default": "./dist/poll.mjs"
+        },
         "./primitives": {
             "types": "./src/primitives.mts",
             "default": "./dist/primitives.mjs"
+        },
+        "./priorityQueue": {
+            "types": "./src/priorityQueue.mts",
+            "default": "./dist/priorityQueue.mjs"
         },
         "./promiseHelpers": {
             "types": "./src/promiseHelpers.mts",
@@ -194,9 +202,21 @@
             "types": "./src/promiseResult.mts",
             "default": "./dist/promiseResult.mjs"
         },
+        "./promisify": {
+            "types": "./src/promisify.mts",
+            "default": "./dist/promisify.mjs"
+        },
+        "./random": {
+            "types": "./src/random.mts",
+            "default": "./dist/random.mjs"
+        },
         "./regexpHelpers": {
             "types": "./src/regexpHelpers.mts",
             "default": "./dist/regexpHelpers.mjs"
+        },
+        "./reporter": {
+            "types": "./src/reporter.mts",
+            "default": "./dist/reporter.mjs"
         },
         "./result": {
             "types": "./src/result.mts",
@@ -209,6 +229,10 @@
         "./storageSize": {
             "types": "./src/storageSize.mts",
             "default": "./dist/storageSize.mjs"
+        },
+        "./stringDiff": {
+            "types": "./src/stringDiff.mts",
+            "default": "./dist/stringDiff.mjs"
         },
         "./stringHelpers": {
             "types": "./src/stringHelpers.mts",
