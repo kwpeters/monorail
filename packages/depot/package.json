@@ -70,6 +70,10 @@
             "types": "./src/discriminatedUnion.mts",
             "default": "./dist/discriminatedUnion.mjs"
         },
+        "./enumHelpers": {
+            "types": "./src/enumHelpers.mts",
+            "default": "./dist/enumHelpers.mjs"
+        },
         "./equate": {
             "types": "./src/equate.mts",
             "default": "./dist/equate.mjs"
