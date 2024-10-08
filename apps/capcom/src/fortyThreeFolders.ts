@@ -22,6 +22,9 @@ export async function getFortyThreeFoldersFile(): Promise<Result<File, string>> 
     }
 
     const fortyThreeFoldersFile = new File(cloudHome, "data", "43_folders", "43_folders.org");
+    if (!fortyThreeFoldersFile.existsSync()) {
+        return new FailedResult(`43 folders file "${fortyThreeFoldersFile.toString()}" does not exist.`);
+    }
 
     const maxDatePresent = await getMaxDate(fortyThreeFoldersFile);
     const now = new Date();
