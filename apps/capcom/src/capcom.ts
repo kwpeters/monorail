@@ -2,6 +2,7 @@ import * as url from "url";
 import { FailedResult, Result, SucceededResult } from "../../../packages/depot/src/result.js";
 import { PromiseResult } from "../../../packages/depot/src/promiseResult.js";
 import { pipe } from "../../../packages/depot/src/pipe2.js";
+import { insertIf } from "../../../packages/depot/src/arrayHelpers.js";
 import { Directory } from "../../../packages//depot-node/src/directory.js";
 import { File } from "../../../packages/depot-node/src/file.js";
 import { openInEmacs } from "../../../packages/depot-node/src/editor.js";
@@ -30,30 +31,23 @@ function runningThisScript(): boolean {
 
 
 async function main(): Promise<Result<number, string>> {
-    // Append to the captlog file if needed.
-    const captlogRes = await appendToCaptlogIfNeeded();
-    const fortyThreeFoldersRes = await getFortyThreeFoldersFile();
-    const todoFileRes = getTodoFile();
-    const clipPaletteFileRes = getClipPaletteFile();
-    const notesDirRes = getNotesFolder();
-    const logixFileRes = getLogixFile();
 
+    const results: Array<Result<File | Directory, string>> = [
+        // The last item in the list is the active buffer in Emacs.
+        getClipPaletteFile(),
+        getNotesFolder(),
+        getLogixFile(),
+        ...insertIf(isHomePc(), await getFortyThreeFoldersFile()),
+        getTodoFile(),
+        ...insertIf(isWorkPc(), await appendToCaptlogIfNeeded())
+    ];
 
-    const allRes = Result.allM(
-        fortyThreeFoldersRes,
-        todoFileRes,
-        clipPaletteFileRes,
-        notesDirRes,
-        logixFileRes,
-        // Last item will be the one on top in Emacs
-        captlogRes
-    );
+    const allRes = Result.allArrayM(results);
     if (allRes.failed) {
         return allRes;
     }
 
     openInEmacs([...allRes.value], false);
-
     return new SucceededResult(0);
 }
 
@@ -93,4 +87,13 @@ function getLogixFile(): Result<File, string> {
         getNotesFolder(),
         (dirRes) => Result.mapSuccess((dir) => new File(dir, "rockwell", "logix.org"), dirRes)
     );
+}
+
+
+function isWorkPc(): boolean {
+    return !!process.env.WORK_PC;
+}
+
+function isHomePc(): boolean {
+    return !process.env.WORK_PC;
 }
