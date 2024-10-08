@@ -37,7 +37,7 @@ async function main(): Promise<Result<number, string>> {
         getClipPaletteFile(),
         getNotesFolder(),
         getLogixFile(),
-        ...insertIf(isHomePc(), await getFortyThreeFoldersFile()),
+        await getFortyThreeFoldersFile(),
         getTodoFile(),
         ...insertIf(isWorkPc(), await appendToCaptlogIfNeeded())
     ];
