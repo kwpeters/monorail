@@ -14,7 +14,7 @@ if (runningThisScript()) {
 
     const res = await PromiseResult.forceResult(main());
     if (res.failed) {
-        console.error(res.error);
+        console.error(`❌ ${res.error}`);
         process.exit(-1);
     }
     else if (res.value !== 0) {
