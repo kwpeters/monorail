@@ -58,6 +58,14 @@
             "types": "./src/file.mts",
             "default": "./dist/file.mjs"
         },
+        "./fileDiff": {
+            "types": "./src/fileDiff.mts",
+            "default": "./dist/fileDiff.mjs"
+        },
+        "./filesystemHelpers": {
+            "types": "./src/filesystemHelpers.mts",
+            "default": "./dist/filesystemHelpers.mjs"
+        },
         "./httpError": {
             "types": "./src/httpError.mts",
             "default": "./dist/httpError.mjs"
@@ -101,6 +109,10 @@
         "./spawn2": {
             "types": "./src/spawn2.mts",
             "default": "./dist/spawn2.mjs"
+        },
+        "./symlink": {
+            "types": "./src/symlink.mts",
+            "default": "./dist/symlink.mjs"
         }
     },
     "dependencies": {
