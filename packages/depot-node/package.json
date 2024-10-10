@@ -98,6 +98,10 @@
             "types": "./src/launch.mts",
             "default": "./dist/launch.mjs"
         },
+        "./logger": {
+            "types": "./src/logger.mts",
+            "default": "./dist/logger.mjs"
+        },
         "./lint": {
             "types": "./src/lint.mts",
             "default": "./dist/lint.mjs"
