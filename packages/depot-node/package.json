@@ -66,6 +66,10 @@
             "types": "./src/filesystemHelpers.mts",
             "default": "./dist/filesystemHelpers.mjs"
         },
+        "./fileValidatorFns": {
+            "types": "./src/fileValidatorFns.mts",
+            "default": "./dist/fileValidatorFns.mjs"
+        },
         "./httpError": {
             "types": "./src/httpError.mts",
             "default": "./dist/httpError.mjs"
