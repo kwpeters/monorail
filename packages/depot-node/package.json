@@ -78,6 +78,18 @@
             "types": "./src/fsPath.mts",
             "default": "./dist/fsPath.mjs"
         },
+        "./gitBranch": {
+            "types": "./src/gitBranch.mts",
+            "default": "./dist/gitBranch.mjs"
+        },
+        "./gitHelpers": {
+            "types": "./src/gitHelpers.mts",
+            "default": "./dist/gitHelpers.mjs"
+        },
+        "./gitRepo": {
+            "types": "./src/gitRepo.mts",
+            "default": "./dist/gitRepo.mjs"
+        },
         "./httpError": {
             "types": "./src/httpError.mts",
             "default": "./dist/httpError.mjs"
@@ -93,6 +105,14 @@
         "./listenerTracker": {
             "types": "./src/listenerTracker.mts",
             "default": "./dist/listenerTracker.mjs"
+        },
+        "./nodePackage": {
+            "types": "./src/nodePackage.mts",
+            "default": "./dist/nodePackage.mjs"
+        },
+        "./nodePackageScript": {
+            "types": "./src/nodePackageScript.mts",
+            "default": "./dist/nodePackageScript.mjs"
         },
         "./nodeTypes": {
             "types": "./src/nodeTypes.mts",
@@ -118,6 +138,10 @@
             "types": "./src/promiseHelpers.mts",
             "default": "./dist/promiseHelpers.mjs"
         },
+        "./spawn": {
+            "types": "./src/spawn.mts",
+            "default": "./dist/spawn.mjs"
+        },
         "./spawn2": {
             "types": "./src/spawn2.mts",
             "default": "./dist/spawn2.mjs"
@@ -130,6 +154,7 @@
     "dependencies": {
         "@repo/depot": "*",
         "chalk": "^5.3.0",
+        "compressing": "^1.10.0",
         "lodash-es": "^4.17.21",
         "long": "^5.2.3",
         "node-fetch": "^3.3.1",
