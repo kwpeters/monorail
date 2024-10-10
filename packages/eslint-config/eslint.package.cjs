@@ -753,7 +753,11 @@ module.exports = {
             {
                 "devDependencies": [
                     "**/*.test.js",
-                    "**/*.spec.js"
+                    "**/*.test.ts",
+                    "**/*.test.mts",
+                    "**/*.spec.js",
+                    "**/*.spec.ts",
+                    "**/*.spec.mts"
                 ]
             }
         ],

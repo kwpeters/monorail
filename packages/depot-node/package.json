@@ -90,10 +90,6 @@
             "types": "./src/gitRepo.mts",
             "default": "./dist/gitRepo.mjs"
         },
-        "./gulpHelpers": {
-            "types": "./src/gulpHelpers.mts",
-            "default": "./dist/gulpHelpers.mjs"
-        },
         "./httpError": {
             "types": "./src/httpError.mts",
             "default": "./dist/httpError.mjs"
