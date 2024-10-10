@@ -70,6 +70,14 @@
             "types": "./src/fileValidatorFns.mts",
             "default": "./dist/fileValidatorFns.mjs"
         },
+        "./fsItem": {
+            "types": "./src/fsItem.mts",
+            "default": "./dist/fsItem.mjs"
+        },
+        "./fsPath": {
+            "types": "./src/fsPath.mts",
+            "default": "./dist/fsPath.mjs"
+        },
         "./httpError": {
             "types": "./src/httpError.mts",
             "default": "./dist/httpError.mjs"
