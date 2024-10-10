@@ -1,9 +1,9 @@
 import * as url from "node:url";
 import * as path from "node:path";
-import { getTimerPromise } from "../../depot/src/promiseHelpers.mjs";
-import { Symlink } from "../src/symlink.mjs";
-import { File } from "../src/file.mjs";
-import { Directory } from "../src/directory.mjs";
+import { getTimerPromise } from "@repo/depot/promiseHelpers";
+import { Symlink } from "./symlink.mjs";
+import { File } from "./file.mjs";
+import { Directory } from "./directory.mjs";
 import { tmpDir } from "./specHelpers.test.mjs";
 
 

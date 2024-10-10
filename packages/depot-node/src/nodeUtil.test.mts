@@ -1,9 +1,9 @@
-import {constants} from "fs";
+import {constants} from "node:fs";
 import * as _ from "lodash-es";
 import { splitIntoLines } from "@repo/depot/stringHelpers";
-import { File } from "../src/file.mjs";
-import { getOs, OperatingSystem } from "../src/os.mjs";
-import { makeNodeScriptExecutable, createCmdLaunchScript } from "../src/nodeUtil.mjs";
+import { File } from "./file.mjs";
+import { getOs, OperatingSystem } from "./os.mjs";
+import { makeNodeScriptExecutable, createCmdLaunchScript } from "./nodeUtil.mjs";
 import {tmpDir} from "./specHelpers.test.mjs";
 
 

@@ -1,7 +1,7 @@
 import path from "path";
-import { Directory } from "../src/directory.mjs";
-import { File } from "../src/file.mjs";
-import { findAngularProjectDirs } from "../src/angular.mjs";
+import { Directory } from "./directory.mjs";
+import { File } from "./file.mjs";
+import { findAngularProjectDirs } from "./angular.mjs";
 import {tmpDir} from "./specHelpers.test.mjs";
 
 

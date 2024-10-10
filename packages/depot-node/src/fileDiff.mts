@@ -1,4 +1,4 @@
-import { insertIf } from "../../depot/src/arrayHelpers.mjs";
+import { insertIf } from "@repo/depot/arrayHelpers";
 import { File } from "./file.mjs";
 import { getOs, OperatingSystem } from "./os.mjs";
 import {spawn} from "./spawn2.mjs";

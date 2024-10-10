@@ -1,9 +1,9 @@
 import * as path from "node:path";
-import { getTimerPromise } from "../../depot/src/promiseHelpers.mjs";
-import { getFilesystemItem, getMostRecentlyModified, resolveDirectoryLocation, resolveFileLocation } from "../src/filesystemHelpers.mjs";
-import {File} from "../src/file.mjs";
-import {Directory} from "../src/directory.mjs";
-import { Symlink } from "../src/symlink.mjs";
+import { getTimerPromise } from "@repo/depot/promiseHelpers";
+import { getFilesystemItem, getMostRecentlyModified, resolveDirectoryLocation, resolveFileLocation } from "./filesystemHelpers.mjs";
+import {File} from "./file.mjs";
+import {Directory} from "./directory.mjs";
+import { Symlink } from "./symlink.mjs";
 import { tmpDir } from "./specHelpers.test.mjs";
 
 

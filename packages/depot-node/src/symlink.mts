@@ -1,10 +1,10 @@
 import * as path from "node:path";
 import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
-import { Result, FailedResult, SucceededResult } from "../../depot/src/result.mjs";
-import { PromiseResult } from "../../depot/src/promiseResult.mjs";
-import { pipeAsync } from "../../depot/src/pipeAsync.mjs";
-import { errorToString } from "../../depot/src/errorHelpers.mjs";
+import { Result, FailedResult, SucceededResult } from "@repo/depot/result";
+import { PromiseResult } from "@repo/depot/promiseResult";
+import { pipeAsync } from "@repo/depot/pipeAsync";
+import { errorToString } from "@repo/depot/errorHelpers";
 import { type PathPart, reducePathParts } from "./pathHelpers.mjs";
 import { File } from "./file.mjs";
 import { Directory } from "./directory.mjs";

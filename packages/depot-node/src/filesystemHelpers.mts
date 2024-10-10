@@ -1,8 +1,8 @@
 import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import * as _ from "lodash-es";
-import { FailedResult, Result, SucceededResult } from "../../depot/src/result.mjs";
-import { errorToString } from "../../depot/src/errorHelpers.mjs";
+import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
+import { errorToString } from "@repo/depot/errorHelpers";
 import {Directory} from "./directory.mjs";
 import {File} from "./file.mjs";
 import { Symlink  } from "./symlink.mjs";
