@@ -110,6 +110,10 @@
             "types": "./src/listenerTracker.mts",
             "default": "./dist/listenerTracker.mjs"
         },
+        "./networkHelpers": {
+            "types": "./src/networkHelpers.mts",
+            "default": "./dist/networkHelpers.mjs"
+        },
         "./nodePackage": {
             "types": "./src/nodePackage.mts",
             "default": "./dist/nodePackage.mjs"
