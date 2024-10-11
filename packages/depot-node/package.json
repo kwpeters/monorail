@@ -198,9 +198,21 @@
             "types": "./src/timers.mts",
             "default": "./dist/timers.mjs"
         },
+        "./tsProject": {
+            "types": "./src/tsProject.mts",
+            "default": "./dist/tsProject.mjs"
+        },
+        "./ttyHelpers": {
+            "types": "./src/ttyHelpers.mts",
+            "default": "./dist/ttyHelpers.mjs"
+        },
         "./uniqueProcessStr": {
             "types": "./src/uniqueProcessStr.mts",
             "default": "./dist/uniqueProcessStr.mjs"
+        },
+        "./windowsHelpers": {
+            "types": "./src/windowsHelpers.mts",
+            "default": "./dist/windowsHelpers.mjs"
         }
     },
     "dependencies": {
