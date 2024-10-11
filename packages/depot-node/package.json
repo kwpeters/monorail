@@ -142,6 +142,10 @@
             "types": "./src/pathHelpers.mts",
             "default": "./dist/pathHelpers.mjs"
         },
+        "./powershell": {
+            "types": "./src/powershell.mts",
+            "default": "./dist/powershell.mjs"
+        },
         "./promiseHelpers": {
             "types": "./src/promiseHelpers.mts",
             "default": "./dist/promiseHelpers.mjs"
@@ -163,6 +167,7 @@
         "@repo/depot": "*",
         "chalk": "^5.3.0",
         "compressing": "^1.10.0",
+        "glob": "^10.3.3",
         "lodash-es": "^4.17.21",
         "long": "^5.2.3",
         "node-fetch": "^3.3.1",
