@@ -402,6 +402,19 @@ describe("bind()", () => {
     });
 
 
+    it("invokes the function when the input is a success", async () => {
+        let numInvocations = 0;
+        const fn = (x: number) => {
+            numInvocations++;
+            return Promise.resolve(new SucceededResult(x + 1));
+        };
+
+        const res = await PromiseResult.bind(fn, new SucceededResult(1));
+        expect(res.succeeded).toBeTrue();
+        expect(numInvocations).toEqual(1);
+    });
+
+
     it("works well in a pipeAsync()", async () => {
         const fn = (x: number) => Promise.resolve(new SucceededResult(x + 1));
         const res =
@@ -415,6 +428,66 @@ describe("bind()", () => {
     });
 
 
+});
+
+
+describe("bindError()", () => {
+
+    it("allows the input to be a Result<>", async () => {
+        const fn = (err: string) => Promise.resolve(new SucceededResult(100));
+        const res = await PromiseResult.bindError(fn, new FailedResult("error"));
+        expect(res.succeeded).toBeTrue();
+        expect(res.value).toEqual(100);
+    });
+
+
+    it("allows the input to be a Promise<Result<>>", async () => {
+        const fn = (err: string) => Promise.resolve(new SucceededResult(100));
+        const res = await PromiseResult.bindError(fn, Promise.resolve(new FailedResult("error")));
+        expect(res.succeeded).toBeTrue();
+        expect(res.value).toEqual(100);
+    });
+
+
+    it("does not invoke the function if the input is successful", async () => {
+        let numInvocations = 0;
+        const fn = (err: string) => {
+            numInvocations++;
+            return Promise.resolve(new SucceededResult(100));
+        };
+
+        const res = await PromiseResult.bindError(fn, new SucceededResult(1));
+        expect(res.succeeded).toBeTrue();
+        expect(numInvocations).toEqual(0);
+    });
+
+
+    it("invokes the function when the input is an error", async () => {
+        let numInvocations = 0;
+        const fn = (err: string) => {
+            numInvocations++;
+            return Promise.resolve(new SucceededResult(100));
+        };
+
+        const res = await PromiseResult.bindError(fn, new FailedResult("error"));
+        expect(res.succeeded).toBeTrue();
+        expect(numInvocations).toEqual(1);
+    });
+
+
+    it("works well in a pipeAsync()", async () => {
+        const fn = (err: string) => Promise.resolve(new FailedResult(err + "!"));
+
+        const res =
+            await pipeAsync(Promise.resolve(new FailedResult("error")))
+            .pipe((res) => PromiseResult.bindError(fn, res))
+            .pipe((res) => PromiseResult.bindError(fn, res))
+            .pipe((res) => PromiseResult.bindError(fn, res))
+            .end();
+        expect(res.failed).toBeTrue();
+        expect(res.error).toEqual("error!!!");
+
+    });
 });
 
 
