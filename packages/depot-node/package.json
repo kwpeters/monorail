@@ -154,6 +154,14 @@
             "types": "./src/promiseHelpers.mts",
             "default": "./dist/promiseHelpers.mjs"
         },
+        "./prompts": {
+            "types": "./src/prompts.mts",
+            "default": "./dist/prompts.mjs"
+        },
+        "./promptAutocomplete": {
+            "types": "./src/promptAutocomplete.mts",
+            "default": "./dist/promptAutocomplete.mjs"
+        },
         "./sourceStream": {
             "types": "./src/sourceStream.mts",
             "default": "./dist/sourceStream.mjs"
@@ -175,7 +183,10 @@
         "@repo/depot": "*",
         "chalk": "^5.3.0",
         "compressing": "^1.10.0",
+        "fuzzy": "^0.1.3",
         "glob": "^10.3.3",
+        "inquirer": "^9.1.5",
+        "inquirer-autocomplete-prompt": "^3.0.1",
         "lodash-es": "^4.17.21",
         "long": "^5.2.3",
         "node-fetch": "^3.3.1",
@@ -188,6 +199,8 @@
         "@repo/typescript-config": "*",
         "@stylistic/eslint-plugin": "^2.8.0",
         "@types/jasmine": "^5.1.4",
+        "@types/inquirer": "^9.0.4",
+        "@types/inquirer-autocomplete-prompt": "^3.0.1",
         "@types/lodash-es": "^4.17.7",
         "@types/node": "^20.16.5",
         "@types/sprintf-js": "^1.1.2",
