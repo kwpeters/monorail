@@ -182,6 +182,10 @@
             "types": "./src/spawn2.mts",
             "default": "./dist/spawn2.mjs"
         },
+        "./streamHelpers": {
+            "types": "./src/streamHelpers.mts",
+            "default": "./dist/streamHelpers.mjs"
+        },
         "./symlink": {
             "types": "./src/symlink.mts",
             "default": "./dist/symlink.mjs"
