@@ -142,6 +142,10 @@
             "types": "./src/pathHelpers.mts",
             "default": "./dist/pathHelpers.mjs"
         },
+        "./prefixStream": {
+            "types": "./src/prefixStream.mts",
+            "default": "./dist/prefixStream.mjs"
+        },
         "./powershell": {
             "types": "./src/powershell.mts",
             "default": "./dist/powershell.mjs"
@@ -149,6 +153,10 @@
         "./promiseHelpers": {
             "types": "./src/promiseHelpers.mts",
             "default": "./dist/promiseHelpers.mjs"
+        },
+        "./sourceStream": {
+            "types": "./src/sourceStream.mts",
+            "default": "./dist/sourceStream.mjs"
         },
         "./spawn": {
             "types": "./src/spawn.mts",
