@@ -162,6 +162,10 @@
             "types": "./src/promptAutocomplete.mts",
             "default": "./dist/promptAutocomplete.mjs"
         },
+        "./selfSignedCertificate": {
+            "types": "./src/selfSignedCertificate.mts",
+            "default": "./dist/selfSignedCertificate.mjs"
+        },
         "./sourceStream": {
             "types": "./src/sourceStream.mts",
             "default": "./dist/sourceStream.mjs"
@@ -177,6 +181,10 @@
         "./symlink": {
             "types": "./src/symlink.mts",
             "default": "./dist/symlink.mjs"
+        },
+        "./uniqueProcessStr": {
+            "types": "./src/uniqueProcessStr.mts",
+            "default": "./dist/uniqueProcessStr.mjs"
         }
     },
     "dependencies": {
