@@ -1,9 +1,9 @@
-import { FailedResult, Result, SucceededResult } from "../../depot/src/result.js";
-import { spawn } from "./spawn2.js";
-import { File } from "./file.js";
-import { Directory } from "./directory.js";
-import { FsItem } from "./fsItem.js";
-import { OperatingSystem, getOs } from "./os.js";
+import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
+import { spawn } from "./spawn2.mjs";
+import { File } from "./file.mjs";
+import { Directory } from "./directory.mjs";
+import { type FsItem } from "./fsItem.mjs";
+import { OperatingSystem, getOs } from "./os.mjs";
 
 
 export async function launchAdmin(executable: File, cwd: Directory | undefined = undefined): Promise<boolean> {

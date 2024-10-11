@@ -1,5 +1,7 @@
-import {Directory} from "../../depot-node/src/directory.js";
-import { getUncPath } from "../src/windowsHelpers.js";
+// import { Directory } from "./directory.mjs";
+// import { getUncPath } from "./windowsHelpers.mjs";
+
+
 describe("getUncPath()", () => {
 
     // it("replaces the drive letter with the server and share names", async () => {
