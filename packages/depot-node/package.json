@@ -166,6 +166,10 @@
             "types": "./src/selfSignedCertificate.mts",
             "default": "./dist/selfSignedCertificate.mjs"
         },
+        "./semver": {
+            "types": "./src/semver.mts",
+            "default": "./dist/semver.mjs"
+        },
         "./sourceStream": {
             "types": "./src/sourceStream.mts",
             "default": "./dist/sourceStream.mjs"
@@ -198,6 +202,7 @@
         "lodash-es": "^4.17.21",
         "long": "^5.2.3",
         "node-fetch": "^3.3.1",
+        "semver": "^7.5.0",
         "sprintf-js": "^1.1.2",
         "strip-ansi": "^7.1.0",
         "strip-json-comments": "^5.0.1"
@@ -211,6 +216,7 @@
         "@types/inquirer-autocomplete-prompt": "^3.0.1",
         "@types/lodash-es": "^4.17.7",
         "@types/node": "^20.16.5",
+        "@types/semver": "^7.3.13",
         "@types/sprintf-js": "^1.1.2",
         "@typescript-eslint/eslint-plugin": "^8.6.0",
         "@typescript-eslint/parser": "^8.6.0",
