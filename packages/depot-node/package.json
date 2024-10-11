@@ -194,6 +194,10 @@
             "types": "./src/taskQueue.mts",
             "default": "./dist/taskQueue.mjs"
         },
+        "./timers": {
+            "types": "./src/timers.mts",
+            "default": "./dist/timers.mjs"
+        },
         "./uniqueProcessStr": {
             "types": "./src/uniqueProcessStr.mts",
             "default": "./dist/uniqueProcessStr.mjs"
