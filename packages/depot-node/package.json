@@ -190,6 +190,10 @@
             "types": "./src/symlink.mts",
             "default": "./dist/symlink.mjs"
         },
+        "./taskQueue": {
+            "types": "./src/taskQueue.mts",
+            "default": "./dist/taskQueue.mjs"
+        },
         "./uniqueProcessStr": {
             "types": "./src/uniqueProcessStr.mts",
             "default": "./dist/uniqueProcessStr.mjs"
