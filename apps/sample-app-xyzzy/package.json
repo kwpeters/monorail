@@ -8,7 +8,9 @@
     "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
     "lint": "eslint ./src"
   },
-  "bin": "./dist/index.mjs",
+  "bin": {
+    "sample-app-xyzzy": "./dist/index.mjs"
+  },
   "dependencies": {
     "@repo/depot": "*"
   },

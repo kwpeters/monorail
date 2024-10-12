@@ -10,7 +10,9 @@
     "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
     "lint": "eslint ./src"
   },
-  "bin": "./dist/index.cjs",
+  "bin": {
+    "sample-app-sea-xyzzy": "./dist/index.cjs"
+  },
   "dependencies": {
     "@repo/sample-lib-xyzzy": "*"
   },
