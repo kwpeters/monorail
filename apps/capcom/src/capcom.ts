@@ -36,10 +36,10 @@ async function main(): Promise<Result<number, string>> {
         // The last item in the list is the active buffer in Emacs.
         getClipPaletteFile(),
         getNotesFolder(),
-        getLogixFile(),
+        ...insertIf(isWorkPc(), getLogixFile()),
         await getFortyThreeFoldersFile(),
         getTodoFile(),
-        ...insertIf(isWorkPc(), await appendToCaptlogIfNeeded())
+        await appendToCaptlogIfNeeded()
     ];
 
     const allRes = Result.allArrayM(results);
