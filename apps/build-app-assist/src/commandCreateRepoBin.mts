@@ -72,8 +72,8 @@ async function handler(argv: ArgumentsCamelCase<IArgsCommand>): Promise<Result<n
         resCreateLaunchers.value,
         (fileArrArr) => fileArrArr.flat(1),
         (launcherFiles) => {
-            console.log(`Successfully created ${launcherFiles.length} launch scripts:`);
-            console.log(launcherFiles.map((launcherFile) => launcherFile.toString()).join("\n"));
+            console.log(`✅ Successfully created ${launcherFiles.length} launch scripts:`);
+            console.log(launcherFiles.map((launcherFile) => `    ${launcherFile.toString() }`).join("\n"));
         }
     );
 
