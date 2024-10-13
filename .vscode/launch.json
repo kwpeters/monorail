@@ -13,8 +13,9 @@
             "args": [
                 // "--loader", "tsx",
                 "${workspaceRoot}/apps/build-app-assist/src/index.mts",
-                "cjsToSeaApp",
-                "--help"
+                "createRepoBin",
+                "--repoRootDir",
+                "."
             ],
             "cwd": "${workspaceRoot}",
             "runtimeArgs": [

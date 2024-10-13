@@ -20,26 +20,24 @@ const NODEJS_SHEBANG = "#!/usr/bin/env node";
  * @param file - The file to make executable
  * @return A promise that resolves with the file that was made executable
  */
-export function makeNodeScriptExecutable(file: File): Promise<File> {
-    return file.read()
-    .then((text) => {
-        const newText = NODEJS_SHEBANG + EOL + text;
-        return file.write(newText);
-    })
-    .then(() => {
-        // We need to set the access mode of the file to the current mode with
-        // execute permissions OR'ed in (for owner, group and other).  So first
-        // get the current mode bits.
-        return file.exists();
-    })
-    .then((stats) => {
-        // Turn on all execute bits.
-        const newMode = stats!.mode | constants.S_IXUSR | constants.S_IXGRP | constants.S_IXOTH;
-        return file.chmod(newMode);
-    })
-    .then(() => {
-        return file;
-    });
+export async function makeNodeScriptExecutable(file: File): Promise<File> {
+
+    const res = await addShebang(file);
+    if (res.failed) {
+        throw new Error(res.error);
+    }
+
+    // We need to set the access mode of the file to the current mode with
+    // execute permissions OR'ed in (for owner, group and other).  So first
+    // get the current mode bits.
+    const stats = await file.exists();
+    if (stats === undefined) {
+        throw new Error("Unexpected error.");
+    }
+
+    // Turn on all execute bits.
+    const newMode = stats.mode | constants.S_IXUSR | constants.S_IXGRP | constants.S_IXOTH;
+    return file.chmod(newMode);
 }
 
 
@@ -212,7 +210,8 @@ interface ILaunchScript {
  */
 export function getLaunchScriptCode(
     launchScriptDir: Directory,
-    targetJsFile: File
+    targetJsFile: File,
+    launcherBaseName: string
 ): Result<ILaunchScript, string> {
 
     // Currently, only Windows is supported.  Will need to generate a bash
@@ -241,8 +240,9 @@ export function getLaunchScriptCode(
         `)`
     ];
 
+    const baseName = launcherBaseName || targetJsFile.baseName;
     return new SucceededResult({
-        scriptFile: new File(launchScriptDir, `${targetJsFile.baseName}.cmd` ),
+        scriptFile: new File(launchScriptDir, `${baseName}.cmd` ),
         scriptCode: lines.join(EOL)
     });
 }

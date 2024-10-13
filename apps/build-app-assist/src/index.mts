@@ -7,6 +7,7 @@ import { PromiseResult } from "@repo/depot/promiseResult";
 
 // Command modules
 import { def as cmdDefCjsToSeaApp } from "./commandCjsToSeaApp.mjs";
+import { def as cmdDefCreateRepoBin} from "./commandCreateRepoBin.mjs";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -52,6 +53,14 @@ async function main(): Promise<Result<number, string>> {
         cmdDefCjsToSeaApp.builder,
         async (argv) => {
             retVal = await cmdDefCjsToSeaApp.handler(argv);
+        }
+    )
+    .command(
+        cmdDefCreateRepoBin.command,
+        cmdDefCreateRepoBin.description,
+        cmdDefCreateRepoBin.builder,
+        async (argv) => {
+            retVal = await cmdDefCreateRepoBin.handler(argv);
         }
     )
     .help()

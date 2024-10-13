@@ -159,7 +159,7 @@ export class NodePackage {
      * and the value is a File instance.
      */
     public get binFiles(): ReadonlyMap<string, File> {
-        if (this.config?.bin === undefined) {
+        if (this.config.bin === undefined) {
             return new Map<string, File>();
         }
 

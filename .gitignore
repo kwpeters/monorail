@@ -27,6 +27,7 @@ build/
 dist/
 snapshot/
 tmp/
+bin/
 
 # Debug
 npm-debug.log*
