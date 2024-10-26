@@ -13,14 +13,18 @@
       "outputs": ["dist"]
     },
     "lint": {
-      "dependsOn": ["^lint"]
+        // Linting does not depend on anything from any other project.  So run
+        // with maximum parallelism.
+      "dependsOn": []
     },
     "dev": {
       "cache": false,
       "persistent": true
     },
     "test": {
-        "dependsOn": [ "^test" ],
+        // Running unit tests does not depend on anything from any other
+        // project.  So run with maximum parallelism.
+        "dependsOn": [],
         "outputs": []
     }
   }
