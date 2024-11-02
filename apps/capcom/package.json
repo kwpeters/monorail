@@ -1,0 +1,28 @@
+{
+  "name": "@repo/capcom",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo 'Add dev script here'",
+    "build": "tsc --build",
+    "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
+    "lint": "eslint ./src"
+  },
+  "bin": {
+    "capcom": "./dist/index.mjs"
+  },
+  "dependencies": {
+    "@repo/depot": "*",
+    "@repo/depot-node": "*"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*",
+    "@stylistic/eslint-plugin": "^2.8.0",
+    "@types/jasmine": "^5.1.4",
+    "@typescript-eslint/eslint-plugin": "^8.6.0",
+    "@typescript-eslint/parser": "^8.6.0",
+    "eslint": "^8.57.1",
+    "jasmine": "^5.3.0"
+  }
+}
