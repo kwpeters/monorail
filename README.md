@@ -112,28 +112,3 @@ Now, you can generate the dependency graph, pipe it into `dot` and open the outp
 ```powershell
 npx turbo run build --graph | dot -T png > deps.png && start deps.png
 ```
-
-## TODO/Where I Left Off
-
-- To aid performance `commandTo` should isolate all of the directory creation
-  operations and complete them before performing the file operations.
-
-- Before running unit tests, delete all "tmp" directories.
-  But DON'T delete the tmp Node.js package!!!  Here's the glob:
-  `**/tmp/ !**/node_modules/**/tmp/`
-  `ts-node --esm --project ./apps/splat/tsconfig.json ./apps/splat/src/splat.ts **/tmp/ !**/node_modules/**/tmp/`
-
-- In a post-build step, I can delete a lot of test files. Remove `*.spec.d.ts`,
-  `*spec.d.ts.map`, `*.spec.js`. Really, ./out/**/*.spec.* Then, prune all empty
-  directories.
-
-- Change npmRunParallel so that it prints output from each script as soon as it finishes.
-  This will help reduce waiting when there is a failure.
-
-- Should unit test be their own separate projects (with their own tsconfig.json)?
-
-- Pull in depot argInquirer
-
-- Pull in depot persistentCache
-
-- Pull in depot QuickServer
