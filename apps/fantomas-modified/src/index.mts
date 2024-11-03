@@ -40,7 +40,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
     .usage([
         "Runs Fantomas F# style checker on all staged and modified .fs files.",
         "",
-        "fantomasModified [options]",
+        "fantomas-modified [options]",
 
     ].join(os.EOL))
     .help()
