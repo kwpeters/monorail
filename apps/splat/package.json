@@ -1,0 +1,38 @@
+{
+  "name": "@repo/splat",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo 'Add dev script here'",
+    "build": "npm run build:ts && npm run build:sea",
+    "build:ts": "tsc --build",
+    "build:sea": "tsx ../build-app-assist/src/index.mts cjsToSeaApp --inputCjsFile ./dist/index.cjs --exeBaseName splat",
+    "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
+    "lint": "eslint ./src"
+  },
+  "bin": {
+    "splat": "./dist/index.cjs"
+  },
+  "dependencies": {
+    "@repo/depot": "*",
+    "glob": "^10.3.3",
+    "lodash-es": "^4.17.21",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@repo/build-app-assist": "*",
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*",
+    "@stylistic/eslint-plugin": "^2.8.0",
+    "@types/jasmine": "^5.1.4",
+    "@types/lodash-es": "^4.17.7",
+    "@types/node": "^20.16.5",
+    "@types/yargs": "^17.0.24",
+    "@typescript-eslint/eslint-plugin": "^8.6.0",
+    "@typescript-eslint/parser": "^8.6.0",
+    "esbuild": "^0.23.1",
+    "eslint": "^8.57.1",
+    "jasmine": "^5.3.0",
+    "postject": "^1.0.0-alpha.6"
+  }
+}
