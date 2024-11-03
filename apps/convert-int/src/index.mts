@@ -40,7 +40,7 @@ async function getConfiguration(): Promise<IConfig> {
         [
             "Converts a value to other representations.",
             "",
-            "convertInt <8_bit_integer_value>"
+            "convert-int <8_bit_integer_value>"
         ].join(os.EOL)
     )
     .help()
