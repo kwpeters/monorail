@@ -76,7 +76,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
         [
             "Diffs two directories or two files.",
             "",
-            "ideadiff <file_or_dir_1> <file_or_dir_2>"
+            "idea-diff <file_or_dir_1> <file_or_dir_2>"
         ].join(os.EOL)
     )
     .help()
