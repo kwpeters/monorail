@@ -8,7 +8,6 @@ import {GitRepo} from "./gitRepo.mjs";
 import {GitBranch} from "./gitBranch.mjs";
 import {Directory} from "./directory.mjs";
 import {File} from "./file.mjs";
-import { resolveDirectoryLocation } from "./filesystemHelpers.mjs";
 import {sampleRepoDir, sampleRepoUrl, tmpDir} from "./specHelpers.test.mjs";
 
 
@@ -19,8 +18,8 @@ describe("GitRepo", () => {
 
     let repoDir: Directory;
 
-    beforeAll(async () => {
-        repoDir = (await resolveDirectoryLocation(".git", new Directory(__dirname))).value!.parentDir()!;
+    beforeAll(() => {
+        repoDir = sampleRepoDir;
     });
 
 
@@ -137,7 +136,7 @@ describe("GitRepo", () => {
                 })
                 .then((remotes) => {
                     expect(Object.keys.length).toEqual(1);
-                    expect(remotes.origin).toEqual("https://github.com/kwpeters/monorail.git");
+                    expect(remotes.origin).toEqual("https://github.com/kwpeters/sampleGitRepo-src.git");
                     done();
                 });
             });
@@ -154,7 +153,7 @@ describe("GitRepo", () => {
                     return repoResult.value!.name();
                 })
                 .then((repoName) => {
-                    expect(repoName).toEqual("monorail");
+                    expect(repoName).toEqual("sampleGitRepo-src");
                     done();
                 });
             });
@@ -171,7 +170,7 @@ describe("GitRepo", () => {
                 .then((repoResult) => {
                     const repo = repoResult.value!;
                     expect(repo.directory).toBeTruthy();
-                    expect(repo.directory.absPath()).toContain("monorail");
+                    expect(repo.directory.absPath()).toContain("sampleGitRepo-src");
                     done();
                 });
             });
@@ -214,7 +213,7 @@ describe("GitRepo", () => {
                     return repoResult.value!.tags();
                 })
                 .then((tags) => {
-                    expect(tags).toContain("test");
+                    expect(tags).toContain("aTag");
                     done();
                 });
             });
@@ -229,7 +228,7 @@ describe("GitRepo", () => {
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 GitRepo.fromDirectory(repoDir)
                 .then((repoResult) => {
-                    return repoResult.value!.hasTag("test");
+                    return repoResult.value!.hasTag("aTag");
                 })
                 .then((hasTag) => {
                     expect(hasTag).toBeTruthy();
@@ -366,7 +365,7 @@ describe("GitRepo", () => {
                 const repo = (await GitRepo.fromDirectory(repoDir)).value!;
                 const branches = await repo.getBranches();
                 expect(branches.length).toBeGreaterThan(0);
-                expect(_.map(branches, "name")).toContain("main");
+                expect(_.map(branches, "name")).toContain("master");
             });
 
 
