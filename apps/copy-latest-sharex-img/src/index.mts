@@ -72,7 +72,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
                 "Copies the most recently captured ShareX file to the specified",
                 "destination.",
                 "",
-                "copyLatestShareXImg <destination>"
+                "copy-latest-sharex-img <destination>"
             ].join(os.EOL)
         )
         .help()
