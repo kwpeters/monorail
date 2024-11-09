@@ -4,6 +4,8 @@
 import * as _ from "lodash-es";
 import { isIToString } from "./primitives.mjs";
 import { Option } from "./option.mjs";
+import { inspect } from "./inspect.mjs";
+
 
 interface IResult<TSuccess, TError> {
     /**
@@ -64,6 +66,11 @@ export class SucceededResult<TSuccess> implements IResult<TSuccess, undefined> {
             `Successful Result (${this._value.toString()})` :
             "Successful Result";
     }
+
+
+    public throwIfFailed(): TSuccess {
+        return this._value;
+    }
 }
 
 
@@ -95,6 +102,12 @@ export class FailedResult<TError> implements IResult<undefined, TError> {
         return isIToString(this._error) ?
             `Failed Result (${this._error.toString()})` :
             "Failed Result";
+    }
+
+
+    public throwIfFailed(): never {
+        const errMsg = inspect(this.error);
+        throw new Error(errMsg);
     }
 }
 
@@ -1191,6 +1204,19 @@ export namespace Result {
             fn(input.value);
         }
         return input;
+    }
+
+
+    /**
+     * Unwraps a successful Result, throwing if it is a failure.
+     *
+     * @param result - The Result to be unwrapped
+     * @return The unwrapped successful Result value
+     */
+    export function throwIfFailed<TSuccess, TError extends IHasToString>(
+        result: Result<TSuccess, TError>
+    ): TSuccess {
+        return result.throwIfFailed();
     }
 
 
