@@ -67,6 +67,29 @@ export class SucceededResult<TSuccess> implements IResult<TSuccess, undefined> {
             "Successful Result";
     }
 
+    ////////////////////////////////////////////////////////////////////////////////
+
+    public augment<TFnSuccess, TFnError>(
+        fn: (input: TSuccess) => Result<TFnSuccess, TFnError>
+    ): Result<TSuccess & TFnSuccess, TFnError> {
+        const res = fn(this._value);
+        if (res.succeeded) {
+            const resRet = {...this._value, ...res.value};
+            return new SucceededResult(resRet);
+        }
+        else {
+            return res;
+        }
+    }
+
+
+    public bind<TFnSuccess, TFnError>(
+        fn: (input: TSuccess) => Result<TFnSuccess, TFnError>
+    ): Result<TFnSuccess, TFnError> {
+        const res = fn(this._value);
+        return res;
+    }
+
 
     public throwIfFailed(): TSuccess {
         return this._value;
@@ -102,6 +125,22 @@ export class FailedResult<TError> implements IResult<undefined, TError> {
         return isIToString(this._error) ?
             `Failed Result (${this._error.toString()})` :
             "Failed Result";
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////
+
+    public augment<TFnSuccess, TFnError>(
+        fn: (input: never) => Result<TFnSuccess, TFnError>
+    ): this {
+        return this;
+    }
+
+
+    public bind<TFnSuccess, TFnError>(
+        fn: (input: never) => Result<TFnSuccess, TFnError>
+    ): this {
+        return this;
     }
 
 
@@ -537,21 +576,23 @@ export namespace Result {
         input: Result<TInputSuccess, TInputError>
     ): Result<TInputSuccess & TFnSuccess, TInputError | TFnError> {
 
-        if (input.failed) {
-            return input;
-        }
+        // if (input.failed) {
+        //     return input;
+        // }
 
-        // The input is a successful Result.
-        const fnRes = fn(input.value);
-        if (fnRes.failed) {
-            // _fn_ has errored.  Return that error.
-            return fnRes;
-        }
+        // // The input is a successful Result.
+        // const fnRes = fn(input.value);
+        // if (fnRes.failed) {
+        //     // _fn_ has errored.  Return that error.
+        //     return fnRes;
+        // }
 
-        // _fn_ has succeeded.  Return an object containing all properties of
-        // the original input and the value returned by _fn_.
-        const augmented = { ...input.value, ...fnRes.value};
-        return new SucceededResult(augmented);
+        // // _fn_ has succeeded.  Return an object containing all properties of
+        // // the original input and the value returned by _fn_.
+        // const augmented = { ...input.value, ...fnRes.value};
+        // return new SucceededResult(augmented);
+
+        return input.augment(fn);
     }
 
 
@@ -569,13 +610,14 @@ export namespace Result {
         fn: (x: TInputSuccess) => Result<TOutputSuccess, TOutputError>,
         input: Result<TInputSuccess, TInputError>
     ): Result<TOutputSuccess, TInputError | TOutputError> {
-        if (input.succeeded) {
-            const boundResult = fn(input.value);
-            return boundResult;
-        }
-        else {
-            return input;
-        }
+        // if (input.succeeded) {
+        //     const boundResult = fn(input.value);
+        //     return boundResult;
+        // }
+        // else {
+        //     return input;
+        // }
+        return input.bind(fn);
     }
 
 
@@ -1213,7 +1255,7 @@ export namespace Result {
      * @param result - The Result to be unwrapped
      * @return The unwrapped successful Result value
      */
-    export function throwIfFailed<TSuccess, TError extends IHasToString>(
+    export function throwIfFailed<TSuccess, TError>(
         result: Result<TSuccess, TError>
     ): TSuccess {
         return result.throwIfFailed();
