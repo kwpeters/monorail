@@ -1,5 +1,7 @@
 import * as _ from "lodash-es";
 import { FailedResult, Result, SucceededResult } from "./result.mjs";
+import { pipe } from "./pipe2.mjs";
+import { id } from "./functional.mjs";
 
 
 // Regular expressions used to parse fraction strings.
@@ -247,7 +249,11 @@ export class Fraction {
 
 
     public stringRepresentations(): Array<string> {
-        let lastUsedValue: Fraction = Fraction.from(this).value!;
+
+        let lastUsedValue = pipe(
+            Fraction.from(this),
+            (res) => Result.throwIfFailedWith(id, res)
+        );
 
         // First, get the standard (possibly improper) form of this fraction.
         const representations = [lastUsedValue.toString(true)];
@@ -380,7 +386,11 @@ export class Fraction {
     public add(other: Fraction): Fraction;
     public add(other: number): Fraction;
     public add(other: Fraction | number): Fraction {
-        const otherFrac = Fraction.from(other).value!;
+        const otherFrac = pipe(
+            Fraction.from(other),
+            (res) => Result.throwIfFailedWith(id, res)
+        );
+
         const lcm = leastCommonMultiple(this._den, otherFrac._den);
 
         const thisScale = lcm  / this._den;
@@ -396,7 +406,10 @@ export class Fraction {
     public subtract(other: Fraction): Fraction;
     public subtract(other: number): Fraction;
     public subtract(other: Fraction | number): Fraction {
-        const otherFrac = Fraction.from(other).value!;
+        const otherFrac = pipe(
+            Fraction.from(other),
+            (res) => Result.throwIfFailedWith(id, res)
+        );
         const lcm = leastCommonMultiple(this._den, otherFrac._den);
 
         const thisScale = lcm  / this._den;
@@ -412,7 +425,10 @@ export class Fraction {
     public multiply(other: Fraction): Fraction;
     public multiply(other: number): Fraction;
     public multiply(other: Fraction | number): Fraction {
-        const otherFrac = Fraction.from(other).value!;
+        const otherFrac = pipe(
+            Fraction.from(other),
+            (res) => Result.throwIfFailedWith(id, res)
+        );
         const num = this._num * otherFrac._num;
         const den = this._den * otherFrac._den;
         const product = new Fraction(num, den);
@@ -424,7 +440,10 @@ export class Fraction {
     public divide(other: number): Fraction;
     public divide(other: Fraction): Fraction;
     public divide(other: number | Fraction): Fraction {
-        const fracOther = Fraction.from(other).value!;
+        const fracOther = pipe(
+            Fraction.from(other),
+            (res) => Result.throwIfFailedWith(id, res)
+        );
         const result = this.multiply(fracOther.reciprocal());
         return result;
     }
@@ -481,7 +500,10 @@ export class Fraction {
      */
     public abs(): Fraction {
         const num = Math.abs(this._num);
-        const absoluteVal: Fraction = Fraction.fromParts(num, this._den).value!;
+        const absoluteVal = pipe(
+            Fraction.fromParts(num, this._den),
+            (res) => Result.throwIfFailedWith(id, res)
+        );
         return absoluteVal;
     }
 
@@ -495,7 +517,10 @@ export class Fraction {
     public bracket(
         increment: number | Fraction
     ): {floor: Fraction, ceil: Fraction, nearest: Fraction} {
-        const incr = Fraction.from(increment).value!;
+        const incr = pipe(
+            Fraction.from(increment),
+            (res) => Result.throwIfFailedWith(id, res)
+        );
 
         // The increment must be a positive value.
         if (incr._num === 0 || incr.toNumber() < 0) {
@@ -508,8 +533,14 @@ export class Fraction {
             throw new Error("bracket() 1 must be divisible by the specified increment.");
         }
 
-        const rangeFloor = Fraction.from(this.floor()).value!;
-        const rangeCeil  = Fraction.from(this.ceil()).value!;
+        const rangeFloor = pipe(
+            Fraction.from(this.floor()),
+            (res) => Result.throwIfFailedWith(id, res)
+        );
+        const rangeCeil = pipe(
+            Fraction.from(this.ceil()),
+            (res) => Result.throwIfFailedWith(id, res)
+        );
 
         let floorVal: Fraction;
 

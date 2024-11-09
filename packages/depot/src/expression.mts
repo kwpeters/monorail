@@ -4,6 +4,8 @@ import {find} from "./collection.mjs";
 import { assertNever } from "./never.mjs";
 import { type IDuMember } from "./discriminatedUnion.mjs";
 import { FailedResult, Result, SucceededResult } from "./result.mjs";
+import { pipe } from "./pipe2.mjs";
+import { id } from "./functional.mjs";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -169,9 +171,16 @@ function getTokenizers(): Array<ITokenizer> {
                        regexWhole.exec(remainingText);
             },
             tokenCreatorFn: (match: RegExpExecArray, fullExpression: string, startIndex: number, endIndex: number) => {
+
+                const frac = pipe(
+                    match[0],
+                    Fraction.from,
+                    (res) => Result.throwIfFailedWith(id, res)
+                );
+
                 return {
                     type:               "IExpressionTokenNumber" as const,
-                    value:              Fraction.from(match[0]).value!,
+                    value:              frac,
                     originalExpression: fullExpression,
                     startIndex:         startIndex,
                     endIndex:           endIndex,

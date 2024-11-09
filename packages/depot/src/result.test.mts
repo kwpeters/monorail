@@ -1211,11 +1211,11 @@ describe("Result namespace", () => {
     });
 
 
-    describe("throwIfFailed()", () => {
+    describe("throwIfFailedWith()", () => {
 
         it("unwraps the value when given a successful result", () => {
             const res = new SucceededResult(5);
-            const val = Result.throwIfFailed("error message", res);
+            const val = Result.throwIfFailedWith("error message", res);
             expect(val).toEqual(5);
         });
 
@@ -1223,7 +1223,7 @@ describe("Result namespace", () => {
         it("throws when given a failed Result", () => {
             const res = new FailedResult("error 12");
             expect(() => {
-                const __val = Result.throwIfFailed("operation failed", res);
+                const __val = Result.throwIfFailedWith("operation failed", res);
             }).toThrowError("operation failed");
         });
 
@@ -1236,7 +1236,7 @@ describe("Result namespace", () => {
                 return `Error: ${errorCode}`;
             };
             expect(() => {
-                const __val = Result.throwIfFailed(errorCodeToMessage, res);
+                const __val = Result.throwIfFailedWith(errorCodeToMessage, res);
             }).toThrowError("Error: 5");
             expect(numInvocations).toEqual(1);
         });
@@ -1245,7 +1245,7 @@ describe("Result namespace", () => {
         it("can be used in a pipe()", () => {
             expect(() => {
                 pipe(new FailedResult("error 1") as Result<number, string>)
-                .pipe((res) => Result.throwIfFailed("error 2", res))
+                .pipe((res) => Result.throwIfFailedWith("error 2", res))
                 .end();
             }).toThrow();
         });
@@ -1255,7 +1255,7 @@ describe("Result namespace", () => {
             expect(() => {
                 pipe2(
                     new FailedResult("error 1") as Result<number, string>,
-                    (res) => Result.throwIfFailed("error 2", res)
+                    (res) => Result.throwIfFailedWith("error 2", res)
                 );
             }).toThrow();
         });
@@ -1264,7 +1264,7 @@ describe("Result namespace", () => {
         it("can be used in a pipeAsync()", async () => {
             await expectAsync(
                 pipeAsync(Promise.resolve(new FailedResult("error 1") as Result<number, string>))
-                .pipe((res) => Result.throwIfFailed("error 2", res))
+                .pipe((res) => Result.throwIfFailedWith("error 2", res))
                 .end()
             ).toBeRejected();
         });
@@ -1274,7 +1274,7 @@ describe("Result namespace", () => {
             await expectAsync(
                 pipeAsync2(
                     Promise.resolve(new FailedResult("error 1") as Result<number, string>),
-                    (res) => Result.throwIfFailed("error 2", res)
+                    (res) => Result.throwIfFailedWith("error 2", res)
                 )
             ).toBeRejected();
         });
