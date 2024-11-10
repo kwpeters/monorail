@@ -126,6 +126,14 @@ export class SucceededResult<TSuccess> implements IResult<TSuccess, undefined> {
     }
 
 
+    public mapSuccess<TMappedSuccess>(
+        fn: (successVal: TSuccess) => TMappedSuccess
+    ): SucceededResult<TMappedSuccess> {
+        const mappedVal = fn(this._value);
+        return new SucceededResult(mappedVal);
+    }
+
+
     ////////////////////////////////////////////////////////////////////////////////
 
     public throwIfFailed(): TSuccess {
@@ -214,6 +222,13 @@ export class FailedResult<TError> implements IResult<undefined, TError> {
     ): FailedResult<TMappedError> {
         const mappedErr = fn(this._error);
         return new FailedResult(mappedErr);
+    }
+
+
+    public mapSuccess<TMappedSuccess>(
+        fn: (successVal: never) => TMappedSuccess
+    ): this {
+        return this;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -1116,13 +1131,14 @@ export namespace Result {
         fn: (input: TInputSuccess) => TOutputSuccess,
         input: Result<TInputSuccess, TError>
     ): Result<TOutputSuccess, TError> {
-        if (input.succeeded) {
-            const mappedValue = fn(input.value);
-            return new SucceededResult(mappedValue);
-        }
-        else {
-            return input;
-        }
+        // if (input.succeeded) {
+        //     const mappedValue = fn(input.value);
+        //     return new SucceededResult(mappedValue);
+        // }
+        // else {
+        //     return input;
+        // }
+        return input.mapSuccess(fn);
     }
 
 
