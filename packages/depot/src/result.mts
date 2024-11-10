@@ -67,7 +67,6 @@ export class SucceededResult<TSuccess> implements IResult<TSuccess, undefined> {
             "Successful Result";
     }
 
-    ////////////////////////////////////////////////////////////////////////////////
 
     public augment<TFnSuccess, TFnError>(
         fn: (input: TSuccess) => Result<TFnSuccess, TFnError>
@@ -90,6 +89,44 @@ export class SucceededResult<TSuccess> implements IResult<TSuccess, undefined> {
         return res;
     }
 
+
+    public bindError<TFnSuccess, TFnError>(
+        fn: (err: never) => Result<TFnSuccess, TFnError>
+    ): this {
+        return this;
+    }
+
+
+    public defaultValue(
+        defaultValue: TSuccess
+    ): TSuccess {
+        return this._value;
+    }
+
+
+    public defaultWith(
+        fn: () => TSuccess
+    ): TSuccess {
+        return this._value;
+    }
+
+
+    public gate<TFnSuccess, TFnError>(
+        fn: (successVal: TSuccess) => Result<TFnSuccess, TFnError>
+    ): Result<TSuccess, TFnError> {
+        const res = fn(this._value);
+        return res.succeeded ? this : res;
+    }
+
+
+    public mapError<TMappedError>(
+        fn: (err: never) => TMappedError
+    ): this {
+        return this;
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////
 
     public throwIfFailed(): TSuccess {
         return this._value;
@@ -128,8 +165,6 @@ export class FailedResult<TError> implements IResult<undefined, TError> {
     }
 
 
-    ////////////////////////////////////////////////////////////////////////////////
-
     public augment<TFnSuccess, TFnError>(
         fn: (input: never) => Result<TFnSuccess, TFnError>
     ): this {
@@ -143,6 +178,45 @@ export class FailedResult<TError> implements IResult<undefined, TError> {
         return this;
     }
 
+
+    public bindError<TFnSuccess, TFnError>(
+        fn: (err: TError) => Result<TFnSuccess, TFnError>
+    ): Result<TFnSuccess, TFnError> {
+        const res = fn(this._error);
+        return res;
+    }
+
+
+    public defaultValue<TSuccess>(
+        defaultValue: TSuccess
+    ): TSuccess {
+        return defaultValue;
+    }
+
+
+    public defaultWith<TSuccess>(
+        fn: () => TSuccess
+    ): TSuccess {
+        const val = fn();
+        return val;
+    }
+
+
+    public gate<TFnSuccess, TFnError>(
+        fn: (successVal: never) => Result<TFnSuccess, TFnError>
+    ): this {
+        return this;
+    }
+
+
+    public mapError<TMappedError>(
+        fn: (err: TError) => TMappedError
+    ): FailedResult<TMappedError> {
+        const mappedErr = fn(this._error);
+        return new FailedResult(mappedErr);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
 
     public throwIfFailed(): never {
         const errMsg = inspect(this.error);
@@ -638,13 +712,14 @@ export namespace Result {
         fn: (err: TInputError) => Result<TOutputSuccess, TOutputError>,
         input: Result<TInputSuccess, TInputError>
     ): Result<TInputSuccess | TOutputSuccess, TOutputError> {
-        if (input.failed) {
-            const boundResult = fn(input.error);
-            return boundResult;
-        }
-        else {
-            return input;
-        }
+        // if (input.failed) {
+        //     const boundResult = fn(input.error);
+        //     return boundResult;
+        // }
+        // else {
+        //     return input;
+        // }
+        return input.bindError(fn);
     }
 
 
@@ -662,9 +737,10 @@ export namespace Result {
         defaultValue: TSuccess,
         input: Result<TSuccess, TError>
     ): TSuccess {
-        return input.succeeded ?
-            input.value :
-            defaultValue;
+        // return input.succeeded ?
+        //     input.value :
+        //     defaultValue;
+        return input.defaultValue(defaultValue);
     }
 
     /**
@@ -993,14 +1069,15 @@ export namespace Result {
         fn: (successVal: TInSuccess) => Result<TOutSuccess, TOutError>,
         input: Result<TInSuccess, TInError>
     ): Result<TInSuccess, TInError | TOutError> {
-        if (input.failed) {
-            return input;
-        }
+        // if (input.failed) {
+        //     return input;
+        // }
 
-        const resGate = fn(input.value);
-        return resGate.succeeded ?
-            input :
-            resGate;
+        // const resGate = fn(input.value);
+        // return resGate.succeeded ?
+        //     input :
+        //     resGate;
+        return input.gate(fn);
     }
 
 
@@ -1016,13 +1093,14 @@ export namespace Result {
         fn: (input: TInputError) => TOutputError,
         input: Result<TSuccess, TInputError>
     ): Result<TSuccess, TOutputError> {
-        if (input.succeeded) {
-            return input;
-        }
-        else {
-            const mappedError = fn(input.error);
-            return new FailedResult(mappedError);
-        }
+        // if (input.succeeded) {
+        //     return input;
+        // }
+        // else {
+        //     const mappedError = fn(input.error);
+        //     return new FailedResult(mappedError);
+        // }
+        return input.mapError(fn);
     }
 
 
