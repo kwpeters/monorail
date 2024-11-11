@@ -86,7 +86,7 @@ export class SomeOption<T> {
     }
 
     public throwIfSome(): void {
-        const errMsg = `throwIfSome() called on SomeOption with value "${inspect(this._value)}"`;
+        const errMsg = `Expected no value but got "${inspect(this._value)}"`;
         throw new Error(errMsg);
     }
 

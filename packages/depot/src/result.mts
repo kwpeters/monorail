@@ -279,7 +279,9 @@ export class FailedResult<TError> {
 
 
     public throwIfFailed(): never {
-        const errMsg = inspect(this._error);
+        const errMsg = typeof this._error === "string" ?
+            this._error :
+            inspect(this._error);
         throw new Error(errMsg);
     }
 
