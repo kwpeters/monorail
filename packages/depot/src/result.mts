@@ -7,33 +7,10 @@ import { Option } from "./option.mjs";
 import { inspect } from "./inspect.mjs";
 
 
-interface IResult<TSuccess, TError> {
-    /**
-     * Determines whether this object is a successful Result.
-     */
-    readonly succeeded: boolean;
-    /**
-     * Gets the value associated with this successful Result.  The `succeeded`
-     * property should always be checked first.  If this is a failure Result,
-     * this property will be `undefined`.
-     */
-    readonly value: TSuccess | undefined;
-    /**
-     * Determines whether this object is a failed Result.
-     */
-    readonly failed: boolean;
-    /**
-     * Gets the error associated with this failure Result.  The `failed`
-     * property should always be checked first.  If this is a successful Result,
-     * this property will be `undefined`.
-     */
-    readonly error: TError | undefined;
-}
-
 /**
  * Represents a successful result returned from a function.
  */
-export class SucceededResult<TSuccess> implements IResult<TSuccess, undefined> {
+export class SucceededResult<TSuccess> {
 
     private readonly _value: TSuccess;
 
@@ -188,7 +165,7 @@ export class SucceededResult<TSuccess> implements IResult<TSuccess, undefined> {
 }
 
 
-export class FailedResult<TError> implements IResult<undefined, TError> {
+export class FailedResult<TError> {
 
     private readonly _error: TError;
 
@@ -765,23 +742,6 @@ export namespace Result {
         fn: (input: TInputSuccess) => Result<TFnSuccess, TFnError>,
         input: Result<TInputSuccess, TInputError>
     ): Result<TInputSuccess & TFnSuccess, TInputError | TFnError> {
-
-        // if (input.failed) {
-        //     return input;
-        // }
-
-        // // The input is a successful Result.
-        // const fnRes = fn(input.value);
-        // if (fnRes.failed) {
-        //     // _fn_ has errored.  Return that error.
-        //     return fnRes;
-        // }
-
-        // // _fn_ has succeeded.  Return an object containing all properties of
-        // // the original input and the value returned by _fn_.
-        // const augmented = { ...input.value, ...fnRes.value};
-        // return new SucceededResult(augmented);
-
         return input.augment(fn);
     }
 
@@ -800,13 +760,6 @@ export namespace Result {
         fn: (x: TInputSuccess) => Result<TOutputSuccess, TOutputError>,
         input: Result<TInputSuccess, TInputError>
     ): Result<TOutputSuccess, TInputError | TOutputError> {
-        // if (input.succeeded) {
-        //     const boundResult = fn(input.value);
-        //     return boundResult;
-        // }
-        // else {
-        //     return input;
-        // }
         return input.bind(fn);
     }
 
@@ -828,13 +781,6 @@ export namespace Result {
         fn: (err: TInputError) => Result<TOutputSuccess, TOutputError>,
         input: Result<TInputSuccess, TInputError>
     ): Result<TInputSuccess | TOutputSuccess, TOutputError> {
-        // if (input.failed) {
-        //     const boundResult = fn(input.error);
-        //     return boundResult;
-        // }
-        // else {
-        //     return input;
-        // }
         return input.bindError(fn);
     }
 
@@ -853,9 +799,6 @@ export namespace Result {
         defaultValue: TSuccess,
         input: Result<TSuccess, TError>
     ): TSuccess {
-        // return input.succeeded ?
-        //     input.value :
-        //     defaultValue;
         return input.defaultValue(defaultValue);
     }
 
@@ -874,9 +817,7 @@ export namespace Result {
         fn: () => TSuccess,
         input: Result<TSuccess, TError>
     ): TSuccess {
-        return input.succeeded ?
-            input.value :
-            fn();
+        return input.defaultWith(fn);
     }
 
 
@@ -1185,14 +1126,6 @@ export namespace Result {
         fn: (successVal: TInSuccess) => Result<TOutSuccess, TOutError>,
         input: Result<TInSuccess, TInError>
     ): Result<TInSuccess, TInError | TOutError> {
-        // if (input.failed) {
-        //     return input;
-        // }
-
-        // const resGate = fn(input.value);
-        // return resGate.succeeded ?
-        //     input :
-        //     resGate;
         return input.gate(fn);
     }
 
@@ -1209,13 +1142,6 @@ export namespace Result {
         fn: (input: TInputError) => TOutputError,
         input: Result<TSuccess, TInputError>
     ): Result<TSuccess, TOutputError> {
-        // if (input.succeeded) {
-        //     return input;
-        // }
-        // else {
-        //     const mappedError = fn(input.error);
-        //     return new FailedResult(mappedError);
-        // }
         return input.mapError(fn);
     }
 
@@ -1232,13 +1158,6 @@ export namespace Result {
         fn: (input: TInputSuccess) => TOutputSuccess,
         input: Result<TInputSuccess, TError>
     ): Result<TOutputSuccess, TError> {
-        // if (input.succeeded) {
-        //     const mappedValue = fn(input.value);
-        //     return new SucceededResult(mappedValue);
-        // }
-        // else {
-        //     return input;
-        // }
         return input.mapSuccess(fn);
     }
 
@@ -1403,8 +1322,6 @@ export namespace Result {
         fn: (res: Result<TSuccess, TError>) => unknown,
         input: Result<TSuccess, TError>
     ): Result<TSuccess, TError> {
-        // fn(input);
-        // return input;
         return input.tap(fn);
     }
 
@@ -1420,10 +1337,6 @@ export namespace Result {
         fn: (val: TError) => unknown,
         input: Result<TSuccess, TError>
     ): Result<TSuccess, TError> {
-        // if (input.failed) {
-        //     fn(input.error);
-        // }
-        // return input;
         return input.tapError(fn);
     }
 
@@ -1439,10 +1352,6 @@ export namespace Result {
         fn: (val: TSuccess) => unknown,
         input: Result<TSuccess, TError>
     ): Result<TSuccess, TError> {
-        // if (input.succeeded) {
-        //     fn(input.value);
-        // }
-        // return input;
         return input.tapSuccess(fn);
     }
 
@@ -1490,18 +1399,6 @@ export namespace Result {
         errorMsgOrFn: string | ((err: TError) => string),
         result: Result<TSuccess, TError>
     ): TSuccess {
-        // if (result.succeeded) {
-        //     return result.value;
-        // }
-
-        // // The Result is a failure.  We must throw.
-        // const errorMsg =
-        //     typeof errorMsgOrFn === "function" ?
-        //     errorMsgOrFn(result.error) :
-        //     errorMsgOrFn;
-
-        // throw new Error(errorMsg);
-
         return result.throwIfFailedWith(errorMsgOrFn);
     }
 
@@ -1550,17 +1447,6 @@ export namespace Result {
         errorMsgOrFn: string | ((val: TSuccess) => string),
         result: Result<TSuccess, TError>
     ): TError {
-        // if (result.failed) {
-        //     return result.error;
-        // }
-
-        // // The Result is a success.  We must throw.
-        // const errorMsg =
-        //     typeof errorMsgOrFn === "function" ?
-        //     errorMsgOrFn(result.value) :
-        //     errorMsgOrFn;
-
-        // throw new Error(errorMsg);
         return result.throwIfSucceededWith(errorMsgOrFn);
     }
 
