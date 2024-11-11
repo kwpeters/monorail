@@ -124,6 +124,7 @@ export class NoneOption {
      * instance.
      */
     private constructor() {
+        // Intentionally empty
     }
 
     public get isSome(): false {

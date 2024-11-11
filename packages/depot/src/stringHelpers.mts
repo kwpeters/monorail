@@ -202,7 +202,9 @@ export function trimBlankLines(str: string): string {
 
     // If lines have been removed from the end, we will have a new last line.
     // We need to make sure that new last line does not have an EOL.
-    lines[lines.length - 1] = lines[lines.length - 1]!.replace(createEolRegex(), "");
+    if (lines.length > 0) {
+        lines[lines.length - 1] = lines[lines.length - 1]!.replace(createEolRegex(), "");
+    }
 
     return lines.join("");
 }
@@ -228,7 +230,9 @@ export function removeBlankLines(str: string): string {
 
     // If lines have been removed from the end, we will have a new last line.
     // We need to make sure that new last line does not have an EOL.
-    lines[lines.length - 1] = lines[lines.length - 1]!.replace(createEolRegex(), "");
+    if (lines.length > 0) {
+        lines[lines.length - 1] = lines[lines.length - 1]!.replace(createEolRegex(), "");
+    }
 
     return lines.join("");
 }
