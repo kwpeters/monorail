@@ -55,7 +55,6 @@ describe("NoneOption.get()", () => {
         const opt = NoneOption.get();
         expect(opt.isNone).toBeTrue();
         expect(opt.isSome).toBeFalse();
-        expect(opt.value).toEqual(undefined);
     });
 
 });
@@ -287,7 +286,7 @@ describe("Option namespace", () => {
     });
 
 
-    describe("bindError()", () => {
+    describe("bindNone()", () => {
 
         it("with some input the Option is passed along and the function is not invoked", () => {
 
@@ -295,7 +294,7 @@ describe("Option namespace", () => {
 
             const opt =
                 pipe(new SomeOption(1))
-                .pipe((opt) => Option.bindError(
+                .pipe((opt) => Option.bindNone(
                     () => {
                         numInvocations++;
                         return new SomeOption(2);
@@ -315,7 +314,7 @@ describe("Option namespace", () => {
 
             const opt =
                 pipe(NoneOption.get())
-                .pipe((opt) => Option.bindError(
+                .pipe((opt) => Option.bindNone(
                     () => {
                         numInvocations++;
                         return new SomeOption(2);
@@ -498,11 +497,11 @@ describe("Option namespace", () => {
     });
 
 
-    describe("throwIfNone()", () => {
+    describe("throwIfNoneWith()", () => {
 
         it("unwraps the Option when it is a SomeOption", () => {
             const opt = new SomeOption(5);
-            const unwrapped = Option.throwIfNone("error message", opt);
+            const unwrapped = Option.throwIfNoneWith("error message", opt);
             expect(unwrapped).toEqual(5);
         });
 
@@ -510,7 +509,7 @@ describe("Option namespace", () => {
         it("throws when the Option is a NoneOption", () => {
             const opt = NoneOption.get();
             expect(() => {
-                const __unwrapped = Option.throwIfNone("the error message", opt);
+                const __unwrapped = Option.throwIfNoneWith("the error message", opt);
             }).toThrowError("the error message");
         });
 

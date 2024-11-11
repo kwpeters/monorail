@@ -4,28 +4,10 @@
 import { inspect } from "./inspect.mjs";
 
 
-interface IOption<T> {
-    /**
-     * Returns whether this option contains a value.
-     */
-    readonly isSome: boolean;
-
-    /**
-     * Returns whether this option does not contain a value.
-     */
-    readonly isNone: boolean;
-
-    /**
-     * Gets the value contained within this option, if any.
-     */
-    readonly value: T | undefined;
-}
-
-
 /**
  * Represents an optional value that is set.
  */
-export class SomeOption<T> implements IOption<T> {
+export class SomeOption<T> {
     private readonly _value: T;
 
     public constructor(value: T) {
@@ -48,13 +30,81 @@ export class SomeOption<T> implements IOption<T> {
         const str = `SomeOption ${inspect(this._value)}`;
         return str;
     }
+
+    public augment<TAugment>(
+        fn: (val: T) => Option<TAugment>
+    ): Option<T & TAugment> {
+        const fnOpt = fn(this._value);
+        if (fnOpt.isNone) {
+            return fnOpt;
+        }
+
+        const augmented = { ...this._value, ...fnOpt._value};
+        return new SomeOption(augmented);
+    }
+
+    public bind<TOut>(
+        fn: (val: T) => Option<TOut>
+    ): Option<TOut> {
+        const opt = fn(this._value);
+        return opt;
+    }
+
+    public bindNone<TOut>(
+        fn: () => Option<TOut>
+    ): this {
+        return this;
+    }
+
+    public defaultValue(
+        defaultValue: T
+    ): T {
+        return this._value;
+    }
+
+    public defaultWith(
+        fn: () => T
+    ): T {
+        return this._value;
+    }
+
+    public mapSome<TOut>(
+        fn: (val: T) => TOut
+    ): Option<TOut> {
+        const newVal = fn(this._value);
+        return new SomeOption(newVal);
+    }
+
+    public throwIfNone(): T {
+        return this._value;
+    }
+
+    public throwIfNoneWith(
+        errorMsg: string
+    ): T {
+        return this._value;
+    }
+
+    public throwIfSome(): void {
+        const errMsg = `throwIfSome() called on SomeOption with value "${inspect(this._value)}"`;
+        throw new Error(errMsg);
+    }
+
+    public throwIfSomeWith(
+        fn: (val: T) => string
+    ): void {
+        const errorMsg = fn(this._value);
+        throw new Error(errorMsg);
+    }
+
+
 }
 
 
 /**
  * Represents an optional value that is not set.
  */
-export class NoneOption implements IOption<undefined> {
+export class NoneOption {
 
     private static readonly _instance: NoneOption = new NoneOption();
 
@@ -73,7 +123,6 @@ export class NoneOption implements IOption<undefined> {
      * Private constructor.  Use static get() method to get the one-and-only
      * instance.
      */
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
     private constructor() {
     }
 
@@ -85,13 +134,69 @@ export class NoneOption implements IOption<undefined> {
         return true;
     }
 
-    public get value(): undefined {
-        return undefined;
-    }
-
     public toString(): string {
         return "NoneOption";
     }
+
+    public augment<TAugment>(
+        fn: (val: never) => Option<TAugment>
+    ): this {
+        return this;
+    }
+
+    public bind<TOut>(
+        fn: (val: never) => Option<TOut>
+    ): this {
+        return this;
+    }
+
+    public bindNone<TOut>(
+        fn: () => Option<TOut>
+    ): Option<TOut> {
+        const bound = fn();
+        return bound;
+    }
+
+    public defaultValue<T>(
+        defaultValue: T
+    ): T {
+        return defaultValue;
+    }
+
+    public defaultWith<T>(
+        fn: () => T
+    ): T {
+        const val = fn();
+        return val;
+    }
+
+    public mapSome<TOut>(
+        fn: (val: never) => TOut
+    ): this {
+        return this;
+    }
+
+    public throwIfNone(): never {
+        const errMsg = "throwIfNone() called on a NoneOption.";
+        throw new Error(errMsg);
+    }
+
+    public throwIfNoneWith(
+        errorMsg: string
+    ): never {
+        throw new Error(errorMsg);
+    }
+
+    public throwIfSome(): void {
+        // Intentionally empty.
+    }
+
+    public throwIfSomeWith(
+        fn: (val: never) => string
+    ): void {
+        // Intentionally empty.
+    }
+
 }
 
 
@@ -152,7 +257,7 @@ export namespace Option {
         const firstNone = collection.find((curOpt): curOpt is NoneOption => curOpt instanceof NoneOption);
         return firstNone ?
             firstNone :
-            new SomeOption(collection.map((curOpt) => curOpt.value!));
+            new SomeOption(collection.map((curOpt) => (curOpt as SomeOption<T>).value));
     }
 
 
@@ -171,10 +276,10 @@ export namespace Option {
         const options = Object.values(namedOptions);
         const firstNoneIdx = options.findIndex((opt) => opt.isNone);
         if (firstNoneIdx === -1) {
-            // All were some.  Return an object of the some values.
+            // All were Some.  Return an object of the some values.
             const someValuesObj: { [k: string]: unknown; } = {};
             for (const [name, opt] of Object.entries(namedOptions)) {
-                someValuesObj[name] = opt.value;
+                someValuesObj[name] = (opt as SomeOption<unknown>).value;
             }
             return new SomeOption(someValuesObj as AllSomeTypes<T>);
         }
@@ -200,26 +305,11 @@ export namespace Option {
      * Otherwise, a successful Option containing all properties of the original
      * input and the value returned by _fn_.
      */
-    export function augment<TInput, TFn>(
-        fn: (input: TInput) => Option<TFn>,
+    export function augment<TInput, TAugment>(
+        fn: (input: TInput) => Option<TAugment>,
         input: Option<TInput>
-    ): Option<TInput & TFn> {
-
-        if (input.isNone) {
-            return input;
-        }
-
-        // The input is a some Result.
-        const fnOpt = fn(input.value);
-        if (fnOpt.isNone) {
-            // _fn_ has returned None.  Return None.
-            return fnOpt;
-        }
-
-        // _fn_ has returned Some.  Return an object containing all properties of
-        // the original input and the value returned by _fn_.
-        const augmented = { ...input.value, ...fnOpt.value};
-        return new SomeOption(augmented);
+    ): Option<TInput & TAugment> {
+        return input.augment(fn);
     }
 
 
@@ -237,9 +327,7 @@ export namespace Option {
         fn: (x: TIn) => Option<TOut>,
         input: Option<TIn>
     ): Option<TOut> {
-        return input.isSome ?
-            fn(input.value) :
-            input;
+        return input.bind(fn);
     }
 
 
@@ -255,13 +343,11 @@ export namespace Option {
      * @return Either the passed-through "some" Option or the Option returned
      * from _fn_.
      */
-    export function bindError<TIn, TOut>(
+    export function bindNone<TIn, TOut>(
         fn: () => Option<TOut>,
         input: Option<TIn>
     ): Option<TIn | TOut> {
-        return input.isSome ?
-            input :
-            fn();
+        return input.bindNone(fn);
     }
 
 
@@ -305,10 +391,11 @@ export namespace Option {
      * @param input - The input Option
      * @returns The contained value if input is Some, else the default value.
      */
-    export function defaultValue<T>(defaultValue: T, input: Option<T>): T {
-        return input.isSome ?
-            input.value :
-            defaultValue;
+    export function defaultValue<T>(
+        defaultValue: T,
+        input: Option<T>
+    ): T {
+        return input.defaultValue(defaultValue);
     }
 
 
@@ -324,9 +411,7 @@ export namespace Option {
      * returned by _fn_.
      */
     export function defaultWith<T>(fn: () => T, input: Option<T>): T {
-        return input.isSome ?
-            input.value :
-            fn();
+        return input.defaultWith(fn);
     }
 
 
@@ -402,30 +487,67 @@ export namespace Option {
         fn: (x: TIn) => TOut,
         input: Option<TIn>
     ): Option<TOut> {
-        return input.isSome ?
-            new SomeOption(fn(input.value)) :
-            input;
+        return input.mapSome(fn);
     }
 
 
     /**
-     * Unwraps a SomeOption, throwing if it is a NoneOption.
+     * Unwraps a SomeOption, throwing if it is a NoneOption.  Uses a generic
+     * generated error message.
+     *
+     * @param opt - The input Option
+     * @returns The unwrapped SomeOption value
+     */
+    export function throwIfNone<T>(
+        input: Option<T>
+    ): T {
+        return input.throwIfNone();
+    }
+
+
+    /**
+     * Unwraps a SomeOption.  If the Option is a NoneOption an Error is thrown
+     * containing the specified error message.
      *
      * @param errorMsg - The error message to use when throwing in the event the
      * Option is a NoneOption
      * @param opt - The input Option
      * @returns The unwrapped SomeOption value
      */
-    export function throwIfNone<T>(
+    export function throwIfNoneWith<T>(
         errorMsg: string,
         opt: Option<T>
     ): T {
-        if (opt.isSome) {
-            return opt.value;
-        }
+        return opt.throwIfNoneWith(errorMsg);
+    }
 
-        // The Option is a NoneOption.  We must throw.
-        throw new Error(errorMsg);
+
+    /**
+     * Throws if the specified Option is a SomeOption.  Uses a generic generated
+     * error message.
+     *
+     * @param opt - The input Option
+     * @return Description
+     */
+    export function throwIfSome<T>(
+        opt: Option<T>
+    ): void {
+        return opt.throwIfSome();
+    }
+
+
+    /**
+     * Throws an Error if the specified Option is a SomeOption.  Uses the
+     * specified function to generate the error message.
+     *
+     * @param param - Description
+     * @return Description
+     */
+    export function throwIfSomeWith<T>(
+        fn: (val: T) => string,
+        opt: Option<T>
+    ): void {
+        opt.throwIfSomeWith(fn);
     }
 
 }
