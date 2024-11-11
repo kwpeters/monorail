@@ -1494,7 +1494,7 @@ export namespace Result {
      * @param result - The input Result
      * @returns The unwrapped failed Result error.
      */
-    export function throwIfSucceeded<TSuccess, TError>(
+    export function throwIfSucceededWith<TSuccess, TError>(
         errorMsg: string,
         result: Result<TSuccess, TError>
     ): TError;
@@ -1508,12 +1508,12 @@ export namespace Result {
      * @param result - The input Result
      * @returns The unwrapped failed Result error.
      */
-    export function throwIfSucceeded<TSuccess, TError>(
+    export function throwIfSucceededWith<TSuccess, TError>(
         errorMapFn: (val: TSuccess) => string,
         result: Result<TSuccess, TError>
     ): TError;
 
-    export function throwIfSucceeded<TSuccess, TError>(
+    export function throwIfSucceededWith<TSuccess, TError>(
         errorMsgOrFn: string | ((val: TSuccess) => string),
         result: Result<TSuccess, TError>
     ): TError {

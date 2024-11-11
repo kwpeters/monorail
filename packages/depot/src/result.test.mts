@@ -1281,11 +1281,11 @@ describe("Result namespace", () => {
     });
 
 
-    describe("throwIfSucceeded()", () => {
+    describe("throwIfSucceededWith()", () => {
 
         it("unwraps the error when given a failed result", () => {
             const res = new FailedResult("error 9");
-            const err = Result.throwIfSucceeded("error message", res);
+            const err = Result.throwIfSucceededWith("error message", res);
             expect(err).toEqual("error 9");
         });
 
@@ -1293,7 +1293,7 @@ describe("Result namespace", () => {
         it("throws when given a successful Result", () => {
             const res = new SucceededResult(6);
             expect(() => {
-                const __val = Result.throwIfSucceeded("operation should have failed", res);
+                const __val = Result.throwIfSucceededWith("operation should have failed", res);
             }).toThrowError("operation should have failed");
 
         });
@@ -1307,7 +1307,7 @@ describe("Result namespace", () => {
                 return `Got success "${val}" when error expected.`;
             };
             expect(() => {
-                const __val = Result.throwIfSucceeded(successToMessage, res);
+                const __val = Result.throwIfSucceededWith(successToMessage, res);
             }).toThrowError(`Got success "6" when error expected.`);
             expect(numInvocations).toEqual(1);
         });
