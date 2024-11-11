@@ -162,7 +162,22 @@ export class SucceededResult<TSuccess> implements IResult<TSuccess, undefined> {
     }
 
 
-    ////////////////////////////////////////////////////////////////////////////////
+    public throwIfFailedWith(
+        errorMsg: string
+    ): TSuccess;
+    public throwIfFailedWith(
+        errorMapFn: (error: never) => string
+    ): TSuccess;
+    public throwIfFailedWith(
+        errorMsgOrFn: string | ((error: never) => string)
+    ): TSuccess;
+    public throwIfFailedWith(
+        errorMsgOrFn: string | ((error: never) => string)
+    ): TSuccess {
+        return this._value;
+    }
+
+
 }
 
 
@@ -285,8 +300,23 @@ export class FailedResult<TError> implements IResult<undefined, TError> {
     }
 
 
-    ////////////////////////////////////////////////////////////////////////////////
-
+    public throwIfFailedWith(
+        errorMsg: string
+    ): never;
+    public throwIfFailedWith(
+        errorMapFn: (error: TError) => string
+    ): never;
+    public throwIfFailedWith(
+        errorMsgOrFn: string | ((error: TError) => string)
+    ): never;
+    public throwIfFailedWith(
+        errorMsgOrFn: string | ((error: TError) => string)
+    ): never {
+        const errMsg = typeof errorMsgOrFn === "string" ?
+            errorMsgOrFn :
+            errorMsgOrFn(this._error);
+        throw new Error(errMsg);
+    }
 
 }
 
@@ -1440,18 +1470,19 @@ export namespace Result {
         errorMsgOrFn: string | ((err: TError) => string),
         result: Result<TSuccess, TError>
     ): TSuccess {
+        // if (result.succeeded) {
+        //     return result.value;
+        // }
 
-        if (result.succeeded) {
-            return result.value;
-        }
+        // // The Result is a failure.  We must throw.
+        // const errorMsg =
+        //     typeof errorMsgOrFn === "function" ?
+        //     errorMsgOrFn(result.error) :
+        //     errorMsgOrFn;
 
-        // The Result is a failure.  We must throw.
-        const errorMsg =
-            typeof errorMsgOrFn === "function" ?
-            errorMsgOrFn(result.error) :
-            errorMsgOrFn;
+        // throw new Error(errorMsg);
 
-        throw new Error(errorMsg);
+        return result.throwIfFailedWith(errorMsgOrFn);
     }
 
 
