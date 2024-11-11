@@ -120,9 +120,8 @@ describe("Option namespace", () => {
                 one: optSomeA,
                 two: optSomeB,
             };
-            const opt = Option.allObj(optObj);
-            expect(opt.isSome).toBeTrue();
-            expect(opt.value).toEqual({
+            const obj = Option.allObj(optObj).throwIfNone();
+            expect(obj).toEqual({
                 one: "hello",
                 two: 5
             });
@@ -255,9 +254,8 @@ describe("Option namespace", () => {
             let numInvocations = 0;
             const fn = (x: number) => { numInvocations++; return new SomeOption(x + 1); };
 
-            const opt = Option.bind(fn, new SomeOption(3));
-            expect(opt.isSome).toBeTruthy();
-            expect(opt.value).toEqual(4);
+            const val = Option.bind(fn, new SomeOption(3)).throwIfNone();
+            expect(val).toEqual(4);
             expect(numInvocations).toEqual(1);
         });
 
@@ -273,14 +271,14 @@ describe("Option namespace", () => {
                 .end();
             expect(opt1.isNone).toBeTruthy();
 
-            const opt2 =
+            const val =
                 pipe(2)
                 .pipe(subtract1)
                 .pipe((o) => Option.bind(subtract1, o))
+                .pipe(Option.throwIfNone)
                 .end();
 
-            expect(opt2.isSome).toBeTruthy();
-            expect(opt2.value).toEqual(0);
+            expect(val).toEqual(0);
 
         });
     });
@@ -292,7 +290,7 @@ describe("Option namespace", () => {
 
             let numInvocations = 0;
 
-            const opt =
+            const val =
                 pipe(new SomeOption(1))
                 .pipe((opt) => Option.bindNone(
                     () => {
@@ -301,10 +299,10 @@ describe("Option namespace", () => {
                     },
                     opt
                 ))
+                .pipe(Option.throwIfNone)
                 .end();
 
-            expect(opt.isSome).toBeTrue();
-            expect(opt.value).toEqual(1);
+            expect(val).toEqual(1);
             expect(numInvocations).toEqual(0);
         });
 
@@ -312,7 +310,7 @@ describe("Option namespace", () => {
         it("with none input the function is invoked and its Option is returned", () => {
             let numInvocations = 0;
 
-            const opt =
+            const val =
                 pipe(NoneOption.get())
                 .pipe((opt) => Option.bindNone(
                     () => {
@@ -321,10 +319,10 @@ describe("Option namespace", () => {
                     },
                     opt
                 ))
+                .pipe(Option.throwIfNone)
                 .end();
 
-            expect(opt.isSome).toBeTrue();
-            expect(opt.value).toEqual(2);
+            expect(val).toEqual(2);
             expect(numInvocations).toEqual(1);
         });
 
@@ -474,9 +472,8 @@ describe("Option namespace", () => {
             let numInvocations = 0;
             const add1 = (x: number) => { numInvocations++; return x + 1; };
 
-            const opt = Option.mapSome(add1, new SomeOption(3));
-            expect(opt.isSome).toBeTruthy();
-            expect(opt.value).toEqual(4);
+            const val = Option.mapSome(add1, new SomeOption(3)).throwIfNone();
+            expect(val).toEqual(4);
             expect(numInvocations).toEqual(1);
         });
 
@@ -484,15 +481,15 @@ describe("Option namespace", () => {
         it("can be used easily with pipe()", () => {
             const add1 = (x: number) => x + 1;
 
-            const opt =
+            const val =
                 pipe(new SomeOption(3))
                 .pipe((o) => Option.mapSome(add1, o))
                 .pipe((o) => Option.mapSome(add1, o))
                 .pipe((o) => Option.mapSome(add1, o))
+                .pipe(Option.throwIfNone)
                 .end();
 
-            expect(opt.isSome).toBeTruthy();
-            expect(opt.value).toEqual(6);
+            expect(val).toEqual(6);
         });
     });
 
