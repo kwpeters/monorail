@@ -162,22 +162,29 @@ export class SucceededResult<TSuccess> implements IResult<TSuccess, undefined> {
     }
 
 
-    public throwIfFailedWith(
-        errorMsg: string
-    ): TSuccess;
-    public throwIfFailedWith(
-        errorMapFn: (error: never) => string
-    ): TSuccess;
-    public throwIfFailedWith(
-        errorMsgOrFn: string | ((error: never) => string)
-    ): TSuccess;
-    public throwIfFailedWith(
-        errorMsgOrFn: string | ((error: never) => string)
-    ): TSuccess {
+    public throwIfFailedWith(errorMsg: string): TSuccess;
+    public throwIfFailedWith(errorMapFn: (error: never) => string): TSuccess;
+    public throwIfFailedWith(errorMsgOrFn: string | ((error: never) => string)): TSuccess;
+    public throwIfFailedWith(errorMsgOrFn: string | ((error: never) => string)): TSuccess {
         return this._value;
     }
 
 
+    public throwIfSucceeded(): never {
+        const errMsg = inspect(this._value);
+        throw new Error(errMsg);
+    }
+
+
+    public throwIfSucceededWith(successMsg: string): never;
+    public throwIfSucceededWith(successMapFn: (val: TSuccess) => string): never;
+    public throwIfSucceededWith(successMsgOrFn: string | ((val: TSuccess) => string)): never;
+    public throwIfSucceededWith(successMsgOrFn: string | ((val: TSuccess) => string)): never {
+        const msg = typeof successMsgOrFn === "string" ?
+            successMsgOrFn :
+            successMsgOrFn(this._value);
+        throw new Error(msg);
+    }
 }
 
 
@@ -295,7 +302,7 @@ export class FailedResult<TError> implements IResult<undefined, TError> {
 
 
     public throwIfFailed(): never {
-        const errMsg = inspect(this.error);
+        const errMsg = inspect(this._error);
         throw new Error(errMsg);
     }
 
@@ -316,6 +323,19 @@ export class FailedResult<TError> implements IResult<undefined, TError> {
             errorMsgOrFn :
             errorMsgOrFn(this._error);
         throw new Error(errMsg);
+    }
+
+
+    public throwIfSucceeded(): TError {
+        return this._error;
+    }
+
+
+    public throwIfSucceededWith(successMsg: string): TError;
+    public throwIfSucceededWith(successMapFn: (val: never) => string): TError;
+    public throwIfSucceededWith(successMsgOrFn: string | ((val: never) => string)): TError;
+    public throwIfSucceededWith(successMsgOrFn: string | ((val: never) => string)): TError {
+        return this._error;
     }
 
 }
@@ -1487,6 +1507,19 @@ export namespace Result {
 
 
     /**
+     * Unwraps a failed Result, throwing if it is successful.
+     *
+     * @param result - The Result to be unwrapped
+     * @return The unwrapped failed Result error
+     */
+    export function throwIfSucceeded<TSuccess, TError>(
+        result: Result<TSuccess, TError>
+    ): TError {
+        return result.throwIfSucceeded();
+    }
+
+
+    /**
      * Unwraps a failed Result, throwing if it is a success.
      *
      * @param errorMsg - The error message to use when throwing in the event the
@@ -1517,17 +1550,18 @@ export namespace Result {
         errorMsgOrFn: string | ((val: TSuccess) => string),
         result: Result<TSuccess, TError>
     ): TError {
-        if (result.failed) {
-            return result.error;
-        }
+        // if (result.failed) {
+        //     return result.error;
+        // }
 
-        // The Result is a success.  We must throw.
-        const errorMsg =
-            typeof errorMsgOrFn === "function" ?
-            errorMsgOrFn(result.value) :
-            errorMsgOrFn;
+        // // The Result is a success.  We must throw.
+        // const errorMsg =
+        //     typeof errorMsgOrFn === "function" ?
+        //     errorMsgOrFn(result.value) :
+        //     errorMsgOrFn;
 
-        throw new Error(errorMsg);
+        // throw new Error(errorMsg);
+        return result.throwIfSucceededWith(errorMsgOrFn);
     }
 
 }
