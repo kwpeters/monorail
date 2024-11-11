@@ -74,15 +74,15 @@ export class SucceededResult<TSuccess> {
     }
 
 
-    public defaultValue(
-        defaultValue: TSuccess
+    public defaultValue<TDefault>(
+        defaultValue: TDefault
     ): TSuccess {
         return this._value;
     }
 
 
-    public defaultWith(
-        fn: () => TSuccess
+    public defaultWith<TDefault>(
+        fn: (err: never) => TDefault
     ): TSuccess {
         return this._value;
     }
@@ -218,17 +218,17 @@ export class FailedResult<TError> {
     }
 
 
-    public defaultValue<TSuccess>(
-        defaultValue: TSuccess
-    ): TSuccess {
+    public defaultValue<TDefault>(
+        defaultValue: TDefault
+    ): TDefault {
         return defaultValue;
     }
 
 
-    public defaultWith<TSuccess>(
-        fn: () => TSuccess
-    ): TSuccess {
-        const val = fn();
+    public defaultWith<TDefault>(
+        fn: (err: TError) => TDefault
+    ): TDefault {
+        const val = fn(this._error);
         return val;
     }
 
@@ -786,8 +786,8 @@ export namespace Result {
 
 
     /**
-     * If the input is a successful value, returns the contained value, else
-     * returns the default value.
+     * If the input is a successful value, returns the wrapped value, else
+     * returns the default value (which may be a different type).
      *
      * @param defaultValue - The default value to use if input is an error
      * Result
@@ -795,17 +795,17 @@ export namespace Result {
      * @returns The contained value if input is successful, else the default
      * value.
      */
-    export function defaultValue<TSuccess, TError>(
-        defaultValue: TSuccess,
+    export function defaultValue<TSuccess, TError, TDefault>(
+        defaultValue: TDefault,
         input: Result<TSuccess, TError>
-    ): TSuccess {
+    ): TSuccess | TDefault {
         return input.defaultValue(defaultValue);
     }
 
     /**
-     * If the input is a successful value, returns the contained value, else
-     * returns _fn()_.  This function is useful when getting the default value
-     * is expensive.
+     * If the input is a successful value, returns the wrapped value, else
+     * returns _fn()_ (which may be a different type).  This function is useful
+     * when getting the default value is expensive.
      *
      * @param fn - A function that can be invoked to get the default value.  Not
      * executed unless input is an error.
@@ -813,10 +813,10 @@ export namespace Result {
      * @returns The contained value if input is successful, else the value
      * returned by _fn_.
      */
-    export function defaultWith<TSuccess, TError>(
-        fn: () => TSuccess,
+    export function defaultWith<TSuccess, TError, TDefault>(
+        fn: (err: TError) => TDefault,
         input: Result<TSuccess, TError>
-    ): TSuccess {
+    ): TSuccess | TDefault {
         return input.defaultWith(fn);
     }
 

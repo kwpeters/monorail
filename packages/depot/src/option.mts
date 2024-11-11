@@ -56,14 +56,14 @@ export class SomeOption<T> {
         return this;
     }
 
-    public defaultValue(
-        defaultValue: T
+    public defaultValue<TDefault>(
+        defaultValue: TDefault
     ): T {
         return this._value;
     }
 
-    public defaultWith(
-        fn: () => T
+    public defaultWith<TDefault>(
+        fn: () => TDefault
     ): T {
         return this._value;
     }
@@ -157,15 +157,15 @@ export class NoneOption {
         return bound;
     }
 
-    public defaultValue<T>(
-        defaultValue: T
-    ): T {
+    public defaultValue<TDefault>(
+        defaultValue: TDefault
+    ): TDefault {
         return defaultValue;
     }
 
-    public defaultWith<T>(
-        fn: () => T
-    ): T {
+    public defaultWith<TDefault>(
+        fn: () => TDefault
+    ): TDefault {
         const val = fn();
         return val;
     }
@@ -384,33 +384,36 @@ export namespace Option {
 
     /**
      * If the input is Some value, returns the contained value, else returns the
-     * default value.
+     * specified default value (which may be a different type).
      *
      * @param defaultValue - The default value to use if input is a None Option
      * Otherwise, returns the specified default value.
      * @param input - The input Option
      * @returns The contained value if input is Some, else the default value.
      */
-    export function defaultValue<T>(
-        defaultValue: T,
+    export function defaultValue<T, TDefault>(
+        defaultValue: TDefault,
         input: Option<T>
-    ): T {
+    ): T | TDefault {
         return input.defaultValue(defaultValue);
     }
 
 
     /**
-     * If the input is a Some value, returns the contained value, else
-     * returns _fn()_.  This function is useful when getting the default value
-     * is expensive.
+     * If the input is a Some value, returns the contained value, else returns
+     * _fn()_ (which may be of a different type).  This function is useful when
+     * getting the default value is expensive.
      *
      * @param fn - A function that can be invoked to get the default value.  Not
      * executed unless input is None.
      * @param input - The input Result
-     * @returns The contained value if input is Some, else the value
-     * returned by _fn_.
+     * @returns The contained value if input is Some, else the value returned by
+     * _fn_.
      */
-    export function defaultWith<T>(fn: () => T, input: Option<T>): T {
+    export function defaultWith<T, TDefault>(
+        fn: () => TDefault,
+        input: Option<T>
+    ): T | TDefault {
         return input.defaultWith(fn);
     }
 

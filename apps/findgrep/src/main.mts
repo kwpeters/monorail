@@ -187,7 +187,7 @@ async function doTextSearch(config: IFindGrepConfig): Promise<number> {
         await fileOrDir.readLines((lineText, lineNum) => {
             const [numMatches, highlightedText] = highlightMatches(
                 lineText,
-                config.textRegex.value!,
+                config.textRegex.throwIfNone(),
                 styles.textMatchStyle
             );
             if (numMatches > 0) {
