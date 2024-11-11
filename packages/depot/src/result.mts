@@ -134,11 +134,35 @@ export class SucceededResult<TSuccess> implements IResult<TSuccess, undefined> {
     }
 
 
-    ////////////////////////////////////////////////////////////////////////////////
+    public tap(
+        fn: (res: SucceededResult<TSuccess>) => unknown
+    ): this {
+        fn(this);
+        return this;
+    }
+
+
+    public tapError(
+        fn: (err: never) => unknown
+    ): this {
+        return this;
+    }
+
+
+    public tapSuccess(
+        fn: (val: TSuccess) => unknown
+    ): this {
+        fn(this._value);
+        return this;
+    }
+
 
     public throwIfFailed(): TSuccess {
         return this._value;
     }
+
+
+    ////////////////////////////////////////////////////////////////////////////////
 }
 
 
@@ -231,12 +255,39 @@ export class FailedResult<TError> implements IResult<undefined, TError> {
         return this;
     }
 
-    ////////////////////////////////////////////////////////////////////////////////
+
+    public tap(
+        fn: (res: FailedResult<TError>) => unknown
+    ): this {
+        fn(this);
+        return this;
+    }
+
+
+    public tapError(
+        fn: (err: TError) => unknown
+    ): this {
+        fn(this._error);
+        return this;
+    }
+
+
+    public tapSuccess(
+        fn: (val: never) => unknown
+    ): this {
+        return this;
+    }
+
 
     public throwIfFailed(): never {
         const errMsg = inspect(this.error);
         throw new Error(errMsg);
     }
+
+
+    ////////////////////////////////////////////////////////////////////////////////
+
+
 }
 
 
@@ -1299,11 +1350,12 @@ export namespace Result {
      * @returns The original input Result
      */
     export function tap<TSuccess, TError>(
-        fn: (res: Result<TSuccess, TError>) => void,
+        fn: (res: Result<TSuccess, TError>) => unknown,
         input: Result<TSuccess, TError>
     ): Result<TSuccess, TError> {
-        fn(input);
-        return input;
+        // fn(input);
+        // return input;
+        return input.tap(fn);
     }
 
 
@@ -1318,10 +1370,11 @@ export namespace Result {
         fn: (val: TError) => unknown,
         input: Result<TSuccess, TError>
     ): Result<TSuccess, TError> {
-        if (input.failed) {
-            fn(input.error);
-        }
-        return input;
+        // if (input.failed) {
+        //     fn(input.error);
+        // }
+        // return input;
+        return input.tapError(fn);
     }
 
 
@@ -1336,10 +1389,11 @@ export namespace Result {
         fn: (val: TSuccess) => unknown,
         input: Result<TSuccess, TError>
     ): Result<TSuccess, TError> {
-        if (input.succeeded) {
-            fn(input.value);
-        }
-        return input;
+        // if (input.succeeded) {
+        //     fn(input.value);
+        // }
+        // return input;
+        return input.tapSuccess(fn);
     }
 
 
