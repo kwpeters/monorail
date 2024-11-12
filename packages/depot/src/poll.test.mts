@@ -1,4 +1,4 @@
-import { continuePollingNo, ContinuePollingPredicate, continuePollingYes, poll, pollAsyncResult } from "./poll.mjs";
+import { continuePollingNo, type ContinuePollingPredicate, continuePollingYes, poll, pollAsyncResult } from "./poll.mjs";
 import { getTimerPromise } from "./promiseHelpers.mjs";
 import { FailedResult, SucceededResult } from "./result.mjs";
 

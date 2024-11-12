@@ -1,4 +1,4 @@
-import {createReadStream} from "fs";
+import {createReadStream} from "node:fs";
 import {File} from "./file.mjs";
 import {readableStreamToText} from "./streamHelpers.mjs";
 import {tmpDir} from "./specHelpers.test.mjs";

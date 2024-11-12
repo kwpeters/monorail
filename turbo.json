@@ -26,6 +26,17 @@
         // project.  So run with maximum parallelism.
         "dependsOn": [],
         "outputs": []
+    },
+    "type-check": {
+        "dependsOn": [
+            "^type-check"
+        ],
+        "inputs": [
+            "$TURBO_DEFAULT$",
+            ".env*"
+        ],
+        "outputs": [
+        ]
     }
   }
 }

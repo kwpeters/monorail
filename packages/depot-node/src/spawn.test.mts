@@ -2,7 +2,7 @@ import * as path from "node:path";
 import * as cp from "node:child_process";
 import * as fs from "node:fs";
 import * as _ from "lodash-es";
-import {spawn, SpawnCloseError} from "./spawn.mjs";
+import {spawn, type SpawnCloseError} from "./spawn.mjs";
 import { getOs, OperatingSystem } from "./os.mjs";
 import { tmpDir } from "./specHelpers.test.mjs";
 

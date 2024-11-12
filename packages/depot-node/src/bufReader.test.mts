@@ -14,9 +14,9 @@ describe("BufReader", () => {
 
     it("readBOOL() will return the expected value", () => {
         const reader = new BufReader(Buffer.from([0xff, 0x01, 0x00]));
-        expect(reader.readBOOL()).toEqual(new SucceededResult(1));
-        expect(reader.readBOOL()).toEqual(new SucceededResult(1));
-        expect(reader.readBOOL()).toEqual(new SucceededResult(0));
+        expect(reader.readBOOL()).toEqual(new SucceededResult(1 as const));
+        expect(reader.readBOOL()).toEqual(new SucceededResult(1 as const));
+        expect(reader.readBOOL()).toEqual(new SucceededResult(0 as const));
         expect(reader.readBOOL().succeeded).toBeFalse();
     });
 

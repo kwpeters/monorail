@@ -27,7 +27,8 @@
         "lint": "turbo lint",
         "test": "turbo test",
         "createBin": "tsx ./apps/build-app-assist/src/index.mts createRepoBin --repoRootDir .",
-        "all": "npm run build && npm run lint && npm run test && npm run createBin"
+        "all": "npm run build && npm run lint && npm run test && npm run createBin",
+        "type-check": "turbo type-check"
     },
     "devDependencies": {
         "tsx": "^4.19.1",

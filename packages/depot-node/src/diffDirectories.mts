@@ -1,5 +1,5 @@
-import * as path from "path";
-import { Stats } from "fs";
+import * as path from "node:path";
+import { Stats } from "node:fs";
 import * as _ from "lodash-es";
 import { assertNever } from "@repo/depot/never";
 import { Directory } from "./directory.mjs";

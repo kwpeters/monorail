@@ -1,4 +1,4 @@
-import { DirectedGraph, EdgeClassification, IEdge } from "./directedGraph.mjs";
+import { DirectedGraph, EdgeClassification, type IEdge } from "./directedGraph.mjs";
 
 
 function getGraph1(): [Set<string>, Array<IEdge<string, string>>] {

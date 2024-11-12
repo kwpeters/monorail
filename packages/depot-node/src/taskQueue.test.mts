@@ -1,6 +1,6 @@
 import {EventEmitter} from "node:events";
 import {Deferred} from "@repo/depot/deferred";
-import {Task, getTimerPromise} from "@repo/depot/promiseHelpers";
+import {type Task, getTimerPromise} from "@repo/depot/promiseHelpers";
 import {TaskQueue} from "./taskQueue.mjs";
 
 

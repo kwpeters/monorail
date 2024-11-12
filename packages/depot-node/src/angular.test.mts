@@ -1,4 +1,4 @@
-import path from "path";
+import path from "node:path";
 import { Directory } from "./directory.mjs";
 import { File } from "./file.mjs";
 import { findAngularProjectDirs } from "./angular.mjs";
@@ -29,7 +29,7 @@ describe("findAngularProjectDirs()", () => {
 
         const projectDirs = await findAngularProjectDirs(tmpDir);
         expect(projectDirs.length).toEqual(1);
-        expect(projectDirs[0].toString()).toEqual(tmpDir.toString());
+        expect(projectDirs[0]!.toString()).toEqual(tmpDir.toString());
     });
 
 
@@ -40,7 +40,7 @@ describe("findAngularProjectDirs()", () => {
 
         const projectDirs = await findAngularProjectDirs(tmpDir);
         expect(projectDirs.length).toEqual(1);
-        expect(projectDirs[0].toString()).toEqual(path.join("tmp", "dir2"));
+        expect(projectDirs[0]!.toString()).toEqual(path.join("tmp", "dir2"));
     });
 
 

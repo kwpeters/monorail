@@ -530,7 +530,7 @@ describe("GitRepo", () => {
                 expect(getStagedFilesResult.succeeded).toBeTrue();
                 const stagedFiles = getStagedFilesResult.value!;
                 expect(stagedFiles.length).toEqual(1);
-                expect(stagedFiles[0].toString()).toEqual("package.json");
+                expect(stagedFiles[0]!.toString()).toEqual("package.json");
             });
 
 
@@ -551,7 +551,7 @@ describe("GitRepo", () => {
                 expect(getStagedFilesResult.succeeded).toBeTrue();
                 const stagedFiles = getStagedFilesResult.value!;
                 expect(stagedFiles.length).toEqual(1);
-                expect(stagedFiles[0].toString()).toEqual(path.join("tmp", "sampleGitRepo-src", "package.json"));
+                expect(stagedFiles[0]!.toString()).toEqual(path.join("tmp", "sampleGitRepo-src", "package.json"));
             });
         });
 
@@ -598,20 +598,20 @@ describe("GitRepo", () => {
                 const log = await repo.getLog();
                 expect(log.length).toBeGreaterThan(0);
 
-                expect(log[0].commitHash).toEqual("a5206775d3e67a4282a07f15f18eb44bca8d52c8");
-                expect(log[0].author).toContain("kwpeters");
-                expect(log[0].timestamp instanceof Date).toBeTruthy();
-                expect(log[0].message).toBe("Initial commit");
+                expect(log[0]!.commitHash).toEqual("a5206775d3e67a4282a07f15f18eb44bca8d52c8");
+                expect(log[0]!.author).toContain("kwpeters");
+                expect(log[0]!.timestamp instanceof Date).toBeTruthy();
+                expect(log[0]!.message).toBe("Initial commit");
 
-                expect(log[1].commitHash).toEqual("bf60e95d83e63a807dfc072a90ba70d7c7597135");
-                expect(log[1].author).toContain("kwpeters");
-                expect(log[1].timestamp instanceof Date).toBeTruthy();
-                expect(log[1].message).toBe("Created README.md.");
+                expect(log[1]!.commitHash).toEqual("bf60e95d83e63a807dfc072a90ba70d7c7597135");
+                expect(log[1]!.author).toContain("kwpeters");
+                expect(log[1]!.timestamp instanceof Date).toBeTruthy();
+                expect(log[1]!.message).toBe("Created README.md.");
 
-                expect(log[5].commitHash).toEqual("74a66ef9f2751b843b166d33a2f48c81d420fde2");
-                expect(log[5].author).toContain("kwpeters");
-                expect(log[5].timestamp instanceof Date).toBeTruthy();
-                expect(log[5].message).toBe("A dummy checking done solely for\nthe purpose of making\na multi-line commit message.");
+                expect(log[5]!.commitHash).toEqual("74a66ef9f2751b843b166d33a2f48c81d420fde2");
+                expect(log[5]!.author).toContain("kwpeters");
+                expect(log[5]!.timestamp instanceof Date).toBeTruthy();
+                expect(log[5]!.message).toBe("A dummy checking done solely for\nthe purpose of making\na multi-line commit message.");
             });
 
 

@@ -1,5 +1,5 @@
 import { Uuid } from "./uuid.mjs";
-import { Brand } from "./brand.mjs";
+import { type Brand } from "./brand.mjs";
 
 
 type FooId = Brand<Uuid, "FooId">;

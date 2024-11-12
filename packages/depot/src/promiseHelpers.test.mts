@@ -359,26 +359,26 @@ describe("sequentialSettle()", () => {
         ];
 
         promises = sequentialSettle(promises);
-        void promises[0].then(() => { settledFlags[0] = true; });
-        void promises[1].then(() => { settledFlags[1] = true; });
-        void promises[2].then(() => { settledFlags[2] = true; });
+        void promises[0]!.then(() => { settledFlags[0] = true; });
+        void promises[1]!.then(() => { settledFlags[1] = true; });
+        void promises[2]!.then(() => { settledFlags[2] = true; });
 
-        void promises[0]
+        void promises[0]!
         .then(() => {
-            expect(settledFlags[1]).toBeFalsy();
-            expect(settledFlags[2]).toBeFalsy();
+            expect(settledFlags[1]!).toBeFalsy();
+            expect(settledFlags[2]!).toBeFalsy();
         });
 
-        void promises[1]
+        void promises[1]!
         .then(() => {
-            expect(settledFlags[0]).toBeTruthy();
-            expect(settledFlags[2]).toBeFalsy();
+            expect(settledFlags[0]!).toBeTruthy();
+            expect(settledFlags[2]!).toBeFalsy();
         });
 
-        void promises[2]
+        void promises[2]!
         .then(() => {
-            expect(settledFlags[0]).toBeTruthy();
-            expect(settledFlags[1]).toBeTruthy();
+            expect(settledFlags[0]!).toBeTruthy();
+            expect(settledFlags[1]!).toBeTruthy();
             done();
         });
     });

@@ -1,5 +1,5 @@
-import {constants} from "fs";
-import {EOL} from "os";
+import {constants} from "node:fs";
+import {EOL} from "node:os";
 import * as _ from "lodash-es";
 import { mapAsync } from "@repo/depot/promiseHelpers";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";

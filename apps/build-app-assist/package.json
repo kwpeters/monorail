@@ -6,7 +6,8 @@
     "dev": "echo 'Add dev script here'",
     "build": "tsc --build",
     "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
-    "lint": "eslint ./src"
+    "lint": "eslint ./src",
+    "type-check": "tsc --project tsconfig.ut.json --noEmit"
   },
   "bin": {
     "build-app-assist": "./dist/index.mjs"

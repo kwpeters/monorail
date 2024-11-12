@@ -1,8 +1,8 @@
-import { MakePropsNonNullable,
-         MakePropsNonNullableAndRequired,
-         MakePropsOptional,
-         MakePropsRequired,
-         RecursivePartial} from "./typeUtils.mjs";
+import { type MakePropsNonNullable,
+         type MakePropsNonNullableAndRequired,
+         type MakePropsOptional,
+         type MakePropsRequired,
+         type RecursivePartial} from "./typeUtils.mjs";
 
 
 interface IAllRequired {

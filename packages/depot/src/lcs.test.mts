@@ -1,5 +1,5 @@
 import {compareStr, compareStrI} from "./compare.mjs";
-import {createLcsTable, DiffChangeType, Table, DiffItem, getDiff, elideEqual} from "./lcs.mjs";
+import {createLcsTable, DiffChangeType, type Table, type DiffItem, getDiff, elideEqual} from "./lcs.mjs";
 
 
 describe("createLcsTable()", () => {

@@ -1,5 +1,5 @@
-import * as path from "path";
-import * as fs from "fs/promises";
+import * as path from "node:path";
+import * as fs from "node:fs/promises";
 import { mapAsync } from "@repo/depot/promiseHelpers";
 import { File } from "./file.mjs";
 import { Directory } from "./directory.mjs";
@@ -62,32 +62,32 @@ describe("diffDirectories()", () => {
 
             // Note:  All items should be sorted according to their relative path.
 
-            expect(diffDirFiles[0].relativeFilePath).toEqual(path.join("both", "both.txt"));
-            expect((await diffDirFiles[0].isLeftOnly())).toEqual(false);
-            expect((await diffDirFiles[0].isRightOnly())).toEqual(false);
-            expect((await diffDirFiles[0].isInBoth())).toEqual(true);
+            expect(diffDirFiles[0]!.relativeFilePath).toEqual(path.join("both", "both.txt"));
+            expect((await diffDirFiles[0]!.isLeftOnly())).toEqual(false);
+            expect((await diffDirFiles[0]!.isRightOnly())).toEqual(false);
+            expect((await diffDirFiles[0]!.isInBoth())).toEqual(true);
 
-            expect(diffDirFiles[1].relativeFilePath).toEqual(path.join("leftSubdir", "leftOnly.txt"));
-            expect((await diffDirFiles[1].isLeftOnly())).toEqual(true);
-            expect((await diffDirFiles[1].isRightOnly())).toEqual(false);
-            expect((await diffDirFiles[1].isInBoth())).toEqual(false);
+            expect(diffDirFiles[1]!.relativeFilePath).toEqual(path.join("leftSubdir", "leftOnly.txt"));
+            expect((await diffDirFiles[1]!.isLeftOnly())).toEqual(true);
+            expect((await diffDirFiles[1]!.isRightOnly())).toEqual(false);
+            expect((await diffDirFiles[1]!.isInBoth())).toEqual(false);
 
             // This right-only file will only preceded the following left-only file
             // (commonDirLeftUnique.txt) when the results array is sorted.
-            expect(diffDirFiles[2].relativeFilePath).toEqual(path.join("rightSubdir", "rightOnly.txt"));
-            expect((await diffDirFiles[2].isLeftOnly())).toEqual(false);
-            expect((await diffDirFiles[2].isRightOnly())).toEqual(true);
-            expect((await diffDirFiles[2].isInBoth())).toEqual(false);
+            expect(diffDirFiles[2]!.relativeFilePath).toEqual(path.join("rightSubdir", "rightOnly.txt"));
+            expect((await diffDirFiles[2]!.isLeftOnly())).toEqual(false);
+            expect((await diffDirFiles[2]!.isRightOnly())).toEqual(true);
+            expect((await diffDirFiles[2]!.isInBoth())).toEqual(false);
 
-            expect(diffDirFiles[3].relativeFilePath).toEqual(path.join("zCommonDir", "/commonDirLeftUnique.txt"));
-            expect((await diffDirFiles[3].isLeftOnly())).toEqual(true);
-            expect((await diffDirFiles[3].isRightOnly())).toEqual(false);
-            expect((await diffDirFiles[3].isInBoth())).toEqual(false);
+            expect(diffDirFiles[3]!.relativeFilePath).toEqual(path.join("zCommonDir", "/commonDirLeftUnique.txt"));
+            expect((await diffDirFiles[3]!.isLeftOnly())).toEqual(true);
+            expect((await diffDirFiles[3]!.isRightOnly())).toEqual(false);
+            expect((await diffDirFiles[3]!.isInBoth())).toEqual(false);
 
-            expect(diffDirFiles[4].relativeFilePath).toEqual(path.join("zCommonDir", "commonDirRightUnique.txt"));
-            expect((await diffDirFiles[4].isLeftOnly())).toEqual(false);
-            expect((await diffDirFiles[4].isRightOnly())).toEqual(true);
-            expect((await diffDirFiles[4].isInBoth())).toEqual(false);
+            expect(diffDirFiles[4]!.relativeFilePath).toEqual(path.join("zCommonDir", "commonDirRightUnique.txt"));
+            expect((await diffDirFiles[4]!.isLeftOnly())).toEqual(false);
+            expect((await diffDirFiles[4]!.isRightOnly())).toEqual(true);
+            expect((await diffDirFiles[4]!.isInBoth())).toEqual(false);
         });
 
 
@@ -127,9 +127,9 @@ describe("diffDirectories()", () => {
         it("will return an item with no actions for identical files",  async () => {
             const diffDirFiles = await diffDirectories(leftDir, rightDir, true);
             expect(diffDirFiles.length).toEqual(1);
-            expect((await diffDirFiles[0].isInBoth())).toEqual(true);
-            expect((await diffDirFiles[0].bothExistAndIdentical())).toEqual(true);
-            expect((await diffDirFiles[0].actions(ActionPriority.PRESERVE)).length).toEqual(0);
+            expect((await diffDirFiles[0]!.isInBoth())).toEqual(true);
+            expect((await diffDirFiles[0]!.bothExistAndIdentical())).toEqual(true);
+            expect((await diffDirFiles[0]!.actions(ActionPriority.PRESERVE)).length).toEqual(0);
         });
 
     });
@@ -212,8 +212,8 @@ describe("diffDirectories()", () => {
 
             expect(results.length).toEqual(2);
 
-            expect(results[0].relativeFilePath).toEqual("aaaRightOnly.txt");
-            expect(results[1].relativeFilePath).toEqual("bbbLeftOnly.txt");
+            expect(results[0]!.relativeFilePath).toEqual("aaaRightOnly.txt");
+            expect(results[1]!.relativeFilePath).toEqual("bbbLeftOnly.txt");
         });
 
 
@@ -257,27 +257,27 @@ describe("diffDirectories()", () => {
 
             expect(diffDirFileItems.length).toEqual(3);
 
-            expect(diffDirFileItems[0].relativeFilePath).toEqual("both.txt");
-            let actions = await diffDirFileItems[0].actions(ActionPriority.SyncLeftToRight);
+            expect(diffDirFileItems[0]!.relativeFilePath).toEqual("both.txt");
+            let actions = await diffDirFileItems[0]!.actions(ActionPriority.SyncLeftToRight);
             expect(actions.length).toEqual(4);
-            expect(actions[0].type).toEqual(FileCompareActionType.CopyRight);
-            expect(actions[1].type).toEqual(FileCompareActionType.Skip);
-            expect(actions[2].type).toEqual(FileCompareActionType.CopyLeft);
-            expect(actions[3].type).toEqual(FileCompareActionType.DeleteBoth);
+            expect(actions[0]!.type).toEqual(FileCompareActionType.CopyRight);
+            expect(actions[1]!.type).toEqual(FileCompareActionType.Skip);
+            expect(actions[2]!.type).toEqual(FileCompareActionType.CopyLeft);
+            expect(actions[3]!.type).toEqual(FileCompareActionType.DeleteBoth);
 
-            expect(diffDirFileItems[1].relativeFilePath).toEqual("leftOnly.txt");
-            actions = await diffDirFileItems[1].actions(ActionPriority.SyncLeftToRight);
+            expect(diffDirFileItems[1]!.relativeFilePath).toEqual("leftOnly.txt");
+            actions = await diffDirFileItems[1]!.actions(ActionPriority.SyncLeftToRight);
             expect(actions.length).toEqual(3);
-            expect(actions[0].type).toEqual(FileCompareActionType.CopyRight);
-            expect(actions[1].type).toEqual(FileCompareActionType.Skip);
-            expect(actions[2].type).toEqual(FileCompareActionType.DeleteLeft);
+            expect(actions[0]!.type).toEqual(FileCompareActionType.CopyRight);
+            expect(actions[1]!.type).toEqual(FileCompareActionType.Skip);
+            expect(actions[2]!.type).toEqual(FileCompareActionType.DeleteLeft);
 
-            expect(diffDirFileItems[2].relativeFilePath).toEqual("rightOnly.txt");
-            actions = await diffDirFileItems[2].actions(ActionPriority.SyncLeftToRight);
+            expect(diffDirFileItems[2]!.relativeFilePath).toEqual("rightOnly.txt");
+            actions = await diffDirFileItems[2]!.actions(ActionPriority.SyncLeftToRight);
             expect(actions.length).toEqual(3);
-            expect(actions[0].type).toEqual(FileCompareActionType.DeleteRight);
-            expect(actions[1].type).toEqual(FileCompareActionType.Skip);
-            expect(actions[2].type).toEqual(FileCompareActionType.CopyLeft);
+            expect(actions[0]!.type).toEqual(FileCompareActionType.DeleteRight);
+            expect(actions[1]!.type).toEqual(FileCompareActionType.Skip);
+            expect(actions[2]!.type).toEqual(FileCompareActionType.CopyLeft);
         });
 
 
@@ -288,7 +288,7 @@ describe("diffDirectories()", () => {
 
             await mapAsync(diffDirFileItems, async (curDiffDirFileItem) => {
                 // Execute the first action for each file item.
-                return (await curDiffDirFileItem.actions(ActionPriority.SyncLeftToRight))[0].execute();
+                return (await curDiffDirFileItem.actions(ActionPriority.SyncLeftToRight))[0]!.execute();
             });
 
             // Check the state of the left directory.  It should be unchanged.
@@ -308,27 +308,27 @@ describe("diffDirectories()", () => {
 
             expect(diffDirFileItems.length).toEqual(3);
 
-            expect(diffDirFileItems[0].relativeFilePath).toEqual("both.txt");
-            let actions = await diffDirFileItems[0].actions(ActionPriority.SyncRightToLeft);
+            expect(diffDirFileItems[0]!.relativeFilePath).toEqual("both.txt");
+            let actions = await diffDirFileItems[0]!.actions(ActionPriority.SyncRightToLeft);
             expect(actions.length).toEqual(4);
-            expect(actions[0].type).toEqual(FileCompareActionType.CopyLeft);
-            expect(actions[1].type).toEqual(FileCompareActionType.Skip);
-            expect(actions[2].type).toEqual(FileCompareActionType.CopyRight);
-            expect(actions[3].type).toEqual(FileCompareActionType.DeleteBoth);
+            expect(actions[0]!.type).toEqual(FileCompareActionType.CopyLeft);
+            expect(actions[1]!.type).toEqual(FileCompareActionType.Skip);
+            expect(actions[2]!.type).toEqual(FileCompareActionType.CopyRight);
+            expect(actions[3]!.type).toEqual(FileCompareActionType.DeleteBoth);
 
-            expect(diffDirFileItems[1].relativeFilePath).toEqual("leftOnly.txt");
-            actions = await diffDirFileItems[1].actions(ActionPriority.SyncRightToLeft);
+            expect(diffDirFileItems[1]!.relativeFilePath).toEqual("leftOnly.txt");
+            actions = await diffDirFileItems[1]!.actions(ActionPriority.SyncRightToLeft);
             expect(actions.length).toEqual(3);
-            expect(actions[0].type).toEqual(FileCompareActionType.DeleteLeft);
-            expect(actions[1].type).toEqual(FileCompareActionType.Skip);
-            expect(actions[2].type).toEqual(FileCompareActionType.CopyRight);
+            expect(actions[0]!.type).toEqual(FileCompareActionType.DeleteLeft);
+            expect(actions[1]!.type).toEqual(FileCompareActionType.Skip);
+            expect(actions[2]!.type).toEqual(FileCompareActionType.CopyRight);
 
-            expect(diffDirFileItems[2].relativeFilePath).toEqual("rightOnly.txt");
-            actions = await diffDirFileItems[2].actions(ActionPriority.SyncRightToLeft);
+            expect(diffDirFileItems[2]!.relativeFilePath).toEqual("rightOnly.txt");
+            actions = await diffDirFileItems[2]!.actions(ActionPriority.SyncRightToLeft);
             expect(actions.length).toEqual(3);
-            expect(actions[0].type).toEqual(FileCompareActionType.CopyLeft);
-            expect(actions[1].type).toEqual(FileCompareActionType.Skip);
-            expect(actions[2].type).toEqual(FileCompareActionType.DeleteRight);
+            expect(actions[0]!.type).toEqual(FileCompareActionType.CopyLeft);
+            expect(actions[1]!.type).toEqual(FileCompareActionType.Skip);
+            expect(actions[2]!.type).toEqual(FileCompareActionType.DeleteRight);
         });
 
 
@@ -338,7 +338,7 @@ describe("diffDirectories()", () => {
             expect(result.length).toEqual(3);
             await mapAsync(result, async (curDiffDirFileItem) => {
                 // Execute the first action for each file item.
-                return (await curDiffDirFileItem.actions(ActionPriority.SyncRightToLeft))[0].execute();
+                return (await curDiffDirFileItem.actions(ActionPriority.SyncRightToLeft))[0]!.execute();
             });
 
             // Check the state of the left directory.
@@ -358,27 +358,27 @@ describe("diffDirectories()", () => {
 
             expect(result.length).toEqual(3);
 
-            expect(result[0].relativeFilePath).toEqual("both.txt");
-            let actions = await result[0].actions(ActionPriority.PRESERVE);
+            expect(result[0]!.relativeFilePath).toEqual("both.txt");
+            let actions = await result[0]!.actions(ActionPriority.PRESERVE);
             expect(actions.length).toEqual(4);
-            expect(actions[0].type).toEqual(FileCompareActionType.CopyRight);
-            expect(actions[1].type).toEqual(FileCompareActionType.CopyLeft);
-            expect(actions[2].type).toEqual(FileCompareActionType.Skip);
-            expect(actions[3].type).toEqual(FileCompareActionType.DeleteBoth);
+            expect(actions[0]!.type).toEqual(FileCompareActionType.CopyRight);
+            expect(actions[1]!.type).toEqual(FileCompareActionType.CopyLeft);
+            expect(actions[2]!.type).toEqual(FileCompareActionType.Skip);
+            expect(actions[3]!.type).toEqual(FileCompareActionType.DeleteBoth);
 
-            expect(result[1].relativeFilePath).toEqual("leftOnly.txt");
-            actions = await result[1].actions(ActionPriority.PRESERVE);
+            expect(result[1]!.relativeFilePath).toEqual("leftOnly.txt");
+            actions = await result[1]!.actions(ActionPriority.PRESERVE);
             expect(actions.length).toEqual(3);
-            expect(actions[0].type).toEqual(FileCompareActionType.CopyRight);
-            expect(actions[1].type).toEqual(FileCompareActionType.Skip);
-            expect(actions[2].type).toEqual(FileCompareActionType.DeleteLeft);
+            expect(actions[0]!.type).toEqual(FileCompareActionType.CopyRight);
+            expect(actions[1]!.type).toEqual(FileCompareActionType.Skip);
+            expect(actions[2]!.type).toEqual(FileCompareActionType.DeleteLeft);
 
-            expect(result[2].relativeFilePath).toEqual("rightOnly.txt");
-            actions = await result[2].actions(ActionPriority.PRESERVE);
+            expect(result[2]!.relativeFilePath).toEqual("rightOnly.txt");
+            actions = await result[2]!.actions(ActionPriority.PRESERVE);
             expect(actions.length).toEqual(3);
-            expect(actions[0].type).toEqual(FileCompareActionType.CopyLeft);
-            expect(actions[1].type).toEqual(FileCompareActionType.Skip);
-            expect(actions[2].type).toEqual(FileCompareActionType.DeleteRight);
+            expect(actions[0]!.type).toEqual(FileCompareActionType.CopyLeft);
+            expect(actions[1]!.type).toEqual(FileCompareActionType.Skip);
+            expect(actions[2]!.type).toEqual(FileCompareActionType.DeleteRight);
         });
 
 
@@ -388,7 +388,7 @@ describe("diffDirectories()", () => {
             expect(result.length).toEqual(3);
             await mapAsync(result, async (curDiffDirFileItem) => {
                 // Execute the first action for each file item.
-                return (await curDiffDirFileItem.actions(ActionPriority.PRESERVE))[0].execute();
+                return (await curDiffDirFileItem.actions(ActionPriority.PRESERVE))[0]!.execute();
             });
 
             // Check the state of the left directory.
