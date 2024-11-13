@@ -1,8 +1,10 @@
 import { sprintf } from "sprintf-js";
 import { FailedResult, Result, SucceededResult } from "./result.mjs";
+import { isBlank } from "./stringHelpers.mjs";
+import { pipe } from "./pipe2.mjs";
 
 
-const byteRegexStr = "\\s*(?<byteval>[0-9a-fA-F]{1,2})\\s*";
+const byteRegexStr = "^[0-9a-fA-F]{1,2}$";
 
 
 /**
@@ -12,44 +14,40 @@ const byteRegexStr = "\\s*(?<byteval>[0-9a-fA-F]{1,2})\\s*";
  * @return The regex used to match a hexadecimal byte in string form.
  */
 function getByteRegex(): RegExp {
-    return new RegExp(byteRegexStr, "gd");
+    return new RegExp(byteRegexStr);
 }
 
 
 export class ByteString {
 
     public static create(str: string): Result<ByteString, string> {
+        // Split the string on any chunks of whitespace and remove any that
+        // contain only whitespace (this could happen at the beginning and end
+        // of the string).
+        const tokens = pipe(
+            str.split(/\s+/),
+            (tokens) => tokens.filter((token) => !isBlank(token))
+        );
 
         const byteRegex = getByteRegex();
 
-        const bytes: Array<number> = [];
-        let curIndex = 0;
-
-        while (curIndex < str.length) {
-            const match = byteRegex.exec(str);
-
-            if (match && match.index === curIndex) {
-                // There is a match and it starts at our current position.  Use
-                // the match to get the next byte.
-                const byteValStr = match.groups!.byteval!;
-                const byteVal = parseInt(byteValStr, 16);
-                bytes.push(byteVal);
-                curIndex += match[0].length;
+        const results = tokens.map((token) => {
+            if (byteRegex.test(token)) {
+                const byteVal = parseInt(token, 16);
+                return new SucceededResult(byteVal);
             }
             else {
-                // One of the following happened:
-                //   - There was no match and we are not at the end of the
-                //     string yet.
-                //   - There was a match, but it does not start at the current
-                //     position, meaning there are some illegal characters at
-                //     the current position.
-                // Either way, it's bad.
-                const msg = `Failed to parse byte string "${str}" at position ${curIndex}.`;
-                return new FailedResult(msg);
+                return new FailedResult(`The token "${token}" could not be parsed as a byte value.`);
             }
+        });
+
+        const res = Result.allArrayM(results);
+        if (res.failed) {
+            return res;
         }
 
-        return new SucceededResult(new ByteString(str, bytes));
+        const inst = new ByteString(str, res.value);
+        return new SucceededResult(inst);
     }
 
 

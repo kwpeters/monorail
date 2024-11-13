@@ -41,6 +41,14 @@ describe("ByteString", () => {
             });
 
 
+            it("fails when there are more than two digits in a value", () => {
+                const input = "01 2 034 45";
+                const res = ByteString.create(input);
+                expect(res.succeeded).toBeFalse();
+
+            });
+
+
             it("succeeds when given an empty string", () => {
                 const input = "";
                 const res = ByteString.create(input);
@@ -49,7 +57,7 @@ describe("ByteString", () => {
             });
 
 
-            it("succeeds when given a string containing leanding whitespace", () => {
+            it("succeeds when given a string containing leading whitespace", () => {
                 const input = "   1 d a";
                 const res = ByteString.create(input);
                 expect(res.succeeded).toBeTrue();
@@ -67,14 +75,6 @@ describe("ByteString", () => {
 
             it("succeeds when given a string containing leading and trailing whitespace", () => {
                 const input = " 01 2 03 4 05     ";
-                const res = ByteString.create(input);
-                expect(res.succeeded).toBeTrue();
-                expect(res.value!.length).toEqual(5);
-            });
-
-
-            it("succeeds when given a string with no whitespace", () => {
-                const input = "1122334455";
                 const res = ByteString.create(input);
                 expect(res.succeeded).toBeTrue();
                 expect(res.value!.length).toEqual(5);
