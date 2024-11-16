@@ -1,3 +1,5 @@
+import { Result, SucceededResult } from "@repo/depot/result";
+import { insertIf } from "@repo/depot/arrayHelpers";
 import { File } from "./file.mjs";
 import { Directory } from "./directory.mjs";
 import { launch } from "./launch.mjs";
@@ -26,4 +28,26 @@ export function openInEmacs(filesAndDirs: Array<File | Directory>, openInExistin
     const argsAbsPaths = filesAndDirs.map((fileOrDir) => fileOrDir.absPath());
     args = args.concat(argsAbsPaths);
     launch(cmd, args);
+}
+
+
+/**
+ * Launches a vscode diff for the specified files.
+ *
+ * @param left - File that will be on the left side
+ * @param right - File that will be on the right side
+ * @param newWindow - Whether to open a new instance of vscode
+ * @return If successful, a string stating that vscode has been launched.
+ * Otherwise, an error message.
+ */
+export function openVscodeDiff(left: File, right: File, newWindow = true): Result<string, string> {
+    const cmd = "code";
+    const args = [
+        ...insertIf(newWindow, "--new-window"),
+        "--diff",
+        left.toString(),
+        right.toString()
+    ];
+    launch(cmd, args, { shell: true });
+    return new SucceededResult(`Opening vscode diff for "${left.toString()}" and "${right.toString()}".`);
 }
