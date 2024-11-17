@@ -26,6 +26,25 @@
             ],
         },
         {
+            "name": "splat",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/tsx/dist/cli.mjs",
+            "stopOnEntry": false,
+            "args": [
+                "${workspaceRoot}/apps/splat/src/index.cts",
+                ".\\apps\\abspath\\src\\**\\*"
+            ],
+            "cwd": "${workspaceRoot}",
+            "runtimeArgs": [
+                "--nolazy"
+            ],
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+        },
+        {
             "name": "depot - test",
             "type": "node",
             "request": "launch",
