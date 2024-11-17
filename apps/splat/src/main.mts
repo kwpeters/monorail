@@ -54,9 +54,16 @@ async function mainImpl(): Promise<Result<number, string>> {
         return new FailedResult("Please specify at least one glob pattern.");
     }
 
+    // In all glob patterns, replace backslashes with forward slashes.
+    const allGlobs = (argv._ as Array<string>).map((curArg) => {
+        return curArg.replaceAll("\\", "/");
+    });
+
+    console.log(`allGlobs: ${JSON.stringify(allGlobs)}`);
+
     // Treat all globs that start with "!" as ignore globs.
     let [ignoreGlobs, includeGlobs] =
-        _.partition(argv._ as Array<string>, (pattern) => pattern.startsWith("!"));
+        _.partition(allGlobs, (pattern) => pattern.startsWith("!"));
 
     // For each ignore glob, remove the initial "!".
     ignoreGlobs = ignoreGlobs.map((pattern) => pattern.slice(1));
@@ -67,7 +74,8 @@ async function mainImpl(): Promise<Result<number, string>> {
         .sort();
 
     // Print the matches found.
-    console.log(paths.join(os.EOL));
+    const output = paths.join(os.EOL);
+    console.log(output);
 
     // Print additional info, if requested.
     if (argv.info) {
