@@ -20,6 +20,13 @@ describe("updateTimes()", () => {
     });
 
 
+    it("fails if the specified file does not exist", async () => {
+        const tmpFile2 = new File(tmpDir, "tmpFile2.txt");
+        const res = await updateTimes(tmpFile2, new SomeOption(new Date()), new SomeOption(new Date()));
+        expect(res.failed).toBeTrue();
+    });
+
+
     it("succeeds when neither time is specified", async () => {
         const res = await updateTimes(tmpFile, NoneOption.get(), NoneOption.get());
         expect(res.succeeded).toBeTrue();
@@ -85,5 +92,19 @@ describe("updateTimes()", () => {
         expect(now - stats.mtime.valueOf()).toBeLessThan(100);
     });
 
+
+    it("works on a directory too", async () => {
+        const res = await updateTimes(tmpDir, new SomeOption(new Date()), new SomeOption(new Date()));
+        expect(res.succeeded).toBeTrue();
+        const stats = await tmpDir.exists();
+        if (!stats) {
+            fail("We should have been able to stat the directory.");
+            return;
+        }
+
+        const now = Date.now();
+        expect(now - stats.atime.valueOf()).toBeLessThan(100);
+        expect(now - stats.mtime.valueOf()).toBeLessThan(100);
+    });
 
 });

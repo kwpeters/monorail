@@ -114,6 +114,12 @@ export async function updateTimes(
         return new FailedResult("Failed to calculate new aTime or mTime.");
     }
 
-    await fsp.utimes(fsItem.toString(), aTime.value, mTime.value);
+    try {
+        await fsp.utimes(fsItem.toString(), aTime.value, mTime.value);
+    }
+    catch (err) {
+        return new FailedResult((err as Error).message);
+    }
+
     return new SucceededResult(fsItem);
 }
