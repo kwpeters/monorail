@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import { Result, FailedResult, SucceededResult } from "@repo/depot/result";
+import { NoneOption, Option, SomeOption } from "@repo/depot/option";
 import { PromiseResult } from "@repo/depot/promiseResult";
 import { assertNever } from "@repo/depot/never";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
@@ -63,6 +64,56 @@ export async function deleteFsItem(fsItem: FsItem): Promise<Result<FsItem, strin
     else {
         assertNever(fsItem);
     }
+}
 
 
+/**
+ * Updates the last access time and modified time of the specified filesystem
+ * item.
+ *
+ * @param fsItem - The filesystem item to be updated
+ * @param optAccessTime - An Option for the new last access time.  If a
+ *      NoneOption, the current value will be preserved.
+ * @param optModificationTime - An Option for the new last modified time.  If a
+ *      NoneOption, the current value will be preserved.
+ * @return The original _fsItem_
+ */
+export async function updateTimes(
+    fsItem: FsItem,
+    optAccessTime: Option<Date>,
+    optModificationTime: Option<Date>
+): Promise<Result<FsItem, string>> {
+
+    if (optAccessTime.isNone && optModificationTime.isNone) {
+        return new SucceededResult(fsItem);
+    }
+
+    let optStats: Option<fs.Stats> = NoneOption.get();
+
+    // If either time has not been specified, we need to stat the item to get
+    // the current value.
+    if (optAccessTime.isNone || optModificationTime.isNone) {
+        try {
+            const stats = await fsp.stat(fsItem.toString());
+            optStats = new SomeOption(stats);
+        }
+        catch (err) {
+            return new FailedResult((err as Error).message);
+        }
+    }
+
+    const aTime =
+        optAccessTime
+        .bindNone(() => optStats.mapSome((stats) => stats.atime));
+    const mTime =
+        optModificationTime
+        .bindNone(() => optStats.mapSome((stats) => stats.mtime));
+
+    if (aTime.isNone || mTime.isNone) {
+        // This should never happen.
+        return new FailedResult("Failed to calculate new aTime or mTime.");
+    }
+
+    await fsp.utimes(fsItem.toString(), aTime.value, mTime.value);
+    return new SucceededResult(fsItem);
 }
