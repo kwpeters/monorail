@@ -59,8 +59,6 @@ async function mainImpl(): Promise<Result<number, string>> {
         return curArg.replaceAll("\\", "/");
     });
 
-    console.log(`allGlobs: ${JSON.stringify(allGlobs)}`);
-
     // Treat all globs that start with "!" as ignore globs.
     let [ignoreGlobs, includeGlobs] =
         _.partition(allGlobs, (pattern) => pattern.startsWith("!"));
