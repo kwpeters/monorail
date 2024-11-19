@@ -55,7 +55,7 @@ async function main(): Promise<Result<number, string>> {
             // eslint-disable-next-line turbo/no-undeclared-env-vars
             const left = new File(process.env.CLOUDHOME!, "diff-buff-left.txt");
             // eslint-disable-next-line turbo/no-undeclared-env-vars
-            const right = new File(process.env.CLOUDHOME!, "diff-buf-right.text");
+            const right = new File(process.env.CLOUDHOME!, "diff-buf-right.txt");
 
             if (config.reset || !left.existsSync()) {
                 left.writeSync("");
