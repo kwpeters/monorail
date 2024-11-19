@@ -40,9 +40,6 @@ function runningThisScript(): boolean {
 
 async function main(): Promise<Result<number, string>> {
 
-
-
-
     const resConfig = await getConfiguration();
     if (resConfig.failed) {
         return resConfig;
@@ -67,6 +64,9 @@ async function main(): Promise<Result<number, string>> {
             return {left, right};
         }, res),
         (res) => Result.bind((files) => {
+            console.log("Starting diff on the following files:");
+            console.log(`    ${files.left.toString()}`);
+            console.log(`    ${files.right.toString()}`);
             return openVscodeDiff(files.left, files.right, true);
         }, res),
         (res) => Result.mapSuccess(() => 0, res)
