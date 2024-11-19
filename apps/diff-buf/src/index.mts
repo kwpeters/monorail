@@ -50,9 +50,9 @@ async function main(): Promise<Result<number, string>> {
         (res) => Result.gate((config) => checkEnvironment(), res),
         (res) => Result.mapSuccess((config) => {
             // eslint-disable-next-line turbo/no-undeclared-env-vars
-            const left = new File(process.env.CLOUDHOME!, "diff-buff-left.txt");
+            const left = new File(process.env.CLOUDHOME!, `diff-buff-left.${config.ext}`);
             // eslint-disable-next-line turbo/no-undeclared-env-vars
-            const right = new File(process.env.CLOUDHOME!, "diff-buf-right.txt");
+            const right = new File(process.env.CLOUDHOME!, `diff-buf-right.${config.ext}`);
 
             if (config.reset || !left.existsSync()) {
                 left.writeSync("");
@@ -87,6 +87,7 @@ function checkEnvironment(): Result<undefined, string> {
 
 interface IConfig {
     reset: boolean;
+    ext: string;
 }
 
 /**
@@ -118,11 +119,26 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
                 describe:     "clear the contents of temporary diff files"
             }
         )
+        .option(
+            "ext",
+            {
+                demandOption: false,
+                type:         "string",
+                default:      "",
+                describe:     "sets the extension of the buffers"
+            }
+        )
         .help()
         .wrap(process.stdout.columns ?? 80)
         .argv;
 
+    // If the initial "." was included in the extension, remove it.
+    if (argv.ext.startsWith(".")) {
+        argv.ext = argv.ext.slice(1);
+    }
+
     return new SucceededResult({
-        reset: argv.reset
+        reset: argv.reset,
+        ext:   argv.ext || "txt"
     });
 }
