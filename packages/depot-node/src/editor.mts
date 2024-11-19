@@ -45,8 +45,8 @@ export function openVscodeDiff(left: File, right: File, newWindow = true): Resul
     const args = [
         ...insertIf(newWindow, "--new-window"),
         "--diff",
-        left.toString(),
-        right.toString()
+        `"${left.toString()}"`,
+        `"${right.toString()}"`
     ];
     launch(cmd, args, { shell: true });
     return new SucceededResult(`Opening vscode diff for "${left.toString()}" and "${right.toString()}".`);
