@@ -1,4 +1,6 @@
 import * as os from "node:os";
+import * as fsp from "node:fs/promises";
+import * as _ from "lodash-es";
 import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
 import { Result, SucceededResult, FailedResult } from "@repo/depot/result";
@@ -8,6 +10,7 @@ import { isBlank, splitIntoLines } from "@repo/depot/stringHelpers";
 import { deleteFsItem, type FsItem, fsPathToFsItem } from "@repo/depot-node/fsItem";
 import { readableStreamToText } from "@repo/depot-node/streamHelpers";
 import { FsPath } from "@repo/depot-node/fsPath";
+import { mapAsync } from "@repo/depot/promiseHelpers";
 
 
 interface IConfig {
@@ -72,40 +75,58 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
     .wrap(process.stdout.columns ?? 80)
     .argv;
 
+    const inputStrings = argv._.filter((cur) => typeof cur === "string");
+
+    // If input is being piped into this app, append to the list of inputs.
     const inputIsPiped = !process.stdin.isTTY;
-    const resFsItems = inputIsPiped ? await pipedInputToFsItems() : await argsToFsItems();
+    if (inputIsPiped) {
+        const text = await readableStreamToText(process.stdin);
+        const lines = splitIntoLines(text, false).filter((curLine) => !isBlank(curLine));
+        inputStrings.push(...lines);
+    }
+
+    const resFsItems = await stringsToFsItems(inputStrings);
 
     return resFsItems.failed ?
         resFsItems :
         new SucceededResult({ fsItems: resFsItems.value });
 
 
-    async function pipedInputToFsItems(): Promise<Result<Array<FsItem>, string>> {
-        return pipeAsync(
-            // Get the text from the input stream.
-            readableStreamToText(process.stdin),
-            // Split the input into lines.
-            (text) => splitIntoLines(text, false).filter((curLine) => !isBlank(curLine)),
-            // Convert each line into a FsPath.
-            (lines) => lines.map((curLine) => new FsPath(curLine)),
-            // Check that the path exists and map to FsItem objects.
-            (paths) => Promise.all(paths.map((curPath) => fsPathToFsItem(curPath))),
-            // Convert array of Results to a Result for an array.
-            (results) => Result.allArrayM(results)
-        );
-    }
+    async function stringsToFsItems(
+        strings: Array<string>
+    ): Promise<Result<Array<FsItem>, string>> {
 
-    async function argsToFsItems(): Promise<Result<Array<FsItem>, string>> {
+        const fsPaths = strings.map((curStr) => new FsPath(curStr));
+
+        const [extant, nonextant] = await pipeAsync(
+            mapAsync(fsPaths, async (fsPath) => {
+                let exists = false;
+                try {
+                    const stats = await fsp.stat(fsPath.toString());
+                    exists = !!stats;
+                }
+                catch (err) {
+                    exists = false;
+                }
+                return { fsPath, exists };
+            }),
+            (objs) => _.partition(objs, (obj) => !!obj.exists)
+        );
+
+        if (nonextant.length > 0) {
+            console.log(`${nonextant.length} items do not exist and will be skipped:`);
+            nonextant.forEach((nonextant) => {
+                console.log(`    ${nonextant.fsPath.toString()}`);
+            });
+        }
+
         return pipeAsync(
-            argv._,
-            // Arguments can be numbers too.  Convert all of them to strings.
-            (args) => args.map((curArg) => curArg.toString()),
-            // Convert to FsPath objects.
-            (strs) => strs.map((curStr) => new FsPath(curStr)),
-            // Check that the path exists and map to FsItem objects.
+            extant.map((extant) => extant.fsPath),
+            // Map to FsItem objects.
             (paths) => Promise.all(paths.map((curPath) => fsPathToFsItem(curPath))),
             // Convert array of Results to a Result for an array.
             (results) => Result.allArrayM(results)
         );
+
     }
 }

@@ -17,6 +17,7 @@
   "dependencies": {
     "@repo/depot": "*",
     "@repo/depot-node": "*",
+    "lodash-es": "^4.17.21",
     "yargs": "^17.7.2"
   },
   "devDependencies": {
@@ -25,6 +26,7 @@
     "@repo/typescript-config": "*",
     "@stylistic/eslint-plugin": "^2.8.0",
     "@types/jasmine": "^5.1.4",
+    "@types/lodash-es": "^4.17.7",
     "@types/node": "^20.16.5",
     "@types/yargs": "^17.0.24",
     "@typescript-eslint/eslint-plugin": "^8.6.0",
