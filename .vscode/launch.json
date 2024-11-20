@@ -26,6 +26,25 @@
             ],
         },
         {
+            "name": "rmrf",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/tsx/dist/cli.mjs",
+            "stopOnEntry": false,
+            "args": [
+                "${workspaceRoot}/apps/rmrf/src/index.cts",
+                "foo.bar.txt"
+            ],
+            "cwd": "${workspaceRoot}",
+            "runtimeArgs": [
+                "--nolazy"
+            ],
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+        },
+        {
             "name": "splat",
             "type": "node",
             "request": "launch",
