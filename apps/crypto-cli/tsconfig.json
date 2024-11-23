@@ -1,0 +1,16 @@
+{
+    "extends": "@repo/typescript-config/tsconfig.app.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "jsx": "react"
+    },
+    "include": [
+        "src"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "**/*.test.mts",
+        "**/*.test.tsx"
+    ]
+}

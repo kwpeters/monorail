@@ -1,0 +1,46 @@
+{
+	"name": "@repo/crytpo-cli",
+	"version": "0.0.0",
+	"license": "MIT",
+    "bin": {
+        "crytpo-cli": "./dist/cli.js"
+    },
+	"type": "module",
+	"engines": {
+		"node": ">=16"
+	},
+	"scripts": {
+		"dev": "tsc --watch",
+		"build": "tsc",
+        "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
+        "lint": "eslint ./src",
+        "type-check": "tsc --project tsconfig.ut.json --noEmit"
+	},
+	"files": [
+		"dist"
+	],
+	"dependencies": {
+        "@repo/depot": "*",
+		"ink": "^4.1.0",
+		"react": "^18.2.0",
+        "yargs": "^17.7.2"
+	},
+	"devDependencies": {
+        "@repo/eslint-config": "*",
+        "@repo/typescript-config": "*",
+        "@stylistic/eslint-plugin": "^2.8.0",
+        "@types/jasmine": "^5.1.4",
+		"@types/react": "^18.0.32",
+        "@types/yargs": "^17.0.24",
+        "@typescript-eslint/eslint-plugin": "^8.6.0",
+        "@typescript-eslint/parser": "^8.6.0",
+		"chalk": "^5.2.0",
+        "eslint": "^8.57.1",
+		"eslint-plugin-react": "^7.32.2",
+		"eslint-plugin-react-hooks": "^4.6.0",
+		"ink-testing-library": "^3.0.0",
+        "jasmine": "^5.3.0",
+		"ts-node": "^10.9.1",
+		"typescript": "^5.0.3"
+	}
+}

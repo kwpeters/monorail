@@ -1,0 +1,10 @@
+{
+    "spec_dir": "src",
+    "spec_files": [
+        "**/*.test.mts",
+        "**/*.test.tsx"
+    ],
+    "helpers": [],
+    "stopSpecOnExpectationFailure": false,
+    "random": false
+}
