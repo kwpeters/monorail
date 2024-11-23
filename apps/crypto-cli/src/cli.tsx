@@ -9,13 +9,13 @@ import App from "./app.js";
 const cli = meow(
     `
     Usage
-      $ crypto-cli
+      $ ink-sample-app-xyzzy
 
     Options
         --name  Your name
 
     Examples
-      $ crypto-cli --name=Jane
+      $ ink-sample-app-xyzzy --name=Jane
       Hello, Jane
 `,
     {

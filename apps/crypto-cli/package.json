@@ -1,9 +1,9 @@
 {
-	"name": "@repo/crypto-cli",
+	"name": "@repo/ink-sample-app-xyzzy",
 	"version": "0.0.0",
 	"license": "MIT",
     "bin": {
-        "crypto-cli": "./dist/cli.js"
+        "ink-sample-app-xyzzy": "./dist/cli.js"
     },
 	"type": "module",
 	"engines": {
