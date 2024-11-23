@@ -25,6 +25,15 @@ else if (res.value !== 0) {
     process.exit(res.value);
 }
 
+
+/**
+ * Application entry point.
+ *
+ * @return A Promise that always resolves with a Result.  If the application
+ * completed successfully, a SucceededResult wrapping 0 is returned.  Otherwise,
+ * the returned Result is either a SuccessfulResult wrapping a non-zero exit
+ * code value or a FailedResult wrapping an error message.
+ */
 async function main(): Promise<Result<number, string>> {
 
     const resConfig = await getConfiguration();
