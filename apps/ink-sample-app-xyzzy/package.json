@@ -20,9 +20,10 @@
 		"dist"
 	],
 	"dependencies": {
+        "@repo/depot": "*",
 		"ink": "^4.1.0",
-		"meow": "^11.0.0",
-		"react": "^18.2.0"
+		"react": "^18.2.0",
+        "yargs": "^17.7.2"
 	},
 	"devDependencies": {
         "@repo/eslint-config": "*",
@@ -30,6 +31,7 @@
         "@stylistic/eslint-plugin": "^2.8.0",
         "@types/jasmine": "^5.1.4",
 		"@types/react": "^18.0.32",
+        "@types/yargs": "^17.0.24",
         "@typescript-eslint/eslint-plugin": "^8.6.0",
         "@typescript-eslint/parser": "^8.6.0",
 		"chalk": "^5.2.0",
