@@ -773,9 +773,11 @@ module.exports = {
                     "**/*.test.js",
                     "**/*.test.ts",
                     "**/*.test.mts",
+                    "**/*.test.tsx",
                     "**/*.spec.js",
                     "**/*.spec.ts",
-                    "**/*.spec.mts"
+                    "**/*.spec.mts",
+                    "**/*.spec.tsx"
                 ]
             }
         ],

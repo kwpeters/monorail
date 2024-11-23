@@ -10,6 +10,7 @@
     "exclude": [
         "node_modules",
         "dist",
-        "**/*.test.mts"
+        "**/*.test.mts",
+        "**/*.test.tsx"
     ]
 }
