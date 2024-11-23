@@ -2,16 +2,19 @@
 	"name": "@repo/crypto-cli",
 	"version": "0.0.0",
 	"license": "MIT",
-	"bin": "dist/cli.js",
+    "bin": {
+        "crypto-cli": "./dist/cli.js"
+    },
 	"type": "module",
 	"engines": {
 		"node": ">=16"
 	},
 	"scripts": {
-		"build": "tsc",
 		"dev": "tsc --watch",
+		"build": "tsc",
+        "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
         "lint": "eslint ./src",
-        "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json"
+        "type-check": "tsc --project tsconfig.ut.json --noEmit"
 	},
 	"files": [
 		"dist"
