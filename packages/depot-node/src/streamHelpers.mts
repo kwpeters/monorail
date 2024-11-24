@@ -1,4 +1,5 @@
 import {Readable} from "node:stream";
+import { isBuffer } from "lodash-es";
 
 
 export function readableStreamToText(readable: Readable): Promise<string> {
@@ -29,8 +30,20 @@ export function readableStreamToText(readable: Readable): Promise<string> {
 export function streamToBuffer(readableStream: NodeJS.ReadableStream): Promise<Buffer> {
     return new Promise((resolve, reject) => {
         const chunks: Array<Buffer> = [];
-        readableStream.on("data", (data: WithImplicitCoercion<ArrayBuffer | SharedArrayBuffer>) => {
-            chunks.push(data instanceof Buffer ? data : Buffer.from(data));
+        readableStream.on("data", (data: Buffer | string | ArrayBuffer | SharedArrayBuffer) => {
+
+            if (isBuffer(data)) {
+                chunks.push(data as Buffer);
+            }
+            else if (typeof data === "string") {
+                chunks.push(Buffer.from(data));
+            }
+            else if (data instanceof ArrayBuffer || data instanceof SharedArrayBuffer) {
+                chunks.push(Buffer.from(data));
+            }
+            else {
+                throw new Error("Unsupported type of data in readable stream.");
+            }
         });
         readableStream.on("end", () => {
             resolve(Buffer.concat(chunks));
