@@ -44,7 +44,6 @@
         "eslint-plugin-react-hooks": "^4.6.0",
         "ink-testing-library": "^3.0.0",
         "jasmine": "^5.3.0",
-        "ts-node": "^10.9.1",
-        "typescript": "^5.0.3"
+        "ts-node": "^10.9.1"
     }
 }
