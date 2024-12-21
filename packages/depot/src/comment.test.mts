@@ -183,6 +183,39 @@ describe("uncomment()", () => {
     });
 
 
+    it("will remove the commenting appropriately when the code is indented different amounts", () => {
+
+        const orig = [
+            "// let a = 5;",
+            "//",
+            "// if (true) {",
+            "//     a = 8;",
+            "// }",
+            "//",
+            "// // A dummy comment.",
+            "// const b = 3;",
+            "// const c = 7;",
+            "// return a + b + c;",
+        ];
+        const result = splitIntoLines(uncomment(orig.join("\n"))!);
+        expect(result).toEqual([
+            "let a = 5;",
+            "",
+            "if (true) {",
+            "    a = 8;",
+            "}",
+            "",
+            "// A dummy comment.",
+            "const b = 3;",
+            "const c = 7;",
+            "return a + b + c;",
+        ]);
+
+
+
+    });
+
+
 });
 
 
