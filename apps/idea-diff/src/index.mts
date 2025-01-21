@@ -39,7 +39,7 @@ function runningThisScript(): boolean {
 ////////////////////////////////////////////////////////////////////////////////
 
 interface IConfig {
-    left: Directory | File;
+    left:  Directory | File;
     right: Directory | File;
 }
 

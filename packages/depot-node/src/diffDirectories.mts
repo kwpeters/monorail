@@ -25,7 +25,7 @@ export enum FileCompareActionType {
 
 export class FileCompareAction {
 
-    private readonly _files: IFilesToCompare;
+    private readonly _files:      IFilesToCompare;
     private readonly _actionType: FileCompareActionType;
 
     public constructor(
@@ -81,7 +81,7 @@ export class FileCompareAction {
 }
 
 export interface IFilesToCompare {
-    leftFile: File;
+    leftFile:  File;
     rightFile: File;
     actions(actionPriority: ActionPriority): Promise<Array<FileCompareAction>>;
 }
@@ -94,7 +94,7 @@ export class FileComparer implements IFilesToCompare {
 
 
     // #region Data Members
-    private readonly _leftFile: File;
+    private readonly _leftFile:  File;
     private readonly _rightFile: File;
     // #endregion
 
@@ -303,10 +303,10 @@ export class DiffDirFileItem {
 
 
     // #region Data Members
-    private readonly _leftRootDir:           Directory;
-    private readonly _rightRootDir:          Directory;
-    private readonly _relativeFilePath:      string;
-    private readonly _files:                 IFilesToCompare;
+    private readonly _leftRootDir:      Directory;
+    private readonly _rightRootDir:     Directory;
+    private readonly _relativeFilePath: string;
+    private readonly _files:            IFilesToCompare;
     // #endregion
 
 

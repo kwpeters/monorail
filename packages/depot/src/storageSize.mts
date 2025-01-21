@@ -30,7 +30,7 @@ type DiskSizeUnits = keyof typeof factors;
 
 interface IDataSizeScaleItem {
     factor: number;
-    units: DiskSizeUnits;
+    units:  DiskSizeUnits;
 }
 
 const scale: IDataSizeScaleItem[] = [

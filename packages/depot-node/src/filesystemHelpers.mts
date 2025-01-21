@@ -152,7 +152,7 @@ export async function resolveDirectoryLocation(
 ////////////////////////////////////////////////////////////////////////////////
 
 export interface IFsItemWithModifiedMs<TFsItem> {
-    fsItem: TFsItem;
+    fsItem:  TFsItem;
     mtimeMs: number;
 }
 

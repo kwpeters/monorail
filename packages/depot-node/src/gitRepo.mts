@@ -18,9 +18,9 @@ import {type IPackageJson} from "./nodePackage.mjs";
 interface IGitLogEntry {
     // TODO: Change the following to an instance of CommitHash.
     commitHash: string;
-    author: string;
-    timestamp: Date;
-    message: string;
+    author:     string;
+    timestamp:  Date;
+    message:    string;
 }
 
 
@@ -147,8 +147,8 @@ export class GitRepo {
 
     // region Private Data Members
     private readonly _dir: Directory;
-    private _branches: Array<GitBranch> | undefined;
-    private _log: Array<IGitLogEntry> | undefined;
+    private _branches:     Array<GitBranch> | undefined;
+    private _log:          Array<IGitLogEntry> | undefined;
     // endregion
 
 

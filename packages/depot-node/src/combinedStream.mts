@@ -3,7 +3,7 @@ import {PassThrough, Readable, Writable, Stream} from "node:stream";
 
 export class CombinedStream extends PassThrough {
     private readonly _streams: Array<Stream>;
-    private _streamEnd: Stream | undefined;
+    private _streamEnd:        Stream | undefined;
 
     constructor(...streams: Array<Stream>) {
         super();

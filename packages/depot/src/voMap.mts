@@ -1,7 +1,7 @@
 import { type HashFn } from "./hash.mjs";
 
 interface IMapData<TKey, TVal> {
-    clientKey: TKey;
+    clientKey:   TKey;
     clientValue: TVal;
 }
 
@@ -18,7 +18,7 @@ interface IMapData<TKey, TVal> {
  */
 export class VoMap<TKey, TVal> implements Iterable<[TKey, TVal]>, Map<TKey, TVal> {
 
-    private readonly _hashFn: HashFn<TKey>;
+    private readonly _hashFn:       HashFn<TKey>;
     private readonly _backingStore: Map<string, IMapData<TKey, TVal>>;
 
 

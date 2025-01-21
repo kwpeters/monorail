@@ -1,5 +1,5 @@
 export interface IFindResult<TCollectionItem, TPredicateReturn> {
-    item: TCollectionItem;
+    item:            TCollectionItem;
     predicateReturn: TPredicateReturn;
 }
 

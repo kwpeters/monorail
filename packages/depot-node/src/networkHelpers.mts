@@ -109,6 +109,6 @@ export function selectAvailableTcpPort(...preferredPorts: Array<number>): Promis
 
 
 export interface IPortConfig {
-    requiredPort?: number;
+    requiredPort?:  number;
     preferredPort?: number;
 }

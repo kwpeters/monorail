@@ -17,7 +17,7 @@ export interface ISubproblemInfo {
     // both).
     optSubproblem: DiffChangeType | undefined;
     // Length of the LCS for the given subproblem.
-    lcsLength: number;
+    lcsLength:     number;
 }
 
 export type Row = Array<ISubproblemInfo>;
@@ -96,12 +96,12 @@ export function createLcsTable<T>(x: Array<T>, y: Array<T>, compareFn: CompareFu
 
 export interface IDiffItemUniqueToX<T> {
     change: DiffChangeType.UniqueToX;
-    value: T;
+    value:  T;
 }
 
 export interface IDiffItemUniqueToY<T> {
     change: DiffChangeType.UniqueToY;
-    value: T;
+    value:  T;
 }
 
 export interface IDiffItemEqual<T> {

@@ -38,9 +38,9 @@ Object.freeze(levelLabels);
 
 export class Logger {
     // region Private Data Members
-    private readonly _logLevelStack: Array<LogLevel>    = [];
+    private readonly _logLevelStack:   Array<LogLevel>    = [];
     private readonly _defaultLogLevel: LogLevel         = LogLevel.Warn2;
-    private readonly _listeners: Array<LogListenerFunc> = [];
+    private readonly _listeners:       Array<LogListenerFunc> = [];
     // endregion
 
 

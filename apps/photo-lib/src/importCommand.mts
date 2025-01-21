@@ -30,7 +30,7 @@ const skipFileRegexes = [
  * the builder.
  */
 export interface IArgsImport {
-    importDir: string;
+    importDir:   string;
     photoLibDir: string;
 }
 
@@ -131,7 +131,7 @@ async function handler(argv: ArgumentsCamelCase<IArgsImport>): Promise<Result<nu
  * Config object for this subcommand.
  */
 interface IImportConfig {
-    importDir: Directory;
+    importDir:   Directory;
     photoLibDir: Directory;
 }
 

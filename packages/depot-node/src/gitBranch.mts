@@ -129,9 +129,9 @@ export class GitBranch {
 
 
     // region Instance Data Members
-    private readonly _repo: GitRepo;
+    private readonly _repo:       GitRepo;
     private readonly _remoteName: string | undefined;
-    private readonly _name: string;
+    private readonly _name:       string;
     // endregion
 
 

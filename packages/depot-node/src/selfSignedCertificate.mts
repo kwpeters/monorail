@@ -57,14 +57,14 @@ export class SelfSignedCertificate {
 
 
     // region Instance Data Members
-    private readonly _countryCode: string;
-    private readonly _state: string;
-    private readonly _location: string;
-    private readonly _organization: string;
+    private readonly _countryCode:        string;
+    private readonly _state:              string;
+    private readonly _location:           string;
+    private readonly _organization:       string;
     private readonly _organizationalUnit: string;
-    private readonly _commonName: string;
-    private readonly _keyData: string;
-    private readonly _certData: string;
+    private readonly _commonName:         string;
+    private readonly _keyData:            string;
+    private readonly _certData:           string;
     // endregion
 
 

@@ -6,7 +6,7 @@ import { getExternalIpv4Addresses, isTcpPortAvailable, getAvailableTcpPort,
 
 interface IServerInfo {
     server: net.Server;
-    port: number;
+    port:   number;
 }
 
 // A helper function to start a server.

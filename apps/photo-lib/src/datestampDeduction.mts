@@ -11,15 +11,15 @@ export enum ConfidenceLevel {
 
 
 export interface IDatestampDeductionSuccess {
-    readonly confidence: ConfidenceLevel;
-    readonly datestamp: Datestamp;
+    readonly confidence:  ConfidenceLevel;
+    readonly datestamp:   Datestamp;
     readonly explanation: string;
-    readonly destFile: File;
+    readonly destFile:    File;
 }
 
 
 export interface IDatestampDeductionFailure {
-    readonly confidence: ConfidenceLevel.NoClue;
+    readonly confidence:  ConfidenceLevel.NoClue;
     readonly explanation: string;
 }
 

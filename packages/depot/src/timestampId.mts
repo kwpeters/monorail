@@ -15,7 +15,7 @@ export class TimestampId implements IEquatable<TimestampId> {
 
 
     private readonly _timestamp: number;
-    private readonly _uuid: string;
+    private readonly _uuid:      string;
 
 
     private constructor(timestamp: number, uuid: string) {

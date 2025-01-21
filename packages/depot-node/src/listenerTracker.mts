@@ -16,7 +16,7 @@ export class ListenerTracker {
 
     private readonly _emitter: EventEmitter;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private _listenerMap: { [eventName: string]: Array<(...args: Array<any>) => void>; };
+    private _listenerMap:      { [eventName: string]: Array<(...args: Array<any>) => void>; };
 
     /**
      * Creates a new ListenerTracker that can be used to track listeners for the

@@ -5,7 +5,7 @@ import {TaskQueue} from "./taskQueue.mjs";
 
 
 interface ITaskInfo<TResolve> {
-    task: Task<TResolve>;
+    task:     Task<TResolve>;
     deferred: Deferred<TResolve>;
 }
 

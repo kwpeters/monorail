@@ -16,8 +16,8 @@ export type AdjacencyMap<TVertex, TEdge> = Map<TVertex, Array<IAdjacencyInfo<TVe
 
 export interface IEdge<TVertex, TEdge> {
     fromVertex: TVertex;
-    toVertex: TVertex;
-    edgeAttr: TEdge;
+    toVertex:   TVertex;
+    edgeAttr:   TEdge;
 }
 
 
@@ -26,7 +26,7 @@ export interface IBfsResult<TVertex> {
      * The distance from the keyed vertex to the source node. Vertices that have
      * no path to the source vertex will have a distance of Infinity.
      */
-    distance: Map<TVertex, number>;
+    distance:    Map<TVertex, number>;
     /**
      * Each vertex's predecessor along the shortest path to the source vertex.
      * Undefined if the vertex has no path to the source node or the vertex is
@@ -62,7 +62,7 @@ export interface IDfsResult<TVertex> {
      * forest.  Undefined indicates the vertex is the root of tree within the
      * resulting depth-first forest.
      */
-    predecessor: Map<TVertex, TVertex | undefined>;
+    predecessor:        Map<TVertex, TVertex | undefined>;
     /**
      * A timestamp indicating when the vertex was discovered during the
      * depth-first search.  Used to classify the edges of the graph.
@@ -73,7 +73,7 @@ export interface IDfsResult<TVertex> {
      * depth-first search.  Used when performing a topological sort or finding
      * strongly connected components.
      */
-    finishTimestamp: Map<TVertex, number>;
+    finishTimestamp:    Map<TVertex, number>;
     /**
      * An adjacency map classifying the edges of the graph.
      */

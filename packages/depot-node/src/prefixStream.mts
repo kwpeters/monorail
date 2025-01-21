@@ -7,8 +7,8 @@ import {Deferred} from "@repo/depot/deferred";
  */
 export class PrefixStream extends Transform {
     // region Private Members
-    private readonly _prefixBuf: Buffer;
-    private _partial: Buffer | undefined;
+    private readonly _prefixBuf:       Buffer;
+    private _partial:                  Buffer | undefined;
     private readonly _flushedDeferred: Deferred<void>;
     // endregion
 

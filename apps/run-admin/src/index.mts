@@ -31,7 +31,7 @@ function runningThisScript(): boolean {
 
 interface IConfig {
     executable: File;
-    cwd: Directory | undefined;
+    cwd:        Directory | undefined;
 }
 
 async function getConfiguration(): Promise<Result<IConfig, string>> {

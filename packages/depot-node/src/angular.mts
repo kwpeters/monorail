@@ -21,28 +21,28 @@ export async function findAngularProjectDirs(rootDir: Directory): Promise<Array<
 type EslintResults = Array<IEslintFileResults>;
 
 interface IEslintFileResults {
-    filePath: string;
-    messages: Array<IEslintMessage>;
-    errorCount: number;
-    fatalErrorCount: number;
-    warningCount: number;
-    fixableErrorCount: number;
+    filePath:            string;
+    messages:            Array<IEslintMessage>;
+    errorCount:          number;
+    fatalErrorCount:     number;
+    warningCount:        number;
+    fixableErrorCount:   number;
     fixableWarningCount: number;
-    source: string;
+    source:              string;
     usedDeprecatedRules: Array<{ruleId: string, replacedBy: Array<string>}>
 }
 
 interface IEslintMessage {
-    ruleId: string;
-    severity: number;
-    message: string;
-    line: number;
-    column: number;
-    nodeType: string;
+    ruleId:    string;
+    severity:  number;
+    message:   string;
+    line:      number;
+    column:    number;
+    nodeType:  string;
     messageId: string;
-    endLine: number;
+    endLine:   number;
     endColumn: number;
-    fix?: {range: Array<number>, text: string}
+    fix?:      {range: Array<number>, text: string}
 }
 
 const lintedFileExtensions = [".ts", ".js"];

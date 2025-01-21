@@ -11,7 +11,7 @@ export type WriterFn = (str: string) => void;
 export class IndentingWriter {
 
     private readonly _spacesPerLevel: number;
-    private readonly _writerFn: WriterFn;
+    private readonly _writerFn:       WriterFn;
     private _curLevel = 0;
 
 

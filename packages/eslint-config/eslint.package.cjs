@@ -80,6 +80,20 @@ module.exports = {
         "@stylistic/func-call-spacing": [
             "error"
         ],
+        "@stylistic/key-spacing": [
+            "error",
+            {
+                "beforeColon": false,
+                "afterColon": true,
+                "mode": "minimum",
+                "align": {
+                    "beforeColon": false,
+                    "afterColon": true,
+                    "on": "value",
+                    "mode": "strict"
+                }
+            }
+        ],
         "@stylistic/keyword-spacing": [
             "error",
             {
@@ -559,20 +573,6 @@ module.exports = {
                 "ArrayExpression": "first",
                 "ObjectExpression": "first",
                 "ImportDeclaration": "first"
-            }
-        ],
-        "key-spacing": [
-            "error",
-            {
-                "beforeColon": false,
-                "afterColon": true,
-                "mode": "minimum",
-                "align": {
-                    "beforeColon": false,
-                    "afterColon": true,
-                    "on": "value",
-                    "mode": "strict"
-                }
             }
         ],
         "linebreak-style": "off",

@@ -65,7 +65,7 @@ const __test3: NoNulls = {
 ////////////////////////////////////////////////////////////////////////////////
 
 interface ISomeOptionalAndNullable {
-    propA: number;
+    propA:  number;
     propB?: undefined | number;
     propC?: null | number;
 }

@@ -54,12 +54,12 @@ export class Datestamp {
 
     // #region Instance Data Members
     /// The year
-    private readonly _year: number;
+    private readonly _year:  number;
     // The month as a 1-based integer 1 - 12 (unlike the JS Date which is 0 -
     // 11)
     private readonly _month: number;
     // The day of the month as an integer 1 - 31.
-    private readonly _day: number;
+    private readonly _day:   number;
     // #endregion
 
 

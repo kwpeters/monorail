@@ -9,7 +9,7 @@
  */
 export class IntRange implements Iterable<number> {
     private readonly _first: number;
-    private readonly _last: number;
+    private readonly _last:  number;
 
 
     /**

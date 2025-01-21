@@ -28,9 +28,9 @@ const FAIL_TEXT    = chalk.red.bold;
  * Configuration options for this script.
  */
 interface IWatchConfig {
-    cmd: string;
-    cmdArgs: Array<string>;
-    watchDirs: Array<Directory>;
+    cmd:           string;
+    cmdArgs:       Array<string>;
+    watchDirs:     Array<Directory>;
     ignoreRegexes: Array<RegExp>;
 }
 

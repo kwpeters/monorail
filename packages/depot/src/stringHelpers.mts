@@ -516,7 +516,7 @@ export function getBufferString(buf: Buffer): string {
  */
 export interface IPairing {
     begin: string;
-    end: string;
+    end:   string;
 }
 
 

@@ -13,7 +13,7 @@ import { FailedResult, Result, SucceededResult } from "./result.mjs";
 export class VoSet<TVal> implements Iterable<TVal>, ReadonlySet<TVal> {
 
     private readonly _backingStore: Map<string, TVal>;
-    private readonly _hashFn: HashFn<TVal>;
+    private readonly _hashFn:       HashFn<TVal>;
 
 
     public constructor(hashFn: HashFn<TVal>, iterable?: Iterable<TVal>) {

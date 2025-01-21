@@ -7,7 +7,7 @@ export class Timeout extends EventEmitter {
     // endregion
 
     private readonly _periodMs: number;
-    private _timeoutId: undefined | NodeJS.Timeout;
+    private _timeoutId:         undefined | NodeJS.Timeout;
 
 
     public constructor(periodMs: number) {

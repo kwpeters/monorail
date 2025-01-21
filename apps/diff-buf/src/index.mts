@@ -87,7 +87,7 @@ function checkEnvironment(): Result<undefined, string> {
 
 interface IConfig {
     reset: boolean;
-    ext: string;
+    ext:   string;
 }
 
 /**

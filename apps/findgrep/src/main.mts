@@ -64,9 +64,9 @@ async function mainImpl(): Promise<Result<number, string>> {
  * Configuration options for this script.
  */
 interface IFindGrepConfig {
-    recurse: boolean;
-    pathRegex: RegExp;
-    textRegex: Option<RegExp>;
+    recurse:     boolean;
+    pathRegex:   RegExp;
+    textRegex:   Option<RegExp>;
     pathIgnores: Array<RegExp>;
 }
 

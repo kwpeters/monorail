@@ -20,7 +20,7 @@ export type WalkCallback = (item: Directory | File) => boolean | Promise<boolean
 
 export interface IFilterResult {
     recurse?: boolean;
-    include: boolean;
+    include:  boolean;
 }
 export type FilterCallback = (item: Directory | File) => IFilterResult | Promise<IFilterResult>;
 
@@ -56,7 +56,7 @@ export class Directory {
 
     // region Data Members
     private readonly _dirPath: string;
-    private _cachedSize: StorageSize | undefined;
+    private _cachedSize:       StorageSize | undefined;
     // endregion
 
 

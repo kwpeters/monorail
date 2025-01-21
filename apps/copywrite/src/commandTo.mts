@@ -82,11 +82,11 @@ export async function handler(args: Arguments): Promise<void> {
 
 
 interface IConfig {
-    srcRoot: Directory,
-    verbose: boolean,
-    dryRun: boolean,
+    srcRoot:      Directory,
+    verbose:      boolean,
+    dryRun:       boolean,
     emptyDestDir: boolean,
-    destDir: Directory
+    destDir:      Directory
 }
 
 

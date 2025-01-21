@@ -28,8 +28,8 @@ export async function getDuplicateFiles(dir: Directory): Promise<IDuplicateFileI
 
 
 export interface IDuplicateFileInfo {
-    originalFile: File;
-    originalSize: StorageSize;
+    originalFile:  File;
+    originalSize:  StorageSize;
     duplicateFile: File;
     duplicateSize: StorageSize;
 }

@@ -15,11 +15,11 @@ export interface IExpressionToken {
     /// The full original expression
     originalExpression: string;
     /// Starting character index in originalExpression
-    startIndex: number;
+    startIndex:         number;
     /// 1 *past* the last character
-    endIndex: number;
+    endIndex:           number;
     /// The text comprising the token
-    text: string;
+    text:               string;
 }
 
 
@@ -27,7 +27,7 @@ export interface IExpressionToken {
 // IExpressionTokenNumber
 ////////////////////////////////////////////////////////////////////////////////
 export interface IExpressionTokenNumber extends IDuMember, IExpressionToken {
-    type: "IExpressionTokenNumber";
+    type:  "IExpressionTokenNumber";
     value: Fraction;
 }
 
@@ -43,8 +43,8 @@ type OperatorSymbol = "(" | ")" | "*" | "/" | "+" | "-";
 
 
 interface IOperatorTraits {
-    symbol: OperatorSymbol;
-    precedence: number;
+    symbol:        OperatorSymbol;
+    precedence:    number;
     associativity: OperatorAssociativity;
     numArguments?: number;
     evaluate?(args: Array<Fraction>): Fraction;
@@ -52,9 +52,9 @@ interface IOperatorTraits {
 
 
 export interface IExpressionTokenOperator extends IDuMember, IExpressionToken {
-    type: "IExpressionTokenOperator";
-    symbol: OperatorSymbol;
-    precedence: number;
+    type:          "IExpressionTokenOperator";
+    symbol:        OperatorSymbol;
+    precedence:    number;
     associativity: OperatorAssociativity;
 }
 

@@ -15,7 +15,7 @@ import { type ISystemError } from "./nodeTypes.mjs";
  * Describes a spawn failure where the process could not be started.
  */
 export interface ISpawnSystemError extends ISystemError {
-    type: "ISpawnSystemError";
+    type:  "ISpawnSystemError";
     code?: string;
 }
 

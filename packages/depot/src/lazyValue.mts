@@ -5,7 +5,7 @@ export class LazyValue<T> {
 
     ////////////////////////////////////////////////////////////////////////////////
     private readonly _computeFn: ComputeFn<T>;
-    private _cachedValue: T | undefined;
+    private _cachedValue:        T | undefined;
 
     ////////////////////////////////////////////////////////////////////////////////
     public constructor(computeFn: ComputeFn<T>) {

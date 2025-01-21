@@ -5,7 +5,7 @@ import {Deferred} from "@repo/depot/deferred";
 
 
 interface ITaskInfo<TResolve> {
-    task: Task<TResolve>;
+    task:     Task<TResolve>;
     deferred: Deferred<TResolve>;
 }
 
@@ -17,12 +17,12 @@ export class TaskQueue extends EventEmitter {
 
 
     // region Private Members
-    private readonly _numConcurrentTasks: number | undefined;
-    private readonly _tasks: PriorityQueue<ITaskInfo<any>>;  // eslint-disable-line @typescript-eslint/no-explicit-any
-    private _numRunning: number;
-    private _isProcessingLastFulfillment: boolean;
-    private _isRunning: boolean;
-    private readonly _pauseWhenDrained: boolean;
+    private readonly _numConcurrentTasks:   number | undefined;
+    private readonly _tasks:                PriorityQueue<ITaskInfo<any>>;  // eslint-disable-line @typescript-eslint/no-explicit-any
+    private _numRunning:                    number;
+    private _isProcessingLastFulfillment:   boolean;
+    private _isRunning:                     boolean;
+    private readonly _pauseWhenDrained:     boolean;
     private _lastSettledInternalRunPromise: Promise<void> | undefined;
     // endregion
 

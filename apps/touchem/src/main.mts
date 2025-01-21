@@ -12,8 +12,8 @@ import { NoneOption, SomeOption } from "@repo/depot/option";
 
 
 interface IConfig {
-    fsItems: Array<FsItem>;
-    updateAccessTime: boolean;
+    fsItems:            Array<FsItem>;
+    updateAccessTime:   boolean;
     updateModifiedTime: boolean;
 }
 

@@ -55,7 +55,7 @@ export async function promptForString(
  * Interface defining the properties of a choice of type string.
  */
 export interface IChoiceString {
-    name: string;
+    name:  string;
     value: string;
 }
 

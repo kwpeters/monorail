@@ -4,13 +4,13 @@ import { FailedResult, Result } from "./result.mjs";
 
 interface IContinuePollingYes {
     continuePolling: true;
-    delayMs: number;
+    delayMs:         number;
 }
 
 
 interface IContinuePollingNo<TResult> {
     continuePolling: false;
-    result: TResult;
+    result:          TResult;
 }
 
 

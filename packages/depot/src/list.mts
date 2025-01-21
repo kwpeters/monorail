@@ -57,8 +57,8 @@ class DLNodeEnd<TValue> {
  */
 class DLNodeValue<TValue> {
     // region Data Members
-    private _prev: DLNode<TValue> | undefined;
-    private _next: DLNode<TValue> | undefined;
+    private _prev:  DLNode<TValue> | undefined;
+    private _next:  DLNode<TValue> | undefined;
     private _value: TValue;
     // endregion
 
@@ -140,7 +140,7 @@ export class List<TValue> implements Iterable<TValue> {
 
     // region Data Members
     private readonly _end: DLNodeEnd<TValue>;
-    private _length: number;
+    private _length:       number;
     // endregion
 
 

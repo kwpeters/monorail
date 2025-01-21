@@ -16,8 +16,8 @@ export class Deferred<TResolve> {
     }
 
     public readonly promise: Promise<TResolve>;
-    public resolve!: (result: TResolve) => void;
-    public reject!: (err: unknown) => void;
+    public resolve!:         (result: TResolve) => void;
+    public reject!:          (err: unknown) => void;
 }
 
 

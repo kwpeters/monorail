@@ -4,7 +4,7 @@ import {Deferred} from "@repo/depot/deferred";
 
 export class CollectorStream extends Transform {
     // region Private Members
-    private _collected: Buffer;
+    private _collected:                Buffer;
     private readonly _flushedDeferred: Deferred<void>;
     // endregion
 

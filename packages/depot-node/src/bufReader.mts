@@ -9,7 +9,7 @@ import {Lint, Ulint} from "./lint.mjs";
  */
 export class BufReader {
 
-    private _curIndex: number = 0;
+    private _curIndex:           number = 0;
     private readonly _theBuffer: Buffer;
 
 

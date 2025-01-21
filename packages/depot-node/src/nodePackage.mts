@@ -14,15 +14,15 @@ import { NodePackageScript } from "./nodePackageScript.mjs";
 
 
 export interface IPackageJson {
-    name: string;
-    version: string;
-    description: string;
-    main: string;
-    repository: {type: string, url: string} | undefined;
+    name:            string;
+    version:         string;
+    description:     string;
+    main:            string;
+    repository:      {type: string, url: string} | undefined;
     devDependencies: {[packageName: string]: string};
-    dependencies: {[packageName: string]: string};
-    bin: { [binName: string]: string; };
-    scripts: { [scriptName: string]: string } | undefined;
+    dependencies:    {[packageName: string]: string};
+    bin:             { [binName: string]: string; };
+    scripts:         { [scriptName: string]: string } | undefined;
 }
 
 

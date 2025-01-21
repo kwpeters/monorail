@@ -22,7 +22,7 @@ const commandDescription = [
   */
 interface IArgsCommand {
     inputCjsFile: string;
-    exeBaseName: string;
+    exeBaseName:  string;
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -49,8 +49,8 @@ const builder = (yargs: Argv<NonNullable<unknown>>) => {
 
 
 interface ISeaConfig {
-    main: string;
-    output: string;
+    main:                          string;
+    output:                        string;
     disableExperimentalSEAWarning: boolean;
 }
 
@@ -191,7 +191,7 @@ async function injectBlob(blobFile: File, exeFile: File): Promise<Result<string,
  */
 interface IConfig {
     inputCjsFile: File;
-    exeBaseName: string;
+    exeBaseName:  string;
 }
 
 
