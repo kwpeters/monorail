@@ -26,6 +26,26 @@
             ],
         },
         {
+            "name": "findgrep",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/tsx/dist/cli.mjs",
+            "stopOnEntry": false,
+            "args": [
+                "${workspaceRoot}/apps/findgrep/src/index.cts",
+                "ChildModuleImport_CIP-1-12-332.xml",
+                "Port"
+            ],
+            "cwd": "${workspaceRoot}",
+            "runtimeArgs": [
+                "--nolazy"
+            ],
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+        },
+        {
             "name": "rmrf",
             "type": "node",
             "request": "launch",
