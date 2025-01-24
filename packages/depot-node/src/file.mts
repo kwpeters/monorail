@@ -2,10 +2,12 @@ import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import * as path from "node:path";
 import * as crypto from "node:crypto";
-import * as readline from "readline";
+import * as readline from "node:readline";
 import * as _ from "lodash-es";
 import stripJsonComments from "strip-json-comments";
+import * as chardet from "chardet";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
+import { Deferred } from "@repo/depot/deferred";
 import { ListenerTracker } from "./listenerTracker.mjs";
 import { Directory } from "./directory.mjs";
 import { type PathPart, reducePathParts } from "./pathHelpers.mjs";
@@ -773,43 +775,38 @@ export class File {
      * @returns A promise that resolves when the file is done being processed.
      * The promise will reject if an error is encountered.
      */
-    public async readLines(callbackFn: ReadLinesCallback): Promise<void> {
-        return new Promise((resolve, reject) => {
-            if (!this.existsSync()) {
-                reject(new Error(`The file "${this._filePath}" does not exist.`));
-            }
+    public readLines(callbackFn: ReadLinesCallback): Promise<void> {
+        // Detect the encoding of the file
+        const encoding = (chardet.detectFileSync(this._filePath) || "utf8") as BufferEncoding;
 
-            try {
-                let lineNum = 1;
+        // Create a readable stream
+        const fileStream = fs.createReadStream(this._filePath, { encoding });
 
-                const rl = readline.createInterface({
-                    input:     fs.createReadStream(this.absPath()),
-                    crlfDelay: Infinity
-                });
-
-                const listenerTracker = new ListenerTracker(rl);
-
-                listenerTracker.on("line", (line: string) => {
-                    callbackFn(line, lineNum);
-                    lineNum += 1;
-                });
-
-                listenerTracker.once("close", () => {
-                    listenerTracker.removeAll();
-                    resolve();
-                });
-
-                listenerTracker.once("error", (err) => {
-                    listenerTracker.removeAll();
-                    reject(err);
-                });
-            }
-            catch (err) {
-                reject(err);
-            }
+        const rl = readline.createInterface({
+            input:     fileStream,
+            crlfDelay: Infinity
         });
-    }
 
+        let lineNumber = 0;
+        let isFirstLine = true;
+        const dfd = new Deferred<void>();
+
+        rl.on("line", (line: string) => {
+            if (isFirstLine) {
+                // Remove BOM if present
+                line = line.replace(/^\uFEFF/, "");
+                isFirstLine = false;
+            }
+            lineNumber++;
+            callbackFn(line, lineNumber);
+        });
+
+        rl.on("close", () => {
+            dfd.resolve();
+        });
+
+        return dfd.promise;
+    }
 
 }
 

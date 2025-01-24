@@ -1,6 +1,8 @@
 import * as url from "node:url";
 import * as path from "node:path";
+import * as os from "node:os";
 import {constants} from "node:fs";
+import * as fsp from "node:fs/promises";
 import { File } from "./file.mjs";
 import { Directory } from "./directory.mjs";
 import { getOs, OperatingSystem } from "./os.mjs";
@@ -1374,6 +1376,7 @@ describe("File", () => {
 
 
         describe("readLines()", () => {
+
             it("passes each line of the file to the callback", async () => {
                 const inputFile = new File(tmpDir, "input.txt");
                 const contents = [
@@ -1407,6 +1410,28 @@ describe("File", () => {
                 catch (err) {
                     expect(err).toBeDefined();
                 }
+            });
+
+
+            it("will open files encoded with utf16le", async () => {
+                // Create a file that has utf16le encoding.
+                const inputFile = new File(tmpDir, "input.txt");
+                const bom = "\uFEFF";
+                const text = [bom + "one", "two", "three"].join(os.EOL);
+                const buf = Buffer.from(text, "utf16le");
+                await fsp.writeFile(inputFile.toString(), buf);
+
+
+                // const inputFile = new File(tmpDir, "..", "test", "assets", "sample-utf16le.txt");
+                const readContents: Array<string> = [];
+                const lineNums: Array<number> = [];
+                await inputFile.readLines((text, lineNum) => {
+                    readContents.push(text);
+                    lineNums.push(lineNum);
+                });
+
+                expect(readContents).toEqual(["one", "two", "three"]);
+                expect(lineNums).toEqual([1, 2, 3]);
             });
 
         });
