@@ -1421,8 +1421,6 @@ describe("File", () => {
                 const buf = Buffer.from(text, "utf16le");
                 await fsp.writeFile(inputFile.toString(), buf);
 
-
-                // const inputFile = new File(tmpDir, "..", "test", "assets", "sample-utf16le.txt");
                 const readContents: Array<string> = [];
                 const lineNums: Array<number> = [];
                 await inputFile.readLines((text, lineNum) => {
