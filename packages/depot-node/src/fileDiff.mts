@@ -12,11 +12,13 @@ export async function showVsCodeDiff(fileA: File, fileB: File, useExisting = fal
         ...insertIf(!useExisting, "-n"),
         ...insertIf(wait, "--wait"),
         "--diff",
-        fileA.toString(),
-        fileB.toString()
+        `"${fileA.toString() }"`,
+        `"${fileB.toString() }"`
     ];
 
-    const spawnOut = spawn(cmd, args);
+    const spawnOptions = { shell: true, windowsVerbatimArguments: true };
+
+    const spawnOut = spawn(cmd, args, spawnOptions);
     await spawnOut.closePromise;
     return undefined;
 }
