@@ -26,6 +26,28 @@
             ],
         },
         {
+            "name": "copywrite",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/tsx/dist/cli.mjs",
+            "stopOnEntry": false,
+            "args": [
+                "${workspaceRoot}/apps/copywrite/src/index.mts",
+                // .\bin\copywrite.cmd diff .\packages\depot\src\ C:\Users\kwpet\dev\kwp\monorail\monorail\packages\depot\src\
+                "diff",
+                ".\\packages\\depot\\src\\",
+                "C:\\Users\\kwpet\\dev\\kwp\\monorail\\monorail\\packages\\depot\\src\\"
+            ],
+            "cwd": "${workspaceRoot}",
+            "runtimeArgs": [
+                "--nolazy"
+            ],
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+        }
+        {
             "name": "findgrep",
             "type": "node",
             "request": "launch",
