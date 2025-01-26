@@ -777,10 +777,13 @@ export class File {
      */
     public readLines(callbackFn: ReadLinesCallback): Promise<void> {
         // Detect the encoding of the file
-        const encoding = (chardet.detectFileSync(this._filePath) || "utf8") as BufferEncoding;
+        let encoding = (chardet.detectFileSync(this._filePath) || "utf8");
+
+        // If we detected UTF-16LE, we'll use that.  Otherwise, we'll use utf8.
+        encoding = encoding === "UTF-16LE" ? "UTF-16LE" : "utf8";
 
         // Create a readable stream
-        const fileStream = fs.createReadStream(this._filePath, { encoding });
+        const fileStream = fs.createReadStream(this._filePath, { encoding: encoding as BufferEncoding });
 
         const rl = readline.createInterface({
             input:     fileStream,
