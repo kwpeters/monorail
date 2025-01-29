@@ -15,6 +15,7 @@
     "sample-app-sea-xyzzy": "./dist/index.cjs"
   },
   "dependencies": {
+    "@repo/sample-lib-xyzzy": "*"
   },
   "devDependencies": {
     "@repo/build-app-assist": "*",
