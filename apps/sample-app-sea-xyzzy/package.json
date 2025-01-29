@@ -6,7 +6,7 @@
     "dev": "echo 'Add dev script here'",
     "build": "npm run build:ts && npm run build:sea",
     "build:ts": "tsc --build",
-    "build:sea": "tsx ../build-app-assist/src/index.mts cjsToSeaApp --inputCjsFile ./dist/index.cjs --exeBaseName sample-app-xyzzy",
+    "build:sea": "tsx ../build-app-assist/src/index.mts cjsToSeaApp --inputCjsFile ./dist/index.cjs --exeBaseName sample-app-sea-xyzzy",
     "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
     "lint": "eslint ./src",
     "type-check": "tsc --project tsconfig.ut.json --noEmit"
@@ -15,7 +15,6 @@
     "sample-app-sea-xyzzy": "./dist/index.cjs"
   },
   "dependencies": {
-    "@repo/sample-lib-xyzzy": "*"
   },
   "devDependencies": {
     "@repo/build-app-assist": "*",
