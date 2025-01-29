@@ -63,64 +63,6 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-        }
-        {
-            "name": "findgrep",
-            "type": "node",
-            "request": "launch",
-            "program": "${workspaceRoot}/node_modules/tsx/dist/cli.mjs",
-            "stopOnEntry": false,
-            "args": [
-                "${workspaceRoot}/apps/findgrep/src/index.cts",
-                "ChildModuleImport_CIP-1-12-332.xml",
-                "Port"
-            ],
-            "cwd": "${workspaceRoot}",
-            "runtimeArgs": [
-                "--nolazy"
-            ],
-            "console": "integratedTerminal",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-        },
-        {
-            "name": "rmrf",
-            "type": "node",
-            "request": "launch",
-            "program": "${workspaceRoot}/node_modules/tsx/dist/cli.mjs",
-            "stopOnEntry": false,
-            "args": [
-                "${workspaceRoot}/apps/rmrf/src/index.cts",
-                "foo.bar.txt"
-            ],
-            "cwd": "${workspaceRoot}",
-            "runtimeArgs": [
-                "--nolazy"
-            ],
-            "console": "integratedTerminal",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-        },
-        {
-            "name": "splat",
-            "type": "node",
-            "request": "launch",
-            "program": "${workspaceRoot}/node_modules/tsx/dist/cli.mjs",
-            "stopOnEntry": false,
-            "args": [
-                "${workspaceRoot}/apps/splat/src/index.cts",
-                ".\\apps\\abspath\\src\\**\\*"
-            ],
-            "cwd": "${workspaceRoot}",
-            "runtimeArgs": [
-                "--nolazy"
-            ],
-            "console": "integratedTerminal",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
         },
         {
             "name": "depot - test",
@@ -163,6 +105,26 @@
             ],
         },
         {
+            "name": "findgrep",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/tsx/dist/cli.mjs",
+            "stopOnEntry": false,
+            "args": [
+                "${workspaceRoot}/apps/findgrep/src/index.cts",
+                "ChildModuleImport_CIP-1-12-332.xml",
+                "Port"
+            ],
+            "cwd": "${workspaceRoot}",
+            "runtimeArgs": [
+                "--nolazy"
+            ],
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+        },
+        {
             "name": "quiz - test",
             "type": "node",
             "request": "launch",
@@ -174,6 +136,44 @@
                 "--config=./jasmine.json"
             ],
             "cwd": "${workspaceRoot}/apps/quiz",
+            "runtimeArgs": [
+                "--nolazy"
+            ],
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+        },
+        {
+            "name": "rmrf",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/tsx/dist/cli.mjs",
+            "stopOnEntry": false,
+            "args": [
+                "${workspaceRoot}/apps/rmrf/src/index.cts",
+                "foo.bar.txt"
+            ],
+            "cwd": "${workspaceRoot}",
+            "runtimeArgs": [
+                "--nolazy"
+            ],
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+        },
+        {
+            "name": "splat",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/tsx/dist/cli.mjs",
+            "stopOnEntry": false,
+            "args": [
+                "${workspaceRoot}/apps/splat/src/index.cts",
+                ".\\apps\\abspath\\src\\**\\*"
+            ],
+            "cwd": "${workspaceRoot}",
             "runtimeArgs": [
                 "--nolazy"
             ],
