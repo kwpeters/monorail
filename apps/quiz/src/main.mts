@@ -13,6 +13,7 @@ import { FsPath } from "@repo/depot-node/fsPath";
 import { readableStreamToText } from "@repo/depot-node/streamHelpers";
 import { schemaFlashcardDeck, type Flashcard } from "./quizDomain.mjs";
 
+
 export async function main(): Promise<number> {
     const res = await mainImpl();
     if (res.succeeded) {
@@ -35,7 +36,7 @@ async function mainImpl(): Promise<Result<number, string>> {
         return resConfig;
     }
     const config = resConfig.value;
-    
+
     const resFlashcards = await pipeAsync(
         mapAsync(config.inputFiles, getFlashcardsFromFile),
         (results) => Result.allArrayM(results),
@@ -50,6 +51,13 @@ async function mainImpl(): Promise<Result<number, string>> {
 }
 
 
+/**
+ * Reads a JSON file and parses it into an array of flashcards.
+ *
+ * @param file - The file to read and parse.
+ * @returns A promise that resolves to a Result containing an array of
+ * flashcards or an error message.
+ */
 async function getFlashcardsFromFile(file: File): Promise<Result<Array<Flashcard>, string>> {
     const unk = await file.readJson<unknown>();
     const resDeck = await schemaFlashcardDeck.safeParseAsync(unk);
@@ -66,12 +74,21 @@ async function getFlashcardsFromFile(file: File): Promise<Result<Array<Flashcard
 }
 
 
+/**
+ * The configuration for the quiz app.
+ */
 interface IConfig {
     inputFiles:         Array<File>;
     numFlashcardsToAsk: number | undefined;
 }
 
 
+/**
+ * Gets the configuration for the quiz app from the command line.
+ *
+ * @return If the command line configuration is valid, a successful Result
+ * containing the app configuration.  Otherwise, an error message.
+ */
 async function getConfiguration(): Promise<Result<IConfig, string>> {
     const argv =
         await yargs(hideBin(process.argv))
@@ -99,59 +116,80 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
         .argv;
 
     const inputStrings = argv._.filter((cur) => typeof cur === "string");
+    inputStrings.push(...(await getStdinPipedLines()));
 
-    // If input is being piped into this app, append to the list of inputs.
+    const [nonExtantFiles, extantFiles] = await stringsToFiles(inputStrings);
+
+    if (nonExtantFiles.length > 0) {
+        console.error(`${nonExtantFiles.length} items are not files and will be skipped:`);
+        nonExtantFiles.forEach((nonFile) => {
+            console.log(`    ${nonFile}`);
+        });
+    }
+
+    if (extantFiles.length === 0) {
+        return new FailedResult("No valid input files specified.");
+    }
+
+    return new SucceededResult({
+        inputFiles:         extantFiles,
+        numFlashcardsToAsk: argv.numFlashcards
+    });
+}
+
+
+/**
+ * Gets lines of text that are piped into this app's stdin, if any.
+ *
+ * @return Lines of text that are being piped into this process, if any.
+ */
+async function getStdinPipedLines(): Promise<Array<string>> {
+    const lines: Array<string> = [];
     const inputIsPiped = !process.stdin.isTTY;
     if (inputIsPiped) {
         const text = await readableStreamToText(process.stdin);
         const lines = splitIntoLines(text, false).filter((curLine) => !isBlank(curLine));
-        inputStrings.push(...lines);
+        lines.push(...lines);
     }
-
-    const resFiles = await stringsToFiles(inputStrings);
-
-    return resFiles.failed ?
-        resFiles :
-        new SucceededResult({
-            inputFiles:         resFiles.value,
-            numFlashcardsToAsk: argv.numFlashcards
-        });
+    return lines;
+}
 
 
-    async function stringsToFiles(
-        strings: Array<string>
-    ): Promise<Result<Array<File>, string>> {
+/**
+ * Converts an array of strings to a tuple containing the strings that do not
+ * represent extant files and File instances that represent extant files.
+ *
+ * @param fileCandidates - The strings that represent possible file paths
+ * @return A tuple.  The first element contains the strings that represent non
+ * extant files.  The second element contains File instances that represent
+ * extant files.
+ */
+async function stringsToFiles(
+    fileCandidates: Array<string>
+): Promise<[Array<string>, Array<File>]> {
 
-        const fsPaths = strings.map((curStr) => new FsPath(curStr));
+    const fsPaths = fileCandidates.map((curStr) => new FsPath(curStr));
 
-        const [extantFiles, nonExtantFiles] = await pipeAsync(
-            mapAsync(fsPaths, async (fsPath) => {
-                let isFile = false;
-                try {
-                    const stats = await fsp.stat(fsPath.toString());
-                    isFile = !!stats && stats.isFile();
-                }
-                catch (err) {
-                    isFile = false;
-                }
-                return { fsPath, isFile };
-            }),
-            (objs) => _.partition(objs, (obj) => !!obj.isFile)
-        );
+    const [extantFiles, nonExtantFiles] = await pipeAsync(
+        mapAsync(fsPaths, async (fsPath) => {
+            let isFile = false;
+            try {
+                const stats = await fsp.stat(fsPath.toString());
+                isFile = !!stats && stats.isFile();
+            }
+            catch (err) {
+                isFile = false;
+            }
+            return { fsPath, isFile };
+        }),
+        (objs) => _.partition(objs, (obj) => !!obj.isFile)
+    );
 
-        if (nonExtantFiles.length > 0) {
-            console.log(`${nonExtantFiles.length} items are not files and will be skipped:`);
-            nonExtantFiles.forEach((nonFile) => {
-                console.log(`    ${nonFile.fsPath.toString()}`);
-            });
-        }
+    return pipeAsync(
+        extantFiles.map((extantFileObj) => extantFileObj.fsPath),
+        // Map to File objects.
+        (paths) => paths.map((curPath) => new File(curPath.toString())),
+        (files) => [nonExtantFiles.map((x) => x.fsPath.toString()), files]
+    );
 
-        return pipeAsync(
-            extantFiles.map((extantFileObj) => extantFileObj.fsPath),
-            // Map to File objects.
-            (paths) => paths.map((curPath) => new File(curPath.toString())),
-            (files) => new SucceededResult(files)
-        );
-
-    }
 }
