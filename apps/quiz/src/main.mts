@@ -34,35 +34,35 @@ async function mainImpl(): Promise<Result<number, string>> {
     if (resConfig.failed) {
         return resConfig;
     }
-
     const config = resConfig.value;
-
-    const deckResults =
-        await mapAsync(config.inputFiles, async (inputFile): Promise<Result<Array<Flashcard>, string>> => {
-            const unk = await inputFile.readJson<unknown>();
-            const resDeck = await schemaFlashcardDeck.safeParseAsync(unk);
-
-            if (resDeck.success) {
-                const flashcards = resDeck.data.flashcards;
-                return new SucceededResult(flashcards);
-            }
-            else {
-                const zodErrStr = fromError(resDeck.error).toString();
-                const errStr = `${inputFile.toString()}: ${zodErrStr}`;
-                return new FailedResult(errStr);
-            }
-        });
-
-
-    const res = Result.allArrayM(deckResults);
-    if (res.failed) {
-        return res;
+    
+    const resFlashcards = await pipeAsync(
+        mapAsync(config.inputFiles, getFlashcardsFromFile),
+        (results) => Result.allArrayM(results),
+        (res) => Result.mapSuccess((decks) => decks.flat(), res)
+    );
+    if (resFlashcards.failed) {
+        return resFlashcards;
     }
-
-    const allFlashcards = res.value.flat();
-    console.log(allFlashcards);
-
+    const flashcards = resFlashcards.value;
+    console.log(flashcards);
     return new SucceededResult(0);
+}
+
+
+async function getFlashcardsFromFile(file: File): Promise<Result<Array<Flashcard>, string>> {
+    const unk = await file.readJson<unknown>();
+    const resDeck = await schemaFlashcardDeck.safeParseAsync(unk);
+
+    if (resDeck.success) {
+        const flashcards = resDeck.data.flashcards;
+        return new SucceededResult(flashcards);
+    }
+    else {
+        const zodErrStr = fromError(resDeck.error).toString();
+        const errStr = `${file.toString()}: ${zodErrStr}`;
+        return new FailedResult(errStr);
+    }
 }
 
 
