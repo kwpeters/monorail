@@ -18,6 +18,7 @@
     "@repo/depot": "*",
     "@repo/depot-node": "*",
     "lodash-es": "^4.17.21",
+    "word-wrap": "^1.2.5",
     "yargs": "^17.7.2",
     "zod": "^3.24.1",
     "zod-validation-error": "^3.4.0"

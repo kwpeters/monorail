@@ -1,10 +1,14 @@
 import * as os from "node:os";
+import * as _ from "lodash-es";
 import yargs from "yargs/yargs";
+import wrap from "word-wrap";
 import { hideBin } from "yargs/helpers";
 import { fromError } from "zod-validation-error";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { mapAsync } from "@repo/depot/promiseHelpers";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
+import { assertNever } from "@repo/depot/never";
+import { promptForChoice, promptForString } from "@repo/depot-node/prompts";
 import { getStdinPipedLines } from "@repo/depot-node/ttyHelpers";
 import { File, stringsToFiles } from "@repo/depot-node/file";
 import { schemaFlashcardDeck, type Flashcard } from "./quizDomain.mjs";
@@ -41,9 +45,84 @@ async function mainImpl(): Promise<Result<number, string>> {
     if (resFlashcards.failed) {
         return resFlashcards;
     }
-    const flashcards = resFlashcards.value;
-    console.log(flashcards);
+    const flashcards = _.shuffle(resFlashcards.value);
+    const numFlashcardsToAsk = config.numFlashcardsToAsk ?
+        Math.min(config.numFlashcardsToAsk, flashcards.length) :
+        flashcards.length;
+    let questionsRemaining = numFlashcardsToAsk;
+    let numCorrect = 0;
+
+    console.log("");
+
+    while (questionsRemaining > 0) {
+        const curFlashcard = flashcards.pop()!;
+
+        const correct = await askFlashcard(curFlashcard);
+        console.log("");
+
+        if (correct) {
+            numCorrect++;
+        }
+        questionsRemaining--;
+    }
+
+    console.log(`You answered ${numCorrect} of ${numFlashcardsToAsk} flashcards correctly.`);
     return new SucceededResult(0);
+}
+
+
+async function askFlashcard(flashcard: Flashcard): Promise<boolean> {
+
+    if (flashcard.prompt.type === "PromptSingleLine") {
+        console.log(wrap(flashcard.prompt.prompt));
+    }
+    else if (flashcard.prompt.type === "PromptMultiLine") {
+        flashcard.prompt.prompt.forEach((line) => {
+            console.log(wrap(line));
+        });
+    }
+    else {
+        assertNever(flashcard.prompt);
+    }
+
+    const allowedAttempts = 3;
+    let attemptsRemaining = allowedAttempts;
+
+    while (attemptsRemaining > 0) {
+
+        let userIsCorrect = false;
+
+        if (flashcard.answer.type === "AnswerCandidates") {
+            const allCandidates = _.shuffle([
+                flashcard.answer.correctCandidate,
+                ...flashcard.answer.wrongCandidates
+            ]);
+
+            const choices = allCandidates.map((cur) => ({ name: cur, value: cur }));
+            const usersAnswer = await promptForChoice("Your answer:", choices);
+            userIsCorrect = usersAnswer === flashcard.answer.correctCandidate;
+        }
+        else if (flashcard.answer.type === "AnswerText") {
+            const usersAnswer = await promptForString("Your answer: ");
+            userIsCorrect = usersAnswer === flashcard.answer.answer;
+        }
+        else {
+            assertNever(flashcard.answer);
+        }
+
+        if (userIsCorrect) {
+            console.log("Correct!");
+            return true;
+        }
+
+        attemptsRemaining--;
+        const msg = attemptsRemaining > 0 ?
+            `Incorrect.  You have ${attemptsRemaining} attempts remaining.` :
+            "Incorrect.  No more attempts.";
+        console.log(msg);
+    }
+
+    return false;
 }
 
 
