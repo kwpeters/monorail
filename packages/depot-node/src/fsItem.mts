@@ -1,11 +1,13 @@
 import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
+import * as _ from "lodash-es";
 import { Result, FailedResult, SucceededResult } from "@repo/depot/result";
 import { NoneOption, Option, SomeOption } from "@repo/depot/option";
 import { PromiseResult } from "@repo/depot/promiseResult";
 import { assertNever } from "@repo/depot/never";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { errorToString } from "@repo/depot/errorHelpers";
+import { mapAsync } from "@repo/depot/promiseHelpers";
 import { Directory } from "./directory.mjs";
 import { File } from "./file.mjs";
 import { Symlink } from "./symlink.mjs";
@@ -122,4 +124,41 @@ export async function updateTimes(
     }
 
     return new SucceededResult(fsItem);
+}
+
+
+/**
+ * Converts an array of strings to a tuple containing the strings that represent
+ * non-extant FsItems and FsItem instances that represent extant file system
+ * objects.
+ *
+ * @param candidates - The strings that represent possible filesystem paths
+ * @return A tuple.  The first element contains the strings that represent non
+ * extant filesystem objects.  The second element contains FsItem instances that
+ * represent extant filesystem objects.
+ */
+export async function stringsToFsItems(
+    candidates: Array<string>
+): Promise<[Array<string>, Array<FsItem>]> {
+
+    const fsPaths = candidates.map((curStr) => new FsPath(curStr));
+
+    const [extant, nonExtant] = await pipeAsync(
+        mapAsync(fsPaths, async (fsPath) => {
+
+            const res = await fsPathToFsItem(fsPath);
+            if (res.succeeded) {
+                return { fsPath, fsItem: res.value };
+            }
+            else {
+                return { fsPath, fsItem: undefined };
+            }
+        }),
+        (objs) => _.partition(objs, (obj) => !!obj.fsItem)
+    );
+
+    return [
+        nonExtant.map((x) => x.fsPath.toString()),
+        extant.map((x) => x.fsItem)
+    ];
 }

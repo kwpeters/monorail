@@ -8,9 +8,12 @@ import stripJsonComments from "strip-json-comments";
 import * as chardet from "chardet";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { Deferred } from "@repo/depot/deferred";
+import { pipeAsync } from "@repo/depot/pipeAsync2";
+import { mapAsync } from "@repo/depot/promiseHelpers";
 import { ListenerTracker } from "./listenerTracker.mjs";
 import { Directory } from "./directory.mjs";
 import { type PathPart, reducePathParts } from "./pathHelpers.mjs";
+import { FsPath } from "./fsPath.mjs";
 
 
 /**
@@ -910,4 +913,44 @@ function copyFileSync(sourceFilePath: string, destFilePath: string, options?: IC
         const srcStats = fs.statSync(sourceFilePath);
         fs.utimesSync(destFilePath, srcStats.atime.valueOf() / 1000, srcStats.mtime.valueOf() / 1000);
     }
+}
+
+
+/**
+ * Converts an array of strings to a tuple containing the strings that do not
+ * represent extant files and File instances that represent extant files.
+ *
+ * @param fileCandidates - The strings that represent possible file paths
+ * @return A tuple.  The first element contains the strings that represent non
+ * extant files.  The second element contains File instances that represent
+ * extant files.
+ */
+export async function stringsToFiles(
+    fileCandidates: Array<string>
+): Promise<[Array<string>, Array<File>]> {
+
+    const fsPaths = fileCandidates.map((curStr) => new FsPath(curStr));
+
+    const [extantFiles, nonExtantFiles] = await pipeAsync(
+        mapAsync(fsPaths, async (fsPath) => {
+            let isFile = false;
+            try {
+                const stats = await fsp.stat(fsPath.toString());
+                isFile = !!stats && stats.isFile();
+            }
+            catch (err) {
+                isFile = false;
+            }
+            return { fsPath, isFile };
+        }),
+        (objs) => _.partition(objs, (obj) => !!obj.isFile)
+    );
+
+    return pipeAsync(
+        extantFiles.map((extantFileObj) => extantFileObj.fsPath),
+        // Map to File objects.
+        (paths) => paths.map((curPath) => new File(curPath.toString())),
+        (files) => [nonExtantFiles.map((x) => x.fsPath.toString()), files]
+    );
+
 }

@@ -1,16 +1,12 @@
 import * as os from "node:os";
-import * as fsp from "node:fs/promises";
-import * as _ from "lodash-es";
 import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
 import { fromError } from "zod-validation-error";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { mapAsync } from "@repo/depot/promiseHelpers";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
-import { isBlank, splitIntoLines } from "@repo/depot/stringHelpers";
-import { File } from "@repo/depot-node/file";
-import { FsPath } from "@repo/depot-node/fsPath";
-import { readableStreamToText } from "@repo/depot-node/streamHelpers";
+import { getStdinPipedLines } from "@repo/depot-node/ttyHelpers";
+import { File, stringsToFiles } from "@repo/depot-node/file";
 import { schemaFlashcardDeck, type Flashcard } from "./quizDomain.mjs";
 
 
@@ -135,61 +131,4 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
         inputFiles:         extantFiles,
         numFlashcardsToAsk: argv.numFlashcards
     });
-}
-
-
-/**
- * Gets lines of text that are piped into this app's stdin, if any.
- *
- * @return Lines of text that are being piped into this process, if any.
- */
-async function getStdinPipedLines(): Promise<Array<string>> {
-    const lines: Array<string> = [];
-    const inputIsPiped = !process.stdin.isTTY;
-    if (inputIsPiped) {
-        const text = await readableStreamToText(process.stdin);
-        const lines = splitIntoLines(text, false).filter((curLine) => !isBlank(curLine));
-        lines.push(...lines);
-    }
-    return lines;
-}
-
-
-/**
- * Converts an array of strings to a tuple containing the strings that do not
- * represent extant files and File instances that represent extant files.
- *
- * @param fileCandidates - The strings that represent possible file paths
- * @return A tuple.  The first element contains the strings that represent non
- * extant files.  The second element contains File instances that represent
- * extant files.
- */
-async function stringsToFiles(
-    fileCandidates: Array<string>
-): Promise<[Array<string>, Array<File>]> {
-
-    const fsPaths = fileCandidates.map((curStr) => new FsPath(curStr));
-
-    const [extantFiles, nonExtantFiles] = await pipeAsync(
-        mapAsync(fsPaths, async (fsPath) => {
-            let isFile = false;
-            try {
-                const stats = await fsp.stat(fsPath.toString());
-                isFile = !!stats && stats.isFile();
-            }
-            catch (err) {
-                isFile = false;
-            }
-            return { fsPath, isFile };
-        }),
-        (objs) => _.partition(objs, (obj) => !!obj.isFile)
-    );
-
-    return pipeAsync(
-        extantFiles.map((extantFileObj) => extantFileObj.fsPath),
-        // Map to File objects.
-        (paths) => paths.map((curPath) => new File(curPath.toString())),
-        (files) => [nonExtantFiles.map((x) => x.fsPath.toString()), files]
-    );
-
 }
