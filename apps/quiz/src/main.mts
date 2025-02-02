@@ -71,7 +71,10 @@ async function mainImpl(): Promise<Result<number, string>> {
 }
 
 
-async function askFlashcard(flashcard: Flashcard): Promise<boolean> {
+async function askFlashcard(
+    flashcard: Flashcard,
+    allowedAttempts = 3
+): Promise<boolean> {
 
     if (flashcard.prompt.type === "PromptSingleLine") {
         console.log(wrap(flashcard.prompt.prompt));
@@ -85,7 +88,6 @@ async function askFlashcard(flashcard: Flashcard): Promise<boolean> {
         assertNever(flashcard.prompt);
     }
 
-    const allowedAttempts = 3;
     let attemptsRemaining = allowedAttempts;
 
     while (attemptsRemaining > 0) {
