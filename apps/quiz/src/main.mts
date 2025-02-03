@@ -9,7 +9,7 @@ import { mapAsync } from "@repo/depot/promiseHelpers";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { assertNever } from "@repo/depot/never";
 import { promptForChoice, promptForString } from "@repo/depot-node/prompts";
-import { getStdinPipedLines, hr } from "@repo/depot-node/ttyHelpers";
+import { getStdoutColumns, getStdinPipedLines, hr } from "@repo/depot-node/ttyHelpers";
 import { File, stringsToFiles } from "@repo/depot-node/file";
 import { schemaFlashcardDeck, type Flashcard } from "./quizDomain.mjs";
 
@@ -55,21 +55,19 @@ async function mainImpl(): Promise<Result<number, string>> {
     let questionsRemaining = numFlashcardsToAsk;
     let numCorrect = 0;
 
-    console.log("");
-
     while (questionsRemaining > 0) {
         const curFlashcard = flashcards.pop()!;
 
-        const correct = await askFlashcard(curFlashcard);
-
         console.log(hr("-"));
-        console.log("");
+        const correct = await askFlashcard(curFlashcard);
 
         if (correct) {
             numCorrect++;
         }
         questionsRemaining--;
     }
+
+    console.log(hr("-"));
 
     console.log(`You answered ${numCorrect} of ${numFlashcardsToAsk} flashcards correctly.`);
     console.log("");
@@ -83,11 +81,11 @@ async function askFlashcard(
 ): Promise<boolean> {
 
     if (flashcard.prompt.type === "PromptSingleLine") {
-        console.log(wrap(flashcard.prompt.prompt));
+        console.log(wrap(flashcard.prompt.prompt, { width: getStdoutColumns(), indent: "" }));
     }
     else if (flashcard.prompt.type === "PromptMultiLine") {
         flashcard.prompt.prompt.forEach((line) => {
-            console.log(wrap(line));
+            console.log(wrap(line, { width: getStdoutColumns(), indent: "" }));
         });
     }
     else {
