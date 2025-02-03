@@ -9,7 +9,7 @@ import { mapAsync } from "@repo/depot/promiseHelpers";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { assertNever } from "@repo/depot/never";
 import { promptForChoice, promptForString } from "@repo/depot-node/prompts";
-import { getStdinPipedLines } from "@repo/depot-node/ttyHelpers";
+import { getStdinPipedLines, hr } from "@repo/depot-node/ttyHelpers";
 import { File, stringsToFiles } from "@repo/depot-node/file";
 import { schemaFlashcardDeck, type Flashcard } from "./quizDomain.mjs";
 
@@ -49,6 +49,9 @@ async function mainImpl(): Promise<Result<number, string>> {
     const numFlashcardsToAsk = config.numFlashcardsToAsk ?
         Math.min(config.numFlashcardsToAsk, flashcards.length) :
         flashcards.length;
+
+    console.log(`Starting quiz containing ${numFlashcardsToAsk} flashcards...`);
+
     let questionsRemaining = numFlashcardsToAsk;
     let numCorrect = 0;
 
@@ -58,6 +61,8 @@ async function mainImpl(): Promise<Result<number, string>> {
         const curFlashcard = flashcards.pop()!;
 
         const correct = await askFlashcard(curFlashcard);
+
+        console.log(hr("-"));
         console.log("");
 
         if (correct) {
@@ -67,6 +72,7 @@ async function mainImpl(): Promise<Result<number, string>> {
     }
 
     console.log(`You answered ${numCorrect} of ${numFlashcardsToAsk} flashcards correctly.`);
+    console.log("");
     return new SucceededResult(0);
 }
 
@@ -92,6 +98,7 @@ async function askFlashcard(
 
     while (attemptsRemaining > 0) {
 
+        let correctAnswer = "";
         let userIsCorrect = false;
 
         if (flashcard.answer.type === "AnswerCandidates") {
@@ -102,11 +109,13 @@ async function askFlashcard(
 
             const choices = allCandidates.map((cur) => ({ name: cur, value: cur }));
             const usersAnswer = await promptForChoice("Your answer:", choices);
-            userIsCorrect = usersAnswer === flashcard.answer.correctCandidate;
+            correctAnswer = flashcard.answer.correctCandidate;
+            userIsCorrect = usersAnswer === correctAnswer;
         }
         else if (flashcard.answer.type === "AnswerText") {
             const usersAnswer = await promptForString("Your answer: ");
-            userIsCorrect = usersAnswer === flashcard.answer.answer;
+            correctAnswer = flashcard.answer.answer;
+            userIsCorrect = usersAnswer === correctAnswer;
         }
         else {
             assertNever(flashcard.answer);
@@ -120,7 +129,7 @@ async function askFlashcard(
         attemptsRemaining--;
         const msg = attemptsRemaining > 0 ?
             `Incorrect.  You have ${attemptsRemaining} attempts remaining.` :
-            "Incorrect.  No more attempts.";
+            `Incorrect.  The answer was:\n${correctAnswer}`;
         console.log(msg);
     }
 
