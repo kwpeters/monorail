@@ -35,12 +35,13 @@ export function hr(str: string): string {
  * @return Lines of text that are being piped into this process, if any.
  */
 export async function getStdinPipedLines(): Promise<Array<string>> {
-    const lines: Array<string> = [];
     const inputIsPiped = !process.stdin.isTTY;
-    if (inputIsPiped) {
-        const text = await readableStreamToText(process.stdin);
-        const lines = splitIntoLines(text, false).filter((curLine) => !isBlank(curLine));
-        lines.push(...lines);
+
+    if (!inputIsPiped) {
+        return [];
     }
+
+    const text = await readableStreamToText(process.stdin);
+    const lines = splitIntoLines(text, false).filter((curLine) => !isBlank(curLine));
     return lines;
 }
