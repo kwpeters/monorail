@@ -125,6 +125,25 @@
             ],
         },
         {
+            "name": "quiz",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/tsx/dist/cli.mjs",
+            "stopOnEntry": false,
+            "args": [
+                "${workspaceRoot}/apps/quiz/src/index.cts",
+                "C:\\Users\\kwpet\\SynologyDrive\\Drive\\home\\quiz-sample.json"
+            ],
+            "cwd": "${workspaceRoot}",
+            "runtimeArgs": [
+                "--nolazy"
+            ],
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+        },
+        {
             "name": "quiz - test",
             "type": "node",
             "request": "launch",
