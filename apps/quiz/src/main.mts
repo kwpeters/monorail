@@ -199,7 +199,15 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
         .wrap(process.stdout.columns ?? 80)
         .argv;
 
+    // Get the input files specified as command line arguments.
     const inputStrings = argv._.filter((cur) => typeof cur === "string");
+
+    // Get the input files piped into this process.
+    //
+    // Note:  Reading from stdin does not seem to work well with the inquirer
+    // package.  When this app is invoked with stdin input, it exists
+    // immediately when the first prompt is displayed.  I think this is because
+    // everything has already been read from the stdin stream.
     inputStrings.push(...(await getStdinPipedLines()));
 
     const [nonExtantFiles, extantFiles] = await stringsToFiles(inputStrings);
