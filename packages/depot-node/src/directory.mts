@@ -3,7 +3,7 @@ import * as fsp from "node:fs/promises";
 import * as path from "node:path";
 import * as _ from "lodash-es";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
-import { Result, SucceededResult } from "@repo/depot/result";
+import { Result, SucceededResult, FailedResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
 import { sequence, mapAsync } from "@repo/depot/promiseHelpers";
 import { StorageSize } from "@repo/depot/storageSize";
@@ -83,6 +83,36 @@ export class Directory {
             )
         );
         return resExtantDir;
+    }
+
+
+    /**
+     * Reads the specified environment variable and verifies that its value refers
+     * to an extant directory.
+     *
+     * @param envVarName - The name of the environment variable
+     * @return If the environment variable exists and contains the path to an extant
+     * directory, a successful Result containing the Directory.  Otherwise, an error
+     * Result containing an error message.
+     */
+    public static async fromEnvVar(envVarName: string): Promise<Result<Directory, string>> {
+        const resDir = await pipeAsync(
+            process.env[envVarName],
+            (envVarValue) => Result.fromNullable(envVarValue, `The "${envVarName}" environment variable is not defined.`),
+            // Make sure the length of the environment variable's value is greater
+            // than zero.
+            (resEnvVarStr) => Result.gate(
+                (str) => {
+                    return str.length > 0 ?
+                        new SucceededResult(0) :
+                        new FailedResult(`The environment variable "envVarName" is set to an empty string.`);
+                },
+                resEnvVarStr
+            ),
+            (resEnvVarStr) => Result.mapSuccess((str) => new FsPath(str), resEnvVarStr),
+            (resPath) => PromiseResult.bind((path) => Directory.createIfExtant(path), resPath)
+        );
+        return resDir;
     }
 
 

@@ -64,6 +64,35 @@ describe("Directory", () => {
 
         });
 
+
+        describe("fromEnvVar()", () => {
+
+            it("returns a failed Result for env vars that refer to a non-extant filesystem item", async () => {
+                // eslint-disable-next-line turbo/no-undeclared-env-vars
+                process.env.DEPOT_NODE_TEST_NONEXTANT = path.join(tmpDir.toString(), "non-existant");
+                const res = await Directory.fromEnvVar("DEPOT_NODE_TEST_NONEXTANT");
+                expect(res.failed).toBeTrue();
+            });
+
+
+            it("returns a failed Result for env vars that refer to an extant *file*", async () => {
+                // eslint-disable-next-line turbo/no-undeclared-env-vars
+                process.env.DEPOT_NODE_TEST_NONEXTANT = __filename;
+                const res = await Directory.fromEnvVar("DEPOT_NODE_TEST_NONEXTANT");
+                expect(res.failed).toBeTrue();
+            });
+
+
+            it("returns a Directory when the env var refers to an extant directory", async () => {
+                // eslint-disable-next-line turbo/no-undeclared-env-vars
+                process.env.DEPOT_NODE_TEST_EXTANT = __dirname;
+                const res = await Directory.fromEnvVar("DEPOT_NODE_TEST_EXTANT");
+                expect(res.succeeded).toBeTrue();
+                expect(res.value!.toString().length).toBeGreaterThan(0);
+            });
+
+        });
+
     });
 
 

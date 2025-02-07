@@ -1,12 +1,9 @@
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
-import { PromiseResult } from "@repo/depot/promiseResult";
-import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { spawn } from "./spawn2.mjs";
 import { File } from "./file.mjs";
 import { Directory } from "./directory.mjs";
 import { type FsItem } from "./fsItem.mjs";
 import { OperatingSystem, getOs } from "./os.mjs";
-import { FsPath } from "./fsPath.mjs";
 
 
 export async function launchAdmin(executable: File, cwd: Directory | undefined = undefined): Promise<boolean> {
@@ -72,15 +69,19 @@ export async function getUncPath(fsItem: FsItem): Promise<Result<string, string>
  * Gets the user's profile directory.
  *
  * @return If the user's profile directory could be detected, a successful
- * Result containing a Directory.  Otherwise, an error message.
+ * Result containing the Directory.  Otherwise, an error message.
  */
 export async function getUserProfileDir(): Promise<Result<Directory, string>> {
+    return Directory.fromEnvVar("USERPROFILE");
+}
 
-    const resUserProfileDir = await pipeAsync(
-        process.env.USERPROFILE,
-        (strUserProfile) => Result.fromNullable(strUserProfile, "The USERPROFILE environment variable is not defined."),
-        (resUserProfileStr) => Result.mapSuccess((userProfileStr) => new FsPath(userProfileStr), resUserProfileStr),
-        (resPath) => PromiseResult.bind((path) => Directory.createIfExtant(path), resPath)
-    );
-    return resUserProfileDir;
+
+/**
+ * Gets the user's OneDrive directory.
+ *
+ * @return If the user's OneDrive directory could be detected, a successful
+ * Result containing the Directory.  Otherwise, an error message.
+ */
+export async function getOneDriveDir(): Promise<Result<Directory, string>> {
+    return Directory.fromEnvVar("OneDrive");
 }
