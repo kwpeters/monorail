@@ -2,7 +2,7 @@ import {
     anyMatchRegex, choose, chooseAsync, filterDefined, groupConsecutiveBy,
     insertIf, permutations, split, toArray, chooseFirst, chooseFirstAsync
 } from "./arrayHelpers.mjs";
-import { getTimerPromise } from "./promiseHelpers.mts";
+import { getTimerPromise } from "./promiseHelpers.mjs";
 import { FailedResult, SucceededResult } from "./result.mjs";
 import { getRandomInt } from "./random.mjs";
 
