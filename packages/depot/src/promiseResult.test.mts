@@ -4,6 +4,9 @@ import { Result, FailedResult, SucceededResult } from "./result.mjs";
 import { pipeAsync } from "./pipeAsync.mjs";
 
 
+// TODO: Convert this file to use pipeAsync2.
+
+
 describe("augment()", () => {
 
     it("if the input is an error, returns it without invoking the function", async () => {
@@ -113,6 +116,7 @@ describe("augment()", () => {
 
 
 describe("toPromise()", () => {
+
     it("when given an error result returns a rejected promise", async () => {
         const pr = Promise.resolve(new FailedResult("error message"));
         try {
@@ -135,6 +139,132 @@ describe("toPromise()", () => {
             expect(false).toBeTruthy();
         }
     });
+});
+
+
+describe("firstSuccess()", () => {
+
+    it("returns the errors when all inputs are failures", async () => {
+        const inputs = [
+            pipeAsync(getTimerPromise(15, 0))
+            .pipe(() => new FailedResult("error 1"))
+            .end(),
+            pipeAsync(getTimerPromise(5, 0))
+            .pipe(() => new FailedResult("error 2"))
+            .end(),
+            pipeAsync(getTimerPromise(10, 0))
+            .pipe(() => new FailedResult("error 3"))
+            .end()
+        ];
+
+        const res = await PromiseResult.firstSuccess(inputs);
+        expect(res.failed).toBeTrue();
+        expect(res.error).toEqual(["error 1", "error 2", "error 3"]);
+    });
+
+
+    it("returns the first successful Result", async () => {
+        const inputs = [
+            pipeAsync(getTimerPromise(15, 0))
+            .pipe(() => new FailedResult("error 1"))
+            .end(),
+
+            pipeAsync(getTimerPromise(30, 0))
+            .pipe(() => new SucceededResult("success 1"))
+            .end(),
+
+            // Even though this array element fulfills quicker, it will still be
+            // checked after the previous array element.
+            pipeAsync(getTimerPromise(5, 0))
+            .pipe(() => new SucceededResult("success 2"))
+            .end()
+        ];
+
+        const res = await PromiseResult.firstSuccess(inputs);
+        expect(res.succeeded).toBeTrue();
+        expect(res.value).toEqual("success 1");
+    });
+
+
+    it("supports elements that are not async", async () => {
+        const inputs = [
+            new FailedResult("error"),
+
+            new SucceededResult("success 1"),
+
+            pipeAsync(getTimerPromise(5, 0))
+            .pipe(() => new SucceededResult("success 2"))
+            .end()
+        ];
+
+        const res = await PromiseResult.firstSuccess(inputs);
+        expect(res.succeeded).toBeTrue();
+        expect(res.value).toEqual("success 1");
+    });
+
+});
+
+
+describe("firstError()", () => {
+
+    it("when all inputs are successful returns a failure containing the success values", async () => {
+        const inputs = [
+            pipeAsync(getTimerPromise(15, 0))
+            .pipe(() => new SucceededResult("success 1"))
+            .end(),
+            pipeAsync(getTimerPromise(5, 0))
+            .pipe(() => new SucceededResult("success 2"))
+            .end(),
+            pipeAsync(getTimerPromise(10, 0))
+            .pipe(() => new SucceededResult("success 3"))
+            .end()
+        ];
+
+        const res = await PromiseResult.firstError(inputs);
+        expect(res.failed).toBeTrue();
+        expect(res.error).toEqual(["success 1", "success 2", "success 3"]);
+    });
+
+
+    it("when a failure is found returns a successful Result containing the error", async () => {
+        const inputs = [
+            pipeAsync(getTimerPromise(15, 0))
+            .pipe(() => new SucceededResult("success 1"))
+            .end(),
+
+            pipeAsync(getTimerPromise(30, 0))
+            .pipe(() => new FailedResult("error 1"))
+            .end(),
+
+            // Even though this array element fulfills quicker, it will still be
+            // checked after the previous array element.
+            pipeAsync(getTimerPromise(5, 0))
+            .pipe(() => new FailedResult("error 2"))
+            .end()
+        ];
+
+        const res = await PromiseResult.firstError(inputs);
+        expect(res.succeeded).toBeTrue();
+        expect(res.value).toEqual("error 1");
+    });
+
+
+    it("supports elements that are not async", async () => {
+        const inputs = [
+            new SucceededResult("success"),
+
+            new FailedResult("error 1"),
+
+            pipeAsync(getTimerPromise(5, 0))
+            .pipe(() => new FailedResult("error 2"))
+            .end()
+        ];
+
+        const res = await PromiseResult.firstError(inputs);
+        expect(res.succeeded).toBeTrue();
+        expect(res.value).toEqual("error 1");
+    });
+
 });
 
 

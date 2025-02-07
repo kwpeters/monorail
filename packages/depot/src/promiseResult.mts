@@ -91,6 +91,62 @@ export namespace PromiseResult {
 
 
     /**
+     * Finds the first successful Result in the input collection.  The input
+     * Results can optionally be asynchronous.
+     *
+     * @param inputResults - The Results to be searched
+     * @return The first successful Result found is returned immediately.  If
+     *  all Results are failures a failure Result is returned wrapping an array
+     *  of all the errors.
+     */
+    export async function firstSuccess<TSuccess, TError>(
+        inputResults: Iterable<Result<TSuccess, TError> | Promise<Result<TSuccess, TError>>>
+    ): Promise<Result<TSuccess, Array<TError>>> {
+
+        const errors = [] as Array<TError>;
+        for (const curInput of inputResults) {
+            const res = await Promise.resolve(curInput);
+            if (res.succeeded) {
+                return res;
+            }
+            else {
+                errors.push(res.error);
+            }
+        }
+        // If we got here, all inputs were failures.
+        return new FailedResult(errors);
+    }
+
+
+    /**
+     * Finds the first failure Result in the input collection.  The input
+     * Results can optionally be asynchronous.
+     *
+     * @param inputResults - The Results to be searched
+     * @return If a failure Result is found, a successful Result is returned
+     * wrapping the error.  If all inputs are successful, a failure Result is
+     * returned wrapping an array of the success values.
+     */
+    export async function firstError<TSuccess, TError>(
+        inputResults: Iterable<Result<TSuccess, TError> | Promise<Result<TSuccess, TError>>>
+    ): Promise<Result<TError, Array<TSuccess>>> {
+
+        const successVals = [] as Array<TSuccess>;
+        for (const curInput of inputResults) {
+            const res = await Promise.resolve(curInput);
+            if (res.failed) {
+                return new SucceededResult(res.error);
+            }
+            else {
+                successVals.push(res.value);
+            }
+        }
+        // If we got here, all inputs were successful.
+        return new FailedResult(successVals);
+    }
+
+
+    /**
      * Converts a Promise into a Promise<Result<>> that will always resolve with a
      * Result.
      *
