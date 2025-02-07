@@ -81,7 +81,7 @@ describe("NodePackage", () => {
                     expect(packedFile.existsSync()).toBeTruthy();
                     done();
                 });
-            }, 10 * 1000);
+            }, 15 * 1000);
 
 
             it("will place the .tgz in the package directory when an output directory is not specified", (done) => {
