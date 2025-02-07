@@ -6,7 +6,7 @@ import { File } from "./file.mjs";
 import { Directory, type IDirectoryContents, type IFilterResult } from "./directory.mjs";
 import { getOs, OperatingSystem } from "./os.mjs";
 import { tmpDir } from "./specHelpers.test.mjs";
-import { FsPath } from "./fsPath.mts";
+import { FsPath } from "./fsPath.mjs";
 
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));

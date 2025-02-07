@@ -77,7 +77,7 @@ export class Directory {
                     // See if the directory exists.  Note: exists() returns
                     // undefined when the item is not a directory.
                     const stats = await dir.exists();
-                    return Result.fromNullable(stats, `Directory "${dir.toString()}" does not exist.`)
+                    return Result.fromNullable(stats, `Directory "${dir.toString()}" does not exist.`);
                 },
                 resDir
             )
