@@ -5,10 +5,13 @@ import { hideBin } from "yargs/helpers";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
 import { CompareResult, compareStrI } from "@repo/depot/compare";
+import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { type PathPart } from "@repo/depot-node/pathHelpers";
 import { Directory } from "@repo/depot-node/directory";
 import { File } from "@repo/depot-node/file";
 import { getMostRecentlyModified } from "@repo/depot-node/filesystemHelpers";
+import { getOneDriveDir, getUserProfileDir } from "@repo/depot-node/windowsHelpers";
+import { FsPath } from "@repo/depot-node/fsPath";
 
 
 if (runningThisScript()) {
@@ -87,23 +90,28 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
 
 async function getMostRecentSharexScreenCapture(): Promise<Result<File, string>> {
 
-    // Get the directory where ShareX saves its files.
-    // eslint-disable-next-line turbo/no-undeclared-env-vars
-    const homeDir = new Directory(process.env.USERPROFILE!);
-    if (!homeDir.existsSync()) {
-        return new FailedResult(`Home directory "${homeDir.toString() }" does not exist.`);
+    const resScreenshotsDir = await PromiseResult.firstSuccess([
+        // Attempt to locate the ShareX screenshots directory in the user's
+        // Documents folder.
+        pipeAsync(
+            getUserProfileDir(),
+            (resUserProfileDir) => Result.mapSuccess((dir) => new FsPath(dir, "Documents", "ShareX", "Screenshots"), resUserProfileDir),
+            (resScreenshotsPath) => PromiseResult.bind((path) => Directory.createIfExtant(path), resScreenshotsPath)
+        ),
+        // Attempt to locate the ShareX screenshots directory in the users
+        // OneDrive folder.
+        pipeAsync(
+            getOneDriveDir(),
+            (resOneDriveDir) => Result.mapSuccess((dir) => new FsPath(dir, "Documents", "ShareX", "Screenshots"), resOneDriveDir),
+            (resOneDrivePath) => PromiseResult.bind((path) => Directory.createIfExtant(path), resOneDrivePath)
+        )
+    ]);
+
+    if (resScreenshotsDir.failed) {
+        return new FailedResult(`Failed to locate ShareX screenshots directory.  Encountered the following errors:\n${resScreenshotsDir.error.join("\n")}`);
     }
 
-    const docsDir = new Directory(homeDir, "Documents");
-    if (!docsDir.existsSync()) {
-        return new FailedResult(`Documents directory ${docsDir.toString()} does not exist.`);
-    }
-
-    const screenshotsDir = new Directory(docsDir, "ShareX", "Screenshots");
-
-    if (!screenshotsDir.existsSync()) {
-        return new FailedResult(`ShareX screenshots directory "${screenshotsDir.toString()}" does not exist.`);
-    }
+    const screenshotsDir = resScreenshotsDir.value;
 
     // Within ShareX's "Screenshots" folder, it creates monthly folders (for example, "2023-02").
     // Find the one that has been modified most recently.
