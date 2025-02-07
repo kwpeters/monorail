@@ -44,6 +44,25 @@
             ],
         },
         {
+            "name": "copy-latest-sharex-img",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/tsx/dist/cli.mjs",
+            "stopOnEntry": false,
+            "args": [
+                "${workspaceRoot}/apps/copy-latest-sharex-img/src/index.mts",
+                "c:\\kwptmp\\monorail-debugging.png"
+            ],
+            "cwd": "${workspaceRoot}",
+            "runtimeArgs": [
+                "--nolazy"
+            ],
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+        },
+        {
             "name": "copywrite",
             "type": "node",
             "request": "launch",
