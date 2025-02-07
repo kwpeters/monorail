@@ -1070,6 +1070,7 @@ export namespace Result {
             new SucceededResult(nullable);
     }
 
+
     /**
      * Converts an Option to a Result.
      *
