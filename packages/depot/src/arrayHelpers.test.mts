@@ -1,5 +1,11 @@
-import {anyMatchRegex, choose, chooseAsync, filterDefined, groupConsecutiveBy, insertIf, permutations, split, toArray} from "./arrayHelpers.mjs";
+import {
+    anyMatchRegex, choose, chooseAsync, filterDefined, groupConsecutiveBy,
+    insertIf, permutations, split, toArray, chooseFirst, chooseFirstAsync
+} from "./arrayHelpers.mjs";
+import { getTimerPromise } from "./promiseHelpers.mts";
 import { FailedResult, SucceededResult } from "./result.mjs";
+import { getRandomInt } from "./random.mjs";
+
 
 describe("anyMatchRegex()", () => {
 
@@ -263,6 +269,80 @@ describe("chooseAsync()", () => {
             Promise.resolve(new FailedResult(undefined));
         const out = await chooseAsync(chooseEvenAsync, [1, 2, 3, 4, 5, 6]);
         expect(out).toEqual([{ val: 2 }, { val: 4 }, { val: 6 }]);
+    });
+
+});
+
+
+describe("chooseFirst()", () => {
+
+    it("returns a failed Result with the error value when no inputs produce a success", () => {
+        let numInvocations = 0;
+        const fnContainsFox = (str: string) => {
+            numInvocations++;
+            return str.includes("fox") ?
+                new SucceededResult(str + "-output") : new FailedResult("error message");
+        };
+
+        const inputs = ["foo bar", "quux", "one hen", "two ducks"];
+        const res = chooseFirst(fnContainsFox, "none found", inputs);
+        expect(res.failed).toBeTrue();
+        expect(res.error).toEqual("none found");
+        expect(numInvocations).toEqual(4);
+    });
+
+
+    it("returns a successful Result for the first input that produces a success", () => {
+        let numInvocations = 0;
+        const fnContainsFox = (str: string) => {
+            numInvocations++;
+            return str.includes("fox") ?
+                new SucceededResult(str + "-output") : new FailedResult("error message");
+        };
+
+        const inputs = ["foo bar", "brown fox", "quick brown fox"];
+        const res = chooseFirst(fnContainsFox, "none found", inputs);
+        expect(res.succeeded).toBeTrue();
+        expect(res.value).toEqual("brown fox-output");
+        expect(numInvocations).toEqual(2);
+    });
+
+});
+
+
+describe("chooseFirstAsync()", () => {
+
+    it("returns a failed Result with the error value when no inputs produce a success", async () => {
+        let numInvocations = 0;
+        const fnContainsFox = async (str: string) => {
+            numInvocations++;
+            await getTimerPromise(getRandomInt(10, 30), 0);
+            return str.includes("fox") ?
+                new SucceededResult(str + "-output") : new FailedResult("error message");
+        };
+
+        const inputs = ["foo bar", "quux", "one hen", "two ducks"];
+        const res = await chooseFirstAsync(fnContainsFox, "none found", inputs);
+        expect(res.failed).toBeTrue();
+        expect(res.error).toEqual("none found");
+        expect(numInvocations).toEqual(4);
+    });
+
+
+    it("returns a successful Result for the first input that produces a success", async () => {
+        let numInvocations = 0;
+        const fnContainsFox = async (str: string) => {
+            numInvocations++;
+            await getTimerPromise(getRandomInt(10, 30), 0);
+            return str.includes("fox") ?
+                new SucceededResult(str + "-output") : new FailedResult("error message");
+        };
+
+        const inputs = ["foo bar", "brown fox", "quick brown fox"];
+        const res = await chooseFirstAsync(fnContainsFox, "none found", inputs);
+        expect(res.succeeded).toBeTrue();
+        expect(res.value).toEqual("brown fox-output");
+        expect(numInvocations).toEqual(2);
     });
 
 });

@@ -1,5 +1,5 @@
 import * as _ from "lodash-es";
-import { Result } from "./result.mjs";
+import { FailedResult, Result } from "./result.mjs";
 
 
 /**
@@ -222,4 +222,58 @@ export async function chooseAsync<TIn, TOut, TError>(
     }
     return outputCol;
 
+}
+
+
+/**
+ * Iterates over _inputs_, passing them into _fn_. Returns the first successful
+ * Result that is returned.  If none produce a success, a failed Result wrapping
+ * _errVal_ is returned.
+ *
+ * @param fn - The function to be invoked
+ * @param errVal - The failed Result value if no inputs produce a success
+ * @param inputs - The inputs to be passed to _fn_
+ * @return Description
+ */
+export function chooseFirst<TIn, TFnSuccess, TFnError, TError>(
+    fn: (v: TIn) => Result<TFnSuccess, TFnError>,
+    errVal: TError,
+    inputs: Iterable<TIn>
+): Result<TFnSuccess, TError> {
+
+    for (const curInput of inputs) {
+        const res = fn(curInput);
+        if (res.succeeded) {
+            return res;
+        }
+    }
+    // If we got here, non of the inputs produced a successful Result.
+    return new FailedResult(errVal);
+}
+
+
+/**
+ * Iterates over _inputs_, passing them into _fn_ (which is potentially
+ * asynchronous). Returns the first successful Result that is returned.  If none
+ * produce a success, a failed Result wrapping _errVal_ is returned.
+ *
+ * @param fn - The function to be invoked
+ * @param errVal - The failed Result value if no inputs produce a success
+ * @param inputs - The inputs to be passed to _fn_
+ * @return Description
+ */
+export async function chooseFirstAsync<TIn, TFnSuccess, TFnError, TError>(
+    fn: (v: TIn) => Result<TFnSuccess, TFnError> | Promise<Result<TFnSuccess, TFnError>>,
+    errVal: TError,
+    inputs: Iterable<TIn>
+): Promise<Result<TFnSuccess, TError>> {
+
+    for (const curInput of inputs) {
+        const res = await fn(curInput);
+        if (res.succeeded) {
+            return res;
+        }
+    }
+    // If we got here, non of the inputs produced a successful Result.
+    return new FailedResult(errVal);
 }
