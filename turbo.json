@@ -6,6 +6,9 @@
   // daemon clean" or rebooting, but it's easier to not allow it to run.
   // See: https://github.com/vercel/turborepo/issues/3455
   "daemon": false,
+  "globalPassThroughEnv": [
+    "USERPROFILE"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
