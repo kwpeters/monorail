@@ -2,9 +2,13 @@ import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import * as path from "node:path";
 import * as _ from "lodash-es";
+import { pipeAsync } from "@repo/depot/pipeAsync2";
+import { Result, SucceededResult } from "@repo/depot/result";
+import { PromiseResult } from "@repo/depot/promiseResult";
 import { sequence, mapAsync } from "@repo/depot/promiseHelpers";
 import { StorageSize } from "@repo/depot/storageSize";
 import { matchesAny } from "@repo/depot/regexpHelpers";
+import { FsPath } from "./fsPath.mjs";
 import { File } from "./file.mjs";
 import { type PathPart, reducePathParts } from "./pathHelpers.mjs";
 import { type ISystemError } from "./nodeTypes.mjs";
@@ -51,6 +55,34 @@ export class Directory {
     public static relativeParts(from: Directory, to: Directory): Array<string> {
         const relPath = path.relative(from.toString(), to.toString());
         return relPath.split(path.sep);
+    }
+
+
+    /**
+     * Creates a new Directory instance if the specified path refers to an
+     * extant directory.
+     *
+     * @param fsPath - The path to be checked
+     * @return If _fsPath_ refers to an extant directory, a successful Result
+     * containing the Directory instance.  Otherwise, a failed Result containing
+     * an error message.
+     */
+    public static async createIfExtant(fsPath: FsPath): Promise<Result<Directory, string>> {
+
+        const resExtantDir = await pipeAsync(
+            new Directory(fsPath.toString()),
+            (dir) => new SucceededResult(dir) as Result<Directory, string>,
+            (resDir) => PromiseResult.gate(
+                async (dir) => {
+                    // See if the directory exists.  Note: exists() returns
+                    // undefined when the item is not a directory.
+                    const stats = await dir.exists();
+                    return Result.fromNullable(stats, `Directory "${dir.toString()}" does not exist.`)
+                },
+                resDir
+            )
+        );
+        return resExtantDir;
     }
 
 

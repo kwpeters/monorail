@@ -6,6 +6,7 @@ import { File } from "./file.mjs";
 import { Directory, type IDirectoryContents, type IFilterResult } from "./directory.mjs";
 import { getOs, OperatingSystem } from "./os.mjs";
 import { tmpDir } from "./specHelpers.test.mjs";
+import { FsPath } from "./fsPath.mts";
 
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
@@ -45,6 +46,23 @@ describe("Directory", () => {
 
         });
 
+
+        describe("createIfExtant()", () => {
+
+            it("returns a failed Result for a non-extant directory", async () => {
+                const path = new FsPath(__dirname, "non_extant_dir");
+                const res = await Directory.createIfExtant(path);
+                expect(res.failed).toBeTrue();
+            });
+
+
+            it("returns a successful Result for an extant directory", async () => {
+                const path = new FsPath(__dirname);
+                const res = await Directory.createIfExtant(path);
+                expect(res.succeeded).toBeTrue();
+            });
+
+        });
 
     });
 
