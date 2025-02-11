@@ -3,7 +3,7 @@ import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import { Result, FailedResult, SucceededResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
-import { pipeAsync } from "@repo/depot/pipeAsync";
+import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { errorToString } from "@repo/depot/errorHelpers";
 import { type PathPart, reducePathParts } from "./pathHelpers.mjs";
 import { File } from "./file.mjs";
@@ -195,10 +195,10 @@ export class Symlink {
         await dest.directory.ensureExists();
         const symlinkType = targetFsItemRes.value instanceof Directory ? "dir" : "file";
 
-        const pr =
-            pipeAsync(PromiseResult.fromPromise(fsp.symlink(pathToTargetRes.value, dest._symlinkPath, symlinkType)))
-            .pipe((res) => Result.mapSuccess(() => dest, res))
-            .end();
+        const pr = pipeAsync(
+            PromiseResult.fromPromise(fsp.symlink(pathToTargetRes.value, dest._symlinkPath, symlinkType)),
+            (res) => Result.mapSuccess(() => dest, res)
+        );
 
         return pr;
     }

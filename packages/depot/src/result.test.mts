@@ -2,7 +2,6 @@ import { assertNever } from "./never.mjs";
 import { NoneOption, SomeOption } from "./option.mjs";
 import { pipe } from "./pipe.mjs";
 import { pipe as pipe2 } from "./pipe2.mjs";
-import { pipeAsync } from "./pipeAsync.mjs";
 import { pipeAsync as pipeAsync2 } from "./pipeAsync2.mjs";
 import { FailedResult, Result, SucceededResult } from "./result.mjs";
 
@@ -1258,15 +1257,6 @@ describe("Result namespace", () => {
                     (res) => Result.throwIfFailedWith("error 2", res)
                 );
             }).toThrow();
-        });
-
-
-        it("can be used in a pipeAsync()", async () => {
-            await expectAsync(
-                pipeAsync(Promise.resolve(new FailedResult("error 1") as Result<number, string>))
-                .pipe((res) => Result.throwIfFailedWith("error 2", res))
-                .end()
-            ).toBeRejected();
         });
 
 
