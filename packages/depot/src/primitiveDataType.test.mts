@@ -71,6 +71,15 @@ describe("Int8", () => {
             });
         });
 
+
+        describe("numBits", () => {
+
+            it("returns 8", () => {
+                expect(Int8.numBits).toEqual(8);
+            });
+
+        });
+
     });
 
 
@@ -158,6 +167,15 @@ describe("UInt8", () => {
                 expect(res.succeeded).toBeTrue();
                 expect(res.value!.value).toEqual(5);
             });
+        });
+
+
+        describe("numBits", () => {
+
+            it("returns 8", () => {
+                expect(UInt8.numBits).toEqual(8);
+            });
+
         });
 
     });
@@ -249,6 +267,15 @@ describe("Int16", () => {
             });
         });
 
+
+        describe("numBits", () => {
+
+            it("returns 16", () => {
+                expect(Int16.numBits).toEqual(16);
+            });
+
+        });
+
     });
 
 
@@ -336,6 +363,15 @@ describe("UInt16", () => {
                 expect(res.succeeded).toBeTrue();
                 expect(res.value!.value).toEqual(5);
             });
+        });
+
+
+        describe("numBits", () => {
+
+            it("returns 16", () => {
+                expect(UInt16.numBits).toEqual(16);
+            });
+
         });
 
     });
@@ -427,6 +463,15 @@ describe("Int32", () => {
             });
         });
 
+
+        describe("numBits", () => {
+
+            it("returns 32", () => {
+                expect(Int32.numBits).toEqual(32);
+            });
+
+        });
+
     });
 
 
@@ -516,6 +561,15 @@ describe("UInt32", () => {
             });
         });
 
+
+        describe("numBits", () => {
+
+            it("returns 32", () => {
+                expect(UInt32.numBits).toEqual(32);
+            });
+
+        });
+
     });
 
 
@@ -593,6 +647,15 @@ describe("Int64", () => {
                 expect(res.succeeded).toBeTrue();
                 expect(res.value!.value).toEqual(BigInt(5));
             });
+        });
+
+
+        describe("numBits", () => {
+
+            it("returns 64", () => {
+                expect(Int64.numBits).toEqual(64);
+            });
+
         });
 
     });
@@ -674,6 +737,15 @@ describe("UInt64", () => {
             });
         });
 
+
+        describe("numBits", () => {
+
+            it("returns 64", () => {
+                expect(UInt64.numBits).toEqual(64);
+            });
+
+        });
+
     });
 
 
@@ -737,6 +809,15 @@ describe("Float32", () => {
             });
         });
 
+
+        describe("numBits", () => {
+
+            it("returns 32", () => {
+                expect(Float32.numBits).toEqual(32);
+            });
+
+        });
+
     });
 
 
@@ -798,6 +879,15 @@ describe("Float64", () => {
                 expect(res.succeeded).toBeTrue();
                 expect(res.value!.value).toEqual(5.2);
             });
+        });
+
+
+        describe("numBits", () => {
+
+            it("returns 64", () => {
+                expect(Float64.numBits).toEqual(64);
+            });
+
         });
 
     });

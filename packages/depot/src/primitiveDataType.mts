@@ -15,6 +15,11 @@ export class Int8 {
     }
 
 
+    public static get numBits(): number {
+        return 8;
+    }
+
+
     public static fromString(str: string): Result<Int8, string> {
         return pipe(
             isNonBlankString(str, "An empty string is not a valid Int8 value."),
@@ -67,6 +72,11 @@ export class UInt8 {
 
     public static get dataTypeMax(): number {
         return Math.pow(2, 8) - 1;      // 255
+    }
+
+
+    public static get numBits(): number {
+        return 8;
     }
 
 
@@ -125,6 +135,11 @@ export class Int16 {
     }
 
 
+    public static get numBits(): number {
+        return 16;
+    }
+
+
     public static fromString(str: string): Result<Int16, string> {
         return pipe(
             isNonBlankString(str, "An empty string is not a valid Int16 value."),
@@ -177,6 +192,11 @@ export class UInt16 {
 
     public static get dataTypeMax(): number {
         return Math.pow(2, 16) - 1;      // 65_535
+    }
+
+
+    public static get numBits(): number {
+        return 16;
     }
 
 
@@ -235,6 +255,11 @@ export class Int32 {
     }
 
 
+    public static get numBits(): number {
+        return 32;
+    }
+
+
     public static fromString(str: string): Result<Int32, string> {
         return pipe(
             isNonBlankString(str, "An empty string is not a valid Int32 value."),
@@ -290,6 +315,11 @@ export class UInt32 {
     }
 
 
+    public static get numBits(): number {
+        return 32;
+    }
+
+
     public static fromString(str: string): Result<UInt32, string> {
         return pipe(
             isNonBlankString(str, "An empty string is not a valid UInt32 value."),
@@ -342,6 +372,11 @@ export class Int64 {
 
     public static get dataTypeMax(): bigint {
         return BigInt(2) ** BigInt(63) - BigInt(1);      // 9_223_372_036_854_775_807n
+    }
+
+
+    public static get numBits(): number {
+        return 64;
     }
 
 
@@ -410,6 +445,11 @@ export class UInt64 {
     }
 
 
+    public static get numBits(): number {
+        return 64;
+    }
+
+
     public static fromString(str: string): Result<UInt64, string> {
         return pipe(
             isNonBlankString(str, "An empty string is not a valid UInt64 value."),
@@ -475,6 +515,11 @@ export class Float32 {
     }
 
 
+    public static get numBits(): number {
+        return 32;
+    }
+
+
     public static fromString(str: string): Result<Float32, string> {
         return pipe(
             isNonBlankString(str, "An empty string is not a valid Float32 value."),
@@ -527,6 +572,11 @@ export class Float64 {
 
     public static get dataTypeMax(): number {
         return Number.MAX_VALUE;
+    }
+
+
+    public static get numBits(): number {
+        return 64;
     }
 
 
