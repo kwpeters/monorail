@@ -9,14 +9,21 @@ module.exports = {
         "tsconfigRootDir": ".",
         "project": [
             project
-
-            // TODO: Given that the current working directory is correct, we
-            // could specify the project as follows:
+            // TODO: Given that the cwd is correct we could just specify the TS
+            // config as follows.  If we do it this way, this file can be easily
+            // converted to a json file, which will make it much easier to
+            // migrate to ESLint 9's flat configuration.
             //
             // "./tsconfig.ut.json"
+            
             //
-            // Doing so would make this file easier to convert to a flat config
-            // json file that ESLint 9 uses.
+            // The following method of specifying project files is not
+            // preferred.  See the following ESLint documentation that describes
+            // how it may lead to out of memory situations.
+            // https://typescript-eslint.io/troubleshooting/typed-linting/monorepos/#important-note-regarding-large--10-multi-package-monorepos
+            //
+            // "./packages/*/tsconfig.json", "./apps/*/tsconfig.json",
+            // "./build/tsconfig.json"
         ]
     },
     extends: [
@@ -54,7 +61,19 @@ module.exports = {
         },
         {
             "files": [
-                "*.test.ts"
+                "*.test.ts",
+                "*.test.mts",
+                "*.test.cts",
+                "*.test.js",
+                "*.test.mjs",
+                "*.test.cjs",
+
+                "*.spec.ts",
+                "*.spec.mts",
+                "*.spec.cts",
+                "*.spec.js",
+                "*.spec.mjs",
+                "*.spec.cjs"
             ],
             "rules": {
                 "@typescript-eslint/no-empty-function": "off",
@@ -64,7 +83,6 @@ module.exports = {
         }
     ],
     rules: {
-
         "@stylistic/brace-style": [
             "error",
             "stroustrup",
@@ -173,16 +191,10 @@ module.exports = {
                     "private-static-field",
                     "#private-static-field",
                     "static-field",
-                    "public-static-get",
-                    "protected-static-get",
-                    "private-static-get",
-                    "#private-static-get",
-                    "static-get",
-                    "public-static-set",
-                    "protected-static-set",
-                    "private-static-set",
-                    "#private-static-set",
-                    "static-set",
+                    "public-static-accessor",
+                    "protected-static-accessor",
+                    "private-static-accessor",
+                    "#private-static-accessor",
                     "static-initialization",
                     "public-static-method",
                     "protected-static-method",
@@ -221,50 +233,11 @@ module.exports = {
                     "signature",
                     "call-signature",
 
-                    // Getters
-                    "get",
-                    "instance-get",
-                    "decorated-get",
-                    "abstract-get",
-
-                    "private-get",
-                    "#private-get",
-                    "private-decorated-get",
-                    "private-instance-get",
-                    "#private-instance-get",
-
-                    "protected-get",
-                    "protected-decorated-get",
-                    "protected-instance-get",
-                    "protected-abstract-get",
-
-                    "public-get",
-                    "public-decorated-get",
-                    "public-instance-get",
-                    "public-abstract-get",
-
-                    // Setters
-                    "set",
-                    "instance-set",
-                    "decorated-set",
-                    "abstract-set",
-
-                    "private-set",
-                    "#private-set",
-                    "private-decorated-set",
-                    "private-instance-set",
-                    "#private-instance-set",
-
-                    "protected-set",
-                    "protected-decorated-set",
-                    "protected-instance-set",
-                    "protected-abstract-set",
-
-                    "public-set",
-                    "public-decorated-set",
-                    "public-instance-set",
-                    "public-abstract-set",
-
+                    // Accessors
+                    "public-accessor",
+                    "protected-accessor",
+                    "private-accessor",
+                    "#private-accessor",
 
                     // Methods
                     "public-decorated-method",
@@ -446,7 +419,7 @@ module.exports = {
         //
         // See: https://github.com/typescript-eslint/typescript-eslint/issues/9999
         //
-        // TODO: Enable this rule when there is a new version of typescript-eslint.
+        // TODO: Re-enable this rule when there is a new version of typescript-eslint.
         "@typescript-eslint/prefer-promise-reject-errors": "off",
         "@typescript-eslint/prefer-readonly": [
             "error"
@@ -502,7 +475,8 @@ module.exports = {
         ],
         "block-scoped-var": "error",
         "block-spacing": "error",
-        "camelcase": "error",
+        // Deprecated in favor of naming-convention.
+        "camelcase": "off",
         "comma-style": [
             "error",
             "last"
@@ -752,12 +726,19 @@ module.exports = {
             "error",
             {
                 "devDependencies": [
-                    "**/*.test.js",
                     "**/*.test.ts",
                     "**/*.test.mts",
-                    "**/*.spec.js",
+                    "**/*.test.cts",
+                    "**/*.test.js",
+                    "**/*.test.mjs",
+                    "**/*.test.cjs",
+
                     "**/*.spec.ts",
-                    "**/*.spec.mts"
+                    "**/*.spec.mts",
+                    "**/*.spec.cts",
+                    "**/*.spec.js",
+                    "**/*.spec.mjs",
+                    "**/*.spec.cjs"
                 ]
             }
         ],
