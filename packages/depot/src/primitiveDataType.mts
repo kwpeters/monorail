@@ -4,6 +4,9 @@ import { isNonBlankString } from "./stringHelpers.mjs";
 import { setBitInBigInt, setBitInNumber } from "./bitstringHelpers.mjs";
 
 
+/**
+ * Represents an 8-bit signed integer value
+ */
 export class Int8 {
     /**
      * Gets the minimum value for this data type
@@ -143,6 +146,9 @@ export class Int8 {
 }
 
 
+/**
+ * Represents an 8-bit unsigned integer value
+ */
 export class UInt8 {
     /**
      * Gets the minimum value for this data type
@@ -282,6 +288,9 @@ export class UInt8 {
 }
 
 
+/**
+ * Represents a 16-bit signed integer value
+ */
 export class Int16 {
     /**
      * Gets the minimum value for this data type
@@ -421,6 +430,9 @@ export class Int16 {
 }
 
 
+/**
+ * Represents a 16-bit unsigned integer value
+ */
 export class UInt16 {
     /**
      * Gets the minimum value for this data type
@@ -560,6 +572,9 @@ export class UInt16 {
 }
 
 
+/**
+ * Represents a 32-bit signed integer value
+ */
 export class Int32 {
     /**
      * Gets the minimum value for this data type
@@ -699,6 +714,9 @@ export class Int32 {
 }
 
 
+/**
+ * Represents a 32-bit unsigned integer value
+ */
 export class UInt32 {
     /**
      * Gets the minimum value for this data type
@@ -838,6 +856,9 @@ export class UInt32 {
 }
 
 
+/**
+ * Represents a 64-bit signed integer value
+ */
 export class Int64 {
     /**
      * Gets the minimum value for this data type
@@ -987,6 +1008,9 @@ export class Int64 {
 }
 
 
+/**
+ * Represents a 64-bit unsigned integer value
+ */
 export class UInt64 {
     /**
      * Gets the minimum value for this data type
@@ -1133,6 +1157,9 @@ export class UInt64 {
 }
 
 
+/**
+ * Represents a 32-bit floating point value
+ */
 export class Float32 {
     /**
      * Gets the minimum value for this data type
@@ -1222,6 +1249,9 @@ export class Float32 {
 }
 
 
+/**
+ * Represents a 64-bit floating point value
+ */
 export class Float64 {
     /**
      * Gets the minimum value for this data type
