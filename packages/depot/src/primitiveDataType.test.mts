@@ -80,6 +80,12 @@ describe("Int8", () => {
 
         });
 
+        describe("maxBitIndex", () => {
+            it("returns 7", () => {
+                expect(Int8.maxBitIndex).toEqual(7);
+            });
+        });
+
     });
 
 
@@ -92,6 +98,23 @@ describe("Int8", () => {
                 expect(inst.value).toEqual(0);
             });
 
+        });
+
+        describe("getBit", () => {
+            it("returns the correct bit value", () => {
+                const inst = Int8.create(5).throwIfFailed(); // 5 is 00000101 in binary
+                expect(inst.getBit(0).value).toBeTrue();
+                expect(inst.getBit(1).value).toBeFalse();
+                expect(inst.getBit(2).value).toBeTrue();
+            });
+        });
+
+        describe("setBit", () => {
+            it("sets the correct bit value", () => {
+                const inst = Int8.create(5).throwIfFailed(); // 5 is 00000101 in binary
+                const res = inst.setBit(1, true).throwIfFailed(); // should set the second bit to 1, resulting in 7 (00000111)
+                expect(res.value).toEqual(7);
+            });
         });
 
     });
@@ -178,6 +201,12 @@ describe("UInt8", () => {
 
         });
 
+        describe("maxBitIndex", () => {
+            it("returns 7", () => {
+                expect(UInt8.maxBitIndex).toEqual(7);
+            });
+        });
+
     });
 
 
@@ -190,6 +219,23 @@ describe("UInt8", () => {
                 expect(inst.value).toEqual(0);
             });
 
+        });
+
+        describe("getBit", () => {
+            it("returns the correct bit value", () => {
+                const inst = UInt8.create(5).throwIfFailed(); // 5 is 00000101 in binary
+                expect(inst.getBit(0).value).toBeTrue();
+                expect(inst.getBit(1).value).toBeFalse();
+                expect(inst.getBit(2).value).toBeTrue();
+            });
+        });
+
+        describe("setBit", () => {
+            it("sets the correct bit value", () => {
+                const inst = UInt8.create(5).throwIfFailed(); // 5 is 00000101 in binary
+                const res = inst.setBit(1, true).throwIfFailed(); // should set the second bit to 1, resulting in 7 (00000111)
+                expect(res.value).toEqual(7);
+            });
         });
 
     });
@@ -276,6 +322,12 @@ describe("Int16", () => {
 
         });
 
+        describe("maxBitIndex", () => {
+            it("returns 15", () => {
+                expect(Int16.maxBitIndex).toEqual(15);
+            });
+        });
+
     });
 
 
@@ -288,6 +340,23 @@ describe("Int16", () => {
                 expect(inst.value).toEqual(0);
             });
 
+        });
+
+        describe("getBit", () => {
+            it("returns the correct bit value", () => {
+                const inst = Int16.create(5).throwIfFailed(); // 5 is 0000000000000101 in binary
+                expect(inst.getBit(0).value).toBeTrue();
+                expect(inst.getBit(1).value).toBeFalse();
+                expect(inst.getBit(2).value).toBeTrue();
+            });
+        });
+
+        describe("setBit", () => {
+            it("sets the correct bit value", () => {
+                const inst = Int16.create(5).throwIfFailed(); // 5 is 0000000000000101 in binary
+                const res = inst.setBit(1, true).throwIfFailed(); // should set the second bit to 1, resulting in 7 (0000000000000111)
+                expect(res.value).toEqual(7);
+            });
         });
 
     });
@@ -374,6 +443,12 @@ describe("UInt16", () => {
 
         });
 
+        describe("maxBitIndex", () => {
+            it("returns 15", () => {
+                expect(UInt16.maxBitIndex).toEqual(15);
+            });
+        });
+
     });
 
 
@@ -386,6 +461,23 @@ describe("UInt16", () => {
                 expect(inst.value).toEqual(0);
             });
 
+        });
+
+        describe("getBit", () => {
+            it("returns the correct bit value", () => {
+                const inst = UInt16.create(5).throwIfFailed(); // 5 is 0000000000000101 in binary
+                expect(inst.getBit(0).value).toBeTrue();
+                expect(inst.getBit(1).value).toBeFalse();
+                expect(inst.getBit(2).value).toBeTrue();
+            });
+        });
+
+        describe("setBit", () => {
+            it("sets the correct bit value", () => {
+                const inst = UInt16.create(5).throwIfFailed(); // 5 is 0000000000000101 in binary
+                const res = inst.setBit(1, true).throwIfFailed(); // should set the second bit to 1, resulting in 7 (0000000000000111)
+                expect(res.value).toEqual(7);
+            });
         });
 
     });
@@ -472,6 +564,12 @@ describe("Int32", () => {
 
         });
 
+        describe("maxBitIndex", () => {
+            it("returns 31", () => {
+                expect(Int32.maxBitIndex).toEqual(31);
+            });
+        });
+
     });
 
 
@@ -484,6 +582,23 @@ describe("Int32", () => {
                 expect(inst.value).toEqual(0);
             });
 
+        });
+
+        describe("getBit", () => {
+            it("returns the correct bit value", () => {
+                const inst = Int32.create(5).throwIfFailed(); // 5 is 00000000000000000000000000000101 in binary
+                expect(inst.getBit(0).value).toBeTrue();
+                expect(inst.getBit(1).value).toBeFalse();
+                expect(inst.getBit(2).value).toBeTrue();
+            });
+        });
+
+        describe("setBit", () => {
+            it("sets the correct bit value", () => {
+                const inst = Int32.create(5).throwIfFailed(); // 5 is 00000000000000000000000000000101 in binary
+                const res = inst.setBit(1, true).throwIfFailed(); // should set the second bit to 1, resulting in 7 (00000000000000000000000000000111)
+                expect(res.value).toEqual(7);
+            });
         });
 
     });
@@ -570,6 +685,12 @@ describe("UInt32", () => {
 
         });
 
+        describe("maxBitIndex", () => {
+            it("returns 31", () => {
+                expect(UInt32.maxBitIndex).toEqual(31);
+            });
+        });
+
     });
 
 
@@ -582,6 +703,23 @@ describe("UInt32", () => {
                 expect(inst.value).toEqual(0);
             });
 
+        });
+
+        describe("getBit", () => {
+            it("returns the correct bit value", () => {
+                const inst = UInt32.create(5).throwIfFailed(); // 5 is 00000000000000000000000000000101 in binary
+                expect(inst.getBit(0).value).toBeTrue();
+                expect(inst.getBit(1).value).toBeFalse();
+                expect(inst.getBit(2).value).toBeTrue();
+            });
+        });
+
+        describe("setBit", () => {
+            it("sets the correct bit value", () => {
+                const inst = UInt32.create(5).throwIfFailed(); // 5 is 00000000000000000000000000000101 in binary
+                const res = inst.setBit(1, true).throwIfFailed(); // should set the second bit to 1, resulting in 7 (00000000000000000000000000000111)
+                expect(res.value).toEqual(7);
+            });
         });
 
     });
@@ -658,6 +796,12 @@ describe("Int64", () => {
 
         });
 
+        describe("maxBitIndex", () => {
+            it("returns 63", () => {
+                expect(Int64.maxBitIndex).toEqual(63);
+            });
+        });
+
     });
 
 
@@ -670,6 +814,23 @@ describe("Int64", () => {
                 expect(inst.value).toEqual(BigInt(0));
             });
 
+        });
+
+        describe("getBit", () => {
+            it("returns the correct bit value", () => {
+                const inst = Int64.create(BigInt(5)).throwIfFailed(); // 5 is 0000000000000000000000000000000000000000000000000000000000000101 in binary
+                expect(inst.getBit(0).value).toBeTrue();
+                expect(inst.getBit(1).value).toBeFalse();
+                expect(inst.getBit(2).value).toBeTrue();
+            });
+        });
+
+        describe("setBit", () => {
+            it("sets the correct bit value", () => {
+                const inst = Int64.create(BigInt(5)).throwIfFailed(); // 5 is 0000000000000000000000000000000000000000000000000000000000000101 in binary
+                const res = inst.setBit(1, true).throwIfFailed(); // should set the second bit to 1, resulting in 7 (0000000000000000000000000000000000000000000000000000000000000111)
+                expect(res.value).toEqual(BigInt(7));
+            });
         });
 
     });
@@ -746,6 +907,12 @@ describe("UInt64", () => {
 
         });
 
+        describe("maxBitIndex", () => {
+            it("returns 63", () => {
+                expect(UInt64.maxBitIndex).toEqual(63);
+            });
+        });
+
     });
 
 
@@ -758,6 +925,23 @@ describe("UInt64", () => {
                 expect(inst.value).toEqual(BigInt(0));
             });
 
+        });
+
+        describe("getBit", () => {
+            it("returns the correct bit value", () => {
+                const inst = UInt64.create(BigInt(5)).throwIfFailed(); // 5 is 0000000000000000000000000000000000000000000000000000000000000101 in binary
+                expect(inst.getBit(0).value).toBeTrue();
+                expect(inst.getBit(1).value).toBeFalse();
+                expect(inst.getBit(2).value).toBeTrue();
+            });
+        });
+
+        describe("setBit", () => {
+            it("sets the correct bit value", () => {
+                const inst = UInt64.create(BigInt(5)).throwIfFailed(); // 5 is 0000000000000000000000000000000000000000000000000000000000000101 in binary
+                const res = inst.setBit(1, true).throwIfFailed(); // should set the second bit to 1, resulting in 7 (0000000000000000000000000000000000000000000000000000000000000111)
+                expect(res.value).toEqual(BigInt(7));
+            });
         });
 
     });
