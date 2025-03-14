@@ -6,7 +6,15 @@ This project uses TypeScript with the following rules:
 - Variable names will be camelCase
 - All types will be PascalCase
 - All code files will be either camelCase or kebab-case
-- Two blank lines will be inserted between methods within a class
+- Two blank lines will be inserted between methods within a class.
+- In this project's unit tests, two blank lines should always separate two
+  adjacent `describe()` calls.
+- In this project's unit tests, two blank lines should always separate two
+  adjacent `it()` calls.
+- In this project's unit tests, the first `it()` call within a `describe()`
+  should be preceded by one blank line.
+- In this project's unit tests, the last `it()` call within a `describe()`
+  should be followed by one blank line().
 - When an if statement has an else clause, the `else` keyword will appear at the
   beginning of a new line.  It should not appear on the same line and follow the
   `}` of the preceding `if` block.
