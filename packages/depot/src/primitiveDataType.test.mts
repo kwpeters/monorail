@@ -1,4 +1,107 @@
-import { Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Float32, Float64 } from "./primitiveDataType.mjs";
+import { NonNegativeInt, Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Float32, Float64 } from "./primitiveDataType.mjs";
+
+
+describe("NonNegativeInt", () => {
+
+    describe("static", () => {
+
+        describe("dataTypeMin", () => {
+
+            it("returns the expected minimum value", () => {
+                expect(NonNegativeInt.dataTypeMin).toEqual(0);
+            });
+
+        });
+
+
+        describe("dataTypeMax", () => {
+
+            it("returns the expected maximum value", () => {
+                expect(NonNegativeInt.dataTypeMax).toEqual(Number.MAX_SAFE_INTEGER);
+            });
+
+        });
+
+
+        describe("fromString()", () => {
+
+            it("fails when input is a nonnumeric string", () => {
+                expect(NonNegativeInt.fromString("").failed).toBeTrue();
+                expect(NonNegativeInt.fromString("a1bc").failed).toBeTrue();
+            });
+
+
+            it("fails when input is an integer string that is out of range", () => {
+                // Under range
+                expect(NonNegativeInt.fromString("-1").failed).toBeTrue();
+                // Over range
+                expect(NonNegativeInt.fromString("9007199254740992").failed).toBeTrue();
+            });
+
+
+            it("fails when input is an in-range number that contains a fractional part", () => {
+                expect(NonNegativeInt.fromString("5.2").failed).toBeTrue();
+            });
+
+
+            it("succeeds when given an integer string", () => {
+                const res = NonNegativeInt.fromString("5");
+                expect(res.succeeded).toBeTrue();
+                expect(res.value!.value).toEqual(5);
+            });
+
+        });
+
+
+        describe("create()", () => {
+
+            it("fails when input is out of range", () => {
+                // Under range
+                expect(NonNegativeInt.create(-1).failed).toBeTrue();
+                // Over range
+                expect(NonNegativeInt.create(9007199254740992).failed).toBeTrue();
+            });
+
+
+            it("fails when input has a fractional part", () => {
+                expect(NonNegativeInt.create(5.2).failed).toBeTrue();
+            });
+
+
+            it("succeeds when input is an integer that is in range", () => {
+                const res = NonNegativeInt.create(5);
+                expect(res.succeeded).toBeTrue();
+                expect(res.value!.value).toEqual(5);
+            });
+
+        });
+
+
+        describe("numBits", () => {
+
+            it("returns 64", () => {
+                expect(NonNegativeInt.numBits).toEqual(64);
+            });
+
+        });
+
+    });
+
+
+    describe("instance", () => {
+
+        describe("value", () => {
+
+            it("returns the expected value", () => {
+                const inst = NonNegativeInt.create(0).throwIfFailed();
+                expect(inst.value).toEqual(0);
+            });
+
+        });
+
+    });
+
+});
 
 
 describe("Int8", () => {
@@ -251,6 +354,12 @@ describe("UInt8", () => {
                 expect(inst.getBit(0).value).toBeTrue();
                 expect(inst.getBit(1).value).toBeFalse();
                 expect(inst.getBit(2).value).toBeTrue();
+            });
+
+
+            it("returns the correct bit value when the highest order bit is set", () => {
+                const inst = UInt8.create(0b1000_0000).throwIfFailed();
+                expect(inst.getBit(7).value).toBeTrue();
             });
 
         });
@@ -523,6 +632,12 @@ describe("UInt16", () => {
                 expect(inst.getBit(2).value).toBeTrue();
             });
 
+
+            it("returns the correct bit value when the highest order bit is set", () => {
+                const inst = UInt16.create(0b1000_0000_0000_0000).throwIfFailed();
+                expect(inst.getBit(15).value).toBeTrue();
+            });
+
         });
 
 
@@ -793,6 +908,12 @@ describe("UInt32", () => {
                 expect(inst.getBit(2).value).toBeTrue();
             });
 
+
+            it("returns the correct bit value when the highest order bit is set", () => {
+                const inst = UInt32.create(0b1000_0000_0000_0000_0000_0000_0000_0000).throwIfFailed();
+                expect(inst.getBit(31).value).toBeTrue();
+            });
+
         });
 
 
@@ -1041,6 +1162,13 @@ describe("UInt64", () => {
                 expect(inst.getBit(0).value).toBeTrue();
                 expect(inst.getBit(1).value).toBeFalse();
                 expect(inst.getBit(2).value).toBeTrue();
+            });
+
+
+            it("returns the correct bit value when the highest order bit is set", () => {
+                // eslint-disable-next-line max-len
+                const inst = UInt64.create(0b1000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000n).throwIfFailed();
+                expect(inst.getBit(63).value).toBeTrue();
             });
 
         });

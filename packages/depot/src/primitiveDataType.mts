@@ -5,6 +5,100 @@ import { setBitInBigInt, setBitInNumber } from "./bitstringHelpers.mjs";
 
 
 /**
+ * Represents an integer that can be 0 or greater.
+ */
+export class NonNegativeInt {
+    /**
+     * Gets the minimum value for this data type
+     * @return The minimum value that can be stored
+     */
+    public static get dataTypeMin(): number {
+        return 0;
+    }
+
+
+    /**
+     * Gets the maximum value for this data type
+     * @return The maximum value that can be stored
+     */
+    public static get dataTypeMax(): number {
+        return Math.pow(2, 53) - 1;        // 9_007_199_254_740_991
+    }
+
+
+    /**
+     * Gets the number of bits used by this data type
+     * @return The number of bits used
+     */
+    public static get numBits(): number {
+        // This type is based on Number which is a 64-bit floating point value.
+        return 64;
+    }
+
+
+    /**
+     * Creates an instance from a string representation
+     * @param str - The string to parse
+     * @return A Result containing the new instance or an error message
+     */
+    public static fromString(str: string): Result<NonNegativeInt, string> {
+        return pipe(
+            isNonBlankString(str, "An empty string is not a valid NonNegativeInt value."),
+            (res) => Result.bind((str) => {
+                const num = Number(str);
+                return NonNegativeInt.create(num);
+            }, res)
+        );
+    }
+
+
+    /**
+     * Creates an instance from a number
+     * @param val - The number to wrap
+     * @return A Result containing the new instance or an error message
+     */
+    public static create(val: number): Result<NonNegativeInt, string> {
+        if (val < NonNegativeInt.dataTypeMin || val > NonNegativeInt.dataTypeMax) {
+            return new FailedResult(`"${val}" is not a valid NonNegativeInt value.  Must be between ${NonNegativeInt.dataTypeMin} and ${NonNegativeInt.dataTypeMax}.`);
+        }
+
+        if (!Number.isInteger(val)) {
+            return new FailedResult(`"${val}" is not a valid NonNegativeInt value.  Must be an integer.`);
+        }
+
+        return new SucceededResult(new NonNegativeInt(val));
+    }
+
+
+    private readonly _val: number;
+
+
+    /**
+     * Gets a reference to this class's type
+     * @return The class type
+     */
+    public get static(): typeof NonNegativeInt {
+        return NonNegativeInt;
+    }
+
+
+    private constructor(val: number) {
+        this._val = val;
+    }
+
+
+    /**
+     * Gets the wrapped value
+     * @return The stored value
+     */
+    public get value(): number {
+        return this._val;
+    }
+
+}
+
+
+/**
  * Represents an 8-bit signed integer value
  */
 export class Int8 {
@@ -1093,6 +1187,10 @@ export class UInt64 {
     }
 
 
+    /**
+     * Gets a reference to this class's type
+     * @return The class type
+     */
     public get static(): typeof UInt64 {
         return UInt64;
     }
