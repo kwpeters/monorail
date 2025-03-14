@@ -44,6 +44,8 @@ All TypeScript files within this project follow the following formatting rules.
     - Types are not included.  This is redundant with the TypeScript code, and
       causes unnecessary maintenance.
 
+  - All classes should be described using a JSDoc comment.
+
 ### Unit Test Coding Style
 
 The following rules apply to unit test files (which must include include the
