@@ -33,6 +33,15 @@ export class Int8 {
 
 
     /**
+     * Gets the highest valid bit index for this data type
+     * @return The maximum bit index
+     */
+    public static get maxBitIndex(): number {
+        return Int8.numBits - 1;
+    }
+
+
+    /**
      * Creates an instance from a string representation
      * @param str - The string to parse
      * @return A Result containing the new instance or an error message
@@ -63,15 +72,6 @@ export class Int8 {
         }
 
         return new SucceededResult(new Int8(val));
-    }
-
-
-    /**
-     * Gets the highest valid bit index for this data type
-     * @return The maximum bit index
-     */
-    public static get maxBitIndex(): number {
-        return Int8.numBits - 1;
     }
 
 
@@ -172,6 +172,15 @@ export class UInt8 {
 
 
     /**
+     * Gets the highest valid bit index for this data type
+     * @return The maximum bit index
+     */
+    public static get maxBitIndex(): number {
+        return UInt8.numBits - 1;
+    }
+
+
+    /**
      * Creates an instance from a string representation
      * @param str - The string to parse
      * @return A Result containing the new instance or an error message
@@ -202,15 +211,6 @@ export class UInt8 {
         }
 
         return new SucceededResult(new UInt8(val));
-    }
-
-
-    /**
-     * Gets the highest valid bit index for this data type
-     * @return The maximum bit index
-     */
-    public static get maxBitIndex(): number {
-        return UInt8.numBits - 1;
     }
 
 
@@ -311,6 +311,15 @@ export class Int16 {
 
 
     /**
+     * Gets the highest valid bit index for this data type
+     * @return The maximum bit index
+     */
+    public static get maxBitIndex(): number {
+        return Int16.numBits - 1;
+    }
+
+
+    /**
      * Creates an instance from a string representation
      * @param str - The string to parse
      * @return A Result containing the new instance or an error message
@@ -341,15 +350,6 @@ export class Int16 {
         }
 
         return new SucceededResult(new Int16(val));
-    }
-
-
-    /**
-     * Gets the highest valid bit index for this data type
-     * @return The maximum bit index
-     */
-    public static get maxBitIndex(): number {
-        return Int16.numBits - 1;
     }
 
 
@@ -450,6 +450,15 @@ export class UInt16 {
 
 
     /**
+     * Gets the highest valid bit index for this data type
+     * @return The maximum bit index
+     */
+    public static get maxBitIndex(): number {
+        return UInt16.numBits - 1;
+    }
+
+
+    /**
      * Creates an instance from a string representation
      * @param str - The string to parse
      * @return A Result containing the new instance or an error message
@@ -480,15 +489,6 @@ export class UInt16 {
         }
 
         return new SucceededResult(new UInt16(val));
-    }
-
-
-    /**
-     * Gets the highest valid bit index for this data type
-     * @return The maximum bit index
-     */
-    public static get maxBitIndex(): number {
-        return UInt16.numBits - 1;
     }
 
 
@@ -589,6 +589,15 @@ export class Int32 {
 
 
     /**
+     * Gets the highest valid bit index for this data type
+     * @return The maximum bit index
+     */
+    public static get maxBitIndex(): number {
+        return Int32.numBits - 1;
+    }
+
+
+    /**
      * Creates an instance from a string representation
      * @param str - The string to parse
      * @return A Result containing the new instance or an error message
@@ -619,15 +628,6 @@ export class Int32 {
         }
 
         return new SucceededResult(new Int32(val));
-    }
-
-
-    /**
-     * Gets the highest valid bit index for this data type
-     * @return The maximum bit index
-     */
-    public static get maxBitIndex(): number {
-        return Int32.numBits - 1;
     }
 
 
@@ -728,6 +728,15 @@ export class UInt32 {
 
 
     /**
+     * Gets the highest valid bit index for this data type
+     * @return The maximum bit index
+     */
+    public static get maxBitIndex(): number {
+        return UInt32.numBits - 1;
+    }
+
+
+    /**
      * Creates an instance from a string representation
      * @param str - The string to parse
      * @return A Result containing the new instance or an error message
@@ -758,15 +767,6 @@ export class UInt32 {
         }
 
         return new SucceededResult(new UInt32(val));
-    }
-
-
-    /**
-     * Gets the highest valid bit index for this data type
-     * @return The maximum bit index
-     */
-    public static get maxBitIndex(): number {
-        return UInt32.numBits - 1;
     }
 
 
@@ -867,6 +867,15 @@ export class Int64 {
 
 
     /**
+     * Gets the highest valid bit index for this data type
+     * @return The maximum bit index
+     */
+    public static get maxBitIndex(): number {
+        return Int64.numBits - 1;
+    }
+
+
+    /**
      * Creates an instance from a string representation
      * @param str - The string to parse
      * @return A Result containing the new instance or an error message
@@ -907,15 +916,6 @@ export class Int64 {
         //
 
         return new SucceededResult(new Int64(val));
-    }
-
-
-    /**
-     * Gets the highest valid bit index for this data type
-     * @return The maximum bit index
-     */
-    public static get maxBitIndex(): number {
-        return Int64.numBits - 1;
     }
 
 
@@ -1016,6 +1016,15 @@ export class UInt64 {
 
 
     /**
+     * Gets the highest valid bit index for this data type
+     * @return The maximum bit index
+     */
+    public static get maxBitIndex(): number {
+        return UInt64.numBits - 1;
+    }
+
+
+    /**
      * Creates an instance from a string representation
      * @param str - The string to parse
      * @return A Result containing the new instance or an error message
@@ -1057,15 +1066,6 @@ export class UInt64 {
         //
 
         return new SucceededResult(new UInt64(val));
-    }
-
-
-    /**
-     * Gets the highest valid bit index for this data type
-     * @return The maximum bit index
-     */
-    public static get maxBitIndex(): number {
-        return UInt64.numBits - 1;
     }
 
 
