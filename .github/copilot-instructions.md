@@ -3,6 +3,8 @@
 This project uses TypeScript with the following rules:
 
 - Indent with 4 spaces only
+- The imports at the beginning of each TypeScript source file should be followed
+  by two blank lines.
 - Variable names will be camelCase
 - All types will be PascalCase
 - All code files will be either camelCase or kebab-case
