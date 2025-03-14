@@ -1,29 +1,25 @@
 # Custom instructions for GitHub Copilot
 
-This project uses TypeScript with the following rules:
+## Coding Style
+
+All TypeScript files within this project follow the following formatting rules.
 
 - Indent with 4 spaces only
 - The imports at the beginning of each TypeScript source file should be followed
   by two blank lines.
-- Variable names will be camelCase
-- All types will be PascalCase
-- All code files will be either camelCase or kebab-case
-- Two blank lines will be inserted between methods within a class.
-- In this project's unit tests, two blank lines should always separate two
-  adjacent `describe()` calls.
-- In this project's unit tests, two blank lines should always separate two
-  adjacent `it()` calls.
-- In this project's unit tests, the first `it()` call within a `describe()`
-  should be preceded by one blank line.
-- In this project's unit tests, the last `it()` call within a `describe()`
-  should be followed by one blank line().
+- Variable names will be camelCase.
+- All types will be PascalCase.
+- All code file names will be either camelCase or kebab-case
+- Two blank lines will be inserted between methods and properties within a
+  class.
 - When an if statement has an else clause, the `else` keyword will appear at the
-  beginning of a new line.  It should not appear on the same line and follow the
-  `}` of the preceding `if` block.
+  beginning of a new line.  It should not appear on the same line as the `}` of
+  the preceding `if` block.
 - When formatting a try/catch block, the `catch` keyword will appear at the
-  beginning of a new line.  It should not appear on the same line and follow the
-  `}` of the preceding `try` block.
-- JSDoc style documentation comments should be created for all methods and functions.
+  beginning of a new line.  It should not appear on the same line and as the `}`
+  of the preceding `try` block.
+- JSDoc style documentation comments should be created for all methods and
+  functions.
   - An example JSDoc comment:
 
     ```typescript
@@ -42,8 +38,20 @@ This project uses TypeScript with the following rules:
     - Only include periods at the end if the text is a complete sentence.
       Usually parameter descriptions are not complete sentences and do not
       require a period at the end.
-    - If the return type of the function is not `void`, the return value must
-      be documented using `@return`.
-    - Parameter names and descriptions are separated by ` - `.
+    - If the return type of the function is not `void` and the method is not a
+      constructor, the return value must be documented using `@return`.
+    - Parameter names and their descriptions are separated by ` - `.
     - Types are not included.  This is redundant with the TypeScript code, and
       causes unnecessary maintenance.
+
+### Unit Test Coding Style
+
+The following rules apply to unit test files (which must include include the
+substring `.test.` in their file name).
+
+- Two blank lines should always separate two adjacent `describe()` calls.
+- Two blank lines should always separate two adjacent `it()` calls.
+- The first `it()` call within a `describe()` should be preceded by one blank
+  line.
+- The last `it()` call within a `describe()` should be followed by one blank
+  line().
