@@ -3,17 +3,18 @@ import { pipe } from "./pipe2.mjs";
 import { UInt8 } from "./primitiveDataType.mjs";
 
 
-export interface IBitRange {
+export interface IBitfieldBookends {
+    type:    "IBitfieldBookends";
     lowBit:  number;
     highBit: number;
 }
 
 
-/**
- * A mapping of bitfield names to their bit ranges.  A Map is used here to
- * ensure that a name is not used multiple times.
- */
-// export type BitfieldDefinitions = Map<string, IBitRange>;
+export interface IBitfieldStartAndSize {
+    type:    "IBitfieldStartAndSize";
+    lowBit:  number;
+    numBits: number;
+}
 
 
 /**
@@ -78,19 +79,6 @@ export function bitfieldDefinitionsAreValid(
 
     // If we made it this far, then the bitfield definitions are valid.
     return new SucceededResult(defs);
-}
-
-
-export interface IBitfieldBookends {
-    type:    "IBitfieldBookends";
-    lowBit:  number;
-    highBit: number;
-}
-
-export interface IBitfieldStartAndSize {
-    type:    "IBitfieldStartAndSize";
-    lowBit:  number;
-    numBits: number;
 }
 
 
