@@ -17,6 +17,9 @@ export interface IBitfieldStartAndSize {
 }
 
 
+export type BitfieldSpecifier = IBitfieldStartAndSize | IBitfieldBookends;
+
+
 /**
  * A function to validate the bitfield definitions.  This checks that the bit
  * ranges are valid and do not overlap.
@@ -80,9 +83,6 @@ export function bitfieldDefinitionsAreValid(
     // If we made it this far, then the bitfield definitions are valid.
     return new SucceededResult(defs);
 }
-
-
-export type BitfieldSpecifier = IBitfieldStartAndSize | IBitfieldBookends;
 
 
 /**
