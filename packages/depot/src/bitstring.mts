@@ -66,7 +66,7 @@ export function bitfieldDefinitionsAreValid(
         }
     }
 
-    // Make sure that none of the ranges specified in `defs` overlap.
+    // Make sure that none of the ranges specified in _defs_ overlap.
     const usedBits: boolean[] = Array(bitStringNumBits).fill(false) as boolean[];
     for (const [name, bitRange] of Object.entries(defs)) {
         const highBit = bitRange.type === "IBitfieldBookends" ?
