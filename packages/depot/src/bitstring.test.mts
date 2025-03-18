@@ -1,9 +1,8 @@
-import { BitString8 } from "./bitstring.mjs";
+import { BitString } from "./bitstring.mjs";
 import { UInt8 } from "./primitiveDataType.mjs";
 
 
-
-describe("BitString8", () => {
+describe("BitString", () => {
 
     describe("static", () => {
 
@@ -16,7 +15,7 @@ describe("BitString8", () => {
                 } as const;
 
                 const val = UInt8.create(0b1_01_10_101).throwIfFailed();
-                const res = BitString8.create(val, bitfieldDefs);
+                const res = BitString.create(val, bitfieldDefs);
 
                 expect(res.failed).toBe(true);
             });
@@ -29,7 +28,7 @@ describe("BitString8", () => {
                 } as const;
 
                 const val = UInt8.create(0b1_01_10_101).throwIfFailed();
-                const res = BitString8.create(val, bitfieldDefs);
+                const res = BitString.create(val, bitfieldDefs);
 
                 expect(res.failed).toBe(true);
             });
@@ -42,7 +41,7 @@ describe("BitString8", () => {
                 } as const;
 
                 const val = UInt8.create(0b1_01_10_101).throwIfFailed();
-                const res = BitString8.create(val, bitfieldDefs);
+                const res = BitString.create(val, bitfieldDefs);
 
                 expect(res.failed).toBe(true);
             });
@@ -55,7 +54,7 @@ describe("BitString8", () => {
                 } as const;
 
                 const val = UInt8.create(0b1_01_10_101).throwIfFailed();
-                const res = BitString8.create(val, bitfieldDefs);
+                const res = BitString.create(val, bitfieldDefs);
 
                 expect(res.failed).toBe(true);
             });
@@ -68,7 +67,7 @@ describe("BitString8", () => {
                 } as const;
 
                 const val = UInt8.create(0b1_01_10_101).throwIfFailed();
-                const res = BitString8.create(val, bitfieldDefs);
+                const res = BitString.create(val, bitfieldDefs);
 
                 expect(res.failed).toBe(true);
             });
@@ -80,7 +79,7 @@ describe("BitString8", () => {
                 } as const;
 
                 const val = UInt8.create(0b1_01_10_101).throwIfFailed();
-                const res = BitString8.create(val, bitfieldDefs);
+                const res = BitString.create(val, bitfieldDefs);
 
                 expect(res.failed).toBe(true);
             });
@@ -93,18 +92,17 @@ describe("BitString8", () => {
                 } as const;
 
                 const val = UInt8.create(0b000_10_101).throwIfFailed();
-                const res = BitString8.create(val, bitfieldDefs);
+                const res = BitString.create(val, bitfieldDefs);
 
                 expect(res.succeeded).toBe(true);
             });
         });
-
     });
 
 
     describe("instance", () => {
 
-        describe("asUInt8", () => {
+        describe("asValue", () => {
 
             it("returns the wrapped value", () => {
                 const bitfieldDefs = {
@@ -113,9 +111,9 @@ describe("BitString8", () => {
                 } as const;
 
                 const val = UInt8.create(0b1_01_10_101).throwIfFailed();
-                const bitstring8 = BitString8.create(val, bitfieldDefs).throwIfFailed();
+                const bitstring = BitString.create(val, bitfieldDefs).throwIfFailed();
 
-                expect(bitstring8.asUInt8().value).toEqual(val.value);
+                expect(bitstring.asValue().value).toEqual(val.value);
             });
 
         });
@@ -132,12 +130,12 @@ describe("BitString8", () => {
                 } as const;
 
                 const val = UInt8.create(0b1_01_10_101).throwIfFailed();
-                const bitstring8 = BitString8.create(val, bitfieldDefs).throwIfFailed();
+                const bitstring = BitString.create(val, bitfieldDefs).throwIfFailed();
 
-                expect(bitstring8.getBitfield("a")).toEqual(5);
-                expect(bitstring8.getBitfield("b")).toEqual(2);
-                expect(bitstring8.getBitfield("c")).toEqual(1);
-                expect(bitstring8.getBitfield("d")).toEqual(1);
+                expect(bitstring.getBitfield("a")).toEqual(5);
+                expect(bitstring.getBitfield("b")).toEqual(2);
+                expect(bitstring.getBitfield("c")).toEqual(1);
+                expect(bitstring.getBitfield("d")).toEqual(1);
             });
 
         });

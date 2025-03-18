@@ -1,6 +1,7 @@
 import { FailedResult, Result, SucceededResult } from "./result.mjs";
 import { pipe } from "./pipe2.mjs";
-import { UInt8 } from "./primitiveDataType.mjs";
+import { UInt8, UInt16, UInt32 } from "./primitiveDataType.mjs";
+
 
 
 export interface IBitfieldBookends {
@@ -19,22 +20,23 @@ export interface IBitfieldStartAndSize {
 
 export type BitfieldSpecifier = IBitfieldStartAndSize | IBitfieldBookends;
 
+export type BackingIntegerType = UInt8 | UInt16 | UInt32;
+
 
 /**
  * A function to validate the bitfield definitions.  This checks that the bit
  * ranges are valid and do not overlap.
- * @param defs -  The bitfield definitions to validate
- * @param bitStringNumBits - The number of bits in the bit string
+ * @param defs - The bitfield definitions to validate
+ * @param cls - The class type of the backing integer
  * @return If the definitions are valid, a successful Result containing the
- * definitions; otherwise a failed Result containing an error message.
+ * definitions; otherwise a failed Result containing an error message
  */
 export function bitfieldDefinitionsAreValid(
     defs: {[name: string]: BitfieldSpecifier},
-    bitStringNumBits: number
+    cls: {numBits: number}
 ): Result<{[name: string]: BitfieldSpecifier}, string> {
-
     const minBitNum = 0;
-    const maxBitNum = bitStringNumBits - 1;
+    const maxBitNum = cls.numBits - 1;
 
     for (const [name, bitfieldSpecifier] of Object.entries(defs)) {
         const lowBitNum = bitfieldSpecifier.lowBit;
@@ -67,7 +69,7 @@ export function bitfieldDefinitionsAreValid(
     }
 
     // Make sure that none of the ranges specified in _defs_ overlap.
-    const usedBits: boolean[] = Array(bitStringNumBits).fill(false) as boolean[];
+    const usedBits: boolean[] = Array(cls.numBits).fill(false) as boolean[];
     for (const [name, bitRange] of Object.entries(defs)) {
         const highBit = bitRange.type === "IBitfieldBookends" ?
             bitRange.highBit :
@@ -86,34 +88,40 @@ export function bitfieldDefinitionsAreValid(
 
 
 /**
- * An 8-bit bit string.  A bit string is a sequence of bits, and a definition of
+ * A bit string with configurable width. A bit string is a sequence of bits, and a definition of
  * the bitfields contained within it.
  */
-export class BitString8<T extends {[name: string]: BitfieldSpecifier}> {
+export class BitString<
+    TBackingInteger extends BackingIntegerType,
+    TBitfieldDef extends {[name: string]: BitfieldSpecifier}
+> {
 
     /**
-     * Creates a new BitString8 instance.
+     * Creates a new BitString instance.
      * @param value - The value to wrap
-     * @param defs - The bitfield definitions to use for the bit string.
-     * @return A Result containing the new BitString8 instance if successful;
-     *      otherwise a failed Result containing an error message.
+     * @param defs - The bitfield definitions to use for the bit string
+     * @return A Result containing the new BitString instance if successful;
+     *      otherwise a failed Result containing an error message
      */
-    public static create<T extends {[name: string]: BitfieldSpecifier}>(
-        value: UInt8,
-        defs: T
-    ): Result<BitString8<T>, string> {
+    public static create<
+        TBackingInteger extends BackingIntegerType,
+        TBitfieldDef extends {[name: string]: BitfieldSpecifier}
+    >(
+        value: TBackingInteger,
+        defs: TBitfieldDef
+    ): Result<BitString<TBackingInteger, TBitfieldDef>, string> {
         return pipe(
-            bitfieldDefinitionsAreValid(defs, 8),
-            (res) => Result.mapSuccess(() => new BitString8(value, defs), res)
+            bitfieldDefinitionsAreValid(defs, value.static),
+            (res) => Result.mapSuccess(() => new BitString<TBackingInteger, TBitfieldDef>(value, defs), res)
         );
     }
 
 
-    private readonly _val:  UInt8;
-    private readonly _defs: T;
+    private readonly _val:  TBackingInteger;
+    private readonly _defs: TBitfieldDef;
 
 
-    private constructor(value: UInt8, defs: T) {
+    private constructor(value: TBackingInteger, defs: TBitfieldDef) {
         this._val = value;
         this._defs = defs;
     }
@@ -123,8 +131,8 @@ export class BitString8<T extends {[name: string]: BitfieldSpecifier}> {
      * Gets the wrapped value
      * @return The stored value
      */
-    public asUInt8(): UInt8 {
-        return UInt8.create(this._val.value).throwIfFailed();
+    public asValue(): TBackingInteger {
+        return this._val;
     }
 
 
@@ -135,7 +143,7 @@ export class BitString8<T extends {[name: string]: BitfieldSpecifier}> {
      *      definitions.
      * @return Description
      */
-    public getBitfield(name: keyof T): number {
+    public getBitfield(name: keyof TBitfieldDef): number {
         const bitfieldSpecification = this._defs[name] as BitfieldSpecifier;
         const numBitfieldBits = bitfieldSpecification.type === "IBitfieldBookends" ?
             bitfieldSpecification.highBit - bitfieldSpecification.lowBit + 1 :
