@@ -18,9 +18,11 @@ All TypeScript files within this project follow the following formatting rules.
 - When formatting a try/catch block, the `catch` keyword will appear at the
   beginning of a new line.  It should not appear on the same line and as the `}`
   of the preceding `try` block.
-- JSDoc style documentation comments should be created for all methods and
+- JSDoc style documentation comments should be present for all exports from a
+  TypeScript source file.
+- JSDoc style documentation comments should be present for all methods and
   functions.
-  - An example JSDoc comment:
+  - An example JSDoc comment for a function or method:
 
     ```typescript
     /**
@@ -48,8 +50,15 @@ All TypeScript files within this project follow the following formatting rules.
 - All type parameters names should start with a capital "T" to designate that it
   is a type.  The "T" should be followed by a PascalCase name that describes the
   type.
-- When variables or member variables are defined on successive lines, their
-  data types should be aligned.
+- When variables, member variables or parameters are defined on successive
+  lines, their data types should be aligned.
+- When type parameters are defined on successive lines, their `extends` keyword
+  should be aligned (if present).
+- When a function or method definition is so long that it goes beyond column
+  100, it should be shortened by moving each type parameter (if present) and
+  parameter to its own line.  The parameters should be indented, and the closing
+  `>` (for type parameters) and `)` (parameters) should not be indented so that
+  it appears in the same starting column as the function or method declaration.
 
 ### Unit Test Coding Style
 
