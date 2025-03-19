@@ -41,7 +41,7 @@ export class Bitstring<
         TBitfieldDef extends Record<string, BitRange<TBackingValue>>
     >(
         backingValue: TBackingValue,
-        bitfieldDefs:    TBitfieldDef
+        bitfieldDefs: TBitfieldDef
     ): Result<Bitstring<TBackingValue, TBitfieldDef>, string> {
         return bitfieldDefinitionsAreValid(backingValue, bitfieldDefs)
         .mapSuccess(() => new Bitstring(backingValue, bitfieldDefs));
