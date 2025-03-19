@@ -44,7 +44,12 @@ All TypeScript files within this project follow the following formatting rules.
     - Types are not included.  This is redundant with the TypeScript code, and
       causes unnecessary maintenance.
 
-  - All classes should be described using a JSDoc comment.
+- All classes should be described using a JSDoc comment.
+- All type parameters names should start with a capital "T" to designate that it
+  is a type.  The "T" should be followed by a PascalCase name that describes the
+  type.
+- When variables or member variables are defined on successive lines, their
+  data types should be aligned.
 
 ### Unit Test Coding Style
 
