@@ -7,10 +7,6 @@ describe("Bitstring", () => {
 
     describe("compilation will fail when", () => {
 
-        it("foo", () => {
-            expect(true).toBeTruthy();
-        });
-
 
         it("Bitstring.create() is passed bitfield definitions that conflict with base data type", () => {
             // const bitfieldDefs = {

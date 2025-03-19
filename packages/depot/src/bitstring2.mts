@@ -1,5 +1,4 @@
 import { UInt8, UInt16, UInt32 } from "./primitiveDataType.mjs";
-import { Result, SucceededResult } from "./result.mjs";
 
 
 export type BitNumber<T> =
