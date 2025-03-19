@@ -218,7 +218,7 @@ export class Int8 {
 
 
     /**
-     * Sets the value of a specific bit
+     * Returns a new instance with the specified bit set to the specified value
      * @param bitIndex - Zero-based index of the bit to write
      * @param newBitVal - The value to write to the bit
      * @return A Result containing a new instance with the modified bit or an error message
@@ -360,7 +360,7 @@ export class UInt8 {
 
 
     /**
-     * Sets the value of a specific bit
+     * Returns a new instance with the specified bit set to the specified value
      * @param bitIndex - Zero-based index of the bit to write
      * @param newBitVal - The value to write to the bit
      * @return A Result containing a new instance with the modified bit or an error message
@@ -502,7 +502,7 @@ export class Int16 {
 
 
     /**
-     * Sets the value of a specific bit
+     * Returns a new instance with the specified bit set to the specified value
      * @param bitIndex - Zero-based index of the bit to write
      * @param newBitVal - The value to write to the bit
      * @return A Result containing a new instance with the modified bit or an error message
@@ -644,7 +644,7 @@ export class UInt16 {
 
 
     /**
-     * Sets the value of a specific bit
+     * Returns a new instance with the specified bit set to the specified value
      * @param bitIndex - Zero-based index of the bit to write
      * @param newBitVal - The value to write to the bit
      * @return A Result containing a new instance with the modified bit or an error message
@@ -786,7 +786,7 @@ export class Int32 {
 
 
     /**
-     * Sets the value of a specific bit
+     * Returns a new instance with the specified bit set to the specified value
      * @param bitIndex - Zero-based index of the bit to write
      * @param newBitVal - The value to write to the bit
      * @return A Result containing a new instance with the modified bit or an error message
@@ -928,7 +928,7 @@ export class UInt32 {
 
 
     /**
-     * Sets the value of a specific bit
+     * Returns a new instance with the specified bit set to the specified value
      * @param bitIndex - Zero-based index of the bit to write
      * @param newBitVal - The value to write to the bit
      * @return A Result containing a new instance with the modified bit or an error message
@@ -1080,7 +1080,7 @@ export class Int64 {
 
 
     /**
-     * Sets the value of a specific bit
+     * Returns a new instance with the specified bit set to the specified value
      * @param bitIndex - Zero-based index of the bit to write
      * @param newBitVal - The value to write to the bit
      * @return A Result containing a new instance with the modified bit or an error message
@@ -1233,7 +1233,7 @@ export class UInt64 {
 
 
     /**
-     * Sets the value of a specific bit
+     * Returns a new instance with the specified bit set to the specified value
      * @param bitIndex - Zero-based index of the bit to write
      * @param newBitVal - The value to write to the bit
      * @return A Result containing a new instance with the modified bit or an error message
