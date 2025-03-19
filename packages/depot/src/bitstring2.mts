@@ -15,8 +15,18 @@ export type BitRange<T> =
     { type: "BitfieldDefLowBitAndSize", lowBit: BitNumber<T>; numBits: number };
 
 
+/**
+ * Represents a sequence of bits with named bitfields
+ */
 export class Bitstring<T extends UInt8 | UInt16 | UInt32, TDef extends Record<string, BitRange<T>>> {
 
+    /**
+     * Creates a new Bitstring instance
+     * @param backing - The backing integer value
+     * @param defs - The bitfield definitions
+     * @return A Result containing either the new Bitstring instance or an error
+     * message
+     */
     static create<T extends UInt8 | UInt16 | UInt32, TDef extends Record<string, BitRange<T>>>(
         backing: T,
         defs: TDef
@@ -37,17 +47,21 @@ export class Bitstring<T extends UInt8 | UInt16 | UInt32, TDef extends Record<st
 
 
     /**
-     * Gets the backing value for this Bitstring.
-     *
-     * @return The backing value.
+     * Gets the backing value for this Bitstring
+     * @return The backing value
      */
     public get backingValue(): T {
         return this._backing;
     }
 
 
-    public getBitfield(key: keyof TDef): number {
-        const def = this._defs[key]!;
+    /**
+     * Gets the value of the specified bitfield
+     * @param bitfieldName - The name of the bitfield to get
+     * @return The value of the bitfield
+     */
+    public getBitfield(bitfieldName: keyof TDef): number {
+        const def = this._defs[bitfieldName]!;
 
         const numBitfieldBits = def.type === "BitfieldDefLowBitAndSize" ?
             def.numBits :

@@ -8,9 +8,7 @@ describe("Bitstring", () => {
 
         describe("Bitstring.create()", () => {
 
-
             it("fails when a bitfield definition contains a low bit that is less than zero", () => {
-
                 // const bitfieldDefs = {
                 //     "a": { type: "BitfieldDefLowBitAndSize", lowBit: 0, numBits: 3 },  // bits 0, 1, 2
                 //     "b": { type: "BitfieldDefBookends",      lowBit: 3, highBit: 4 },  // bits 3, 4
@@ -28,7 +26,6 @@ describe("Bitstring", () => {
 
 
             it("fails when a bitfield definition contains a high bit that is greater than the highest bit number supported by the data type", () => {
-
                 // const bitfieldDefs = {
                 //     "a": { type: "BitfieldDefLowBitAndSize", lowBit: 0, numBits: 3 },  // bits 0, 1, 2
                 //     "b": { type: "BitfieldDefBookends",      lowBit: 3, highBit: 4 },  // bits 3, 4
@@ -46,7 +43,6 @@ describe("Bitstring", () => {
 
 
             it("fails when a bitfield definition contains a fractional low bit", () => {
-
                 // const bitfieldDefs = {
                 //     "a": { type: "BitfieldDefLowBitAndSize", lowBit: 0,   numBits: 3 },  // bits 0, 1, 2
                 //     "b": { type: "BitfieldDefBookends",      lowBit: 3.5, highBit: 4 },  // bits 3, 4    <<-- Error: fractional low bit
@@ -64,7 +60,6 @@ describe("Bitstring", () => {
 
 
             it("fails when a bitfield definition contains a fractional high bit", () => {
-
                 // const bitfieldDefs = {
                 //     "a": { type: "BitfieldDefLowBitAndSize", lowBit: 0, numBits: 3 },    // bits 0, 1, 2
                 //     "b": { type: "BitfieldDefBookends",      lowBit: 3, highBit: 4.5 },  // bits 3, 4    <<-- Error: fractional high bit
@@ -116,7 +111,6 @@ describe("Bitstring", () => {
     describe("static", () => {
 
         describe("create()", () => {
-
 
             it("fails when a bitfield definition contains a low bit that is greater than the high bit", () => {
                 const bitfieldDefs = {
@@ -173,7 +167,6 @@ describe("Bitstring", () => {
 
     describe("instance", () => {
 
-
         describe("backingValue property", () => {
 
             it("returns the expected backing value", () => {
@@ -219,4 +212,5 @@ describe("Bitstring", () => {
         });
 
     });
+
 });
