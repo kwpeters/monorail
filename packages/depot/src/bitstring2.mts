@@ -2,47 +2,59 @@ import { UInt8, UInt16, UInt32 } from "./primitiveDataType.mjs";
 import { Result, FailedResult, SucceededResult } from "./result.mjs";
 
 
-export type BitNumber<T> =
-  T extends UInt8 ? 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 :
-  T extends UInt16 ? 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 :
-  T extends UInt32 ? 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
+/**
+ * A type that represents valid bit numbers for a given data type
+ */
+export type BitNumber<TDataType> =
+  TDataType extends UInt8 ? 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 :
+  TDataType extends UInt16 ? 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 :
+  TDataType extends UInt32 ? 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
                     16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 | 31 :
   never;
 
 
-export type BitRange<T> =
-    { type: "BitfieldDefBookends",      lowBit: BitNumber<T>; highBit: BitNumber<T> } |
-    { type: "BitfieldDefLowBitAndSize", lowBit: BitNumber<T>; numBits: number };
+/**
+ * A type that represents a range of bits that define a bitfield within a
+ * bitstring.
+ */
+export type BitRange<TBackingDT> =
+    { type: "BitfieldDefBookends",      lowBit: BitNumber<TBackingDT>; highBit: BitNumber<TBackingDT> } |
+    { type: "BitfieldDefLowBitAndSize", lowBit: BitNumber<TBackingDT>; numBits: number };
 
 
 /**
  * Represents a sequence of bits with named bitfields
  */
-export class Bitstring<T extends UInt8 | UInt16 | UInt32, TDef extends Record<string, BitRange<T>>> {
-
+export class Bitstring<
+    TBackingValue extends UInt8 | UInt16 | UInt32,
+    TBitfieldDef extends Record<string, BitRange<TBackingValue>>
+> {
     /**
      * Creates a new Bitstring instance
-     * @param backing - The backing integer value
-     * @param defs - The bitfield definitions
+     * @param backingValue - The backing integer value
+     * @param bitfieldDefs - The bitfield definitions
      * @return A Result containing either the new Bitstring instance or an error
      * message
      */
-    static create<T extends UInt8 | UInt16 | UInt32, TDef extends Record<string, BitRange<T>>>(
-        backing: T,
-        defs: TDef
-    ): Result<Bitstring<T, TDef>, string> {
-        return bitfieldDefinitionsAreValid(backing, defs)
-        .mapSuccess(() => new Bitstring(backing, defs));
+    static create<
+        TBackingValue extends UInt8 | UInt16 | UInt32,
+        TBitfieldDef extends Record<string, BitRange<TBackingValue>>
+    >(
+        backingValue: TBackingValue,
+        bitfieldDefs:    TBitfieldDef
+    ): Result<Bitstring<TBackingValue, TBitfieldDef>, string> {
+        return bitfieldDefinitionsAreValid(backingValue, bitfieldDefs)
+        .mapSuccess(() => new Bitstring(backingValue, bitfieldDefs));
     }
 
 
-    private readonly _backing: T;
-    private readonly _defs:    TDef;
+    private readonly _backingValue: TBackingValue;
+    private readonly _bitfieldDefs: TBitfieldDef;
 
 
-    private constructor(backing: T, defs: TDef) {
-        this._backing = backing;
-        this._defs = defs;
+    private constructor(backingValue: TBackingValue, bitfieldDefs: TBitfieldDef) {
+        this._backingValue = backingValue;
+        this._bitfieldDefs = bitfieldDefs;
     }
 
 
@@ -50,8 +62,8 @@ export class Bitstring<T extends UInt8 | UInt16 | UInt32, TDef extends Record<st
      * Gets the backing value for this Bitstring
      * @return The backing value
      */
-    public get backingValue(): T {
-        return this._backing;
+    public get backingValue(): TBackingValue {
+        return this._backingValue;
     }
 
 
@@ -60,18 +72,18 @@ export class Bitstring<T extends UInt8 | UInt16 | UInt32, TDef extends Record<st
      * @param bitfieldName - The name of the bitfield to get
      * @return The value of the bitfield
      */
-    public getBitfield(bitfieldName: keyof TDef): number {
-        const def = this._defs[bitfieldName]!;
+    public getBitfield(bitfieldName: keyof TBitfieldDef): number {
+        const bitfiledDef = this._bitfieldDefs[bitfieldName]!;
 
-        const numBitfieldBits = def.type === "BitfieldDefLowBitAndSize" ?
-            def.numBits :
-            def.highBit - def.lowBit + 1;
+        const numBitfieldBits = bitfiledDef.type === "BitfieldDefLowBitAndSize" ?
+            bitfiledDef.numBits :
+            bitfiledDef.highBit - bitfiledDef.lowBit + 1;
 
         // Create a mask to extract the bits from the value.
         const mask = (1 << numBitfieldBits) - 1;
 
         // Shift the value to the right by the low bit and apply the mask.
-        const shiftedValue = (this._backing.value >> def.lowBit) & mask;
+        const shiftedValue = (this._backingValue.value >> bitfiledDef.lowBit) & mask;
         return shiftedValue;
     }
 }
@@ -80,55 +92,55 @@ export class Bitstring<T extends UInt8 | UInt16 | UInt32, TDef extends Record<st
 /**
  * A function to validate the bitfield definitions.  This checks that the bit
  * ranges are valid and do not overlap.
- * @param defs - The bitfield definitions to validate
+ * @param bitfieldDefs - The bitfield definitions to validate
  * @param cls - The class type of the backing integer
  * @return If the definitions are valid, a successful Result containing the
  * definitions; otherwise a failed Result containing an error message
  */
-function bitfieldDefinitionsAreValid<T extends UInt8 | UInt16 | UInt32>(
-    backing: T,
-    defs: Record<string, BitRange<T>>
-): Result<Record<string, BitRange<T>>, string> {
+function bitfieldDefinitionsAreValid<TBackingValue extends UInt8 | UInt16 | UInt32>(
+    backingValue: TBackingValue,
+    bitfieldDefs: Record<string, BitRange<TBackingValue>>
+): Result<Record<string, BitRange<TBackingValue>>, string> {
     const minBitNum = 0;
-    const maxBitNum = backing.static.numBits - 1;
+    const maxBitNum = backingValue.static.numBits - 1;
 
-    for (const [name, bitfieldSpecifier] of Object.entries(defs)) {
+    for (const [bitfieldName, bitfieldDef] of Object.entries(bitfieldDefs)) {
 
         // Even though the type system checks this for literals,
         // add a runtime check for safety with non-literal values.
 
-        const lowBitNum = bitfieldSpecifier.lowBit;
+        const lowBitNum = bitfieldDef.lowBit;
         const highBitNum =
-            bitfieldSpecifier.type === "BitfieldDefBookends" ? bitfieldSpecifier.highBit :
-            lowBitNum + bitfieldSpecifier.numBits - 1;
+            bitfieldDef.type === "BitfieldDefBookends" ? bitfieldDef.highBit :
+            lowBitNum + bitfieldDef.numBits - 1;
 
         // Make sure that the lowBit and highBit are integers.
         if (!Number.isInteger(lowBitNum)) {
-            return new FailedResult(`Bitfield ${name} has a non-integer low bit: ${lowBitNum}`);
+            return new FailedResult(`Bitfield ${bitfieldName} has a non-integer low bit: ${lowBitNum}`);
         }
 
         if (!Number.isInteger(highBitNum)) {
-            return new FailedResult(`Bitfield ${name} has a non-integer high bit: ${highBitNum}`);
+            return new FailedResult(`Bitfield ${bitfieldName} has a non-integer high bit: ${highBitNum}`);
         }
 
         // Make sure that the lowBit and highBit are within the range of the bit string.
         if (lowBitNum < minBitNum) {
-            return new FailedResult(`Bitfield ${name} has a low bit less than the minimum: ${lowBitNum}`);
+            return new FailedResult(`Bitfield ${bitfieldName} has a low bit less than the minimum: ${lowBitNum}`);
         }
 
         if (highBitNum > maxBitNum) {
-            return new FailedResult(`Bitfield ${name} has a high bit greater than the maximum: ${highBitNum}`);
+            return new FailedResult(`Bitfield ${bitfieldName} has a high bit greater than the maximum: ${highBitNum}`);
         }
 
         // Make sure that the lowBit is less than or equal to the highBit.
         if (lowBitNum > highBitNum) {
-            return new FailedResult(`Bitfield ${name} has a low bit greater than the high bit: [${lowBitNum}, ${highBitNum}]`);
+            return new FailedResult(`Bitfield ${bitfieldName} has a low bit greater than the high bit: [${lowBitNum}, ${highBitNum}]`);
         }
     }
 
     // Make sure that none of the ranges specified in _defs_ overlap.
-    const usedBits = Array(backing.static.numBits).fill(false) as boolean[];
-    for (const [name, bitRange] of Object.entries(defs)) {
+    const usedBits = Array(backingValue.static.numBits).fill(false) as boolean[];
+    for (const [name, bitRange] of Object.entries(bitfieldDefs)) {
         const highBit = bitRange.type === "BitfieldDefBookends" ? bitRange.highBit :
             bitRange.lowBit + bitRange.numBits - 1;
         for (let curBitNum = bitRange.lowBit; curBitNum <= highBit; curBitNum++) {
@@ -140,5 +152,5 @@ function bitfieldDefinitionsAreValid<T extends UInt8 | UInt16 | UInt32>(
     }
 
     // If we made it this far, then the bitfield definitions are valid.
-    return new SucceededResult(defs);
+    return new SucceededResult(bitfieldDefs);
 }
