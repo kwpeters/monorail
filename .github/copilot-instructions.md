@@ -57,8 +57,9 @@ All TypeScript files within this project follow the following formatting rules.
 - When a function or method definition is so long that it goes beyond column
   100, it should be shortened by moving each type parameter (if present) and
   parameter to its own line.  The parameters should be indented, and the closing
-  `>` (for type parameters) and `)` (parameters) should not be indented so that
-  it appears in the same starting column as the function or method declaration.
+  `>` (for type parameters) and `)` (for parameters) should not be indented so
+  that they appear in the same starting column as the line preceding the type
+  parameters or parameters.
 
 ### Unit Test Coding Style
 
