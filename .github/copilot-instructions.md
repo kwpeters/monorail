@@ -60,6 +60,18 @@ All TypeScript files within this project follow the following formatting rules.
   `>` (for type parameters) and `)` (for parameters) should not be indented so
   that they appear in the same starting column as the line preceding the type
   parameters or parameters.
+- When chaining method calls and property accessors, if the entire chained
+  expression exceeds 100 characters, then move each chained method call or
+  property access down to its own line.  Each new line should start with the `.`
+  member access operator, and it should *not* be indented.
+  - An example of properly formatted method chaining:
+
+      ```typescript
+          myObject
+          .methodA("one", "two", "three")
+          .methodB("four", "five", "six")
+          .methodC("seven", "eight", "nine");
+      ```
 
 ### Unit Test Coding Style
 
