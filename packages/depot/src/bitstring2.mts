@@ -35,7 +35,18 @@ export class Bitstring<T extends UInt8 | UInt16 | UInt32, TDef extends Record<st
         this._defs = defs;
     }
 
-    getBitfield(key: keyof TDef): number {
+
+    /**
+     * Gets the backing value for this Bitstring.
+     *
+     * @return The backing value.
+     */
+    public get backingValue(): T {
+        return this._backing;
+    }
+
+
+    public getBitfield(key: keyof TDef): number {
         const def = this._defs[key]!;
 
         const numBitfieldBits = def.type === "BitfieldDefLowBitAndSize" ?
