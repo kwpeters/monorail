@@ -51,6 +51,9 @@ This monorepo contains packages and applications that use the following tools:
    executable can be found using your PATH environment variable.  If you have
    Git installed, this can usually be found in `C:\Program Files\Git\usr\bin`.
 
+4. Enable developer mode.  This must be done so that the unit tests for Symlink
+   can run successfully.
+
 ### Install dependencies
 
 ```powershell
