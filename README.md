@@ -37,12 +37,19 @@ This monorepo contains packages and applications that use the following tools:
    This packaging requires use of `signtool`, which is part of the [Windows
    SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-sdk/).
 
+   The Windows SDK is typically installed in:  `C:\Program Files (x86)\Windows Kits`
+   signtool.exe will be installed in something like: `C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64`
+
    To confirm that it is installed on your Windows PC and that it can be found
    using the `PATH` environment variable, run the following PowerShell command:
 
    ```powershell
    get-command signtool
    ```
+
+3. The package depot-node requires use of openssl.exe.  Be sure that this
+   executable can be found using your PATH environment variable.  If you have
+   Git installed, this can usually be found in `C:\Program Files\Git\usr\bin`.
 
 ### Install dependencies
 
