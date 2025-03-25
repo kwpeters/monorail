@@ -625,3 +625,45 @@ export function includesCaseInsensitive(arr: string[], searchStr: string): boole
     const found = arr.find((curStr) => compareStrI(curStr, searchStr) === CompareResult.EQUAL);
     return found !== undefined;
 }
+
+
+export interface ITrimOptions {
+    /**
+     * If `true`, the specified string will only be trimmed if it starts and ends
+     * with the specified string.
+     */
+    onlyTrimIfStartAndEnd: boolean;
+}
+
+
+/**
+ * Trims the specified string from the beginning and end of the specified string.
+ *
+ * @param str - The string to be trimmed
+ * @param toTrim - The string to look for at the beginning and end of _str_.
+ * @return The trimmed string
+ */
+export function trimString(str: string, toTrim: string, opts: ITrimOptions): string {
+
+    if (opts.onlyTrimIfStartAndEnd) {
+        if (str.startsWith(toTrim) &&
+            str.endsWith(toTrim)   &&
+            str.length >= (2 * toTrim.length)) {
+            return str.slice(toTrim.length, -toTrim.length);
+        }
+        else {
+            return str;
+        }
+    }
+    else {
+
+        if (str.startsWith(toTrim)) {
+            str = str.slice(toTrim.length);
+        }
+        if (str.endsWith(toTrim)) {
+            str = str.slice(0, -toTrim.length);
+        }
+
+        return str;
+    }
+}

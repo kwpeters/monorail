@@ -6,7 +6,8 @@ import {
     getBufferString,
     collapseWhitespace,
     tryParseInt,
-    includesCaseInsensitive
+    includesCaseInsensitive,
+    trimString
 } from "./stringHelpers.mjs";
 
 describe("string helpers module", () => {
@@ -735,5 +736,73 @@ describe("includesCaseInsensitive()", () => {
     it("returns false when the search string does not exist", () => {
         const arr = ["one", "two", "three"];
         expect(includesCaseInsensitive(arr, "four")).toBeFalse();
+    });
+});
+
+
+
+describe("trimString()", () => {
+
+    describe("when onlyTrimIfStartAndEnd is true", () => {
+
+        it("does nothing when the search string appears only at the beginning", () => {
+            const orig = "***foo";
+            const trimmed = trimString(orig, "***", { onlyTrimIfStartAndEnd: true});
+            expect(trimmed).toEqual(orig);
+        });
+
+
+        it("does nothing when the search string appears only at the end", () => {
+            const orig = "foo***";
+            const trimmed = trimString(orig, "***", { onlyTrimIfStartAndEnd: true});
+            expect(trimmed).toEqual(orig);
+        });
+
+
+        it("does nothing when the start and end search strings overlap", () => {
+            const orig = "*****";
+            const trimmed = trimString(orig, "***", { onlyTrimIfStartAndEnd: true});
+            expect(trimmed).toEqual(orig);
+        });
+
+
+        it("removes start and end search strings", () => {
+            const orig = "***foo***";
+            const trimmed = trimString(orig, "***", { onlyTrimIfStartAndEnd: true});
+            expect(trimmed).toEqual("foo");
+        });
+    });
+
+
+
+    describe("when onlyTrimIfStartAndEnd is false", () => {
+
+        it("removes the beginning when the search string is present", () => {
+            const orig = "***foo";
+            const trimmed = trimString(orig, "***", { onlyTrimIfStartAndEnd: false});
+            expect(trimmed).toEqual("foo");
+        });
+
+
+        it("removes the ending when the search string is present", () => {
+            const orig = "foo***";
+            const trimmed = trimString(orig, "***", { onlyTrimIfStartAndEnd: false});
+            expect(trimmed).toEqual("foo");
+        });
+
+
+        it("only removes the beginning when the beginning search string and ending search string overlap", () => {
+            const orig = "*****";
+            const trimmed = trimString(orig, "***", { onlyTrimIfStartAndEnd: false});
+            expect(trimmed).toEqual("**");
+        });
+
+
+        it("removes start and end search strings", () => {
+            const orig = "***foo***";
+            const trimmed = trimString(orig, "***", { onlyTrimIfStartAndEnd: false});
+            expect(trimmed).toEqual("foo");
+        });
+
     });
 });
