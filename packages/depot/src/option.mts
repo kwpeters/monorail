@@ -135,6 +135,10 @@ export class NoneOption {
         return true;
     }
 
+    public get value(): undefined {
+        return undefined;
+    }
+
     public toString(): string {
         return "NoneOption";
     }
