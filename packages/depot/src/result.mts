@@ -3,7 +3,7 @@
 
 import * as _ from "lodash-es";
 import { isIToString } from "./primitives.mjs";
-import { Option } from "./option.mjs";
+import { NoneOption, Option, SomeOption } from "./option.mjs";
 import { inspect } from "./inspect.mjs";
 
 
@@ -162,6 +162,11 @@ export class SucceededResult<TSuccess> {
             successMsgOrFn(this._value);
         throw new Error(msg);
     }
+
+
+    public toOption(): Option<TSuccess> {
+        return new SomeOption(this._value);
+    }
 }
 
 
@@ -315,6 +320,11 @@ export class FailedResult<TError> {
     public throwIfSucceededWith(successMsgOrFn: string | ((val: never) => string)): TError;
     public throwIfSucceededWith(successMsgOrFn: string | ((val: never) => string)): TError {
         return this._error;
+    }
+
+
+    public toOption(): Option<never> {
+        return NoneOption.get();
     }
 
 }
@@ -1446,11 +1456,27 @@ export namespace Result {
         result: Result<TSuccess, TError>
     ): TError;
 
+
     export function throwIfSucceededWith<TSuccess, TError>(
         errorMsgOrFn: string | ((val: TSuccess) => string),
         result: Result<TSuccess, TError>
     ): TError {
         return result.throwIfSucceededWith(errorMsgOrFn);
+    }
+
+
+    /**
+     * Converts a Result to an Option.
+     *
+     * @param result - The Result to be converted
+     * @return If the input Result is successful, an Option containing the
+     * value.  If the input Result is a failure, NoneOption.
+     */
+    export function toOption<TSuccess, TError>(
+        result: Result<TSuccess, TError>
+    ): Option<TSuccess> {
+        const opt = result.toOption();
+        return opt;
     }
 
 }

@@ -1303,4 +1303,22 @@ describe("Result namespace", () => {
         });
     });
 
+
+    describe("toOption()", () => {
+
+        it("returns NoneOption when given a failed Result", () => {
+            const res = new FailedResult("error message");
+            const opt = Result.toOption(res);
+            expect(opt.isNone).toBeTrue();
+        });
+
+
+        it("returns SomeOption wrapping the value when given a successful Result", () => {
+            const res = new SucceededResult(5);
+            const opt = Result.toOption(res);
+            expect(opt.isSome).toBeTrue();
+            expect(opt.value).toEqual(5);
+        });
+    });
+
 });
