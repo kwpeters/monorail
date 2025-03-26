@@ -27,6 +27,10 @@
             "types": "./src/arrayHelpers.mts",
             "default": "./dist/arrayHelpers.mjs"
         },
+        "./bitstring": {
+            "types": "./src/bitstring.mts",
+            "default": "./dist/bitstring.mjs"
+        },
         "./brand": {
             "types": "./src/brand.mts",
             "default": "./dist/brand.mjs"
@@ -187,6 +191,10 @@
             "types": "./src/poll.mts",
             "default": "./dist/poll.mjs"
         },
+        "./primitiveDataType": {
+            "types": "./src/primitiveDataType.mts",
+            "default": "./dist/primitiveDataType.mjs"
+        },
         "./primitives": {
             "types": "./src/primitives.mts",
             "default": "./dist/primitives.mjs"
@@ -251,13 +259,13 @@
             "types": "./src/typeUtils.mts",
             "default": "./dist/typeUtils.mjs"
         },
-        "./utilityTypes": {
-            "types": "./src/utilityTypes.mts",
-            "default": "./dist/utilityTypes.mjs"
-        },
         "./url": {
             "types": "./src/url.mts",
             "default": "./dist/url.mjs"
+        },
+        "./utilityTypes": {
+            "types": "./src/utilityTypes.mts",
+            "default": "./dist/utilityTypes.mjs"
         },
         "./uuid": {
             "types": "./src/uuid.mts",
