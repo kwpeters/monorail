@@ -101,6 +101,35 @@ export class Bitstring<
         const shiftedValue = (this._backingValue.value >> bitfiledDef.lowBit) & mask;
         return shiftedValue;
     }
+
+
+    /**
+     * Returns a new Bitstring instance with the specified bitfield set to the
+     * new value.
+     * @param bitfieldName - The name of the bitfield to set
+     * @param value - The new value of the bitfield
+     * @return The new Bitstring instance with the specified bitfield set to the
+     * new value
+     */
+    public setBitfield(bitfieldName: keyof TBitfieldDef, value: number): Bitstring<TBackingValue, TBitfieldDef> {
+        const bitfiledDef = this._bitfieldDefs[bitfieldName]!;
+
+        const numBitfieldBits = bitfiledDef.type === "BitfieldDefLowBitAndSize" ?
+            bitfiledDef.numBits :
+            bitfiledDef.highBit - bitfiledDef.lowBit + 1;
+
+        // Create a mask to clear the bits in the value.
+        const mask = ((1 << numBitfieldBits) - 1) << bitfiledDef.lowBit;
+
+        // Clear the bits in the value and then set the new value.
+        const clearedValue = this._backingValue.value & ~mask;
+        const shiftedValue = value << bitfiledDef.lowBit;
+        const newValue = clearedValue | (shiftedValue & mask);
+
+        const backingValue = this._backingValue.static.create(newValue).throwIfFailed() as TBackingValue;
+        const newBitstring = new Bitstring(backingValue, this._bitfieldDefs);
+        return newBitstring;
+    }
 }
 
 

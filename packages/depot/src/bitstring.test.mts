@@ -1,5 +1,6 @@
 import { UInt8, UInt16 } from "./primitiveDataType.mjs";
 import { Bitstring } from "./bitstring.mjs";
+import { pipe } from "./pipe2.mjs";
 
 
 describe("Bitstring", () => {
@@ -228,6 +229,45 @@ describe("Bitstring", () => {
                 expect(bitstring.getBitfield("b")).toEqual(0b10);
                 expect(bitstring.getBitfield("c")).toEqual(0b01);
                 expect(bitstring.getBitfield("d")).toEqual(0b1);
+            });
+
+        });
+
+
+        describe("setBitfiled()", () => {
+
+            it("returns a new Bitstring with the value of the bitfiled updated", () => {
+
+                const bitfieldDefs = {
+                    "a": { type: "BitfieldDefLowBitAndSize", lowBit: 0, numBits: 3 },  // bits 0, 1, 2
+                    "b": { type: "BitfieldDefBookends",      lowBit: 3, highBit: 4 },  // bits 3, 4
+                    "c": { type: "BitfieldDefBookends",      lowBit: 5, highBit: 6 },  // bits 5, 6
+                    "d": { type: "BitfieldDefLowBitAndSize", lowBit: 7, numBits: 1 },  // bit 7
+                } as const;
+
+                const newBitstring = pipe(
+                    UInt8.create(0b0_00_00_000).throwIfFailed(),
+                    (backingVal) => Bitstring.create(backingVal, bitfieldDefs).throwIfFailed(),
+                    (bitstring) => bitstring.setBitfield("b", 0b11)
+                );
+                expect(newBitstring.backingValue.value).toEqual(0b0_00_11_000);
+            });
+
+
+            it("does not affect bit outside of the bitfield when the value specified is larger than the bitfield", () => {
+                const bitfieldDefs = {
+                    "a": { type: "BitfieldDefLowBitAndSize", lowBit: 0, numBits: 3 },  // bits 0, 1, 2
+                    "b": { type: "BitfieldDefBookends",      lowBit: 3, highBit: 4 },  // bits 3, 4
+                    "c": { type: "BitfieldDefBookends",      lowBit: 5, highBit: 6 },  // bits 5, 6
+                    "d": { type: "BitfieldDefLowBitAndSize", lowBit: 7, numBits: 1 },  // bit 7
+                } as const;
+
+                const newBitstring = pipe(
+                    UInt8.create(0b0_00_00_000).throwIfFailed(),
+                    (backingVal) => Bitstring.create(backingVal, bitfieldDefs).throwIfFailed(),
+                    (bitstring) => bitstring.setBitfield("b", 0b111)  // bitfield is only 2 bits, but trying to set 3
+                );
+                expect(newBitstring.backingValue.value).toEqual(0b0_00_11_000);
             });
 
         });
