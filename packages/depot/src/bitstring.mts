@@ -68,6 +68,16 @@ export class Bitstring<
 
 
     /**
+     * Gets the names of the bitfields within this Bitstring
+     * @return The bitfield definitions
+     */
+    public enumBitfields(): IterableIterator<keyof TBitfieldDef> {
+        return Object.keys(this._bitfieldDefs)[Symbol.iterator]();
+
+    }
+
+
+    /**
      * Gets the value of the specified bitfield
      * @param bitfieldName - The name of the bitfield to get
      * @return The value of the bitfield
