@@ -23,11 +23,16 @@ export type BitRange<TBackingDT> =
 
 
 /**
+ * Data type that defines the bitfields within a Bitstring.
+ */
+export type BitfieldsDef<TBackingValue extends UInt8 | UInt16 | UInt32> = Record<string, BitRange<TBackingValue>>;
+
+/**
  * Represents a sequence of bits with named bitfields
  */
 export class Bitstring<
     TBackingValue extends UInt8 | UInt16 | UInt32,
-    TBitfieldDef extends Record<string, BitRange<TBackingValue>>
+    TBitfieldDef extends BitfieldsDef<TBackingValue>
 > {
     /**
      * Creates a new Bitstring instance
@@ -38,7 +43,7 @@ export class Bitstring<
      */
     static create<
         TBackingValue extends UInt8 | UInt16 | UInt32,
-        TBitfieldDef extends Record<string, BitRange<TBackingValue>>
+        TBitfieldDef extends BitfieldsDef<TBackingValue>
     >(
         backingValue: TBackingValue,
         bitfieldDefs: TBitfieldDef
@@ -109,8 +114,8 @@ export class Bitstring<
  */
 function bitfieldDefinitionsAreValid<TBackingValue extends UInt8 | UInt16 | UInt32>(
     backingValue: TBackingValue,
-    bitfieldDefs: Record<string, BitRange<TBackingValue>>
-): Result<Record<string, BitRange<TBackingValue>>, string> {
+    bitfieldDefs: BitfieldsDef<TBackingValue>
+): Result<BitfieldsDef<TBackingValue>, string> {
     const minBitNum = 0;
     const maxBitNum = backingValue.static.numBits - 1;
 
