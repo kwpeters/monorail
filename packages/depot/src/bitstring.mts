@@ -104,6 +104,22 @@ export class Bitstring<
 
 
     /**
+     * Gets the name and value of all bitfields within this Bitstring.
+     * @return An array of tuples.  Each tuple contains the bitfield name and
+     * its value.
+     */
+    public getAllBitfields(): IterableIterator<[keyof TBitfieldDef, number]> {
+        const bitfieldNames = Object.keys(this._bitfieldDefs) as Array<keyof TBitfieldDef>;
+
+        const vals = bitfieldNames.map((bitfieldName) => {
+            const val = this.getBitfield(bitfieldName);
+            return [bitfieldName, val] as [keyof TBitfieldDef, number];
+        });
+        return vals[Symbol.iterator]();
+    }
+
+
+    /**
      * Returns a new Bitstring instance with the specified bitfield set to the
      * new value.
      * @param bitfieldName - The name of the bitfield to set
