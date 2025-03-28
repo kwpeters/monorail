@@ -256,6 +256,28 @@ describe("Bitstring", () => {
         });
 
 
+        describe("getAllNonZeroBitfields()", () => {
+
+            it("returns only the bitfields with non-zero values", () => {
+                const bitfieldDefs = {
+                    "a": { type: "BitfieldDefLowBitAndSize", lowBit: 0, numBits: 3 },  // bits 0, 1, 2
+                    "b": { type: "BitfieldDefBookends",      lowBit: 3, highBit: 4 },  // bits 3, 4
+                    "c": { type: "BitfieldDefBookends",      lowBit: 5, highBit: 6 },  // bits 5, 6
+                    "d": { type: "BitfieldDefLowBitAndSize", lowBit: 7, numBits: 1 },  // bit 7
+                } as const;
+
+                const bitstring = Bitstring.create(
+                    UInt8.create(0b1_00_10_101).throwIfFailed(),  // bitfield "c" should be skipped
+                    bitfieldDefs
+                ).throwIfFailed();
+
+                const bitfields = Array.from(bitstring.getAllNonZeroBitfields());
+                expect(bitfields).toEqual([["a", 0b101], ["b", 0b10], ["d", 0b1]]);
+            });
+
+        });
+
+
         describe("setBitfiled()", () => {
 
             it("returns a new Bitstring with the value of the bitfiled updated", () => {

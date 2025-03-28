@@ -108,14 +108,46 @@ export class Bitstring<
      * @return An array of tuples.  Each tuple contains the bitfield name and
      * its value.
      */
-    public getAllBitfields(): IterableIterator<[keyof TBitfieldDef, number]> {
-        const bitfieldNames = Object.keys(this._bitfieldDefs) as Array<keyof TBitfieldDef>;
+    public *getAllBitfields(): IterableIterator<[keyof TBitfieldDef, number]> {
+        const keys = Object.keys(this._bitfieldDefs) as Array<keyof TBitfieldDef>;
+        const iter = keys[Symbol.iterator]();
 
-        const vals = bitfieldNames.map((bitfieldName) => {
-            const val = this.getBitfield(bitfieldName);
-            return [bitfieldName, val] as [keyof TBitfieldDef, number];
-        });
-        return vals[Symbol.iterator]();
+        while (true) {
+            const next = iter.next();
+            if (next.done) {
+                break;
+            }
+
+            const bitfieldName = next.value;
+            const bitfieldVal = this.getBitfield(bitfieldName);
+            yield [bitfieldName, bitfieldVal];
+        }
+    }
+
+
+    /**
+     * Gets the name and value of all bitfields within this Bitstring that have
+     * a non-zero value.  Similar to getAllBitfields(), but filters for only
+     * those bitfields that have a non-zero value.  Provided as a convenience,
+     * because it is common to want to iterate over all bitfields that are
+     * non-zero.
+     * @return An array of tuples.  Each tuple contains the bitfield name and
+     * its value.
+     */
+    public *getAllNonZeroBitfields(): IterableIterator<[keyof TBitfieldDef, number]> {
+        const iter = this.getAllBitfields();
+
+        while (true) {
+            const next = iter.next();
+            if (next.done) {
+                break;
+            }
+
+            const [__bitfieldName, bitfieldValue] = next.value;
+            if (bitfieldValue !== 0) {
+                yield next.value;
+            }
+        }
     }
 
 
