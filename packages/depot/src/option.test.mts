@@ -510,8 +510,8 @@ describe("Option namespace", () => {
             };
 
             const opt = new SomeOption(5) as Option<number>;
-            const res = Option.match(someFn, noneFn, opt);
-            expect(res).toEqual(6);
+            const output = Option.match(someFn, noneFn, opt);
+            expect(output).toEqual(6);
             expect(someFnInvocations).toEqual(1);
             expect(noneFnInvocations).toEqual(0);
         });
@@ -531,8 +531,8 @@ describe("Option namespace", () => {
             };
 
             const opt = NoneOption.get() as Option<number>;
-            const res = Option.match(someFn, noneFn, opt);
-            expect(res).toEqual("error message");
+            const output = Option.match(someFn, noneFn, opt);
+            expect(output).toEqual("error message");
             expect(someFnInvocations).toEqual(0);
             expect(noneFnInvocations).toEqual(1);
         });
