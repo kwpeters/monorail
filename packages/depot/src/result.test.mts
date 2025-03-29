@@ -905,6 +905,51 @@ describe("Result namespace", () => {
     });
 
 
+    describe("match()", () => {
+
+        it("when given a successful Result invokes only the first function and returns the returned value", () => {
+            let successFnInvocations = 0;
+            let errorFnInvocations = 0;
+
+            const successFn = (x: number) => {
+                successFnInvocations++;
+                return x + 1;
+            };
+            const errorFn = () => {
+                errorFnInvocations++;
+                return "error message";
+            };
+
+            const res = new SucceededResult(5) as Result<number, string>;
+            const output = Result.match(successFn, errorFn, res);
+            expect(output).toEqual(6);
+            expect(successFnInvocations).toEqual(1);
+            expect(errorFnInvocations).toEqual(0);
+        });
+
+
+        it("when given an error Result invokes only the second function and returns the returned value", () => {
+            let successFnInvocations = 0;
+            let errorFnInvocations = 0;
+
+            const successFn = (x: number) => {
+                successFnInvocations++;
+                return x + 1;
+            };
+            const errorFn = (err: string) => {
+                errorFnInvocations++;
+                return err.toLowerCase();
+            };
+
+            const res = new FailedResult("ERROR MESSAGE") as Result<number, string>;
+            const output = Result.match(successFn, errorFn, res);
+            expect(output).toEqual("error message");
+            expect(successFnInvocations).toEqual(0);
+            expect(errorFnInvocations).toEqual(1);
+        });
+    });
+
+
     describe("partition()", () => {
 
         it("when the input array is empty, returns two empty arrays", () => {

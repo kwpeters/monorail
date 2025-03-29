@@ -111,6 +111,15 @@ export class SucceededResult<TSuccess> {
     }
 
 
+    public match<TSuccessOut, TErrorOut = never>(
+        fnSuccess: (val: TSuccess) => TSuccessOut,
+        fnError: (err: never) => TErrorOut
+    ): TSuccessOut {
+        const out = fnSuccess(this._value);
+        return out;
+    }
+
+
     public tap(
         fn: (res: SucceededResult<TSuccess>) => unknown
     ): this {
@@ -257,6 +266,15 @@ export class FailedResult<TError> {
         fn: (successVal: never) => TMappedSuccess
     ): this {
         return this;
+    }
+
+
+    public match<TSuccessOut, TErrorOut>(
+        fnSuccess: (val: never) => TSuccessOut,
+        fnError: (err: TError) => TErrorOut
+    ): TErrorOut {
+        const out = fnError(this._error);
+        return out;
     }
 
 
@@ -1211,6 +1229,24 @@ export namespace Result {
             },
             new SucceededResult([])
         );
+    }
+
+
+    /**
+     * When _input_ is successful invokes _fnSuccess_ and returns the result.
+     * When _input_ is an error invokes _fnError_ and returns the result.
+     *
+     * @param fnSuccess - Description
+     * @param fnError - Description
+     * @param input - The input Option
+     * @return The value returned by either _fnSome_ or _fnNone_
+     */
+    export function match<TInSuccess, TInError, TOutSuccess, TOutError>(
+        fnSuccess: (val: TInSuccess) => TOutSuccess,
+        fnError: (err: TInError) => TOutError,
+        input: Result<TInSuccess, TInError>
+    ): TOutSuccess | TOutError {
+        return input.match(fnSuccess, fnError);
     }
 
 
