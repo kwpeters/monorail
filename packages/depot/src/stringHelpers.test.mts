@@ -7,7 +7,8 @@ import {
     collapseWhitespace,
     tryParseInt,
     includesCaseInsensitive,
-    trimString
+    trimString,
+    boolStrToBool
 } from "./stringHelpers.mjs";
 
 describe("string helpers module", () => {
@@ -90,6 +91,42 @@ describe("string helpers module", () => {
             expect(toExponential(-0.12345678)).toEqual("-1.23456780e-001");
         });
 
+    });
+
+
+    describe("boolStrToBool()", () => {
+
+        it("returns false when the text 'true' is prepended with extra text", () => {
+            expect(boolStrToBool("---true")).toBeFalse();
+        });
+
+
+        it("returns false when the text 'true' is postpended with extra text", () => {
+            expect(boolStrToBool("true---")).toBeFalse();
+        });
+
+
+        it("returns false when the text 'false' is prepended with extra text", () => {
+            expect(boolStrToBool("---false")).toBeFalse();
+        });
+
+
+        it("returns false when the text 'false' is postpended with extra text", () => {
+            expect(boolStrToBool("false---")).toBeFalse();
+        });
+
+
+        it("returns false when the string is not 'true' or 'false'", () => {
+            expect(boolStrToBool("foo")).toBeFalse();
+        });
+
+
+        it("returns true when the string is any capitalization of 'true'", () => {
+            expect(boolStrToBool("true")).toBeTrue();
+            expect(boolStrToBool("True")).toBeTrue();
+            expect(boolStrToBool("TRUE")).toBeTrue();
+            expect(boolStrToBool("tRuE")).toBeTrue();
+        });
     });
 
 

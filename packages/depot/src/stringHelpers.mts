@@ -77,6 +77,23 @@ export function toExponential(val: number): string {
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// boolean
+
+/**
+ * Converts a string containing the text "true" or "false" (case insensitive) to
+ * a boolean value.  Leading and trailing whitespace is ignored.
+ *
+ * @param str - The string to interpret
+ * @return The boolean value represented by the string, or false if the string
+ * is not "true" or "false"
+ */
+export function boolStrToBool(str: string): boolean {
+    const trimmed = str.trim();
+    return compareStrI(trimmed, "true") === CompareResult.EQUAL;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 
 
 /**
