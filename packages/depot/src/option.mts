@@ -75,6 +75,14 @@ export class SomeOption<T> {
         return new SomeOption(newVal);
     }
 
+    public match<TSomeOut, TNoneOut>(
+        fnSome: (val: T) => TSomeOut,
+        fnNone: () => TNoneOut
+    ): TSomeOut {
+        const out = fnSome(this._value);
+        return out;
+    }
+
     public throwIfNone(): T {
         return this._value;
     }
@@ -179,6 +187,14 @@ export class NoneOption {
         fn: (val: never) => TOut
     ): this {
         return this;
+    }
+
+    public match<TSomeOut, TNoneOut>(
+        fnSome: (val: never) => TSomeOut,
+        fnNone: () => TNoneOut
+    ): TNoneOut {
+        const out = fnNone();
+        return out;
     }
 
     public throwIfNone(): never {
@@ -496,6 +512,24 @@ export namespace Option {
         input: Option<TIn>
     ): Option<TOut> {
         return input.mapSome(fn);
+    }
+
+
+    /**
+     * When _input_ is "some" invokes _fnSome_ and returns the result.
+     * When _input_ is "none" invokes _fnNone_ and returns the result.
+     *
+     * @param fnSome - Description
+     * @param fnNone - Description
+     * @param input - The input Option
+     * @return The value returned by either _fnSome_ or _fnNone_
+     */
+    export function match<TIn, TSomeOut, TNoneOut>(
+        fnSome: (val: TIn) => TSomeOut,
+        fnNone: () => TNoneOut,
+        input: Option<TIn>
+    ): TSomeOut | TNoneOut {
+        return input.match(fnSome, fnNone);
     }
 
 

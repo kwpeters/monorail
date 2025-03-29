@@ -494,6 +494,51 @@ describe("Option namespace", () => {
     });
 
 
+    describe("match()", () => {
+
+        it("when given a Some invokes only the first function and returns the returned value", () => {
+            let someFnInvocations = 0;
+            let noneFnInvocations = 0;
+
+            const someFn = (x: number) => {
+                someFnInvocations++;
+                return x + 1;
+            };
+            const noneFn = () => {
+                noneFnInvocations++;
+                return "error message";
+            };
+
+            const opt = new SomeOption(5) as Option<number>;
+            const res = Option.match(someFn, noneFn, opt);
+            expect(res).toEqual(6);
+            expect(someFnInvocations).toEqual(1);
+            expect(noneFnInvocations).toEqual(0);
+        });
+
+
+        it("when given a None invokes only the second function and returns the returned value", () => {
+            let someFnInvocations = 0;
+            let noneFnInvocations = 0;
+
+            const someFn = (x: number) => {
+                someFnInvocations++;
+                return x + 1;
+            };
+            const noneFn = () => {
+                noneFnInvocations++;
+                return "error message";
+            };
+
+            const opt = NoneOption.get() as Option<number>;
+            const res = Option.match(someFn, noneFn, opt);
+            expect(res).toEqual("error message");
+            expect(someFnInvocations).toEqual(0);
+            expect(noneFnInvocations).toEqual(1);
+        });
+    });
+
+
     describe("throwIfNoneWith()", () => {
 
         it("unwraps the Option when it is a SomeOption", () => {
