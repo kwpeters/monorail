@@ -536,6 +536,7 @@ describe("Option namespace", () => {
             expect(someFnInvocations).toEqual(0);
             expect(noneFnInvocations).toEqual(1);
         });
+
     });
 
 
