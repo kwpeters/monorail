@@ -83,6 +83,13 @@ export class SomeOption<T> {
         return out;
     }
 
+    public matchWith<TSomeOut, TNoneOut>(
+        matcherFns: {some: (val: T) => TSomeOut, none: () => TNoneOut}
+    ): TSomeOut {
+        const out = matcherFns.some(this._value);
+        return out;
+    }
+
     public throwIfNone(): T {
         return this._value;
     }
@@ -194,6 +201,13 @@ export class NoneOption {
         fnNone: () => TNoneOut
     ): TNoneOut {
         const out = fnNone();
+        return out;
+    }
+
+    public matchWith<TSomeOut, TNoneOut>(
+        matcherFns: {some: (val: never) => TSomeOut, none: () => TNoneOut}
+    ): TNoneOut {
+        const out = matcherFns.none();
         return out;
     }
 
@@ -519,8 +533,8 @@ export namespace Option {
      * When _input_ is "some" invokes _fnSome_ and returns the result.
      * When _input_ is "none" invokes _fnNone_ and returns the result.
      *
-     * @param fnSome - Description
-     * @param fnNone - Description
+     * @param fnSome - Function that will be invoked when _input_ is a SomeOption.
+     * @param fnNone - Function that will be invoked when _input_ is a NoneOption.
      * @param input - The input Option
      * @return The value returned by either _fnSome_ or _fnNone_
      */
@@ -530,6 +544,27 @@ export namespace Option {
         input: Option<TIn>
     ): TSomeOut | TNoneOut {
         return input.match(fnSome, fnNone);
+    }
+
+
+    /**
+     * When _input_ is "some" invokes the specified some function and returns the result.
+     * When _input_ is "none" invokes the specified none function and returns the result.
+     * This function is exactly like match(), except it specifies the some and
+     * none functions in an object.  Because the functions are labeled with the
+     * 'some' and 'none' property names, this can help make the calling code
+     * easier to understand.
+     *
+     * @param matcherFns - An object that contains the some and none functions
+     * @param input - The input Option
+     * @return The value returned by the invoked handler function
+     */
+    export function matchWith<TIn, TSomeOut, TNoneOut>(
+        matcherFns: {some: (val: TIn) => TSomeOut, none: () => TNoneOut},
+        input: Option<TIn>
+    ): TSomeOut | TNoneOut {
+        const out = input.match(matcherFns.some, matcherFns.none);
+        return out;
     }
 
 

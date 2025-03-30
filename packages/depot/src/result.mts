@@ -120,6 +120,15 @@ export class SucceededResult<TSuccess> {
     }
 
 
+    public matchWith<TSuccessOut, TErrorOut = never>(
+        matcherFns: {success: (val: TSuccess) => TSuccessOut, error: (err: never) => TErrorOut}
+    ): TSuccessOut {
+        const out = matcherFns.success(this._value);
+        return out;
+
+    }
+
+
     public tap(
         fn: (res: SucceededResult<TSuccess>) => unknown
     ): this {
@@ -274,6 +283,14 @@ export class FailedResult<TError> {
         fnError: (err: TError) => TErrorOut
     ): TErrorOut {
         const out = fnError(this._error);
+        return out;
+    }
+
+
+    public matchWith<TSuccessOut, TErrorOut>(
+        matcherFns: {success: (val: never) => TSuccessOut, error: (err: TError) => TErrorOut}
+    ): TErrorOut {
+        const out = matcherFns.error(this._error);
         return out;
     }
 
@@ -1236,8 +1253,10 @@ export namespace Result {
      * When _input_ is successful invokes _fnSuccess_ and returns the result.
      * When _input_ is an error invokes _fnError_ and returns the result.
      *
-     * @param fnSuccess - Description
-     * @param fnError - Description
+     * @param fnSuccess - Function that will be invoked when _input_ is a
+     * successful Result
+     * @param fnError - Function that will be invoked when _input_ is an error
+     * Result
      * @param input - The input Option
      * @return The value returned by either _fnSome_ or _fnNone_
      */
@@ -1247,6 +1266,30 @@ export namespace Result {
         input: Result<TInSuccess, TInError>
     ): TOutSuccess | TOutError {
         return input.match(fnSuccess, fnError);
+    }
+
+
+    /**
+     * When _input_ is successful, invokes the specified success function and
+     * returns the result.
+     * When _input_ is an error, invokes the specified error function and
+     * returns the result.
+     * This function is exactly like match(), except it specifies the success
+     * and error functions in an object. Because the functions are labeled with
+     * the 'success' and 'error' property names, this can help make the calling
+     * code easier to understand.
+     *
+     * @param matcherFns - An object that specifies the success and error
+     * functions
+     * @param input - The input Option
+     * @return The value returned by the invoked handler function
+     */
+    export function matchWith<TInSuccess, TInError, TOutSuccess, TOutError>(
+        matcherFns: {success: (val: TInSuccess) => TOutSuccess, error: (err: TInError) => TOutError},
+        input: Result<TInSuccess, TInError>
+    ): TOutSuccess | TOutError {
+        const out = input.match(matcherFns.success, matcherFns.error);
+        return out;
     }
 
 
