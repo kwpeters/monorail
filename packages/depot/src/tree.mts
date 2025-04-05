@@ -42,6 +42,16 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
 
 
     /**
+     * Determines whether this tree contains any nodes.
+     *
+     * @return true if this tree is empty; otherwise false.
+     */
+    public isEmpty(): boolean {
+        return this._root.children.length === 0;
+    }
+
+
+    /**
      * Gets the specified node's value
      *
      * @param node - The node whose value will be gotten
@@ -72,6 +82,7 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
      * @return The node's depth
      */
     public depth(node: ITreeNode<TPayload>): number {
+        // Start at -1 to account for the internal root node.
         let depth = -1;
         let curNode: TreeNode<TPayload> = node;
         while (!curNode.isRoot) {
@@ -164,6 +175,69 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
         } as ITreeNode<TPayload>;
         parentNode.children.splice(insertionIndex, 0, newChildNode);
         return newChildNode;
+    }
+
+
+    /**
+     * Returns the node that follows _node_ in a depth first progression.
+     *
+     * @param node - The starting node
+     * @return The next (depth first) node or undefined if there is no next node
+     */
+    public advanceDF(node: ITreeNode<TPayload> | undefined): ITreeNode<TPayload> | undefined {
+
+        // If the node is undefined, the caller is asking for the first node.
+        if (!node) {
+            return this.isEmpty() ? undefined : this._root.children[0];
+        }
+
+        // If the node has children, move to the first child.
+        if (node.children.length > 0) {
+            return node.children[0];
+        }
+
+        // If the node has a next sibling, move to it.
+        const nextSibling = this.nextSibling(node);
+        if (nextSibling) {
+            return nextSibling;
+        }
+
+        // Walk up the tree, searching for the first ancestor that has a
+        // next sibling.
+        let curAncestor = this.parent(node);
+        while (curAncestor) {
+            const ancestorNextSibling = this.nextSibling(curAncestor);
+            if (ancestorNextSibling) {
+                return ancestorNextSibling;
+            }
+
+            // Move up the tree.
+            curAncestor = this.parent(curAncestor);
+        }
+
+        // We have searched all ancestors for a next sibling without
+        // finding any.  There is no next node.
+        return undefined;
+    }
+
+
+    /**
+     * Gets an iterator that will traverse this tree in a depth first manner.
+     *
+     * @return A depth first iterator
+     */
+    public *traverseDF(): IterableIterator<ITreeNode<TPayload>> {
+        let curNode = this._root as TreeNode<TPayload>;
+        while (true) {
+            const nextNode = this.advanceDF(curNode.isRoot ? undefined : curNode);
+            if (nextNode) {
+                curNode = nextNode;
+                yield curNode;
+            }
+            else {
+                break;
+            }
+        }
     }
 
 }
