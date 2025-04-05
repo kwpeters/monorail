@@ -1,7 +1,30 @@
 import { Tree } from "./tree.mjs";
 
 
-fdescribe("Tree", () => {
+/**
+ * T
+ *
+ * 1
+ * ├── 1.1
+ * │   ├── 1.1.1
+ * │   │   └── 1.1.1.1
+ * │   └── 1.1.2
+ * ├── 1.2
+ * │   └── 1.2.1
+ * 2
+ */
+const tree1 = new Tree<string>();
+const n1 = tree1.insert(undefined, undefined, "1");
+const n1n1 = tree1.insert(n1, undefined, "1.1");
+const n1n1n1 = tree1.insert(n1n1, undefined, "1.1.1");
+const n1n1n1n1 = tree1.insert(n1n1n1, undefined, "1.1.1.1");
+const n1n1n2 = tree1.insert(n1n1, undefined, "1.1.2");
+const n1n2 = tree1.insert(n1, undefined, "1.2");
+const n1n2n1 = tree1.insert(n1n2, undefined, "1.2.1");
+const n2 = tree1.insert(undefined, undefined, "2");
+
+
+describe("Tree", () => {
 
     describe("instance", () => {
 
@@ -99,6 +122,30 @@ fdescribe("Tree", () => {
         });
 
 
+        describe("prevSibling()", () => {
+
+            it("when a first sibling is specified returns undefined", () => {
+                const tree = new Tree<string>();
+                const n1 = tree.insert(undefined, undefined, "1");
+                const n2 = tree.insert(undefined, undefined, "2");
+
+                const prevSibling = tree.prevSibling(n1);
+                expect(prevSibling).toBeUndefined();
+            });
+
+
+            it("when a non first sibling is specified returns the previous sibling node", () => {
+                const tree = new Tree<string>();
+                const n1 = tree.insert(undefined, undefined, "1");
+                const n2 = tree.insert(undefined, undefined, "2");
+
+                const prevSibling = tree.prevSibling(n2);
+                expect(prevSibling).toEqual(n1);
+            });
+
+        });
+
+
         describe("nextSibling()", () => {
 
             it("when a last sibling is specified returns undefined", () => {
@@ -117,8 +164,7 @@ fdescribe("Tree", () => {
                 const n2 = tree.insert(undefined, undefined, "2");
 
                 const nextSibling = tree.nextSibling(n1);
-                expect(nextSibling).toBeDefined();
-                expect(tree.value(nextSibling!)).toEqual("2");
+                expect(nextSibling).toEqual(n2);
             });
 
         });
@@ -154,49 +200,26 @@ fdescribe("Tree", () => {
 
         describe("traverseDF()", () => {
 
-            /**
-             * T
-             *
-             * 1
-             * ├── 1.1
-             * │   ├── 1.1.1
-             * │   │   └── 1.1.1.1
-             * │   └── 1.1.2
-             * ├── 1.2
-             * │   └── 1.2.1
-             * 2
-             */
-            const tree = new Tree<string>();
-            const n1 = tree.insert(undefined, undefined, "1");
-            const n1n1 = tree.insert(n1, undefined, "1.1");
-            const n1n1n1 = tree.insert(n1n1, undefined, "1.1.1");
-            const n1n1n1n1 = tree.insert(n1n1n1, undefined, "1.1.1.1");
-            const n1n1n2 = tree.insert(n1n1, undefined, "1.1.2");
-            const n1n2 = tree.insert(n1, undefined, "1.2");
-            const n1n2n1 = tree.insert(n1n2, undefined, "1.2.1");
-            const n2 = tree.insert(undefined, undefined, "2");
-
-
             it("can traverse the entire tree in the expected order", () => {
-                const nodes = Array.from(tree.traverseDF());
+                const nodes = Array.from(tree1.traverseDF());
                 expect(nodes).toEqual([n1, n1n1, n1n1n1, n1n1n1n1, n1n1n2, n1n2, n1n2n1, n2]);
             });
 
 
             it("when traversing a leaf node and excluding the root no nodes are yielded", () => {
-                const nodes = Array.from(tree.traverseDF(n1n1n2, false));
+                const nodes = Array.from(tree1.traverseDF(n1n1n2, false));
                 expect(nodes.length).toEqual(0);
             });
 
 
             it("when traversing a leaf node and including the root only the root is yielded", () => {
-                const nodes = Array.from(tree.traverseDF(n1n1n2, true));
+                const nodes = Array.from(tree1.traverseDF(n1n1n2, true));
                 expect(nodes).toEqual([n1n1n2]);
             });
 
 
             it("can travers a subtree in the expected order while excluding the subtree root", () => {
-                const nodes = Array.from(tree.traverseDF(n1n1, false));
+                const nodes = Array.from(tree1.traverseDF(n1n1, false));
                 expect(nodes).toEqual([n1n1n1, n1n1n1n1, n1n1n2]);
             });
 

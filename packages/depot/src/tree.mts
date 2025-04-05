@@ -108,6 +108,30 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
 
 
     /**
+     * Gets the specified node's previous sibling
+     *
+     * @param node - The node whose previous sibling will be found
+     * @return The previous sibling node or undefined if there is no previous sibling
+     */
+    public prevSibling(node: ITreeNode<TPayload>): ITreeNode<TPayload> | undefined {
+        const parent = node.parent.isRoot ? this._root : node.parent;
+        const foundIndex = parent.children.findIndex((curNode) => curNode === node);
+        if (foundIndex > 0) {
+            // The previous sibling exists
+            return parent.children[foundIndex - 1];
+        }
+        else if (foundIndex === 0) {
+            // The specified node is the first child, so no previous sibling exists.
+            return undefined;
+        }
+        else {
+            // The child node could not be found under its parent.  This is an internal implementation error.
+            throw new Error("Child node could not be found in its parent's children array.");
+        }
+    }
+
+
+    /**
      * Gets the specified node's next sibling
      *
      * @param node - The node whose next sibling will be found
@@ -211,8 +235,8 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
     }
 
 
-    // public *traverseBF(): IterableIterator<ITreeNode<TPayload>> {
-    // }
+    public *traverseBF(): IterableIterator<ITreeNode<TPayload>> {
+    }
 
 
     ////////////////////////////////////////////////////////////////////////////////
