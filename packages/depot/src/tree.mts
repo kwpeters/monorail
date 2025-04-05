@@ -179,12 +179,59 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
 
 
     /**
+     * Gets an iterator that will traverse this tree in a depth first manner.
+     *
+     * @param start - The starting node.  undefined if the traversal should
+     * start with the first top level node in the tree.
+     * @param includeStart - When `true` the starting node will be included in the traversal.
+     * @return A depth first iterator
+     */
+    public *traverseDF(
+        start: ITreeNode<TPayload> | undefined = undefined,
+        includeStart: boolean = false
+    ): IterableIterator<ITreeNode<TPayload>> {
+
+        let curNode: TreeNode<TPayload> = start ?? this._root;
+        if (!curNode.isRoot && includeStart) {
+            // The caller specified a starting node and wants to include it in
+            // the traversal.
+            yield curNode;
+        }
+
+        while (true) {
+            const nextNode = this.advanceDF(curNode.isRoot ? undefined : curNode, start);
+            if (nextNode === undefined) {
+                break;
+            }
+            else {
+                curNode = nextNode;
+                yield curNode;
+            }
+        }
+    }
+
+
+    // public *traverseBF(): IterableIterator<ITreeNode<TPayload>> {
+    // }
+
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Helper Methods
+    ////////////////////////////////////////////////////////////////////////////////
+
+    /**
      * Returns the node that follows _node_ in a depth first progression.
      *
      * @param node - The starting node
+     * @param stopNode - A node that will not be passed when trying to advance
+     * in depth first order.  This is useful when you want to limit the
+     * traversal to a subtree.  undefined if no limit is desired.
      * @return The next (depth first) node or undefined if there is no next node
      */
-    public advanceDF(node: ITreeNode<TPayload> | undefined): ITreeNode<TPayload> | undefined {
+    private advanceDF(
+        node: ITreeNode<TPayload> | undefined,
+        stopNode: ITreeNode<TPayload> | undefined
+    ): ITreeNode<TPayload> | undefined {
 
         // If the node is undefined, the caller is asking for the first node.
         if (!node) {
@@ -202,10 +249,19 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
             return nextSibling;
         }
 
+        // Before we start walking up the tree, check if we have reached the
+        // stop node.  This may be the case if we have been asked to traverse
+        // starting at a leaf node.
+        if (node === stopNode) {
+            // We have reached the stop node, return undefined to indicate there
+            // is no next node.
+            return undefined;
+        }
+
         // Walk up the tree, searching for the first ancestor that has a
-        // next sibling.
+        // next sibling.  If we run into the stop node, stop immediately.
         let curAncestor = this.parent(node);
-        while (curAncestor) {
+        while (curAncestor && curAncestor !== stopNode) {
             const ancestorNextSibling = this.nextSibling(curAncestor);
             if (ancestorNextSibling) {
                 return ancestorNextSibling;
@@ -218,26 +274,6 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
         // We have searched all ancestors for a next sibling without
         // finding any.  There is no next node.
         return undefined;
-    }
-
-
-    /**
-     * Gets an iterator that will traverse this tree in a depth first manner.
-     *
-     * @return A depth first iterator
-     */
-    public *traverseDF(): IterableIterator<ITreeNode<TPayload>> {
-        let curNode = this._root as TreeNode<TPayload>;
-        while (true) {
-            const nextNode = this.advanceDF(curNode.isRoot ? undefined : curNode);
-            if (nextNode) {
-                curNode = nextNode;
-                yield curNode;
-            }
-            else {
-                break;
-            }
-        }
     }
 
 }

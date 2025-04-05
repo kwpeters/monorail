@@ -152,56 +152,52 @@ fdescribe("Tree", () => {
         });
 
 
-        describe("advanceDF", () => {
-
-            it("when the specified node has a child, a next sibling and a parent the child is returned", () => {
-                const tree = new Tree<string>();
-                const parent = tree.insert(undefined, undefined, "1");
-                const node = tree.insert(parent, undefined, "1.1");
-                const sib = tree.insert(parent, undefined, "1.2");
-                const child = tree.insert(node, undefined, "1.1.1");
-
-                const next = tree.advanceDF(node);
-                expect(next).toEqual(child);
-            });
-
-
-            it("when the specified node has a next sibling and a parent the next sibling is returned", () => {
-                const tree = new Tree<string>();
-                const parent = tree.insert(undefined, undefined, "1");
-                const node = tree.insert(parent, undefined, "1.1");
-                const sib = tree.insert(parent, undefined, "1.2");
-
-                const next = tree.advanceDF(node);
-                expect(next).toEqual(sib);
-            });
-
-
-            it("when the specified node has no child or next sibling returns the closest ancestor sibling", () => {
-                const tree = new Tree<string>();
-                const parent = tree.insert(undefined, undefined, "1");
-                const parentSib = tree.insert(undefined, undefined, "2");
-                const node = tree.insert(parent, undefined, "1.1");
-
-                const next = tree.advanceDF(node);
-                expect(next).toEqual(parentSib);
-            });
-
-        });
-
-
         describe("traverseDF()", () => {
 
-            it("traverses the nodes in the expected order", () => {
-                const tree = new Tree<string>();
-                const n1 = tree.insert(undefined, undefined, "1");
-                const n1n1 = tree.insert(n1, undefined, "1.1");
-                const n1n1n1 = tree.insert(n1n1, undefined, "1.1.1");
-                const n1n1n2 = tree.insert(n1n1, undefined, "1.1.2");
-                const n1n2 = tree.insert(n1, undefined, "1.2");
+            /**
+             * T
+             *
+             * 1
+             * ├── 1.1
+             * │   ├── 1.1.1
+             * │   │   └── 1.1.1.1
+             * │   └── 1.1.2
+             * ├── 1.2
+             * │   └── 1.2.1
+             * 2
+             */
+            const tree = new Tree<string>();
+            const n1 = tree.insert(undefined, undefined, "1");
+            const n1n1 = tree.insert(n1, undefined, "1.1");
+            const n1n1n1 = tree.insert(n1n1, undefined, "1.1.1");
+            const n1n1n1n1 = tree.insert(n1n1n1, undefined, "1.1.1.1");
+            const n1n1n2 = tree.insert(n1n1, undefined, "1.1.2");
+            const n1n2 = tree.insert(n1, undefined, "1.2");
+            const n1n2n1 = tree.insert(n1n2, undefined, "1.2.1");
+            const n2 = tree.insert(undefined, undefined, "2");
 
+
+            it("can traverse the entire tree in the expected order", () => {
                 const nodes = Array.from(tree.traverseDF());
-                expect(nodes).toEqual([n1, n1n1, n1n1n1, n1n1n2, n1n2]);
+                expect(nodes).toEqual([n1, n1n1, n1n1n1, n1n1n1n1, n1n1n2, n1n2, n1n2n1, n2]);
+            });
+
+
+            it("when traversing a leaf node and excluding the root no nodes are yielded", () => {
+                const nodes = Array.from(tree.traverseDF(n1n1n2, false));
+                expect(nodes.length).toEqual(0);
+            });
+
+
+            it("when traversing a leaf node and including the root only the root is yielded", () => {
+                const nodes = Array.from(tree.traverseDF(n1n1n2, true));
+                expect(nodes).toEqual([n1n1n2]);
+            });
+
+
+            it("can travers a subtree in the expected order while excluding the subtree root", () => {
+                const nodes = Array.from(tree.traverseDF(n1n1, false));
+                expect(nodes).toEqual([n1n1n1, n1n1n1n1, n1n1n2]);
             });
 
         });
