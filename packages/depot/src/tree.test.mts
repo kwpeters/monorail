@@ -42,6 +42,31 @@ fdescribe("Tree", () => {
         });
 
 
+        describe("depth()", () => {
+
+            it("for top level nodes returns 0", () => {
+                const tree = new Tree<string>();
+                const n1 = tree.insert(undefined, undefined, "1");
+                const n1n1 = tree.insert(n1, undefined, "1.1");
+                const n1n1n1 = tree.insert(n1n1, undefined, "1.1.1");
+
+                expect(tree.depth(n1)).toEqual(0);
+            });
+
+
+            it("for non top level nodes returns the expected depth", () => {
+                const tree = new Tree<string>();
+                const n1 = tree.insert(undefined, undefined, "1");
+                const n1n1 = tree.insert(n1, undefined, "1.1");
+                const n1n1n1 = tree.insert(n1n1, undefined, "1.1.1");
+
+                expect(tree.depth(n1n1)).toEqual(1);
+                expect(tree.depth(n1n1n1)).toEqual(2);
+            });
+
+        });
+
+
         describe("firstChild()", () => {
 
             it("can get top level items", () => {

@@ -25,6 +25,7 @@ type TreeNode<TPayload> = ITreeRoot<TPayload> | ITreeNode<TPayload>;
 export interface IReadOnlyTree<TPayload> {
     value(node: ITreeNode<TPayload>): Readonly<TPayload>;
     parent(node: ITreeNode<TPayload>): Readonly<ITreeNode<TPayload>> | undefined;
+    depth(node: ITreeNode<TPayload>): number;
     firstChild(parent: ITreeNode<TPayload> | undefined): Readonly<ITreeNode<TPayload>> | undefined;
     nextSibling(node: ITreeNode<TPayload>): Readonly<ITreeNode<TPayload>> | undefined;
 }
@@ -60,6 +61,24 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
      */
     public parent(node: ITreeNode<TPayload>): ITreeNode<TPayload> | undefined {
         return node.parent.isRoot ? undefined : node.parent;
+    }
+
+
+    /**
+     * Calculates the specified node's depth within this tree.  Top level nodes
+     * have a depth of 0.
+     *
+     * @param node - The node to calculate the depth of
+     * @return The node's depth
+     */
+    public depth(node: ITreeNode<TPayload>): number {
+        let depth = -1;
+        let curNode: TreeNode<TPayload> = node;
+        while (!curNode.isRoot) {
+            curNode = curNode.parent;
+            depth++;
+        }
+        return depth;
     }
 
 
