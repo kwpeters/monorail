@@ -208,7 +208,7 @@ describe("Tree", () => {
 
             it("when traversing a leaf node and excluding the root no nodes are yielded", () => {
                 const nodes = Array.from(tree1.traverseDF(n1n1n2, false));
-                expect(nodes.length).toEqual(0);
+                expect(nodes).toEqual([]);
             });
 
 
@@ -218,15 +218,52 @@ describe("Tree", () => {
             });
 
 
-            it("can travers a subtree in the expected order while excluding the subtree root", () => {
+            it("can traverse a subtree in the expected order while excluding the subtree root", () => {
                 const nodes = Array.from(tree1.traverseDF(n1n1, false));
                 expect(nodes).toEqual([n1n1n1, n1n1n1n1, n1n1n2]);
+            });
+
+
+            it("can traverse a subtree in the expected order while including the subtree root", () => {
+                const nodes = Array.from(tree1.traverseDF(n1n1, true));
+                expect(nodes).toEqual([n1n1, n1n1n1, n1n1n1n1, n1n1n2]);
             });
 
         });
 
 
+        describe("traverseBF()", () => {
 
+            it("can traverse the entire tree in the expected order", () => {
+                const nodes = Array.from(tree1.traverseBF());
+                expect(nodes).toEqual([n1, n2, n1n1, n1n2, n1n1n1, n1n1n2, n1n2n1, n1n1n1n1]);
+            });
+
+
+            it("when traversing a leaf node and excluding the start node no nodes are yielded", () => {
+                const nodes = Array.from(tree1.traverseBF(n1n1n2, false));
+                expect(nodes).toEqual([]);
+            });
+
+
+            it("when traversing a leaf node and including the start node only the start node is yielded", () => {
+                const nodes = Array.from(tree1.traverseBF(n1n1n2, true));
+                expect(nodes).toEqual([n1n1n2]);
+            });
+
+
+            it("can traverse a subtree in the expected order while excluding the subtree root", () => {
+                const nodes = Array.from(tree1.traverseBF(n1n1, false));
+                expect(nodes).toEqual([n1n1n1, n1n1n2, n1n1n1n1]);
+            });
+
+
+            it("can traverse a subtree in the expected order while including the subtree root", () => {
+                const nodes = Array.from(tree1.traverseBF(n1n1, true));
+                expect(nodes).toEqual([n1n1, n1n1n1, n1n1n2, n1n1n1n1]);
+            });
+
+        });
 
     });
 

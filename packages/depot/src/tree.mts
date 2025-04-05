@@ -203,27 +203,26 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
 
 
     /**
-     * Gets an iterator that will traverse this tree in a depth first manner.
+     * Gets an iterator that will traverse this tree in a depth-first manner.
      *
-     * @param start - The starting node.  undefined if the traversal should
-     * start with the first top level node in the tree.
-     * @param includeStart - When `true` the starting node will be included in the traversal.
-     * @return A depth first iterator
+     * @param subtreeRoot - The root of the subtree to be traversed.  undefined
+     * if the entire tree should be traversed.
+     * @param includeSubtreeRoot - When _subtreeRoot_ is specified, indicates
+     * whether that node is to be included in the traversal.
+     * @return A depth-first iterator
      */
     public *traverseDF(
-        start: ITreeNode<TPayload> | undefined = undefined,
-        includeStart: boolean = false
+        subtreeRoot: ITreeNode<TPayload> | undefined = undefined,
+        includeSubtreeRoot: boolean = false
     ): IterableIterator<ITreeNode<TPayload>> {
 
-        let curNode: TreeNode<TPayload> = start ?? this._root;
-        if (!curNode.isRoot && includeStart) {
-            // The caller specified a starting node and wants to include it in
-            // the traversal.
-            yield curNode;
+        if (subtreeRoot && includeSubtreeRoot) {
+            yield subtreeRoot;
         }
 
+        let curNode = subtreeRoot ?? this._root;
         while (true) {
-            const nextNode = this.advanceDF(curNode.isRoot ? undefined : curNode, start);
+            const nextNode = this.advanceDF(curNode.isRoot ? undefined : curNode, subtreeRoot);
             if (nextNode === undefined) {
                 break;
             }
@@ -235,7 +234,43 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
     }
 
 
-    public *traverseBF(): IterableIterator<ITreeNode<TPayload>> {
+    /**
+     * Gets an iterator that traverses this tree in a breadth-first manner.
+     *
+     * @param subtreeRoot - The root of the subtree to be traversed.  undefined
+     * if the entire tree should be traversed.
+     * @param includeSubtreeRoot - When _subtreeRoot_ is specified, indicates
+     * whether that node is to be included in the traversal.
+     * @return A breadth-first iterator
+     */
+    public *traverseBF(
+        subtreeRoot: ITreeNode<TPayload> | undefined = undefined,
+        includeSubtreeRoot: boolean = true
+    ): IterableIterator<ITreeNode<TPayload>> {
+
+        if (includeSubtreeRoot && subtreeRoot) {
+            yield subtreeRoot;
+        }
+
+        const queue: Array<ITreeNode<TPayload>> = [];
+
+
+        if (subtreeRoot === undefined) {
+            queue.push(...this._root.children);
+        }
+        else {
+            queue.push(...subtreeRoot.children);
+        }
+
+        while (queue.length > 0) {
+            const curNode = queue.shift()!;
+            yield curNode;
+
+            // Enqueue all children of the current node
+            for (const child of curNode.children) {
+                queue.push(child);
+            }
+        }
     }
 
 
