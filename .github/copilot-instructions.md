@@ -18,6 +18,8 @@ All TypeScript files within this project follow the following formatting rules.
 - When formatting a try/catch block, the `catch` keyword will appear at the
   beginning of a new line.  It should not appear on the same line and as the `}`
   of the preceding `try` block.
+- All lines that contain only a comment must be word wrapped so their text
+  occurs within the first 80 columns.
 - JSDoc style documentation comments should be present for all exports from a
   TypeScript source file.
 - JSDoc style documentation comments should be present for all methods and
@@ -27,6 +29,7 @@ All TypeScript files within this project follow the following formatting rules.
     ```typescript
     /**
      * Creates a string where each line of _src_ is indented.
+     *
      * @param src - The string to be indented
      * @param numSpacesOrPad - The number of spaces to indent each line
      * @param skipFirstLine - If truthy, the first line will not be indented
