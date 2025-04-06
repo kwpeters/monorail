@@ -277,7 +277,8 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
      * Gets an iterator that traverses this tree in a breadth-first manner.
      *
      * @param subtreeRoot - The root of the subtree to be traversed.  undefined
-     * if the entire tree should be traversed.
+     * if the entire tree should be traversed.  If specified, the returned
+     * iterator will traverse *only the subtree* rooted at this node.
      * @param includeSubtreeRoot - When _subtreeRoot_ is specified, indicates
      * whether that node is to be included in the traversal.
      * @return A breadth-first iterator
