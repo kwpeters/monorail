@@ -2,16 +2,15 @@ import { Tree } from "./tree.mjs";
 
 
 /**
- * T
- *
- * 1
- * ├── 1.1
- * │   ├── 1.1.1
- * │   │   └── 1.1.1.1
- * │   └── 1.1.2
- * ├── 1.2
- * │   └── 1.2.1
- * 2
+ * tree1
+ * ├─ 1
+ * │  ├── 1.1
+ * │  │   ├── 1.1.1
+ * │  │   │   └── 1.1.1.1
+ * │  │   └── 1.1.2
+ * │  └── 1.2
+ * │      └── 1.2.1
+ * └─ 2
  */
 const tree1 = new Tree<string>();
 const n1 = tree1.insert(undefined, undefined, "1");
@@ -45,6 +44,21 @@ describe("Tree", () => {
         });
 
 
+        describe("length", () => {
+
+            it("returns 0 for an empty tree", () => {
+                const tree = new Tree<string>();
+                expect(tree.length).toEqual(0);
+            });
+
+
+            it("returns the expected size for a non empty tree", () => {
+                expect(tree1.length).toEqual(8);
+            });
+
+        });
+
+
         describe("value()", () => {
 
             it("gets the value of the specified node", () => {
@@ -54,6 +68,34 @@ describe("Tree", () => {
                 expect(tree.value(node)).toEqual("1");
             });
 
+        });
+
+
+        describe("childNodes()", () => {
+
+            it("when there are no child nodes returns an empty array", () => {
+                const tree = new Tree<string>();
+                const n = tree.insert(undefined, undefined, "hello");
+                expect(tree.childNodes(n)).toEqual([]);
+            });
+
+
+            it("returns the expected array of child nodes", () => {
+                const [n1, n2] = tree1.childNodes(undefined);
+                const [n1n1, n1n2] = tree1.childNodes(n1);
+                const [n1n1n1, n1n1n2] = tree1.childNodes(n1n1);
+                const [n1n1n1n1] = tree1.childNodes(n1n1n1);
+                const [n1n2n1] = tree1.childNodes(n1n2);
+
+                expect(tree1.value(n1!)).toEqual("1");
+                expect(tree1.value(n1n1!)).toEqual("1.1");
+                expect(tree1.value(n1n1n1!)).toEqual("1.1.1");
+                expect(tree1.value(n1n1n1n1!)).toEqual("1.1.1.1");
+                expect(tree1.value(n1n1n2!)).toEqual("1.1.2");
+                expect(tree1.value(n1n2!)).toEqual("1.2");
+                expect(tree1.value(n1n2n1!)).toEqual("1.2.1");
+                expect(tree1.value(n2!)).toEqual("2");
+            });
         });
 
 
@@ -261,6 +303,45 @@ describe("Tree", () => {
             it("can traverse a subtree in the expected order while including the subtree root", () => {
                 const nodes = Array.from(tree1.traverseBF(n1n1, true));
                 expect(nodes).toEqual([n1n1, n1n1n1, n1n1n2, n1n1n1n1]);
+            });
+
+        });
+
+
+        describe("map()", () => {
+
+            it("when the map is empty the fn is not called and the output map is empty", () => {
+
+                let numInvocations = 0;
+                const mapper = (str: string) => {
+                    numInvocations++;
+                    return str + "!";
+                };
+
+                const tree = new Tree<string>();
+                const mapped = tree.map(mapper);
+                expect(numInvocations).toEqual(0);
+                expect(mapped.isEmpty()).toBeTrue();
+            });
+
+
+            it("returns a mapped version of the tree", () => {
+                const mapped = tree1.map((val) => `${val}!`);
+
+                const [n1, n2] = mapped.childNodes(undefined);
+                const [n1n1, n1n2] = mapped.childNodes(n1);
+                const [n1n1n1, n1n1n2] = mapped.childNodes(n1n1);
+                const [n1n1n1n1] = mapped.childNodes(n1n1n1);
+                const [n1n2n1] = mapped.childNodes(n1n2);
+
+                expect(mapped.value(n1!)).toEqual("1!");
+                expect(mapped.value(n1n1!)).toEqual("1.1!");
+                expect(mapped.value(n1n1n1!)).toEqual("1.1.1!");
+                expect(mapped.value(n1n1n1n1!)).toEqual("1.1.1.1!");
+                expect(mapped.value(n1n1n2!)).toEqual("1.1.2!");
+                expect(mapped.value(n1n2!)).toEqual("1.2!");
+                expect(mapped.value(n1n2n1!)).toEqual("1.2.1!");
+                expect(mapped.value(n2!)).toEqual("2!");
             });
 
         });

@@ -52,6 +52,18 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
 
 
     /**
+     * Gets the number of nodes in this tree.
+     */
+    public get length(): number {
+        let length = 0;
+        for (const __curNode of this.traverseBF()) {
+            length++;
+        }
+        return length;
+    }
+
+
+    /**
      * Gets the specified node's value
      *
      * @param node - The node whose value will be gotten
@@ -59,6 +71,17 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
      */
     public value(node: ITreeNode<TPayload>): TPayload {
         return node.payload;
+    }
+
+
+    /**
+     * Gets the specified node's child nodes
+     *
+     * @param parent - The node whose child nodes will be gotten
+     * @return The child nodes
+     */
+    public childNodes(parent: ITreeNode<TPayload> | undefined): Array<ITreeNode<TPayload>> {
+        return parent === undefined ? this._root.children : parent.children;
     }
 
 
@@ -274,6 +297,16 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
     }
 
 
+    public map<TOut>(
+        fn: (srcVal: TPayload, srcNode: ITreeNode<TPayload>, srcTree: Tree<TPayload>,
+             dstParent: ITreeNode<TOut> | undefined, dstTree: Tree<TOut>) => TOut
+    ): Tree<TOut> {
+        const dstTree = new Tree<TOut>();
+        this.mapChildNodes(this._root, dstTree, dstTree._root, fn);
+        return dstTree;
+    }
+
+
     ////////////////////////////////////////////////////////////////////////////////
     // Helper Methods
     ////////////////////////////////////////////////////////////////////////////////
@@ -333,6 +366,44 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
         // We have searched all ancestors for a next sibling without
         // finding any.  There is no next node.
         return undefined;
+    }
+
+
+    /**
+     * Implements recursive mapping of the specified node's child nodes.
+     *
+     * @param srcParent - The parent node in the source tree
+     * @param dstTree - The destination tree
+     * @param dstParent - The parent node in the destination tree
+     * @param fn - The mapping function
+     */
+    private mapChildNodes<TOut>(
+        srcParent: TreeNode<TPayload>,
+        dstTree:   Tree<TOut>,
+        dstParent: TreeNode<TOut>,
+        fn:        (srcVal: TPayload, srcNode: ITreeNode<TPayload>, srcTree: Tree<TPayload>,
+                    dstParent: ITreeNode<TOut> | undefined, dstTree: Tree<TOut>) => TOut
+    ): void {
+
+        for (const curSrcNode of srcParent.children) {
+
+            const dstVal = fn(
+                curSrcNode.payload,
+                curSrcNode,
+                this,
+                dstParent.isRoot ? undefined : dstParent,
+                dstTree
+            );
+
+            const curDstNode = dstTree.insert(
+                dstParent.isRoot ? undefined : dstParent,
+                undefined,
+                dstVal
+            );
+
+            // Recurse and create the new node's child nodes.
+            this.mapChildNodes(curSrcNode, dstTree, curDstNode, fn);
+        }
     }
 
 }
