@@ -308,6 +308,22 @@ describe("Tree", () => {
         });
 
 
+        describe("ancestors()", () => {
+
+            it("iterates over the expected nodes when including the starting node", () => {
+                const ancestors = Array.from(tree1.ancestors(n1n1n1n1, true));
+                expect(ancestors).toEqual([n1n1n1n1, n1n1n1, n1n1, n1]);
+            });
+
+
+            it("iterates over the expected nodes when excluding the starting node", () => {
+                const ancestors = Array.from(tree1.ancestors(n1n1n1n1, false));
+                expect(ancestors).toEqual([n1n1n1, n1n1, n1]);
+            });
+
+        });
+
+
         describe("map()", () => {
 
             it("when the map is empty the fn is not called and the output map is empty", () => {

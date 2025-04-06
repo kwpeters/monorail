@@ -314,6 +314,27 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
 
 
     /**
+     * Gets an iterator that traverses ancestor nodes, starting at the specified
+     * node and ending with a top level node.
+     *
+     * @param startNode - The node to start at
+     * @param includeStartNode - true to include _startNode_; false to start
+     * with its parent node.
+     * @return The ancestor iterator
+     */
+    public *ancestors(
+        startNode: ITreeNode<TPayload>,
+        includeStartNode: boolean
+    ): IterableIterator<ITreeNode<TPayload>> {
+        let curNode = includeStartNode ? startNode : this.parent(startNode);
+        while (curNode) {
+            yield curNode;
+            curNode = this.parent(curNode);
+        }
+    }
+
+
+    /**
      * Creates a new Tree that is populated with the results of calling the
      * specified function on every value of this Tree.
      *
