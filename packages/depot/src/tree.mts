@@ -388,7 +388,7 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
         for (const curSrcNode of srcParent.children) {
 
             const dstVal = fn(
-                curSrcNode.payload,
+                this.value(curSrcNode),
                 curSrcNode,
                 this,
                 dstParent.isRoot ? undefined : dstParent,
