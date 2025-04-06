@@ -346,6 +346,34 @@ describe("Tree", () => {
 
         });
 
+
+        describe("filter()", () => {
+
+            it("returns the expected filtered version of the tree", () => {
+
+                // Filter the tree to only keep nodes with a string of 3 or
+                // fewer characters (e.g. "1.1").
+                const filtered = tree1.filter((val) => val.length <= 3);
+
+                /**
+                 * Expected filtered
+                 * ├─ 1
+                 * │  ├── 1.1
+                 * │  └── 1.2
+                 * └─ 2
+                 */
+                const [n1, n2] = filtered.childNodes(undefined);
+                const [n1n1, n1n2] = filtered.childNodes(n1);
+
+                expect(filtered.length).toEqual(4);
+                expect(n1).toBeDefined();
+                expect(n1n1).toBeDefined();
+                expect(n1n2).toBeDefined();
+                expect(n2).toBeDefined();
+            });
+
+        });
+
     });
 
 });

@@ -297,12 +297,37 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
     }
 
 
+    /**
+     * Creates a new Map that is populated with the results of calling the
+     * specified function on every value of this Map.
+     *
+     * @param fn - The mapping function that accepts input about nodes in this
+     * Map and returns the value for the corresponding node in the new Map.
+     * @return The new Map
+     */
     public map<TOut>(
         fn: (srcVal: TPayload, srcNode: ITreeNode<TPayload>, srcTree: Tree<TPayload>,
              dstParent: ITreeNode<TOut> | undefined, dstTree: Tree<TOut>) => TOut
     ): Tree<TOut> {
         const dstTree = new Tree<TOut>();
         this.mapChildNodes(this._root, dstTree, dstTree._root, fn);
+        return dstTree;
+    }
+
+
+    /**
+     * Creates a new Map containing only the nodes from this map that pass the
+     * test implemented by the provided function.
+     *
+     * @param fn - The filter function that returns true if the node should be
+     * included in the returned Map.
+     * @return The new filtered Map
+     */
+    public filter(
+        fn: (srcVal: TPayload, srcNode: ITreeNode<TPayload>, srcTree: Tree<TPayload>) => boolean
+    ): Tree<TPayload> {
+        const dstTree = new Tree<TPayload>();
+        this.filterChildNodes(this._root, dstTree, dstTree._root, fn);
         return dstTree;
     }
 
@@ -372,9 +397,9 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
     /**
      * Implements recursive mapping of the specified node's child nodes.
      *
-     * @param srcParent - The parent node in the source tree
-     * @param dstTree - The destination tree
-     * @param dstParent - The parent node in the destination tree
+     * @param srcParent - The parent node in the source Tree
+     * @param dstTree - The destination Tree
+     * @param dstParent - The parent node in the destination Tree
      * @param fn - The mapping function
      */
     private mapChildNodes<TOut>(
@@ -406,4 +431,43 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
         }
     }
 
+
+    /**
+     * Implements recursive filtering of the specified node's child nodes.
+     *
+     * @param srcParent - The parent node in the source Tree
+     * @param dstTree - The destination Tree
+     * @param dstParent - The parent node in the destination Tree
+     * @param fn - The filter function
+     */
+    private filterChildNodes(
+        srcParent: TreeNode<TPayload>,
+        dstTree: Tree<TPayload>,
+        dstParent: TreeNode<TPayload>,
+        fn: (srcVal: TPayload, srcNode: ITreeNode<TPayload>, srcTree: Tree<TPayload>) => boolean
+    ): void {
+        for (const curSrcNode of srcParent.children) {
+
+            const curVal = this.value(curSrcNode);
+
+            const shouldInclude = fn(
+                curVal,
+                curSrcNode,
+                this
+            );
+
+            // Only insert the corresponding node and its child nodes in the
+            // output Map if it passed the filter function.
+            if (shouldInclude) {
+                const curDstNode = dstTree.insert(
+                    dstParent.isRoot ? undefined : dstParent,
+                    undefined,
+                    curVal
+                );
+
+                // Recurse and filter the node's child nodes.
+                this.filterChildNodes(curSrcNode, dstTree, curDstNode, fn);
+            }
+        }
+    }
 }
