@@ -80,7 +80,7 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
      * @param parent - The node whose child nodes will be gotten
      * @return The child nodes
      */
-    public childNodes(parent: ITreeNode<TPayload> | undefined): Array<ITreeNode<TPayload>> {
+    public childNodes(parent: ITreeNode<TPayload> | undefined): ReadonlyArray<ITreeNode<TPayload>> {
         return parent === undefined ? this._root.children : parent.children;
     }
 
@@ -277,7 +277,6 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
 
         const queue: Array<ITreeNode<TPayload>> = [];
 
-
         if (subtreeRoot === undefined) {
             queue.push(...this._root.children);
         }
@@ -298,12 +297,12 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
 
 
     /**
-     * Creates a new Map that is populated with the results of calling the
-     * specified function on every value of this Map.
+     * Creates a new Tree that is populated with the results of calling the
+     * specified function on every value of this Tree.
      *
      * @param fn - The mapping function that accepts input about nodes in this
-     * Map and returns the value for the corresponding node in the new Map.
-     * @return The new Map
+     * Tree and returns the value for the corresponding node in the new Tree.
+     * @return The new Tree
      */
     public map<TOut>(
         fn: (srcVal: TPayload, srcNode: ITreeNode<TPayload>, srcTree: Tree<TPayload>,
@@ -316,12 +315,12 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
 
 
     /**
-     * Creates a new Map containing only the nodes from this map that pass the
+     * Creates a new Tree containing only the nodes from this Tree that pass the
      * test implemented by the provided function.
      *
      * @param fn - The filter function that returns true if the node should be
-     * included in the returned Map.
-     * @return The new filtered Map
+     * included in the returned Tree.
+     * @return The new filtered Tree
      */
     public filter(
         fn: (srcVal: TPayload, srcNode: ITreeNode<TPayload>, srcTree: Tree<TPayload>) => boolean
@@ -457,7 +456,7 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
             );
 
             // Only insert the corresponding node and its child nodes in the
-            // output Map if it passed the filter function.
+            // output Tree if it passed the filter function.
             if (shouldInclude) {
                 const curDstNode = dstTree.insert(
                     dstParent.isRoot ? undefined : dstParent,
