@@ -10,14 +10,14 @@ interface ITreeRoot<TPayload> {
     children: Array<ITreeNode<TPayload>>;
 }
 
-interface ITreeNode<TPayload> {
+export interface ITreeNode<TPayload> {
     isRoot:   false;
     parent:   TreeNode<TPayload>;
     payload:  TPayload;
     children: Array<ITreeNode<TPayload>>;
 }
 
-type TreeNode<TPayload> = ITreeRoot<TPayload> | ITreeNode<TPayload>;
+export type TreeNode<TPayload> = ITreeRoot<TPayload> | ITreeNode<TPayload>;
 
 
 ////////////////////////////////////////////////////////////////////////////////
