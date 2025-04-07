@@ -255,6 +255,10 @@
             "types": "./src/timestampId.mts",
             "default": "./dist/timestampId.mjs"
         },
+        "./tree": {
+            "types": "./src/tree.mts",
+            "default": "./dist/tree.mjs"
+        },
         "./typeUtils": {
             "types": "./src/typeUtils.mts",
             "default": "./dist/typeUtils.mjs"
