@@ -390,6 +390,43 @@ describe("Tree", () => {
 
         });
 
+
+        describe("toArchy()", () => {
+
+            it("generates the expected object", () => {
+                const tree = new Tree<string>();
+                const n1 = tree.insert(undefined, undefined, "1");
+                const n1n1 = tree.insert(n1, undefined, "1.1");
+                const n1n1n1 = tree.insert(n1n1, undefined, "1.1.1");
+                const n1n1n2 = tree.insert(n1n1, undefined, "1.1.2");
+                const n2 = tree.insert(undefined, undefined, "2");
+                const n3 = tree.insert(undefined, undefined, "3");
+                const archy = tree.toArchy("tree", (payload) => payload + "!");
+                expect(archy).toEqual(
+                    {
+                        label: "tree",
+                        nodes: [
+                            {
+                                label: "1!",
+                                nodes: [
+                                    {
+                                        label: "1.1!",
+                                        nodes: [
+                                            { label: "1.1.1!" },
+                                            { label: "1.1.2!" }
+                                        ]
+                                    }
+                                ]
+                            },
+                            { label: "2!" },
+                            { label: "3!" }
+                        ]
+                    }
+                );
+            });
+
+        });
+
     });
 
 });
