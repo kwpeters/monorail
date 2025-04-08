@@ -18,6 +18,9 @@ export interface ITreeNode<TPayload> {
 }
 
 
+export type TreeNode<TPayload> = ITreeRoot<TPayload> | ITreeNode<TPayload>;
+
+
 /**
  * Describes the tree structure expected by the Archy project.
  *
