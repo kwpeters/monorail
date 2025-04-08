@@ -388,7 +388,7 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
      * @param rootLabel - The label that will appear at the root of the tree
      * @param stringifyFn - A function that will be called to convert each
      * node's value to a string.  Note:  The returned string may contain newline
-     * characters for multi-line node text. 
+     * characters for multi-line node text.
      * @return An object representation of this tree where each node's text is
      * the value returned by _stringifyFn_.
      */
