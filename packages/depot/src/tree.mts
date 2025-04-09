@@ -1,4 +1,3 @@
-
 ////////////////////////////////////////////////////////////////////////////////
 // Tree Nodes
 ////////////////////////////////////////////////////////////////////////////////
@@ -377,6 +376,67 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
         while (curNode) {
             yield curNode;
             curNode = this.parent(curNode);
+        }
+    }
+
+
+    /**
+     * Gets an iterator for the leaf nodes within this tree or the specified
+     * subtree.
+     *
+     * @param subtreeRoot - The root of the subtree to be searched.  undefined
+     * if the entire tree should be searched.  If specified, the returned
+     * iterator will search *only the subtree* rooted at this node.
+     * @param includeSubtreeRoot - When _subtreeRoot_ is specified, indicates
+     * whether that node is to be included in the search.
+     * @return The leaf node iterator
+     */
+    public *leafNodes(
+        subtreeRoot: ITreeNode<TPayload> | undefined = undefined,
+        includeSubtreeRoot: boolean = true
+    ): IterableIterator<ITreeNode<TPayload>> {
+        for (const curNode of this.traverseDF(subtreeRoot, includeSubtreeRoot)) {
+            if (this.isLeaf(curNode)) {
+                yield curNode;
+            }
+        }
+    }
+
+
+    /**
+     * Gets an iterator for all paths to leaf nodes within this tree or the
+     * specified subtree
+     *
+     * @param subtreeRoot - The root of the subtree to be searched.  undefined
+     * if the entire tree should be searched.  If specified, the returned
+     * iterator will search *only the subtree* rooted at this node.
+     * @param includeSubtreeRoot - When _subtreeRoot_ is specified, indicates
+     * whether _subtreeRoot_ is to be included in the resulting paths.
+     * @return The path iterator
+     */
+    public *leafNodePaths(
+        subtreeRoot: ITreeNode<TPayload> | undefined = undefined,
+        includeSubtreeRoot: boolean = true
+    ): IterableIterator<Array<ITreeNode<TPayload>>> {
+
+        const root = subtreeRoot === undefined ? this._root : subtreeRoot;
+        if (subtreeRoot === undefined) {
+            includeSubtreeRoot = false;
+        }
+
+        const leafNodes = this.leafNodes(subtreeRoot, true);
+
+        for (const curLeafNode of leafNodes) {
+            const reverseFullPath = Array.from(this.ancestors(curLeafNode, true));
+            const fullPath = reverseFullPath.reverse();
+            const rootIndex = fullPath.findIndex((curNode) => curNode === root);
+
+            const startIndex =
+                rootIndex === -1 ? 0 :
+                includeSubtreeRoot ? rootIndex :
+                rootIndex + 1;
+
+            yield fullPath.slice(startIndex);
         }
     }
 

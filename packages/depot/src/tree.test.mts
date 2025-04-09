@@ -350,6 +350,68 @@ describe("Tree", () => {
         });
 
 
+        describe("leafNodes()", () => {
+
+            it("yields the expected leaf nodes when searching the entire tree", () => {
+                const leafNodes = Array.from(tree1.leafNodes());
+                expect(leafNodes).toEqual([n1n1n1n1, n1n1n2, n1n2n1, n2]);
+            });
+
+
+            it("yields no leaf nodes when searching a subtree rooted at a leaf node that is not included", () => {
+                const leafNodes = Array.from(tree1.leafNodes(n1n1n1n1, false));
+                expect(leafNodes).toEqual([]);
+            });
+
+
+            it("yields only the leaf node when searching a subtree rooted at a leaf node that is included", () => {
+                const leafNodes = Array.from(tree1.leafNodes(n1n1n1n1, true));
+                expect(leafNodes).toEqual([n1n1n1n1]);
+            });
+
+        });
+
+
+        describe("leafNodePaths()", () => {
+
+            it("returns the expected paths when searching the entire tree", () => {
+                const paths = Array.from(tree1.leafNodePaths());
+                expect(paths).toEqual([
+                    [n1, n1n1, n1n1n1, n1n1n1n1],
+                    [n1, n1n1, n1n1n2],
+                    [n1, n1n2, n1n2n1],
+                    [n2]
+                ]);
+            });
+
+
+            it("returns the expected paths when searching a subtree", () => {
+                const paths = Array.from(tree1.leafNodePaths(n1n1));
+                expect(paths).toEqual([
+                    [n1n1, n1n1n1, n1n1n1n1],
+                    [n1n1, n1n1n2]
+
+                ]);
+            });
+
+
+            it("returns a 1-node path when searching a subtree rooted at a leaf node and including the root", () => {
+                const paths = Array.from(tree1.leafNodePaths(n1n1n1n1, true));
+                expect(paths).toEqual([
+                    [n1n1n1n1]
+                ]);
+            });
+
+
+            it("returns a 0-node path when searching a subtree rooted at a leaf node and not including the root", () => {
+                const paths = Array.from(tree1.leafNodePaths(n1n1n1n1, false));
+                expect(paths).toEqual([
+                    []
+                ]);
+            });
+        });
+
+
         describe("map()", () => {
 
             it("when the map is empty the fn is not called and the output map is empty", () => {
