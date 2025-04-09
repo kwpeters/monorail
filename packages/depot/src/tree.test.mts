@@ -23,7 +23,7 @@ const n1n2n1 = tree1.insert(n1n2, undefined, "1.2.1");
 const n2 = tree1.insert(undefined, undefined, "2");
 
 
-fdescribe("Tree", () => {
+describe("Tree", () => {
 
     describe("instance", () => {
 
