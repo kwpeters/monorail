@@ -59,6 +59,13 @@ export interface IReadOnlyTree<TPayload> {
 }
 
 
+/**
+ * A tree data structure.
+ *
+ * Note:  This tree implementation is a bit unusual in that allows for multiple
+ * top-level nodes.  This is done by using an internal "super root" node that is
+ * not exposed to clients.
+ */
 export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
 
     private readonly _root: ITreeRoot<TPayload>;
@@ -88,6 +95,22 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
             length++;
         }
         return length;
+    }
+
+
+    /**
+     * Gets the maximum node depth within this tree.
+     */
+    public get maxDepth(): number | undefined {
+        let maxDepth: number | undefined = undefined;
+        for (const curNode of this.traverseDF()) {
+            const curDepth = this.depth(curNode);
+            maxDepth =
+                maxDepth === undefined ? curDepth :
+                curDepth > maxDepth ? curDepth :
+                maxDepth;
+        }
+        return maxDepth;
     }
 
 

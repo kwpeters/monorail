@@ -59,6 +59,16 @@ describe("Tree", () => {
         });
 
 
+        describe("maxDepth", () => {
+
+            it("returns the expected maximum depth", () => {
+                const maxDepth = tree1.maxDepth;
+                expect(maxDepth).toEqual(3);
+            });
+
+        });
+
+
         describe("value()", () => {
 
             it("gets the value of the specified node", () => {
