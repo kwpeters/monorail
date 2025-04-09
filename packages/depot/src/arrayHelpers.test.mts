@@ -1,10 +1,38 @@
 import {
     anyMatchRegex, choose, chooseAsync, filterDefined, groupConsecutiveBy,
-    insertIf, permutations, split, toArray, chooseFirst, chooseFirstAsync
+    insertIf, permutations, split, toArray, chooseFirst, chooseFirstAsync,
+    hasIndex
 } from "./arrayHelpers.mjs";
 import { getTimerPromise } from "./promiseHelpers.mjs";
 import { FailedResult, SucceededResult } from "./result.mjs";
 import { getRandomInt } from "./random.mjs";
+
+
+describe("hasIndex()", () => {
+
+    it("returns false when given a negative index", () => {
+        expect(hasIndex([0, 1, 2], -1)).toBeFalse();
+    });
+
+
+    it("returns false when given an index that is not an integer", () => {
+        expect(hasIndex([0, 1, 2], 1.5)).toBeFalse();
+    });
+
+
+    it("returns false when the array is not large enough to have the index", () => {
+        expect(hasIndex([], 0)).toBeFalse();
+        expect(hasIndex([0, 1, 2], 3)).toBeFalse();
+    });
+
+
+    it("returns true when the array is large enough to have the index", () => {
+        expect(hasIndex([0], 0)).toBeTrue();
+        expect(hasIndex([0, 1, 2], 0)).toBeTrue();
+        expect(hasIndex([0, 1, 2], 2)).toBeTrue();
+    });
+
+});
 
 
 describe("anyMatchRegex()", () => {

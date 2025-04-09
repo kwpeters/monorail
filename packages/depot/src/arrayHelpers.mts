@@ -2,6 +2,24 @@ import * as _ from "lodash-es";
 import { FailedResult, Result } from "./result.mjs";
 
 
+export function hasIndex<T>(arr: T[], idx: number): boolean {
+
+    // If _idx_ is not an integer, _arr_ does not have that index.
+    if (!Number.isInteger(idx)) {
+        return false;
+    }
+
+    // If _idx_ is negative, _arr_ does not have that index.
+    if (idx < 0) {
+        return false;
+    }
+
+    const arrMaxIndex = arr.length - 1;
+    return arrMaxIndex >= idx;
+}
+
+
+
 /**
  * Tests the strings in `strings` and returns the first non-null match.
  * @param strings - The array of strings to search
