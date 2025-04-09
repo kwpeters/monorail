@@ -23,7 +23,7 @@ const n1n2n1 = tree1.insert(n1n2, undefined, "1.2.1");
 const n2 = tree1.insert(undefined, undefined, "2");
 
 
-describe("Tree", () => {
+fdescribe("Tree", () => {
 
     describe("instance", () => {
 
@@ -76,6 +76,22 @@ describe("Tree", () => {
                 const node = tree.insert(undefined, undefined, "1");
                 expect(node).toBeDefined();
                 expect(tree.value(node)).toEqual("1");
+            });
+
+        });
+
+
+        describe("isLeaf()", () => {
+
+            it("returns false for non-leaf nodes", () => {
+                const isLeaf = tree1.isLeaf(n1);
+                expect(isLeaf).toBeFalse();
+            });
+
+
+            it("returns true for leaf nodes", () => {
+                const isLeaf = tree1.isLeaf(n1n1n1n1);
+                expect(isLeaf).toBeTrue();
             });
 
         });

@@ -126,6 +126,18 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
 
 
     /**
+     * Determines whether the specified node is a leaf node (a node that has no
+     * children)
+     *
+     * @param node - The node to be tested
+     * @return Whether _node_ is a leaf node.
+     */
+    public isLeaf(node: ITreeNode<TPayload>): boolean {
+        return node.children.length === 0;
+    }
+
+
+    /**
      * Gets the specified node's child nodes
      *
      * @param parent - The node whose child nodes will be gotten
