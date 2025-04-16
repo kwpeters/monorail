@@ -36,47 +36,28 @@ export function treeToTable<TPayload>(
         // Iterate over the nodes in the current tree path and map them into
         // _outputRow_.
         //
-
-        // While iterating over the nodes in the current tree path, if we
-        // encounter a difference we want to stop duplicate checking for the
-        // remainder of the nodes.  Start with dupe checking turned on.
-        let doDupeCheck = true;
-
         for (let pathIndex = 0; pathIndex < curTreePath.length; pathIndex++) {
-            if (!doDupeCheck) {
-                // Duplicate checking is disabled for the remainder of the path.
-                // Just put the current node into the row.
-                outputRow.push(new SomeOption(curTreePath[pathIndex]!));
-            }
-            else {
-                if (hasIndex(prevTreePath, pathIndex)) {
 
-                    if (curTreePath[pathIndex] === prevTreePath[pathIndex]) {
-                        // The current node is the same node as in the previous path.
-                        // This is represented as a None value.
-                        outputRow.push(NoneOption.get());
+            if (hasIndex(prevTreePath, pathIndex)) {
 
-                        // Continue to do duplicate checking.
-                    }
-                    else {
-                        // The current node is *not* the same as that in the previous path.
-                        // Put the current node into the output table.
-                        outputRow.push(new SomeOption(curTreePath[pathIndex]!));
+                if (curTreePath[pathIndex] === prevTreePath[pathIndex]) {
+                    // The current node is the same node as in the previous path.
+                    // This is represented as a None value.
+                    outputRow.push(NoneOption.get());
 
-                        // Since there was a difference, do not do duplicate checking for
-                        // the remainder of the current path.
-                        doDupeCheck = false;
-                    }
+                    // Continue to do duplicate checking.
                 }
                 else {
-                    // The previous path does not have an entry at the current
-                    // depth/level.  Just put the current node into the row.
+                    // The current node is *not* the same as that in the previous path.
+                    // Put the current node into the output table.
                     outputRow.push(new SomeOption(curTreePath[pathIndex]!));
-
-                    doDupeCheck = false;
                 }
             }
-
+            else {
+                // The previous path does not have an entry at the current
+                // depth/level.  Just put the current node into the row.
+                outputRow.push(new SomeOption(curTreePath[pathIndex]!));
+            }
         }
 
         //
