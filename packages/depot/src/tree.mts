@@ -199,7 +199,7 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
      * @return The previous sibling node or undefined if there is no previous sibling
      */
     public prevSibling(node: ITreeNode<TPayload>): ITreeNode<TPayload> | undefined {
-        const parent = node.parent.isRoot ? this._root : node.parent;
+        const parent = node.parent;
         const foundIndex = parent.children.findIndex((curNode) => curNode === node);
         if (foundIndex > 0) {
             // The previous sibling exists
