@@ -1,4 +1,3 @@
-import { pipe } from "./pipe2.mjs";
 import { Tree, type ITreeNode } from "./tree.mjs";
 import { hasIndex } from "./arrayHelpers.mjs";
 import { NoneOption, Option, SomeOption } from "./option.mjs";
@@ -19,11 +18,7 @@ export function treeToTable<TPayload>(
     tree:    Tree<TPayload>
 ): Array<Array<Option<ITreeNode<TPayload>>>> {
 
-
-    const treePaths = pipe(
-        tree.leafNodePaths(),
-        (iter) => Array.from(iter)
-    );
+    const treePaths = tree.leafNodePaths();
 
     const optTable: Array<Array<Option<ITreeNode<TPayload>>>> = [];
     let prevTreePath: Array<ITreeNode<TPayload>> = [];
