@@ -412,6 +412,48 @@ describe("Tree", () => {
         });
 
 
+        describe("nodePathsDF()", () => {
+
+            it("yields the expected paths when traversing the entire tree", () => {
+                const paths = Array.from(tree1.nodePathsDF());
+                expect(paths).toEqual([
+                    [n1],
+                    [n1, n1n1],
+                    [n1, n1n1, n1n1n1],
+                    [n1, n1n1, n1n1n1, n1n1n1n1],
+                    [n1, n1n1, n1n1n2],
+                    [n1, n1n2],
+                    [n1, n1n2, n1n2n1],
+                    [n2]
+                ]);
+            });
+
+
+            it("yields the expected paths when traversing a subtree", () => {
+                const paths = Array.from(tree1.nodePathsDF(n1n1, true));
+                expect(paths).toEqual([
+                    [n1n1],
+                    [n1n1, n1n1n1],
+                    [n1n1, n1n1n1, n1n1n1n1],
+                    [n1n1, n1n1n2]
+                ]);
+            });
+
+
+            it("yields empty array when starting at leaf node and not including the root", () => {
+                const paths = Array.from(tree1.nodePathsDF(n1n1n1n1, false));
+                expect(paths).toEqual([]);
+            });
+
+
+            it("yields only root path when starting at leaf node and including the root", () => {
+                const paths = Array.from(tree1.nodePathsDF(n1n1n1n1, true));
+                expect(paths).toEqual([[n1n1n1n1]]);
+            });
+
+        });
+
+
         describe("map()", () => {
 
             it("when the map is empty the fn is not called and the output map is empty", () => {

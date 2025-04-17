@@ -1,3 +1,7 @@
+import assert from "node:assert/strict";
+import { pipe } from "./pipe2.mjs";
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // Tree Nodes
 ////////////////////////////////////////////////////////////////////////////////
@@ -54,7 +58,11 @@ export interface IReadOnlyTree<TPayload> {
                    dstParent: ITreeNode<TOut> | undefined, dstTree: Tree<TOut>) => TOut
     ): Tree<TOut>;
     filter(fn: (srcVal: TPayload, srcNode: ITreeNode<TPayload>, srcTree: Tree<TPayload>) => boolean
-    ): Tree<TPayload>
+    ): Tree<TPayload>;
+    nodePathsDF(
+        subtreeRoot: ITreeNode<TPayload> | undefined,
+        includeSubtreeRoot: boolean
+    ): IterableIterator<Array<TreeNode<TPayload>>>;
 }
 
 
@@ -437,6 +445,45 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
                 rootIndex + 1;
 
             yield fullPath.slice(startIndex);
+        }
+    }
+
+
+    /**
+     * Gets an iterator for the paths to each node in depth-first order
+     *
+     * @param subtreeRoot - The root of the subtree to be traversed
+     * @param includeSubtreeRoot - When _subtreeRoot_ is specified, indicates
+     * whether that node should be included
+     * @return An iterator yielding each node path.  The returned paths will
+     * start at a tree top level node when _subtreeRoot_ is not specified.  When
+     * _subtreeRoot_ is specified, the returned paths will start at either
+     * _subtreeRoot_ or one of its children, depending on the value of
+     * _includeSubtreeRoot_.
+     */
+    public *nodePathsDF(
+        subtreeRoot: ITreeNode<TPayload> | undefined = undefined,
+        includeSubtreeRoot: boolean = true
+    ): IterableIterator<Array<TreeNode<TPayload>>> {
+        for (const curNode of this.traverseDF(subtreeRoot, includeSubtreeRoot)) {
+            const nodePath = pipe(
+                this.ancestors(curNode, true),
+                (iter) => Array.from(iter),
+                (ancestors) => ancestors.reverse(),
+                (fullNodePath) => {
+                    if (!subtreeRoot) {
+                        return fullNodePath;
+                    }
+
+                    // If a subtree root was specified, we need to remove the
+                    // ancestors that are not part of the subtree.
+                    const subtreeRootIndex = fullNodePath.findIndex((n) => n === subtreeRoot);
+                    assert(subtreeRootIndex >= 0, "Subtree root must be part of the current node's path.");
+                    const startIndex = includeSubtreeRoot ? subtreeRootIndex : subtreeRootIndex + 1;
+                    return fullNodePath.slice(startIndex);
+                }
+            );
+            yield nodePath;
         }
     }
 
