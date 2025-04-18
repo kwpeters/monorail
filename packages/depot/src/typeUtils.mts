@@ -103,3 +103,9 @@ export type Immutable<T> =
     T extends Map<infer K, infer V> ? ImmutableMap<K, V> :
     T extends Set<infer M> ? ImmutableSet<M> :
     ImmutableObject<T>;
+
+
+/**
+ * Represents the type of elements in an array T.
+ */
+export type ElementType<T> = T extends unknown[] ? T[number] : never;
