@@ -263,6 +263,10 @@
             "types": "./src/treeHelpers.mts",
             "default": "./dist/treeHelpers.mjs"
         },
+        "./treeTable": {
+            "types": "./src/treeTable.mts",
+            "default": "./dist/treeTable.mjs"
+        },
         "./typeUtils": {
             "types": "./src/typeUtils.mts",
             "default": "./dist/typeUtils.mjs"
