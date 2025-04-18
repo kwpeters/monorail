@@ -464,7 +464,7 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
     public *nodePathsDF(
         subtreeRoot: ITreeNode<TPayload> | undefined = undefined,
         includeSubtreeRoot: boolean = true
-    ): IterableIterator<Array<TreeNode<TPayload>>> {
+    ): IterableIterator<Array<ITreeNode<TPayload>>> {
         for (const curNode of this.traverseDF(subtreeRoot, includeSubtreeRoot)) {
             const nodePath = pipe(
                 this.ancestors(curNode, true),
