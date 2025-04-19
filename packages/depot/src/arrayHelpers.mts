@@ -45,6 +45,20 @@ export function atOrDefault<T>(arr: T[], idx: number, defaultValue: T): T {
 
 
 /**
+ * Returns the last index of the specified array, or undefined if the array is empty.
+ *
+ * @param arr - The array to get the last index from
+ * @return The last index of the array or undefined if the array is empty
+ */
+export function lastIndex(arr: Array<unknown>): number | undefined {
+    if (arr.length === 0) {
+        return undefined;
+    }
+    return arr.length - 1;
+}
+
+
+/**
  * Tests the strings in `strings` and returns the first non-null match.
  * @param strings - The array of strings to search
  * @param regex - The pattern to search for

@@ -2,7 +2,8 @@ import {
     anyMatchRegex, choose, chooseAsync, filterDefined, groupConsecutiveBy,
     insertIf, permutations, split, toArray, chooseFirst, chooseFirstAsync,
     hasIndex,
-    atOrDefault
+    atOrDefault,
+    lastIndex
 } from "./arrayHelpers.mjs";
 import { getTimerPromise } from "./promiseHelpers.mjs";
 import { FailedResult, SucceededResult } from "./result.mjs";
@@ -45,6 +46,20 @@ describe("atOrDefault()", () => {
 
     it("returns the item at the specified index when it is in bounds", () => {
         expect(atOrDefault([1, 2, 3], 1, 0)).toEqual(2);
+    });
+
+});
+
+
+describe("lastIndex", () => {
+
+    it("returns undefined for an empty array", () => {
+        expect(lastIndex([])).toBeUndefined();
+    });
+
+
+    it("returns the last index for a non-empty array", () => {
+        expect(lastIndex([1, 2, 3])).toEqual(2);
     });
 
 });
