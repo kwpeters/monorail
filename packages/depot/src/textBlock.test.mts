@@ -1,5 +1,6 @@
 import { TextBlock } from "./textBlock.mjs";
 import { pipe } from "./pipe2.mjs";
+import { NonNegativeInt } from "./primitiveDataType.mts";
 
 describe("TextBlock", () => {
 
@@ -104,6 +105,73 @@ describe("TextBlock", () => {
                     TextBlock.fromLines
                 );
                 expect(tb.numLines).toBe(4);
+            });
+
+        });
+
+
+        describe("bottomJustify()", () => {
+
+            it("does nothing when the specified number of lines is less than the current number of lines", () => {
+                const tb = pipe(
+                    ["line 1", "line 2", "line 3"],
+                    TextBlock.fromLines,
+                    (tb) => tb.bottomJustify(NonNegativeInt.create(2).throwIfFailed())
+                );
+                expect(tb.lines).toEqual(["line 1", "line 2", "line 3"]);
+            });
+
+
+            it("does nothing when the specified number of lines is equal to the current number of lines", () => {
+                const tb = pipe(
+                    ["line 1", "line 2", "line 3"],
+                    TextBlock.fromLines,
+                    (tb) => tb.bottomJustify(NonNegativeInt.create(3).throwIfFailed())
+                );
+                expect(tb.lines).toEqual(["line 1", "line 2", "line 3"]);
+            });
+
+
+            it("adds leading blank lines when needed", () => {
+                const tb = pipe(
+                    ["line 1", "line 2", "line 3"],
+                    TextBlock.fromLines,
+                    (tb) => tb.bottomJustify(NonNegativeInt.create(5).throwIfFailed())
+                );
+                expect(tb.lines).toEqual(["", "", "line 1", "line 2", "line 3"]);
+            });
+        });
+
+
+        describe("topJustify()", () => {
+
+            it("does nothing when the specified number of lines is less than the current number of lines", () => {
+                const tb = pipe(
+                    ["line 1", "line 2", "line 3"],
+                    TextBlock.fromLines,
+                    (tb) => tb.topJustify(NonNegativeInt.create(2).throwIfFailed())
+                );
+                expect(tb.lines).toEqual(["line 1", "line 2", "line 3"]);
+            });
+
+
+            it("does nothing when the specified number of lines is equal to the current number of lines", () => {
+                const tb = pipe(
+                    ["line 1", "line 2", "line 3"],
+                    TextBlock.fromLines,
+                    (tb) => tb.topJustify(NonNegativeInt.create(3).throwIfFailed())
+                );
+                expect(tb.lines).toEqual(["line 1", "line 2", "line 3"]);
+            });
+
+
+            it("adds trailing blank lines when needed", () => {
+                const tb = pipe(
+                    ["line 1", "line 2", "line 3"],
+                    TextBlock.fromLines,
+                    (tb) => tb.topJustify(NonNegativeInt.create(5).throwIfFailed())
+                );
+                expect(tb.lines).toEqual(["line 1", "line 2", "line 3", "", ""]);
             });
         });
 
