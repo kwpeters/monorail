@@ -133,7 +133,7 @@ export const fsItemCommandDefinitions = [
         name: "copy path",
         fn:   (subject) => {
             // If the path contains any spaces, wrap it in double quotes.
-            const text = ternary(subject.path, (v) => v.includes(""), (v) => `"${v}"`);
+            const text = ternary(subject.path, (v) => v.includes(" "), (v) => `"${v}"`, (v) => v);
             clipboard.writeSync(text);
             return new SucceededResult(text);
         }

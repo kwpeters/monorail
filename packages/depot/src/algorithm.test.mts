@@ -1,5 +1,5 @@
 import {List, Iterator} from "./list.mjs";
-import {advance, find, distance, partition} from "./algorithm.mjs";
+import {advance, find, distance, partition, ternary} from "./algorithm.mjs";
 
 
 describe("advance()", () => {
@@ -143,5 +143,48 @@ describe("partition()", () => {
         expect(itSecondRange.equals(list.begin().offset(6))).toBeTruthy();
     });
 
+});
+
+
+describe("ternary()", () => {
+
+    it("when the predicate yields a truthy value invokes the true function and returns its result", () => {
+        const predicateFn = (n: number) => n % 2 === 0;
+        let numTrueFnInvocations = 0;
+        let numFalseFnInvocations = 0;
+        const trueFn = (n: number): string => {
+            numTrueFnInvocations++;
+            return "true value";
+        };
+        const falseFn = (n: number): string => {
+            numFalseFnInvocations++;
+            return "false value";
+        };
+
+        const str = ternary(4, predicateFn, trueFn, falseFn);
+        expect(str).toEqual("true value");
+        expect(numTrueFnInvocations).toEqual(1);
+        expect(numFalseFnInvocations).toEqual(0);
+    });
+
+
+    it("when the predicate yields a falsy value invokes the false function and returns its result", () => {
+        const predicateFn = (n: number) => n % 2 === 0;
+        let numTrueFnInvocations = 0;
+        let numFalseFnInvocations = 0;
+        const trueFn = (n: number): string => {
+            numTrueFnInvocations++;
+            return "true value";
+        };
+        const falseFn = (n: number): string => {
+            numFalseFnInvocations++;
+            return "false value";
+        };
+
+        const str = ternary(5, predicateFn, trueFn, falseFn);
+        expect(str).toEqual("false value");
+        expect(numTrueFnInvocations).toEqual(0);
+        expect(numFalseFnInvocations).toEqual(1);
+    });
 
 });

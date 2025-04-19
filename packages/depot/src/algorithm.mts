@@ -1,5 +1,4 @@
 import { Iterator } from "./list.mjs";
-import { id } from "./functional.mjs";
 
 
 /**
@@ -118,7 +117,7 @@ export function partition<TValue>(
 
 
 /**
- * A more sophisticated ternary expression.
+ * A more functional ternary expression.
  *
  * @param val - The value to be examined
  * @param predicate - A predicate that uses _val_ to determine whether the true
@@ -131,16 +130,17 @@ export function partition<TValue>(
  *      will be returned.
  * @return The value returned from _trueFn_ or _falseFn_.
  */
-export function ternary<T>(
-    val: T,
-    predicate: (val: T) => unknown,
-    trueFn: ((val: T) => T) | undefined,
-    falseFn: ((val: T) => T) | undefined = undefined
-): T {
-
-    trueFn ??= id;
-    falseFn ??= id;
-    return predicate(val) ?
-        trueFn(val) :
-        falseFn(val);
+export function ternary<TIn, TOutTrue, TOutFalse>(
+    val:       TIn,
+    predicate: (val: TIn) => unknown,
+    trueFn:    ((val: TIn) => TOutTrue),
+    falseFn:   ((val: TIn) => TOutFalse)
+): TOutTrue | TOutFalse {
+    const predicateResult = predicate(val);
+    if (predicateResult) {
+        return trueFn(val);
+    }
+    else {
+        return falseFn(val);
+    }
 }
