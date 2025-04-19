@@ -1,9 +1,17 @@
+import { lastIndex } from "./arrayHelpers.mjs";
 import type { NonNegativeInt } from "./primitiveDataType.mjs";
+import type { IHasToString } from "./primitives.mjs";
 import { splitIntoLines } from "./stringHelpers.mjs";
 
 
-export class TextBlock implements IHasToString {
+export interface ITextBlockPrefix {
+    first:  string;
+    middle: string;
+    last:   string;
+}
 
+
+export class TextBlock implements IHasToString {
 
     /**
      * Creates a new TextBlock from an array of lines. Each line in the array
@@ -106,5 +114,28 @@ export class TextBlock implements IHasToString {
         const newLines = [...this._lines];
         newLines.push(...new Array<string>(numLinesInt - this.numLines).fill(""));
         return new TextBlock(newLines);
+    }
+
+
+    public prefixLines(prefix: ITextBlockPrefix): TextBlock {
+        const newLines = [] as Array<string>;
+        const lastIdx = lastIndex(this._lines);
+        if (lastIdx === undefined) {
+            return this;
+        }
+
+        for (let lineIdx = 0; lineIdx < this._lines.length; lineIdx++) {
+            if (lineIdx === 0) {
+                newLines.push(prefix.first + this._lines[0]);
+            }
+            else if (lineIdx === lastIdx) {
+                newLines.push(prefix.last + this._lines[lineIdx]);
+            }
+            else {
+                newLines.push(prefix.middle + this._lines[lineIdx]);
+            }
+        }
+
+        return TextBlock.fromLines(newLines);
     }
 }

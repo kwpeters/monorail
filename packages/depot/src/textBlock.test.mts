@@ -1,6 +1,7 @@
 import { TextBlock } from "./textBlock.mjs";
 import { pipe } from "./pipe2.mjs";
-import { NonNegativeInt } from "./primitiveDataType.mts";
+import { NonNegativeInt } from "./primitiveDataType.mjs";
+
 
 describe("TextBlock", () => {
 
@@ -173,6 +174,51 @@ describe("TextBlock", () => {
                 );
                 expect(tb.lines).toEqual(["line 1", "line 2", "line 3", "", ""]);
             });
+        });
+
+
+        describe("prefixLines()", () => {
+
+
+            it("returns an empty TextBlock when there are no lines", () => {
+                const tb = pipe(
+                    [],
+                    TextBlock.fromLines,
+                    (tb) => tb.prefixLines({ first: "first-", middle: "middle-", last: "last-" })
+                );
+                expect(tb.lines).toEqual([]);
+            });
+
+
+            it("uses only the first prefix when there is one line", () => {
+                const tb = pipe(
+                    ["line 1"],
+                    TextBlock.fromLines,
+                    (tb) => tb.prefixLines({ first: "first-", middle: "middle-", last: "last-" })
+                );
+                expect(tb.lines).toEqual(["first-line 1"]);
+            });
+
+
+            it("uses only the first and last prefixes when there are two lines", () => {
+                const tb = pipe(
+                    ["line 1", "line 2"],
+                    TextBlock.fromLines,
+                    (tb) => tb.prefixLines({ first: "first-", middle: "", last: "last-" })
+                );
+                expect(tb.lines).toEqual(["first-line 1", "last-line 2"]);
+            });
+
+
+            it("uses all three prefixes when there are three lines", () => {
+                const tb = pipe(
+                    ["line 1", "line 2", "line 3"],
+                    TextBlock.fromLines,
+                    (tb) => tb.prefixLines({ first: "first-", middle: "middle-", last: "last-" })
+                );
+                expect(tb.lines).toEqual(["first-line 1", "middle-line 2", "last-line 3"]);
+            });
+
         });
 
     });
