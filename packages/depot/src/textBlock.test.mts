@@ -111,6 +111,38 @@ describe("TextBlock", () => {
         });
 
 
+        describe("lines", () => {
+
+            it("returns a copy of the lines", () => {
+                const tb = pipe(
+                    ["line 1", "line 2", "line 3"],
+                    TextBlock.fromLines
+                );
+                expect(tb.lines).toEqual(["line 1", "line 2", "line 3"]);
+            });
+        });
+
+
+        describe("toString()", () => {
+
+
+            it("returns an empty string for an empty TextBlock", () => {
+                const tb = TextBlock.fromLines([]);
+                expect(tb.toString()).toBe("");
+            });
+
+
+            it("returns a string with the lines joined by newline characters", () => {
+                const tb = pipe(
+                    ["line 1", "line 2", "line 3"],
+                    TextBlock.fromLines
+                );
+                expect(tb.toString()).toBe("line 1\nline 2\nline 3");
+            });
+
+        });
+
+
         describe("bottomJustify()", () => {
 
             it("does nothing when the specified number of lines is less than the current number of lines", () => {

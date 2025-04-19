@@ -76,6 +76,17 @@ export class TextBlock implements IHasToString {
 
 
     /**
+     * Returns a string representation of this TextBlock. Each line is joined
+     * by newline characters.
+     *
+     * @return A string representation of this TextBlock.
+     */
+    public toString(): string {
+        return this._lines.join("\n");
+    }
+
+
+    /**
      * Returns a new TextBlock with the specified number of lines. Additional
      * blank lines are added at the top.
      *
