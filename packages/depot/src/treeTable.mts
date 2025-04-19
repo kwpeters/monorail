@@ -1,5 +1,5 @@
 import { Tree } from "./tree.mjs";
-import { hasIndex, toArray } from "./arrayHelpers.mjs";
+import { atOrDefault, hasIndex, toArray } from "./arrayHelpers.mjs";
 import { type ElementType } from "./typeUtils.mjs";
 import { inspect } from "./inspect.mjs";
 
@@ -45,10 +45,15 @@ export function assertTreeGlyph(other: unknown): asserts other is TreeGlyph {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+export interface ITreeTableOptions {
+    colHeaders: Array<string>;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 export function toTreeTable<T>(
     tree: Tree<T | Array<T>>,
-    rootText: string
+    opts: ITreeTableOptions
 ): string {
 
     const srcTree = tree.map((val) => toArray(val));
@@ -62,7 +67,7 @@ export function toTreeTable<T>(
     //     table.push(row.slice(0));
     // }
 
-    let output = rootText + "\n";
+    let output = atOrDefault(opts.colHeaders, 0, "") + "\n";
 
     const paths = Array.from(srcTree.nodePathsDF());
     let prevPath: ElementType<typeof paths> = [];
