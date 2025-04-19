@@ -1,7 +1,8 @@
 import {
     anyMatchRegex, choose, chooseAsync, filterDefined, groupConsecutiveBy,
     insertIf, permutations, split, toArray, chooseFirst, chooseFirstAsync,
-    hasIndex
+    hasIndex,
+    atOrDefault
 } from "./arrayHelpers.mjs";
 import { getTimerPromise } from "./promiseHelpers.mjs";
 import { FailedResult, SucceededResult } from "./result.mjs";
@@ -30,6 +31,20 @@ describe("hasIndex()", () => {
         expect(hasIndex([0], 0)).toBeTrue();
         expect(hasIndex([0, 1, 2], 0)).toBeTrue();
         expect(hasIndex([0, 1, 2], 2)).toBeTrue();
+    });
+
+});
+
+
+describe("atOrDefault()", () => {
+
+    it("returns the default value when the index is out of bounds", () => {
+        expect(atOrDefault([1, 2, 3], 3, 0)).toEqual(0);
+        expect(atOrDefault([1, 2, 3], -1, 0)).toEqual(0);
+    });
+
+    it("returns the item at the specified index when it is in bounds", () => {
+        expect(atOrDefault([1, 2, 3], 1, 0)).toEqual(2);
     });
 
 });

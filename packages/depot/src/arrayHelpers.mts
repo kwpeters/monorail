@@ -2,8 +2,15 @@ import * as _ from "lodash-es";
 import { FailedResult, Result } from "./result.mjs";
 
 
+/**
+ * Checks whether the specified array has an item at the specified index
+ * (negative indices are not supported)
+ *
+ * @param arr - The array to check
+ * @param idx - The index to check
+ * @returns True if the array has an item at the specified index, false otherwise
+ */
 export function hasIndex<T>(arr: T[], idx: number): boolean {
-
     // If _idx_ is not an integer, _arr_ does not have that index.
     if (!Number.isInteger(idx)) {
         return false;
@@ -18,6 +25,23 @@ export function hasIndex<T>(arr: T[], idx: number): boolean {
     return arrMaxIndex >= idx;
 }
 
+
+/**
+ * Returns the item at the specified index in the array, or a default value if
+ * the index is out of bounds.
+ *
+ * @param arr - The array to get the item from
+ * @param idx - The index of the item to retrieve (negative indices are not
+ *      supported)
+ * @param defaultValue - The value to return if the index is out of bounds
+ * @return The item at the specified index or the default value if out of bounds
+ */
+export function atOrDefault<T>(arr: T[], idx: number, defaultValue: T): T {
+    if (hasIndex(arr, idx)) {
+        return arr[idx] as T;
+    }
+    return defaultValue;
+}
 
 
 /**
