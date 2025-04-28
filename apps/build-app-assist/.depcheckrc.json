@@ -1,0 +1,10 @@
+
+{
+    "quiet": true,
+    "skip-missing": true,
+    "ignores": [
+        "@types/jasmine",
+        "jasmine",
+        "postject"
+    ]
+}

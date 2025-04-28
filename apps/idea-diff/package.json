@@ -1,31 +1,32 @@
 {
-  "name": "@repo/idea-diff",
-  "version": "0.0.0",
-  "private": true,
-  "scripts": {
-    "dev": "echo 'Add dev script here'",
-    "build": "tsc --build",
-    "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
-    "lint": "eslint ./src",
-    "type-check": "tsc --project tsconfig.ut.json --noEmit"
-  },
-  "bin": {
-    "idea-diff": "./dist/index.mjs"
-  },
-  "dependencies": {
-    "@repo/depot": "*",
-    "@repo/depot-node": "*",
-    "yargs": "^17.7.2"
-  },
-  "devDependencies": {
-    "@repo/eslint-config": "*",
-    "@repo/typescript-config": "*",
-    "@stylistic/eslint-plugin": "^2.8.0",
-    "@types/jasmine": "^5.1.4",
-    "@types/yargs": "^17.0.24",
-    "@typescript-eslint/eslint-plugin": "^8.6.0",
-    "@typescript-eslint/parser": "^8.6.0",
-    "eslint": "^8.57.1",
-    "jasmine": "^5.3.0"
-  }
+    "name": "@repo/idea-diff",
+    "version": "0.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "echo 'Add dev script here'",
+        "build": "tsc --build",
+        "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
+        "lint": "eslint ./src",
+        "type-check": "tsc --project tsconfig.ut.json --noEmit",
+        "depcheck": "depcheck"
+    },
+    "bin": {
+        "idea-diff": "./dist/index.mjs"
+    },
+    "dependencies": {
+        "@repo/depot": "*",
+        "@repo/depot-node": "*",
+        "yargs": "^17.7.2"
+    },
+    "devDependencies": {
+        "@repo/eslint-config": "*",
+        "@repo/typescript-config": "*",
+        "@stylistic/eslint-plugin": "^2.8.0",
+        "@types/jasmine": "^5.1.4",
+        "@types/yargs": "^17.0.24",
+        "@typescript-eslint/eslint-plugin": "^8.6.0",
+        "@typescript-eslint/parser": "^8.6.0",
+        "eslint": "^8.57.1",
+        "jasmine": "^5.3.0"
+    }
 }
