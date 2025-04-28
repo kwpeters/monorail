@@ -85,3 +85,14 @@ export async function getUserProfileDir(): Promise<Result<Directory, string>> {
 export async function getOneDriveDir(): Promise<Result<Directory, string>> {
     return Directory.fromEnvVar("OneDrive");
 }
+
+
+
+/**
+ * Gets the "Program Files (x86)" install folder and makes sure it exists.
+ *
+ * @return When successful, the directory.  An error message upon failure.
+ */
+export async function getProgramFilesX86Dir(): Promise<Result<Directory, string>> {
+    return Directory.fromEnvVar("ProgramFiles(x86)");
+}
