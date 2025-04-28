@@ -40,6 +40,12 @@
         ],
         "outputs": [
         ]
+    },
+    "depcheck": {
+        // Running depcheck does not depend on anything from any other
+        // project.  So run with maximum parallelism.
+        "dependsOn": [],
+        "outputs": []
     }
   }
 }
