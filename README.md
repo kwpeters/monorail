@@ -6,6 +6,8 @@ This monorepo contains packages and applications that use the following tools:
   checking.
 - This repo uses [ESLint](https://eslint.org/) for code linting.
 - This repo uses [Jasmine](https://jasmine.github.io/) for its unit tests.
+- This repo uses [depcheck](https://github.com/depcheck/depcheck#readme) for
+  auditing dependencies.
 - This repo uses [Turborepo](https://turbo.build/) for its build system.
   - Turborepo provides both local and remote caching of build artifacts.  Remote
     caching requires a Vercel account, so only local caching is currently done.
