@@ -10,7 +10,7 @@ import { FailedResult, Result } from "./result.mjs";
  * @param idx - The index to check
  * @returns True if the array has an item at the specified index, false otherwise
  */
-export function hasIndex<T>(arr: T[], idx: number): boolean {
+export function hasIndex<T>(arr: readonly T[], idx: number): boolean {
     // If _idx_ is not an integer, _arr_ does not have that index.
     if (!Number.isInteger(idx)) {
         return false;
@@ -31,8 +31,8 @@ export function hasIndex<T>(arr: T[], idx: number): boolean {
  * the index is out of bounds.
  *
  * @param arr - The array to get the item from
- * @param idx - The index of the item to retrieve (negative indices are not
- *      supported)
+ * @param idx - The index of the item to retrieve (negative indices are
+ *     intentionally not supported)
  * @param defaultValue - The value to return if the index is out of bounds
  * @return The item at the specified index or the default value if out of bounds
  */
