@@ -37,7 +37,7 @@ interface IArchyData {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export interface IReadOnlyTree<TPayload> {
+export interface IReadonlyTree<TPayload> {
     length: number;
     isEmpty(): boolean;
     value(node: ITreeNode<TPayload>): Readonly<TPayload>;
@@ -73,7 +73,7 @@ export interface IReadOnlyTree<TPayload> {
  * top-level nodes.  This is done by using an internal "super root" node that is
  * not exposed to clients.
  */
-export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
+export class Tree<TPayload> implements IReadonlyTree<TPayload> {
 
     private readonly _root: ITreeRoot<TPayload>;
 
@@ -143,6 +143,7 @@ export class Tree<TPayload> implements IReadOnlyTree<TPayload> {
         return node.children.length === 0;
     }
 
+    // TODO: Convert the following to a generator.
 
     /**
      * Gets the specified node's child nodes
