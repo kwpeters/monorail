@@ -149,7 +149,7 @@ describe("TextBlock", () => {
                 const tb = pipe(
                     ["line 1", "line 2", "line 3"],
                     TextBlock.fromLines,
-                    (tb) => tb.bottomJustify(NonNegativeInt.create(2).throwIfFailed())
+                    (tb) => tb.bottomJustify(2)
                 );
                 expect(tb.lines).toEqual(["line 1", "line 2", "line 3"]);
             });
@@ -159,7 +159,7 @@ describe("TextBlock", () => {
                 const tb = pipe(
                     ["line 1", "line 2", "line 3"],
                     TextBlock.fromLines,
-                    (tb) => tb.bottomJustify(NonNegativeInt.create(3).throwIfFailed())
+                    (tb) => tb.bottomJustify(3)
                 );
                 expect(tb.lines).toEqual(["line 1", "line 2", "line 3"]);
             });
@@ -169,7 +169,7 @@ describe("TextBlock", () => {
                 const tb = pipe(
                     ["line 1", "line 2", "line 3"],
                     TextBlock.fromLines,
-                    (tb) => tb.bottomJustify(NonNegativeInt.create(5).throwIfFailed())
+                    (tb) => tb.bottomJustify(5)
                 );
                 expect(tb.lines).toEqual(["", "", "line 1", "line 2", "line 3"]);
             });
@@ -182,7 +182,7 @@ describe("TextBlock", () => {
                 const tb = pipe(
                     ["line 1", "line 2", "line 3"],
                     TextBlock.fromLines,
-                    (tb) => tb.topJustify(NonNegativeInt.create(2).throwIfFailed())
+                    (tb) => tb.topJustify(2)
                 );
                 expect(tb.lines).toEqual(["line 1", "line 2", "line 3"]);
             });
@@ -192,7 +192,7 @@ describe("TextBlock", () => {
                 const tb = pipe(
                     ["line 1", "line 2", "line 3"],
                     TextBlock.fromLines,
-                    (tb) => tb.topJustify(NonNegativeInt.create(3).throwIfFailed())
+                    (tb) => tb.topJustify(3)
                 );
                 expect(tb.lines).toEqual(["line 1", "line 2", "line 3"]);
             });
@@ -202,7 +202,7 @@ describe("TextBlock", () => {
                 const tb = pipe(
                     ["line 1", "line 2", "line 3"],
                     TextBlock.fromLines,
-                    (tb) => tb.topJustify(NonNegativeInt.create(5).throwIfFailed())
+                    (tb) => tb.topJustify(5)
                 );
                 expect(tb.lines).toEqual(["line 1", "line 2", "line 3", "", ""]);
             });
@@ -210,7 +210,6 @@ describe("TextBlock", () => {
 
 
         describe("prefixLines()", () => {
-
 
             it("returns an empty TextBlock when there are no lines", () => {
                 const tb = pipe(
@@ -249,6 +248,40 @@ describe("TextBlock", () => {
                     (tb) => tb.prefixLines({ first: "first-", middle: "middle-", last: "last-" })
                 );
                 expect(tb.lines).toEqual(["first-line 1", "middle-line 2", "last-line 3"]);
+            });
+
+        });
+
+
+        describe("padLines()", () => {
+
+            it("does nothing when the specified number of columns is less than the size of the text", () => {
+                const tb = pipe(
+                    ["line 1", "line 2", "line 3"],
+                    TextBlock.fromLines,
+                    (tb) => tb.padLines(5)
+                );
+                expect(tb.lines).toEqual(["line 1", "line 2", "line 3"]);
+            });
+
+
+            it("does nothing when the specified number of columns equals the length of the text", () => {
+                const tb = pipe(
+                    ["line 1", "line 2", "line 3"],
+                    TextBlock.fromLines,
+                    (tb) => tb.padLines(6)
+                );
+                expect(tb.lines).toEqual(["line 1", "line 2", "line 3"]);
+            });
+
+
+            it("appends spaces as expected when the specified number of columns is greater than the length of the text", () => {
+                const tb = pipe(
+                    ["line 1", "line 2", "line 3"],
+                    TextBlock.fromLines,
+                    (tb) => tb.padLines(10)
+                );
+                expect(tb.lines).toEqual(["line 1    ", "line 2    ", "line 3    "]);
             });
 
         });

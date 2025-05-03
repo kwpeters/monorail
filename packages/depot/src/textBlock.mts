@@ -1,5 +1,4 @@
 import { lastIndex } from "./arrayHelpers.mjs";
-import type { NonNegativeInt } from "./primitiveDataType.mjs";
 import type { IHasToString } from "./primitives.mjs";
 import { splitIntoLines } from "./stringHelpers.mjs";
 
@@ -95,13 +94,12 @@ export class TextBlock implements IHasToString {
      *     the current TextBlock is returned unchanged.
      * @return A new TextBlock instance with the updated lines of text
      */
-    public bottomJustify(numLines: NonNegativeInt): TextBlock {
-        const numLinesInt = numLines.value;
-        if (numLinesInt <= this.numLines) {
+    public bottomJustify(numLines: number): TextBlock {
+        if (numLines <= this.numLines) {
             return this;
         }
 
-        const newLines = new Array<string>(numLinesInt - this.numLines).fill("");
+        const newLines = new Array<string>(numLines - this.numLines).fill("");
         newLines.push(...this._lines);
         return new TextBlock(newLines);
     }
@@ -116,14 +114,13 @@ export class TextBlock implements IHasToString {
      *     the current TextBlock is returned unchanged.
      * @return A new TextBlock instance with the updated lines of text
      */
-    public topJustify(numLines: NonNegativeInt): TextBlock {
-        const numLinesInt = numLines.value;
-        if (numLinesInt <= this.numLines) {
+    public topJustify(numLines: number): TextBlock {
+        if (numLines <= this.numLines) {
             return this;
         }
 
         const newLines = [...this._lines];
-        newLines.push(...new Array<string>(numLinesInt - this.numLines).fill(""));
+        newLines.push(...new Array<string>(numLines - this.numLines).fill(""));
         return new TextBlock(newLines);
     }
 
@@ -149,4 +146,31 @@ export class TextBlock implements IHasToString {
 
         return TextBlock.fromLines(newLines);
     }
+
+
+    /**
+     * Returns a new TextBlock with the specified number of columns. Additional
+     * spaces are added to the right of each line.
+     *
+     * @param numColumns - The total number of columns the new TextBlock should have.
+     *     If this number is less than or equal to the current number of columns,
+     *     the current TextBlock is returned unchanged.
+     * @return A new TextBlock instance with the updated lines of text
+     */
+    public padLines(numColumns: number): TextBlock {
+        const newLines = this._lines.map((line) => line.padEnd(numColumns, " "));
+        return TextBlock.fromLines(newLines);
+    }
+
+}
+
+
+/**
+ * Calculates the maximum number of lines present in _textBlocks_.
+ *
+ * @param textBlocks - The text blocks to consider
+ * @return The maximum number of lines found
+ */
+export function maxLines(textBlocks: readonly TextBlock[]): number {
+    return textBlocks.reduce((acc, tb) => Math.max(acc, tb.numLines), 0);
 }
