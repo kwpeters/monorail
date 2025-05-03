@@ -1,8 +1,12 @@
-import { Tree } from "./tree.mjs";
-import { atOrDefault, hasIndex, toArray } from "./arrayHelpers.mjs";
-import { type ElementType } from "./typeUtils.mjs";
+// eslint-disable-next-line @typescript-eslint/naming-convention
+import Table, { type TableConstructorOptions } from "cli-table3";
+import { Tree, type IReadonlyTree, type ITreeNode } from "./tree.mjs";
+import { hasIndex } from "./arrayHelpers.mjs";
 import { inspect } from "./inspect.mjs";
-
+import type { IHasToString } from "./primitives.mjs";
+import { type ITextBlockPrefix, maxLines, TextBlock } from "./textBlock.mjs";
+import { FailedResult, SucceededResult, type Result } from "./result.mjs";
+import { pipe } from "./pipe2.mjs";
 
 /**
  * An enumeration of Unicode ascii art glyphs used to represent the
@@ -45,94 +49,196 @@ export function assertTreeGlyph(other: unknown): asserts other is TreeGlyph {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export interface ITreeTableOptions {
-    colHeaders: Array<string>;
-}
 
-////////////////////////////////////////////////////////////////////////////////
+export class TreeTable implements IHasToString {
 
-export function toTreeTable<T>(
-    tree: Tree<T | Array<T>>,
-    opts: ITreeTableOptions
-): string {
+    ////////////////////////////////////////////////////////////////////////////////
+    // Static
+    ////////////////////////////////////////////////////////////////////////////////
 
-    const srcTree = tree.map((val) => toArray(val));
+    public static create(
+        colHeaders: readonly TextBlock[],
+        tree: Tree<readonly TextBlock[]>
+    ): Result<TreeTable, string> {
 
-    // const [numRows, numCols] = calcRowsAndCols(srcTree);
-    //
-    // // An empty row with the correct number of columns.
-    // const row = new Array<string>(numCols).fill("");
-    // const table = [] as Array<Array<string>>;
-    // for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
-    //     table.push(row.slice(0));
-    // }
+        //
+        // Validate the inputs.
+        //
 
-    let output = atOrDefault(opts.colHeaders, 0, "") + "\n";
+        // There must be at least one column header.
+        if (colHeaders.length === 0) {
+            return new FailedResult("A TreeTable must have at least one column header.");
+        }
 
-    const paths = Array.from(srcTree.nodePathsDF());
-    let prevPath: ElementType<typeof paths> = [];
-    for (const curPath of paths) {
-
-        for (let pathIndex = 0; pathIndex < curPath.length; pathIndex++) {
-
-            const prevNode = hasIndex(prevPath, pathIndex) ? prevPath[pathIndex] : undefined;
-            const curNode = curPath[pathIndex]!;
-
-            if (curNode === prevNode) {
-                // The current path is for some descendant of the previous path.
-                // We need to insert some sort of extender.  The type of
-                // extender is determined by whether or not the node has a next
-                // sibling.
-                const nextSibling = srcTree.nextSibling(curNode);
-                const extender = nextSibling ? TreeGlyph.nextSiblingBridge : TreeGlyph.nullSiblingBridge;
-                output += extender;
-            }
-            else {
-                // The current path is not a descendant of the previous path.
-                const nextSibling = srcTree.nextSibling(curNode);
-                const treeGlyph = nextSibling ? TreeGlyph.nonLastSibling : TreeGlyph.lastSibling;
-                const nodeValues = srcTree.value(curNode);
-                const nodeText = nodeValues.at(0)?.toString() ?? "<undefined>";
-                output += treeGlyph + nodeText;
+        // The value associated with each tree node, must be an array of
+        // TextBlocks that is the same size as the column header array.
+        const numCols = colHeaders.length;
+        for (const curNode of tree.traverseDF()) {
+            const textBlocks = tree.value(curNode);
+            if (textBlocks.length !== numCols) {
+                return new FailedResult(`Tree node has ${textBlocks.length} columns but header row has ${numCols}.`);
             }
         }
 
-        //
-        // Move to the next path.
-        //
-        output += "\n";
-        prevPath = curPath;
+        const inst = new TreeTable(colHeaders, tree);
+        return new SucceededResult(inst);
     }
 
-    if (output.endsWith("\n")) {
-        // Remove the trailing newline.
-        output = output.slice(0, -1);
+
+    /**
+     * Creates a new tree in which column 0 contains Unicode characters that
+     * draw the tree structure.
+     *
+     * @param tree - The tree to be decorated
+     * @return A new tree that is identical to _tree_ except that the first
+     *     TextBlock of each node's value array is prefixed with the the Unicode
+     *     characters that are needed to draw the tree structure
+     */
+    private static addTreeLinesToColZero(tree: IReadonlyTree<readonly TextBlock[]>) {
+        let prevPath: ITreeNode<readonly TextBlock[]>[] = [];
+        tree = tree.map((textBlocks, srcNode, srcTree, dstParent, dstTree) => {
+
+            const curPath = pipe(
+                srcTree.ancestors(srcNode, true),
+                (iterNodes) => Array.from(iterNodes),
+                (nodes) => nodes.reverse()
+            );
+
+            const textBlockPrefixes: Array<ITextBlockPrefix> = [];
+
+            curPath.forEach((curNode, idx) => {
+
+                const prevNode = prevPath.at(idx);
+
+                if (curNode === prevNode) {
+                    // The current path is for some descendant of the previous path.
+                    // We need to insert some sort of extender.  The type of
+                    // extender is determined by whether or not the node has a next
+                    // sibling.
+                    const nextSibling = srcTree.nextSibling(curNode);
+
+                    if (nextSibling) {
+                        textBlockPrefixes.push({
+                            first:  TreeGlyph.nextSiblingBridge,
+                            middle: TreeGlyph.nextSiblingBridge,
+                            last:   TreeGlyph.nextSiblingBridge
+                        });
+                    }
+                    else {
+                        textBlockPrefixes.push({
+                            first:  TreeGlyph.nullSiblingBridge,
+                            middle: TreeGlyph.nullSiblingBridge,
+                            last:   TreeGlyph.nullSiblingBridge
+                        });
+                    }
+                }
+                else {
+                    // The current path is not a descendant of the previous path.
+                    const nextSibling = srcTree.nextSibling(curNode);
+                    if (nextSibling) {
+                        textBlockPrefixes.push({
+                            first:  TreeGlyph.nonLastSibling,
+                            middle: TreeGlyph.nextSiblingBridge,
+                            last:   TreeGlyph.nextSiblingBridge
+                        });
+                    }
+                    else {
+                        textBlockPrefixes.push({
+                            first:  TreeGlyph.lastSibling,
+                            middle: TreeGlyph.nullSiblingBridge,
+                            last:   TreeGlyph.nullSiblingBridge
+                        });
+                    }
+
+                }
+            });
+
+            let curTextBlock = hasIndex(textBlocks, 0) ? textBlocks[0]! : TextBlock.fromString("");
+            const reversedPrefixes = textBlockPrefixes.slice().reverse();
+            for (const curPrefix of reversedPrefixes) {
+                curTextBlock = curTextBlock.prefixLines(curPrefix);
+            }
+
+            const newTextBlocks = [curTextBlock, ...textBlocks.slice(1)];
+
+            // Move to the next path.
+            prevPath = curPath;
+
+            return newTextBlocks;
+        });
+        return tree;
     }
 
-    return output;
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // instance
+    ////////////////////////////////////////////////////////////////////////////////
+
+    private readonly _colHeaders: readonly TextBlock[];
+    private readonly _tree:       IReadonlyTree<readonly TextBlock[]>;
+
+
+    private constructor(colHeaders: readonly TextBlock[], tree: IReadonlyTree<readonly TextBlock[]>) {
+        this._colHeaders = colHeaders;
+        this._tree = tree;
+    }
+
+
+    public get tree(): IReadonlyTree<readonly TextBlock[]> {
+        return this._tree;
+    }
+
+
+    public get numRows(): number {
+        // There will be 1 header row plus one row for each node in the tree.
+        return 1 + this._tree.length;
+    }
+
+
+    public get numCols(): number {
+        // TODO: The following implementation is not accurate.  A tree node may
+        // have more columns.
+        return this._colHeaders.length;
+    }
+
+
+    public toTextBlock(): TextBlock {
+
+        const decoratedTree = TreeTable.addTreeLinesToColZero(this._tree);
+
+
+        // TODO: Move this config into a cli-table3Helpers utility file.
+        const tableOptions: TableConstructorOptions = {
+            chars: {
+                // eslint-disable-next-line object-property-newline, @typescript-eslint/naming-convention
+                "top":          "", "top-mid":      "", "top-left":     "", "top-right":    "",
+                // eslint-disable-next-line object-property-newline, @typescript-eslint/naming-convention
+                "bottom":       "", "bottom-mid":   "", "bottom-left":  "", "bottom-right": "",
+                // eslint-disable-next-line object-property-newline, @typescript-eslint/naming-convention
+                "left":         "", "left-mid":     "", "mid":          "", "mid-mid":      "",
+                // eslint-disable-next-line object-property-newline, @typescript-eslint/naming-convention
+                "right":        "", "right-mid":    "", "middle":       "  "
+            },
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            style: { "padding-left": 0, "padding-right": 0 }
+        };
+
+        // Create the table instance with our options
+        const table = new Table(tableOptions);
+
+        // Add the column headers row.  Make sure each column header is bottom
+        // justified.
+        const rowHeight = maxLines(this._colHeaders);
+        const colHeaders = this._colHeaders.map((tb) => tb.bottomJustify(rowHeight));
+        table.push(colHeaders.map((tb) => tb.toString()));
+
+        for (const curNode of decoratedTree.traverseDF(undefined, false)) {
+            const textBlocks = decoratedTree.value(curNode);
+            table.push(textBlocks.map((tb) => tb.toString()));
+        }
+
+        const tb = TextBlock.fromString(table.toString());
+        return tb;
+    }
+
 }
-
-
-////////////////////////////////////////////////////////////////////////////////
-// Helper Functions
-////////////////////////////////////////////////////////////////////////////////
-
-/**
- * Calculates the number of rows and columns needed for the tree table
- *
- * @param tree - The tree to analyze
- * @return A tuple containing the number of rows and columns
- */
-// function calcRowsAndCols<T>(tree: Tree<T | Array<T>>): [number, number] {
-//     let maxCols = 0;
-//     let numNodes = 0;
-//
-//     for (const curNode of tree.traverseDF()) {
-//         const values = toArray(tree.value(curNode));
-//         if (values.length > maxCols) {
-//             maxCols = values.length;
-//         }
-//         numNodes++;
-//     }
-//     return [numNodes, maxCols];
-// }
