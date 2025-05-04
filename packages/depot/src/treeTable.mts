@@ -50,6 +50,10 @@ export function assertTreeGlyph(other: unknown): asserts other is TreeGlyph {
 ////////////////////////////////////////////////////////////////////////////////
 
 
+// TODO: Add an option to not link the first top-level item to the column header
+// using └─ or ├─.  It should use ──  and ┌─.
+
+
 export class TreeTable implements IHasToString {
 
     ////////////////////////////////////////////////////////////////////////////////
