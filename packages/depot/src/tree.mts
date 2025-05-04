@@ -24,17 +24,6 @@ export interface ITreeNode<TPayload> {
 export type TreeNode<TPayload> = ITreeRoot<TPayload> | ITreeNode<TPayload>;
 
 
-/**
- * Describes the tree structure expected by the Archy project.
- *
- * See: https://www.npmjs.com/package/@types/archy
- */
-interface IArchyData {
-    label:  string;
-    nodes?: Array<IArchyData | string> | undefined;
-}
-
-
 ////////////////////////////////////////////////////////////////////////////////
 
 export interface IReadonlyTree<TPayload> {
@@ -524,49 +513,6 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
     }
 
 
-    /**
-     * Converts this tree to a representation that can be provided to the Archy
-     * package to be printed.
-     *
-     * @param rootLabel - The label that will appear at the root of the tree
-     * @param stringifyFn - A function that will be called to convert each
-     * node's value to a string.  Note:  The returned string may contain newline
-     * characters for multi-line node text.
-     * @return An object representation of this tree where each node's text is
-     * the value returned by _stringifyFn_.
-     */
-    public toArchy(
-        rootLabel:   string,
-        stringifyFn: (val: TPayload) => string
-    ): IArchyData {
-
-        const archyData: IArchyData = { label: rootLabel };
-        for (const childNode of this.childNodes(undefined)) {
-            add(this, childNode, stringifyFn, archyData);
-        }
-        return archyData;
-
-
-        function add(
-            srcTree: Tree<TPayload>,
-            srcChildNode: ITreeNode<TPayload>,
-            stringifyFn: (val: TPayload) => string,
-            dstObj: IArchyData
-        ): void {
-            dstObj.nodes ??= [];
-
-            const label = stringifyFn(srcTree.value(srcChildNode));
-            const dstChild: IArchyData = { label };
-            // Recurse to add the child's children.
-            for (const child of srcTree.childNodes(srcChildNode)) {
-                add(srcTree, child, stringifyFn, dstChild);
-            }
-            dstObj.nodes.push(dstChild);
-        }
-
-    }
-
-
     ////////////////////////////////////////////////////////////////////////////////
     // Helper Methods
     ////////////////////////////////////////////////////////////////////////////////
@@ -665,6 +611,13 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
             this.mapChildNodes(curSrcNode, dstTree, curDstNode, fn);
         }
     }
+
+
+    // private mapNode<TOut>(
+    //     srcNode:
+    // ): {
+    //
+    // }
 
 
     /**
