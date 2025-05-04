@@ -98,7 +98,7 @@ export class TextBlock implements IHasToString {
         let linesToAdd = numLines - this.numLines;
         const newLines = [...this._lines];
         while (linesToAdd > 0) {
-            newLines.unshift(padLine)
+            newLines.unshift(padLine);
             linesToAdd--;
         }
 
@@ -119,7 +119,7 @@ export class TextBlock implements IHasToString {
         let linesToAdd = numLines - this.numLines;
         const newLines = [...this._lines];
         while (linesToAdd > 0) {
-            newLines.push(padLine)
+            newLines.push(padLine);
             linesToAdd--;
         }
 

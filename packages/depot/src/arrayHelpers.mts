@@ -36,7 +36,11 @@ export function hasIndex<T>(arr: readonly T[], idx: number): boolean {
  * @param defaultValue - The value to return if the index is out of bounds
  * @return The item at the specified index or the default value if out of bounds
  */
-export function atOrDefault<TElem, TDefault>(arr: readonly TElem[], idx: number, defaultValue: TDefault): TElem | TDefault {
+export function atOrDefault<TElem, TDefault>(
+    arr: readonly TElem[],
+    idx: number,
+    defaultValue: TDefault
+): TElem | TDefault {
     if (hasIndex(arr, idx)) {
         return arr[idx] as TElem;
     }
