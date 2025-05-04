@@ -53,74 +53,6 @@ const treeFulln2n1n1 = treeFull.insert(treeFulln2n1, undefined, ["2.1.1", "2.1.1
 // const treeMLn2n1n1 = treeFull.insert(treeFulln2n1, undefined, ["2.1.1", "2.1.1a", "2.1.1b", "2.1.1c"]);
 
 
-// describe("toTreeTable()", () => {
-//
-//     it("produces the expected output for an empty tree", () => {
-//         const lines = pipe(
-//             toTreeTable(treeEmpty, { colHeaders: ["root text"] }),
-//             (str) => splitIntoLines(str)
-//         );
-//         expect(lines).toEqual([
-//             "root text"
-//         ]);
-//     });
-//
-//
-//     it("produces the expected output for a single node tree", () => {
-//         const lines = pipe(
-//             toTreeTable(treeSingle, { colHeaders: ["root text"] }),
-//             (str) => splitIntoLines(str)
-//         );
-//         expect(lines).toEqual([
-//             "root text",
-//             "└─ 1"
-//         ]);
-//     });
-//
-//
-//     it("produces the expected output for a full tree", () => {
-//         const lines = pipe(
-//             toTreeTable(treeFull, { colHeaders: ["root text"] }),
-//             (str) => splitIntoLines(str)
-//         );
-//         expect(lines).toEqual([
-//             "root text",
-//             "├─ 1",
-//             "│  ├─ 1.1",
-//             "│  │  ├─ 1.1.1",
-//             "│  │  └─ 1.1.2",
-//             "│  └─ 1.2",
-//             "└─ 2",
-//             "   └─ 2.1",
-//             "      └─ 2.1.1",
-//         ]);
-//     });
-//
-//
-//     it("can have a multi-line title", () => {
-//         const lines = pipe(
-//             toTreeTable(treeFull, { colHeaders: ["title - line 1\ntitle - line 2"] }),
-//             (str) => splitIntoLines(str)
-//         );
-//         expect(lines).toEqual([
-//             "title - line 1",
-//             "title - line 2",
-//             "├─ 1",
-//             "│  ├─ 1.1",
-//             "│  │  ├─ 1.1.1",
-//             "│  │  └─ 1.1.2",
-//             "│  └─ 1.2",
-//             "└─ 2",
-//             "   └─ 2.1",
-//             "      └─ 2.1.1",
-//         ]);
-//     });
-//
-// });
-
-
-
-
 // treeFull
 // ├─ 1
 // │  ├─ 1.1
@@ -359,6 +291,45 @@ describe("TextTable", () => {
                         "│  │  └─ 1.1.2        1.1.2A  1.1.2B",
                         "│  └─ 1.2             1.2A    1.2B  ",
                         "└─ 2                  2A      2B    "
+                    ]
+                );
+            });
+
+
+            it("returns the expected TextBlock when all non-column-zero values are are multi-line", () => {
+                const colHeaders = [
+                    TextBlock.fromString("Name"),
+                    TextBlock.fromString("Col A"),
+                    TextBlock.fromString("Col B")
+                ];
+
+                const toTb = (str: string) => TextBlock.fromString(str);
+
+                const tree = new Tree<Array<TextBlock>>();
+                // const n1 = tree.insert(undefined, undefined, [toTb("1"), toTb("1-1\n1-2")])
+                const n1     = tree.insert(undefined, undefined, [toTb("1"),     toTb("1A"),                   toTb("1B")]);
+                const n1n1   = tree.insert(n1,        undefined, [toTb("1.1"),   toTb("1.1A\n1.1A - line2"),   toTb("1.1B")]);
+                const n1n1n1 = tree.insert(n1n1,      undefined, [toTb("1.1.1"), toTb("1.1.1A"),               toTb("1.1.1B")]);
+                const n1n1n2 = tree.insert(n1n1,      undefined, [toTb("1.1.2"), toTb("1.1.2A"),               toTb("1.1.2B")]);
+                const n1n2   = tree.insert(n1,        undefined, [toTb("1.2"),   toTb("1.2A"),                 toTb("1.2B\n1.2B-line2\n1.2B-line3")]);
+                const n2     = tree.insert(undefined, undefined, [toTb("2"),     toTb("2A"),                   toTb("2B")]);
+
+                const resTable = TreeTable.create(colHeaders, tree);
+                expect(resTable.succeeded).toBeTrue();
+                const tb = resTable.value!.toTextBlock();
+                expect(tb.lines.map((l) => stripAnsi(l))).toEqual(
+                    // " Name             Col A    Col B  "
+                    [
+                        "Name            Col A         Col B     ",
+                        "├─ 1            1A            1B        ",
+                        "│  ├─ 1.1       1.1A          1.1B      ",
+                        "│  │  │         1.1A - line2            ",
+                        "│  │  ├─ 1.1.1  1.1.1A        1.1.1B    ",
+                        "│  │  └─ 1.1.2  1.1.2A        1.1.2B    ",
+                        "│  └─ 1.2       1.2A          1.2B      ",
+                        "│                             1.2B-line2",
+                        "│                             1.2B-line3",
+                        "└─ 2            2A            2B        "
                     ]
                 );
             });

@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/naming-convention
 import Table, { type TableConstructorOptions } from "cli-table3";
 import { Tree, type IReadonlyTree, type ITreeNode } from "./tree.mjs";
-import { hasIndex } from "./arrayHelpers.mjs";
+import { atOrDefault, hasIndex } from "./arrayHelpers.mjs";
 import { inspect } from "./inspect.mjs";
 import type { IHasToString } from "./primitives.mjs";
 import { type ITextBlockPrefix, maxLines, TextBlock } from "./textBlock.mjs";
@@ -153,7 +153,17 @@ export class TreeTable implements IHasToString {
                 }
             });
 
-            let curTextBlock = hasIndex(textBlocks, 0) ? textBlocks[0]! : TextBlock.fromString("");
+            // Make the column zero TextBlock have the maximum number of lines
+            // found in the row so that the prefixes get applied to all lines.
+            // Also, when making the column zero TextBlock the maximum number of
+            // lines, pad with a tree glyph that will connect to the child
+            // nodes, if present.
+            const numLines = maxLines(textBlocks);
+            const padLine = srcTree.firstChild(srcNode) ? TreeGlyph.nextSiblingBridge : "";
+            let curTextBlock = pipe(
+                atOrDefault(textBlocks, 0, TextBlock.fromString("")),
+                (tb) => tb.topJustify(numLines, padLine)
+            );
             const reversedPrefixes = textBlockPrefixes.slice().reverse();
             for (const curPrefix of reversedPrefixes) {
                 curTextBlock = curTextBlock.prefixLines(curPrefix);
