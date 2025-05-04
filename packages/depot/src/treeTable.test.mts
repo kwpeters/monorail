@@ -296,7 +296,7 @@ describe("TextTable", () => {
             });
 
 
-            it("returns the expected TextBlock when all non-column-zero values are are multi-line", () => {
+            it("returns the expected TextBlock when non-column-zero values are multi-line", () => {
                 const colHeaders = [
                     TextBlock.fromString("Name"),
                     TextBlock.fromString("Col A"),
