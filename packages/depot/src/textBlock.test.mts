@@ -173,6 +173,16 @@ describe("TextBlock", () => {
                 );
                 expect(tb.lines).toEqual(["", "", "line 1", "line 2", "line 3"]);
             });
+
+
+            it("adds the specified line of text to meet the number of lines specified", () => {
+                const tb = pipe(
+                    ["line 1"],
+                    TextBlock.fromLines,
+                    (tb) => tb.bottomJustify(3, "-")
+                );
+                expect(tb.lines).toEqual(["-", "-", "line 1"]);
+            });
         });
 
 
@@ -205,6 +215,16 @@ describe("TextBlock", () => {
                     (tb) => tb.topJustify(5)
                 );
                 expect(tb.lines).toEqual(["line 1", "line 2", "line 3", "", ""]);
+            });
+
+
+            it("adds the specified line of text to meet the number of lines specified", () => {
+                const tb = pipe(
+                    ["line 1"],
+                    TextBlock.fromLines,
+                    (tb) => tb.topJustify(3, "-")
+                );
+                expect(tb.lines).toEqual(["line 1", "-", "-"]);
             });
         });
 

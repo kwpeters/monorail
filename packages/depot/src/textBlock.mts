@@ -94,13 +94,14 @@ export class TextBlock implements IHasToString {
      *     the current TextBlock is returned unchanged.
      * @return A new TextBlock instance with the updated lines of text
      */
-    public bottomJustify(numLines: number): TextBlock {
-        if (numLines <= this.numLines) {
-            return this;
+    public bottomJustify(numLines: number, padLine = ""): TextBlock {
+        let linesToAdd = numLines - this.numLines;
+        const newLines = [...this._lines];
+        while (linesToAdd > 0) {
+            newLines.unshift(padLine)
+            linesToAdd--;
         }
 
-        const newLines = new Array<string>(numLines - this.numLines).fill("");
-        newLines.push(...this._lines);
         return new TextBlock(newLines);
     }
 
@@ -114,13 +115,14 @@ export class TextBlock implements IHasToString {
      *     the current TextBlock is returned unchanged.
      * @return A new TextBlock instance with the updated lines of text
      */
-    public topJustify(numLines: number): TextBlock {
-        if (numLines <= this.numLines) {
-            return this;
+    public topJustify(numLines: number, padLine = ""): TextBlock {
+        let linesToAdd = numLines - this.numLines;
+        const newLines = [...this._lines];
+        while (linesToAdd > 0) {
+            newLines.push(padLine)
+            linesToAdd--;
         }
 
-        const newLines = [...this._lines];
-        newLines.push(...new Array<string>(numLines - this.numLines).fill(""));
         return new TextBlock(newLines);
     }
 
