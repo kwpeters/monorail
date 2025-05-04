@@ -8,7 +8,8 @@
         "build": "tsc --build",
         "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
         "lint": "eslint ./src",
-        "type-check": "tsc --project tsconfig.ut.json --noEmit"
+        "type-check": "tsc --project tsconfig.ut.json --noEmit",
+        "depcheck": "depcheck"
     },
     "exports": {
         "./sampleModule": {

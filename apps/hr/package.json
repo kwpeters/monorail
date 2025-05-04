@@ -1,34 +1,35 @@
 {
-  "name": "@repo/hr",
-  "version": "0.0.0",
-  "private": true,
-  "scripts": {
-    "dev": "echo 'Add dev script here'",
-    "build": "npm run build:ts && npm run build:sea",
-    "build:ts": "tsc --build",
-    "build:sea": "tsx ../build-app-assist/src/index.mts cjsToSeaApp --inputCjsFile ./dist/index.cjs --exeBaseName hr",
-    "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
-    "lint": "eslint ./src",
-    "type-check": "tsc --project tsconfig.ut.json --noEmit"
-  },
-  "bin": {
-    "hr": "./dist/index.cjs"
-  },
-  "dependencies": {
-    "@repo/depot-node": "*"
-  },
-  "devDependencies": {
-    "@repo/build-app-assist": "*",
-    "@repo/eslint-config": "*",
-    "@repo/typescript-config": "*",
-    "@stylistic/eslint-plugin": "^2.8.0",
-    "@types/jasmine": "^5.1.4",
-    "@types/node": "20.*.*",
-    "@typescript-eslint/eslint-plugin": "^8.6.0",
-    "@typescript-eslint/parser": "^8.6.0",
-    "esbuild": "^0.23.1",
-    "eslint": "^8.57.1",
-    "jasmine": "^5.3.0",
-    "postject": "^1.0.0-alpha.6"
-  }
+    "name": "@repo/hr",
+    "version": "0.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "echo 'Add dev script here'",
+        "build": "npm run build:ts && npm run build:sea",
+        "build:ts": "tsc --build",
+        "build:sea": "tsx ../build-app-assist/src/index.mts cjsToSeaApp --inputCjsFile ./dist/index.cjs --exeBaseName hr",
+        "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
+        "lint": "eslint ./src",
+        "type-check": "tsc --project tsconfig.ut.json --noEmit",
+        "depcheck": "depcheck"
+    },
+    "bin": {
+        "hr": "./dist/index.cjs"
+    },
+    "dependencies": {
+        "@repo/depot-node": "*"
+    },
+    "devDependencies": {
+        "@repo/build-app-assist": "*",
+        "@repo/eslint-config": "*",
+        "@repo/typescript-config": "*",
+        "@stylistic/eslint-plugin": "^2.8.0",
+        "@types/jasmine": "^5.1.4",
+        "@types/node": "20.*.*",
+        "@typescript-eslint/eslint-plugin": "^8.6.0",
+        "@typescript-eslint/parser": "^8.6.0",
+        "esbuild": "^0.23.1",
+        "eslint": "^8.57.1",
+        "jasmine": "^5.3.0",
+        "postject": "^1.0.0-alpha.6"
+    }
 }

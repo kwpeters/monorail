@@ -1,0 +1,13 @@
+
+{
+    "quiet": true,
+    "skip-missing": true,
+    "ignores": [
+        "@repo/build-app-assist",
+        "@types/jasmine",
+        "@types/node",
+        "esbuild",
+        "jasmine",
+        "postject"
+    ]
+}
