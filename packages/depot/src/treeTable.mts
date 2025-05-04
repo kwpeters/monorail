@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/naming-convention
 import Table, { type TableConstructorOptions } from "cli-table3";
 import { Tree, type IReadonlyTree, type ITreeNode } from "./tree.mjs";
-import { atOrDefault, hasIndex } from "./arrayHelpers.mjs";
+import { atOrDefault } from "./arrayHelpers.mjs";
 import { inspect } from "./inspect.mjs";
 import type { IHasToString } from "./primitives.mjs";
 import { type ITextBlockPrefix, maxLines, TextBlock } from "./textBlock.mjs";
