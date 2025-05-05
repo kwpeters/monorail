@@ -1,5 +1,5 @@
 // eslint-disable-next-line @typescript-eslint/naming-convention
-import Table, { type TableConstructorOptions } from "cli-table3";
+import Table from "cli-table3";
 import { Tree, type IReadonlyTree, type ITreeNode } from "./tree.mjs";
 import { atOrDefault } from "./arrayHelpers.mjs";
 import { inspect } from "./inspect.mjs";
@@ -7,6 +7,7 @@ import type { IHasToString } from "./primitives.mjs";
 import { type ITextBlockPrefix, maxLines, TextBlock } from "./textBlock.mjs";
 import { FailedResult, SucceededResult, type Result } from "./result.mjs";
 import { pipe } from "./pipe2.mjs";
+import { optionsNoLines } from "./cli-table3.mjs";
 
 /**
  * An enumeration of Unicode ascii art glyphs used to represent the
@@ -51,7 +52,8 @@ export function assertTreeGlyph(other: unknown): asserts other is TreeGlyph {
 
 
 // TODO: Add an option to not link the first top-level item to the column header
-// using └─ or ├─.  It should use ──  and ┌─.
+// using └─ or ├─.  It should use ──  and ┌─.  This option should be called
+// treeConnectsToHeader
 
 
 export class TreeTable implements IHasToString {
@@ -211,7 +213,7 @@ export class TreeTable implements IHasToString {
 
     public get numCols(): number {
         // TODO: The following implementation is not accurate.  A tree node may
-        // have more columns.
+        // have more columns than what exists in the column headers.
         return this._colHeaders.length;
     }
 
@@ -220,25 +222,8 @@ export class TreeTable implements IHasToString {
 
         const decoratedTree = TreeTable.addTreeLinesToColZero(this._tree);
 
-
-        // TODO: Move this config into a cli-table3Helpers utility file.
-        const tableOptions: TableConstructorOptions = {
-            chars: {
-                // eslint-disable-next-line object-property-newline, @typescript-eslint/naming-convention
-                "top":          "", "top-mid":      "", "top-left":     "", "top-right":    "",
-                // eslint-disable-next-line object-property-newline, @typescript-eslint/naming-convention
-                "bottom":       "", "bottom-mid":   "", "bottom-left":  "", "bottom-right": "",
-                // eslint-disable-next-line object-property-newline, @typescript-eslint/naming-convention
-                "left":         "", "left-mid":     "", "mid":          "", "mid-mid":      "",
-                // eslint-disable-next-line object-property-newline, @typescript-eslint/naming-convention
-                "right":        "", "right-mid":    "", "middle":       "  "
-            },
-            // eslint-disable-next-line @typescript-eslint/naming-convention
-            style: { "padding-left": 0, "padding-right": 0 }
-        };
-
         // Create the table instance with our options
-        const table = new Table(tableOptions);
+        const table = new Table(optionsNoLines);
 
         // Add the column headers row.  Make sure each column header is bottom
         // justified.
