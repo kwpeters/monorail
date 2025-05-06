@@ -27,7 +27,8 @@ export type TreeNode<TPayload> = ITreeRoot<TPayload> | ITreeNode<TPayload>;
 ////////////////////////////////////////////////////////////////////////////////
 
 export interface IReadonlyTree<TPayload> {
-    length: number;
+    length:   number;
+    maxDepth: number | undefined;
     isEmpty(): boolean;
     value(node: ITreeNode<TPayload>): Readonly<TPayload>;
     childNodes(parent: ITreeNode<TPayload> | undefined): ReadonlyArray<ITreeNode<TPayload>>;
