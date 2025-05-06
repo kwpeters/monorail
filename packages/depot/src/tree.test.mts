@@ -61,6 +61,21 @@ describe("Tree", () => {
 
         describe("maxDepth", () => {
 
+            it("returns undefined for an empty tree", () => {
+                const tree = new Tree<string>();
+                expect(tree.maxDepth).toEqual(undefined);
+            });
+
+
+            it("returns 0 for a tree that contains only top level itemsE", () => {
+                const tree = new Tree<string>();
+                const n1 = tree.insert(undefined, undefined, "1");
+                const n2 = tree.insert(undefined, undefined, "2");
+
+                expect(tree.maxDepth).toEqual(0);
+            });
+
+
             it("returns the expected maximum depth", () => {
                 const maxDepth = tree1.maxDepth;
                 expect(maxDepth).toEqual(3);
