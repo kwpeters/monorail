@@ -50,6 +50,7 @@ export function assertTreeGlyph(other: unknown): asserts other is TreeGlyph {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// TODO: Add an option to output this tree in ASCII characters.
 
 // TODO: Add an option to not link the first top-level item to the column header
 // using └─ or ├─.  It should use ──  and ┌─.  This option should be called
