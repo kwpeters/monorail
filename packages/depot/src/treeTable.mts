@@ -212,9 +212,24 @@ export class TreeTable implements IHasToString {
 
 
     public get numCols(): number {
-        // TODO: The following implementation is not accurate.  A tree node may
-        // have more columns than what exists in the column headers.
+
+        // The Create() static method currently verifies that the column headers
+        // array and the TextBlock arrays associated with ever tree node are the
+        // same size.  Therefore, we can just return that consistent size.
         return this._colHeaders.length;
+
+        // If this component is ever changed in the future to allow the column
+        // header size and the tree node values to be different lengths, we
+        // would have to calculate the number of columns as follows.
+        //
+        // let maxTreeCols = 0;
+        // for (const curNode of this._tree.traverseDF(undefined, false)) {
+        //     const val = this._tree.value(curNode);
+        //     maxTreeCols = Math.max(maxTreeCols, val.length);
+        // }
+        //
+        // const numCols = Math.max(this._colHeaders.length, maxTreeCols);
+        // return numCols;
     }
 
 
