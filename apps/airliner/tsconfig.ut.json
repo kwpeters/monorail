@@ -4,11 +4,11 @@
         "outDir": "out",
 	},
     "include": [
-        "src"
+        "src",
+        ".eslintrc.cjs"
     ],
     "exclude": [
         "node_modules",
         "out",
-        "**/*.test.mts"
     ]
 }
