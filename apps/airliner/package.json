@@ -29,7 +29,8 @@
 
     "build": "npm run compile",
     "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
-    "lint": "eslint ./src"
+    "lint": "eslint ./src",
+    "type-check": "tsc --project tsconfig.ut.json --noEmit"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",
