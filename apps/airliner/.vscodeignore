@@ -1,8 +1,11 @@
+.turbo/**
 .vscode/**
-.vscode-test/**
 src/**
-.gitignore
-.yarnrc
+.depcheckrc.json
+.eslintrc.cjs
+jasmine.json
+tsconfig.json
+tsconfig.ut.json
 vsc-extension-quickstart.md
 **/tsconfig.json
 **/eslint.config.mjs
