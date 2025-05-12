@@ -12,7 +12,7 @@
 				"--extensionDevelopmentPath=${workspaceFolder}/apps/airliner"
 			],
 			"outFiles": [
-				"${workspaceFolder}/apps/airliner/out/**/*.js"
+				"${workspaceFolder}/apps/airliner/dist/**/*.js"
 			],
 			"preLaunchTask": "${defaultBuildTask}"
 		},

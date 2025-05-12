@@ -1,7 +1,7 @@
 {
     "extends": "@repo/typescript-config/tsconfig.vsc-extension.json",
 	"compilerOptions": {
-        "outDir": "out",
+        "outDir": "dist",
 	},
     "include": [
         "src",
@@ -9,6 +9,6 @@
     ],
     "exclude": [
         "node_modules",
-        "out",
+        "dist",
     ]
 }
