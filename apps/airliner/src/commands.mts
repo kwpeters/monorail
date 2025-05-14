@@ -2,6 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 // eslint-disable-next-line import/no-unresolved
 import * as vscode from "vscode";
+import * as _ from "lodash-es";
 import { toggleComment } from "@repo/depot/comment";
 
 
@@ -19,6 +20,11 @@ const helloWorldCommand = {
 };
 
 
+////////////////////////////////////////////////////////////////////////////////
+//
+// Comments/uncomments the current selection or line.
+//
+////////////////////////////////////////////////////////////////////////////////
 const toggleCommentCommand = {
     name: "extension.airlinerToggleComment",
     fn:   async (): Promise<void> => {
@@ -70,9 +76,53 @@ const toggleCommentCommand = {
 
 
 ////////////////////////////////////////////////////////////////////////////////
+//
+// Removes tab characters from the current document.
+//
+////////////////////////////////////////////////////////////////////////////////
+const untabifyCommand = {
+    name: "extension.airlinerUntabify",
+    fn:   async (): Promise<void> => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showInformationMessage("There is no active editor.");
+            return;
+        }
+
+        const tabSize = editor.options.tabSize;
+        if (typeof tabSize === "string" || typeof tabSize === "undefined") {
+            vscode.window.showInformationMessage("Tab size could not be determined.");
+            return;
+        }
+
+        // Remember the current cursor location so it can be restored.
+        const cursorPos: vscode.Position = editor.selection.active;
+
+        const numLines = editor.document.lineCount;
+        const docText  = editor.document.getText();
+        const expanded = _.repeat(" ", tabSize);
+        const newDocText = docText.replace(/\t/g, expanded);
+
+        // Select the entire document.
+        const wholeDocRange = new vscode.Range(0, 0, numLines - 1, 1000);
+
+        await editor.edit((editBuilder: vscode.TextEditorEdit) => {
+            editBuilder.replace(wholeDocRange, newDocText);
+        });
+
+        // Restore the cursor position.
+        editor.selection = new vscode.Selection(cursorPos, cursorPos);
+    }
+};
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
 
 
 export const commands: Array<ICommandDefinition> = [
     helloWorldCommand,
-    toggleCommentCommand
+    toggleCommentCommand,
+    untabifyCommand
 ];
