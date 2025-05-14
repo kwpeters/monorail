@@ -16,14 +16,18 @@
         "commands": [
             {
                 "command": "extension.airlinerHelloWorld",
-                "title": "Hello World"
+                "title": "Airliner Hello World"
+            },
+            {
+                "command": "extension.airlinerToggleComment",
+                "title": "Airliner Toggle Comment"
             }
         ]
     },
     "scripts": {
         "vscode:prepublish": "npm run build-prod",
 
-        "build": "npm run build-prod",
+        "build": "npm run build-dev",
         "build-dev": "npm run type-check && npm run esbuild-dev",
         "build-prod": "npm run type-check && npm run esbuild-prod",
 
