@@ -3,6 +3,7 @@
 src/**
 .depcheckrc.json
 .eslintrc.cjs
+development.md
 esbuild.js
 jasmine.json
 README.orig.md

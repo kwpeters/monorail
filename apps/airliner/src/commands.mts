@@ -2,9 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 // eslint-disable-next-line import/no-unresolved
 import * as vscode from "vscode";
-import { SucceededResult } from "@repo/depot/result";
 
-export const foo = new SucceededResult(5);
 
 interface ICommandDefinition {
     name: string;
