@@ -199,6 +199,77 @@ const cutToEolCommand = {
 };
 
 
+////////////////////////////////////////////////////////////////////////////////
+//
+// Deletes whitespace characters to the left of the cursor until either a
+// non-whitespace character is encountered or the beginning of the line.
+//
+////////////////////////////////////////////////////////////////////////////////
+const hungryBackspaceCommand = {
+    name: "extension.airlinerHungryBackspace",
+    fn:   async (): Promise<void> => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showInformationMessage("There is no active editor.");
+            return;
+        }
+
+        let done = false;
+        let numDeletionsMade = 0;
+        // A helper function that helps keep track of how many deletions have
+        // been made.
+        const doBackspace = async function (): Promise<void> {
+            await vscode.commands.executeCommand("deleteLeft");
+            numDeletionsMade++;
+        };
+
+        while (!done) {
+            const activePos = editor.selection.active;
+            if (numDeletionsMade === 0 && activePos.character === 0) {
+                // If we are just starting and in column 0, backspace to the end
+                // of the preceding line.  In this case, we are not done and may
+                // delete whitespace at the end of the preceding line.
+                await doBackspace();
+                continue;
+            }
+
+            if (activePos.character === 0) {
+                // Deletions have already been made and we have reached the
+                // beginning of the line.  Stop deleting.
+                done = true;
+                continue;
+            }
+
+            const prevCharRange = new vscode.Range(
+                activePos.line, activePos.character - 1,
+                activePos.line, activePos.character
+            );
+
+            const prevChar = editor.document.getText(prevCharRange);
+
+            if (!/\s/.test(prevChar)) {
+                if (numDeletionsMade === 0) {
+                    // The user has backspaced over a non-whitespace character.
+                    // Behave like a normal backspace.
+                    await doBackspace();
+                }
+                done = true;
+                continue;
+            }
+
+            // The previous character is whitespace.  Delete it. We are not done
+            // yet.
+            await doBackspace();
+        }
+    }
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Appends a semicolon onto the end of the current line.  Pretty simple.
+//
+////////////////////////////////////////////////////////////////////////////////
 const appendSemicolonCommand = {
     name: "extension.airlinerAppendSemicolon",
     fn:   async (): Promise<void> => {
@@ -223,5 +294,6 @@ export const commands: Array<ICommandDefinition> = [
     toggleCommentCommand,
     untabifyCommand,
     cutToEolCommand,
-    appendSemicolonCommand
+    appendSemicolonCommand,
+    hungryBackspaceCommand
 ];

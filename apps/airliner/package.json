@@ -32,6 +32,10 @@
             {
                 "command": "extension.airlinerAppendSemicolon",
                 "title": "Airliner append semicolon"
+            },
+            {
+                "command": "extension.airlinerHungryBackspace",
+                "title": "Airliner hungry backspace"
             }
         ]
     },
