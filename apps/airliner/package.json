@@ -24,6 +24,10 @@
             {
                 "command": "extension.airlinerUntabify",
                 "title": "Airliner Untabify"
+            },
+            {
+                "command": "extension.airlinerCutToEol",
+                "title": "Airliner Cut to EOL"
             }
         ]
     },
@@ -54,6 +58,7 @@
     },
     "dependencies": {
         "@repo/depot": "*",
+        "@repo/depot-node": "*",
         "lodash-es": "^4.17.21"
     }
 }

@@ -4,6 +4,7 @@
 import * as vscode from "vscode";
 import * as _ from "lodash-es";
 import { toggleComment } from "@repo/depot/comment";
+import { Timeout } from "@repo/depot-node/timers";
 
 
 interface ICommandDefinition {
@@ -116,6 +117,85 @@ const untabifyCommand = {
 };
 
 
+////////////////////////////////////////////////////////////////////////////////
+//
+// Cuts selected text or the text between the cursor and the end of the line
+// (if no text is selected).  If this command is executed repeatedly without
+// more than a 2 second delay, the cut text is appended to the text already
+// on the clipboard, thus accruing it.
+//
+////////////////////////////////////////////////////////////////////////////////
+
+// If the user executes this command within this timeout period, this
+// command will keep adding cut text to the clipboard.  Once the timeout
+// expires, this command will replace the clipboard's contents.
+const accrueTimeout = new Timeout(2 * 1000);
+const textWithLeadingWhitespace = /^(?<leadingWhitespace>\s+)\S+/;
+
+
+const cutToEolCommand = {
+    name: "extension.airlinerCutToEol",
+    fn:   async (): Promise<void> => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showInformationMessage("There is no active editor.");
+            return;
+        }
+
+        // If we are accruing copied text (due to the timeout timer), then the
+        // text we need to copy should start with the current clipboard
+        // contents.
+        let textToCopy = "";
+        if (accrueTimeout.isRunning()) {
+            textToCopy = await vscode.env.clipboard.readText();
+        }
+
+        const activePos = editor.selection.active;
+        const eolPos = new vscode.Position(editor.selection.active.line, 1000);
+        const toEolRange = new vscode.Range(activePos, eolPos);
+
+        const toEolText =  editor.document.getText(toEolRange);
+        if (toEolText.length > 0) {
+
+            // If the text remaining on the line is whitespace followed by
+            // non-whitespace, then kill just the leading whitespace.  By
+            // removing just the whitespace, we will make joining two lines
+            // easier.
+            const match = textWithLeadingWhitespace.exec(toEolText);
+            if (match) {
+                const leadingWhitespace = match.groups!.leadingWhitespace!;
+                textToCopy += leadingWhitespace;
+
+                const whitespaceRange = new vscode.Range(
+                    activePos,
+                    new vscode.Position(activePos.line, activePos.character + leadingWhitespace.length)
+                );
+
+                // Remove the kill text from the document.
+                await editor.edit((editBuilder: vscode.TextEditorEdit) => {
+                    editBuilder.replace(whitespaceRange, "");
+                });
+            }
+            else {
+                textToCopy += toEolText;
+
+                // Remove the kill text from the document.
+                await editor.edit((editBuilder: vscode.TextEditorEdit) => {
+                    editBuilder.replace(toEolRange, "");
+                });
+            }
+        }
+        else {
+            textToCopy += "\n";
+            vscode.commands.executeCommand("deleteRight");
+        }
+
+        await vscode.env.clipboard.writeText(textToCopy);
+
+        // Restart the accrue timeout.
+        accrueTimeout.start();
+    }
+};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -124,5 +204,6 @@ const untabifyCommand = {
 export const commands: Array<ICommandDefinition> = [
     helloWorldCommand,
     toggleCommentCommand,
-    untabifyCommand
+    untabifyCommand,
+    cutToEolCommand
 ];
