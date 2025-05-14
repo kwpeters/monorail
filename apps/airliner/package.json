@@ -40,6 +40,14 @@
             {
                 "command": "extension.airlinerHungryDeleteRight",
                 "title": "Airliner hungry delete right"
+            },
+            {
+                "command": "extension.airlinerSplitTop",
+                "title": "Airliner split top"
+            },
+            {
+                "command": "extension.airlinerSplitEditorDown",
+                "title": "Airliner split editor down"
             }
         ]
     },

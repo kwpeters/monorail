@@ -350,6 +350,58 @@ const hungryDeleteRightCommand = {
 
 
 ////////////////////////////////////////////////////////////////////////////////
+//
+// Splits the current editor and takes you to the top of the file.  This is
+// convenient when you have to add import statements or a #include to the
+// top of you current file and don't want to lose your position.
+//
+////////////////////////////////////////////////////////////////////////////////
+const splitTopCommand = {
+    name: "extension.airlinerSplitTop",
+    fn:   async (): Promise<void> => {
+        // await vscode.commands.executeCommand("workbench.action.splitEditorDown");
+        await vscode.commands.executeCommand("extension.airlinerSplitEditorDown");
+        await vscode.commands.executeCommand("cursorTop");
+    }
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// The normal vscode "workbench.action.splitEditorDown" command does not
+// make sure that the cursor is visible in either the original editor nor
+// the new editor.  So, if your cursor is in the lower half of the editor
+// and you split it, you will have no idea where your cursor is until you
+// move it.  This command fixes that.
+//
+////////////////////////////////////////////////////////////////////////////////
+const splitEditorDownCommand = {
+    name: "extension.airlinerSplitEditorDown",
+    fn:   async (): Promise<void> => {
+        const topEditor = vscode.window.activeTextEditor;
+        if (!topEditor) {
+            vscode.window.showInformationMessage("There is no active editor.");
+            return;
+        }
+        const topCursorPos = topEditor.selection.active;
+
+        await vscode.commands.executeCommand("workbench.action.splitEditorDown");
+        const bottomEditor = vscode.window.activeTextEditor!;
+
+        topEditor.revealRange(
+            new vscode.Range(topCursorPos, topCursorPos),
+            vscode.TextEditorRevealType.InCenterIfOutsideViewport
+        );
+        bottomEditor.revealRange(
+            new vscode.Range(topCursorPos, topCursorPos),
+            vscode.TextEditorRevealType.InCenterIfOutsideViewport
+        );
+    }
+};
+
+
+
+////////////////////////////////////////////////////////////////////////////////
 // Helper Functions
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -371,6 +423,27 @@ function isAtEndOfLine(
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// Example Code
+////////////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////////////////////////////////
+// An example of how to prompt the user for a choice.
+////////////////////////////////////////////////////////////////////////////
+//
+//     const options = ['Option 1', 'Option 2', 'Option 3'];
+//     const selected = await vscode.window.showQuickPick(options, {
+//         placeHolder: 'Choose an option',
+//     });
+//
+//     if (selected) {
+//         vscode.window.showInformationMessage(`You selected: ${selected}`);
+//     } else {
+//         vscode.window.showInformationMessage('No option was selected!');
+//     }
+
+
+////////////////////////////////////////////////////////////////////////////////
 
 
 export const commands: Array<ICommandDefinition> = [
@@ -380,5 +453,7 @@ export const commands: Array<ICommandDefinition> = [
     cutToEolCommand,
     appendSemicolonCommand,
     hungryBackspaceCommand,
-    hungryDeleteRightCommand
+    hungryDeleteRightCommand,
+    splitTopCommand,
+    splitEditorDownCommand
 ];
