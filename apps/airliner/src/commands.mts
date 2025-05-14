@@ -201,6 +201,28 @@ const cutToEolCommand = {
 
 ////////////////////////////////////////////////////////////////////////////////
 //
+// Appends a semicolon onto the end of the current line.  Pretty simple.
+//
+////////////////////////////////////////////////////////////////////////////////
+const appendSemicolonCommand = {
+    name: "extension.airlinerAppendSemicolon",
+    fn:   async (): Promise<void> => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showInformationMessage("There is no active editor.");
+            return;
+        }
+
+        await editor.edit((editBuilder: vscode.TextEditorEdit) => {
+            editBuilder.insert(new vscode.Position(editor.selection.active.line, 10000), ";");
+        });
+    }
+};
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+//
 // Deletes whitespace characters to the left of the cursor until either a
 // non-whitespace character is encountered or the beginning of the line.
 //
@@ -267,23 +289,85 @@ const hungryBackspaceCommand = {
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Appends a semicolon onto the end of the current line.  Pretty simple.
+// Deletes whitespace characters to the right of the cursor until either a
+// non-whitespace character is encountered or the end of the line.
 //
 ////////////////////////////////////////////////////////////////////////////////
-const appendSemicolonCommand = {
-    name: "extension.airlinerAppendSemicolon",
+const hungryDeleteRightCommand = {
+    name: "extension.airlinerHungryDeleteRight",
     fn:   async (): Promise<void> => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showInformationMessage("There is no active editor.");
             return;
         }
+        const doc = vscode.window.activeTextEditor!.document;
+        let done = false;
+        let numDeletionsMade = 0;
+        // A helper function that helps keep track of how many deletions have
+        // been made.
+        const doDeleteRight = async function (): Promise<void> {
+            await vscode.commands.executeCommand("deleteRight");
+            numDeletionsMade++;
+        };
+        while (!done) {
+            const activePos = editor.selection.active;
+            if (numDeletionsMade === 0 && isAtEndOfLine(doc, activePos)) {
+                // If we are starting at the end of a line, delete right to pull
+                // up the following line.  In this case, we are not done and may
+                // delete whitespace at the beginning of the next line.
+                await doDeleteRight();
+                continue;
+            }
 
-        await editor.edit((editBuilder: vscode.TextEditorEdit) => {
-            editBuilder.insert(new vscode.Position(editor.selection.active.line, 10000), ";");
-        });
+            if (isAtEndOfLine(doc, activePos)) {
+                // We have reached the end of the line.  Stop deleting.
+                done = true;
+                continue;
+            }
+
+            const nextCharRange = new vscode.Range(
+                activePos.line, activePos.character,
+                activePos.line, activePos.character + 1
+            );
+
+            const nextChar = editor.document.getText(nextCharRange);
+
+            if (!/\s/.test(nextChar)) {
+                if (numDeletionsMade === 0) {
+                    // The user has deleted a non-whitespace character.
+                    // Behave like a normal backspace.
+                    await doDeleteRight();
+                }
+                done = true;
+                continue;
+            }
+            // The next character is whitespace.  Delete it.
+            await doDeleteRight();
+        }
     }
 };
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Helper Functions
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Helper function that determines whether `position` is at the end of its line
+ * @param doc - The document containing `position`
+ * @param position - The position to be tested
+ * @return Whether `position` is at the end of its line
+ */
+function isAtEndOfLine(
+    doc: vscode.TextDocument,
+    position: vscode.Position
+): boolean {
+    const exaggeratedEndOfLine = new vscode.Position(position.line, position.character + 100000);
+    const validated = doc.validatePosition(exaggeratedEndOfLine);
+    return (position.line === validated.line) &&
+           (position.character === validated.character);
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -295,5 +379,6 @@ export const commands: Array<ICommandDefinition> = [
     untabifyCommand,
     cutToEolCommand,
     appendSemicolonCommand,
-    hungryBackspaceCommand
+    hungryBackspaceCommand,
+    hungryDeleteRightCommand
 ];

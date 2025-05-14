@@ -36,6 +36,10 @@
             {
                 "command": "extension.airlinerHungryBackspace",
                 "title": "Airliner hungry backspace"
+            },
+            {
+                "command": "extension.airlinerHungryDeleteRight",
+                "title": "Airliner hungry delete right"
             }
         ]
     },
