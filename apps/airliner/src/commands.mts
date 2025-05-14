@@ -15,7 +15,8 @@ interface ICommandDefinition {
 
 const helloWorldCommand = {
     name: "extension.airlinerHelloWorld",
-    fn:   (): void => {
+    fn:   async (): Promise<void> => {
+        await Promise.resolve(0);
         vscode.window.showInformationMessage("Hello World from airliner - 7");
     }
 };
@@ -198,6 +199,22 @@ const cutToEolCommand = {
 };
 
 
+const appendSemicolonCommand = {
+    name: "extension.airlinerAppendSemicolon",
+    fn:   async (): Promise<void> => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showInformationMessage("There is no active editor.");
+            return;
+        }
+
+        await editor.edit((editBuilder: vscode.TextEditorEdit) => {
+            editBuilder.insert(new vscode.Position(editor.selection.active.line, 10000), ";");
+        });
+    }
+};
+
+
 ////////////////////////////////////////////////////////////////////////////////
 
 
@@ -205,5 +222,6 @@ export const commands: Array<ICommandDefinition> = [
     helloWorldCommand,
     toggleCommentCommand,
     untabifyCommand,
-    cutToEolCommand
+    cutToEolCommand,
+    appendSemicolonCommand
 ];

@@ -15,19 +15,23 @@
         "commands": [
             {
                 "command": "extension.airlinerHelloWorld",
-                "title": "Airliner Hello World"
+                "title": "Airliner hello world"
             },
             {
                 "command": "extension.airlinerToggleComment",
-                "title": "Airliner Toggle Comment"
+                "title": "Airliner toggle comment"
             },
             {
                 "command": "extension.airlinerUntabify",
-                "title": "Airliner Untabify"
+                "title": "Airliner untabify"
             },
             {
                 "command": "extension.airlinerCutToEol",
-                "title": "Airliner Cut to EOL"
+                "title": "Airliner cut to EOL"
+            },
+            {
+                "command": "extension.airlinerAppendSemicolon",
+                "title": "Airliner append semicolon"
             }
         ]
     },
