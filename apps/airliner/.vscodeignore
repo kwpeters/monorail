@@ -3,7 +3,9 @@
 src/**
 .depcheckrc.json
 .eslintrc.cjs
+esbuild.js
 jasmine.json
+README.orig.md
 tsconfig.json
 tsconfig.ut.json
 vsc-extension-quickstart.md
