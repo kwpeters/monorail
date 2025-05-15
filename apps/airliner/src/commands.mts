@@ -428,14 +428,23 @@ const associatedFilesCommand = {
         // "dot suffixes" until there are none left, leaving us with the true
         // base name.
         let done = false;
+        let lastRemoved = "";
         while (!done) {
             const idx = baseName.lastIndexOf(".");
             if (idx === -1) {
                 done = true;
             }
             else {
+                lastRemoved = baseName.slice(idx);
                 baseName = baseName.slice(0, idx);
             }
+        }
+
+        // If the active file started with a "." and we removed everything from
+        // the base name, then put then use the leftmost "dot suffix" as the
+        // base name.
+        if (baseName.length === 0) {
+            baseName = lastRemoved;
         }
 
         // Invoke the quick open command and seed it with the base name.
