@@ -33,3 +33,7 @@ From this repo's root directory:
 ```powershell
 npm run build-dev && copywrite full . $env:HOME\.vscode\extensions\undefined_publisher.airliner-0.0.1
 ```
+
+```powershell
+npm run all && npm run type-check && pushd .\apps\airliner\ && copywrite full . $env:HOME\.vscode\extensions\undefined_publisher.airliner-0.0.1 && popd
+```
