@@ -48,6 +48,10 @@
             {
                 "command": "extension.airlinerSplitEditorDown",
                 "title": "Airliner split editor down"
+            },
+            {
+                "command": "extension.airlinerAssociatedFiles",
+                "title": "Airliner associated files"
             }
         ]
     },

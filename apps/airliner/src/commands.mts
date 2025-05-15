@@ -5,6 +5,7 @@ import * as vscode from "vscode";
 import * as _ from "lodash-es";
 import { toggleComment } from "@repo/depot/comment";
 import { Timeout } from "@repo/depot-node/timers";
+import { File } from "@repo/depot-node/file";
 
 
 interface ICommandDefinition {
@@ -400,6 +401,49 @@ const splitEditorDownCommand = {
 };
 
 
+////////////////////////////////////////////////////////////////////////////////
+//
+// Prompts the user to switch to a file that is associated with the current
+// editor's file.
+//
+////////////////////////////////////////////////////////////////////////////////
+const associatedFilesCommand = {
+    name: "extension.airlinerAssociatedFiles",
+    fn:   async (): Promise<void> => {
+        const activeEditor = vscode.window.activeTextEditor;
+        if (!activeEditor) {
+            vscode.window.showInformationMessage("There is no active editor.");
+            return;
+        }
+
+        if (activeEditor.document.uri.scheme !== "file") {
+            vscode.window.showInformationMessage("Current editor has no associated file.");
+        }
+
+        const activeFile = new File(activeEditor.document.uri.fsPath);
+
+        let baseName = activeFile.baseName;
+
+        // The base name may have additional "." characters in it.  Remove all
+        // "dot suffixes" until there are none left, leaving us with the true
+        // base name.
+        let done = false;
+        while (!done) {
+            const idx = baseName.lastIndexOf(".");
+            if (idx === -1) {
+                done = true;
+            }
+            else {
+                baseName = baseName.slice(0, idx);
+            }
+        }
+
+        // Invoke the quick open command and seed it with the base name.
+        await vscode.commands.executeCommand("workbench.action.quickOpen", baseName);
+    }
+};
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Helper Functions
@@ -455,5 +499,6 @@ export const commands: Array<ICommandDefinition> = [
     hungryBackspaceCommand,
     hungryDeleteRightCommand,
     splitTopCommand,
-    splitEditorDownCommand
+    splitEditorDownCommand,
+    associatedFilesCommand
 ];
