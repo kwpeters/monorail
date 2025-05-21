@@ -76,16 +76,22 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
     inputStrings.push(...(await getStdinPipedLines()));
 
     const [nonExtant, extant] = await stringsToFsItems(inputStrings);
-    if (nonExtant.length > 0) {
-        console.error(`${nonExtant.length} items do not exist and will be skipped:`);
-        nonExtant.forEach((nonextant) => {
-            console.log(`    ${nonextant}`);
-        });
-    }
 
-    if (extant.length === 0) {
-        return new FailedResult("No valid input files specified.");
-    }
 
-    return new SucceededResult({ fsItems: extant });
+    if (nonExtant.length === 0 && extant.length === 0) {
+        console.error("Nothing to delete.");
+        return new SucceededResult({ fsItems: [] });
+    }
+    else if (nonExtant.length > 0 && extant.length === 0) {
+        console.error(`All specified items do not exist: ${nonExtant.join(", ")}`);
+        return new SucceededResult({ fsItems: [] });
+    }
+    else {
+        if (nonExtant.length > 0) {
+            console.error(`The following items do not exist: ${nonExtant.join(", ")}`);
+        }
+
+        return new SucceededResult({ fsItems: extant });
+
+    }
 }
