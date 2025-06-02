@@ -1,0 +1,14 @@
+{
+    "extends": "@repo/typescript-config/tsconfig.vsc-extension.json",
+	"compilerOptions": {
+        "outDir": "dist",
+	},
+    "include": [
+        "src"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "**/*.test.mts"
+    ]
+}

@@ -28,6 +28,7 @@ dist/
 snapshot/
 tmp/
 bin/
+*.vsix
 
 # Debug
 npm-debug.log*

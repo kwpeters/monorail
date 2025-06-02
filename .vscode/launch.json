@@ -5,6 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
+			"name": "airliner extension",
+			"type": "extensionHost",
+			"request": "launch",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}/apps/airliner"
+			],
+			"outFiles": [
+				"${workspaceFolder}/apps/airliner/dist/**/*.js"
+			],
+			"preLaunchTask": "${defaultBuildTask}"
+		},
+        {
             "name": "build-app-assist",
             "type": "node",
             "request": "launch",

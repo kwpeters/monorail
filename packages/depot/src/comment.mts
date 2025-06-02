@@ -1,6 +1,7 @@
 import * as _ from "lodash-es";
 import {removeBlankLines, splitIntoLines, numInitial, isBlank, getEol} from "./stringHelpers.mjs";
 import { insertIf } from "./arrayHelpers.mjs";
+import { pipe } from "./pipe2.mjs";
 
 
 function getCommentToken(): string {
@@ -68,31 +69,31 @@ export function comment(
 
         // The amount of indentation will be determined by the line with the
         // least indentation characters at the beginning.
-        const numIndentChars = _.chain(linesToConsider)
-        .map((curLine) => numInitial(curLine, indentChar))
-        .min()
-        .value();
+        const numIndentChars = pipe(
+            linesToConsider.map((curLine) => numInitial(curLine, indentChar)),
+            (numIndents) => Math.min(...numIndents)
+        );
 
         indentStr = _.repeat(indentChar, numIndentChars);
     }
 
-    const result: string = _.chain(sourceLines)
-    .map((curLine) => {
-        // The original text that will follow the comment token.
-        // If the current line is a blank one, it may be zero-length, so we will
-        // use the whole line in order to get the EOL.  If it is not blank, it
-        // will be everything following the common indent.
-        const blank = isBlank(curLine);
-        const sourceText = blank ? getEol(curLine) || "" :
-                                   curLine.slice(indentStr.length);
+    const result = pipe(
+        sourceLines.map((curLine) => {
+            // The original text that will follow the comment token.
+            // If the current line is a blank one, it may be zero-length, so we will
+            // use the whole line in order to get the EOL.  If it is not blank, it
+            // will be everything following the common indent.
+            const blank = isBlank(curLine);
+            const sourceText = blank ? getEol(curLine) || "" :
+                                    curLine.slice(indentStr.length);
 
-        // The whitespace that will follow the comment token.
-        const postCommentSpace = blank ? "" : " ";
+            // The whitespace that will follow the comment token.
+            const postCommentSpace = blank ? "" : " ";
 
-        return `${indentStr}${getCommentToken()}${postCommentSpace}${sourceText}`;
-    })
-    .join("")
-    .value();
+            return `${indentStr}${getCommentToken()}${postCommentSpace}${sourceText}`;
+        }),
+        (lines) => lines.join("")
+    );
 
     return result;
 }
@@ -114,8 +115,7 @@ export function uncomment(linesToUncomment: string): string | undefined {
     // eslint-disable-next-line prefer-named-capture-group
     const commentedLineRegex = /^(?<begin_ws>\s*)(?<comment_token>(\/\/)|(#))(?<post_comment_ws>\s*)(?<text>.*)/;
 
-    const resultLines = _.chain(sourceLines)
-    .map((curLine) => {
+    const resultLines = sourceLines.map((curLine) => {
         const match = commentedLineRegex.exec(curLine);
         if (!match) {
             return curLine;
@@ -137,8 +137,7 @@ export function uncomment(linesToUncomment: string): string | undefined {
             uncommented = eol;
         }
         return uncommented;
-    })
-    .value();
+    });
 
     return resultLines.join("");
 }
