@@ -7,6 +7,7 @@ import { PromiseResult } from "@repo/depot/promiseResult";
 import { Directory } from "./directory.mjs";
 import { File } from "./file.mjs";
 import { getOs, OperatingSystem } from "./os.mjs";
+import { spawn, spawnErrorToString } from "./spawn2.mjs";
 
 
 const SHEBANG = "#!";
@@ -245,4 +246,31 @@ export function getLaunchScriptCode(
         scriptFile: new File(launchScriptDir, `${baseName}.cmd` ),
         scriptCode: lines.join(EOL)
     });
+}
+
+
+/**
+ * Gets the path to the Node.js executable.
+ *
+ * @return A promise that resolves with a Result containing the Node.js
+ * executable file if successful, or an error message if it fails.
+ */
+export async function getNodeExecutable(): Promise<Result<File, string>> {
+
+    const os = getOs();
+    const spawnOut = os === OperatingSystem.windows ?
+        spawn("node", ["-e", "console.log(process.execPath);"]) :
+        spawn("command", ["-v", "node"], {shell: true});
+
+    const res = await spawnOut.closePromise;
+    if (res.failed) {
+        return new FailedResult(`Failed to get Node executable path. ${spawnErrorToString(res.error)}`);
+    }
+    const nodeExePath = res.value;
+    const nodeExe = new File(nodeExePath);
+    const exists = await nodeExe.exists();
+    if (exists) {
+        return new SucceededResult(nodeExe);
+    }
+    return new FailedResult(`Node executable "${nodeExe.toString()}" does not exist.`);
 }

@@ -3,7 +3,7 @@ import * as _ from "lodash-es";
 import { splitIntoLines } from "@repo/depot/stringHelpers";
 import { File } from "./file.mjs";
 import { getOs, OperatingSystem } from "./os.mjs";
-import { makeNodeScriptExecutable, createCmdLaunchScript } from "./nodeUtil.mjs";
+import { makeNodeScriptExecutable, createCmdLaunchScript, getNodeExecutable } from "./nodeUtil.mjs";
 import {tmpDir} from "./specHelpers.test.mjs";
 
 
@@ -125,5 +125,33 @@ describe("createCmdLaunchScript()", () => {
         expect(newText).not.toEqual(preexistingText);
     });
 
+
+});
+
+
+describe("getNodeExecutable()", () => {
+
+    it("can get the Node.js executable when running on a non-Windows OS", async () => {
+        if (getOs() === OperatingSystem.windows) {
+            return;
+        }
+
+        const nodeBinFileRes = await getNodeExecutable();
+        expect(nodeBinFileRes.succeeded).toBeTrue();
+        const path = nodeBinFileRes.value!.toString();
+        expect(path.length).toBeGreaterThan(0);
+    });
+
+
+    it("can get the Node.js executable when running on Windows", async () => {
+        if (getOs() !== OperatingSystem.windows) {
+            return;
+        }
+
+        const nodeBinFileRes = await getNodeExecutable();
+        expect(nodeBinFileRes.succeeded).toBeTrue();
+        const path = nodeBinFileRes.value!.toString();
+        expect(path.length).toBeGreaterThan(0);
+    });
 
 });
