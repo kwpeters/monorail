@@ -150,7 +150,8 @@ export class Directory {
      * Gets the name of this directory (without the preceding path)
      */
     public get dirName(): string {
-        if (this._dirPath.length === 0) {
+        if (this._dirPath.length === 0 ||
+            this._dirPath === path.sep) {
             // This directory represents the root of the filesystem.
             return "/";
         }
@@ -171,22 +172,42 @@ export class Directory {
 
 
     /**
-     * Gets the parent directory of this directory, if one exists.
+     * Gets the parent directory of this directory, if one exists. Note: The
+     * returned parent directory will always have an absolute path, even if this
+     * directory was created with a relative path.
      * @return This directory's parent directory.  undefined is returned if this
      * directory is the root of a drive.
      */
     public parentDir(): undefined | Directory {
-        const parts = this.split();
+        // If this directory's path consists only of the path separator, it is
+        // the root of a filesystem.
+        if (this._dirPath === path.sep) {
+            return undefined;
+        }
+
+        const parts = this.absolute().split();
 
         // If the directory separator was not found, the split will result in a
         // 1-element array.  If this is the case, this directory is the root of
-        // the drive.
+        // a Windows drive.
         if (parts.length === 1) {
             return undefined;
         }
 
         const parentParts = _.dropRight(parts);
-        const [first, ...rest] = parentParts;
+        let [first, ...rest] = parentParts;
+
+        // When running on Linux, the absolute path will start with "/" and the
+        // first part will be an empty string.
+        if (first === "") {
+
+            if (rest.length === 0) {
+                return new Directory(path.sep);
+            }
+
+            first = path.sep + rest.shift()!;
+        }
+
         const firstDir = new Directory(first!);
         const parentDir = new Directory(firstDir, ...rest);
         return parentDir;
@@ -970,8 +991,7 @@ export class Directory {
      * @return The path parts
      */
     private split(): string[] {
-        const absPath = this.absPath();
-        let parts = absPath.split(path.sep);
+        let parts = this._dirPath.split(path.sep);
 
         // If the path is a UNC path, there will be 4 or more parts:
         // 1. empty

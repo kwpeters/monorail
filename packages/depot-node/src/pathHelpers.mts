@@ -26,6 +26,12 @@ export function reducePathParts(pathParts: Array<PathPart>): string {
                 return curPathPartStr;
             }
 
+            // if the current part is an absolute path, reset and use only the
+            // current part.
+            if (curPathPartStr.startsWith(path.sep)) {
+                return curPathPartStr;
+            }
+
             // If we are dealing with the first part of a UNC path (that starts
             // with "\\"), then don't let path.join() process it, because it
             // will remove it.

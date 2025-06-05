@@ -32,7 +32,7 @@ export async function getUncPath(fsItem: FsItem): Promise<Result<string, string>
 
     // Because this function uses the "net use" command, this functionality is
     // currently only supported on Windows.
-    if (getOs() !== OperatingSystem.Windows) {
+    if (getOs() !== OperatingSystem.windows) {
         return new FailedResult(`getUncPath() only supports Windows.`);
     }
 

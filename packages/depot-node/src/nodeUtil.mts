@@ -4,8 +4,8 @@ import * as _ from "lodash-es";
 import { mapAsync } from "@repo/depot/promiseHelpers";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
-import {Directory} from "./directory.mjs";
-import {File} from "./file.mjs";
+import { Directory } from "./directory.mjs";
+import { File } from "./file.mjs";
 import { getOs, OperatingSystem } from "./os.mjs";
 
 
@@ -141,7 +141,7 @@ export function makeAllJsScriptsExecutable(dir: Directory, recursive = false): P
 export function nodeBinForOs(nodeBinFile: File | string): File {
     const inputFile: File = nodeBinFile instanceof File ? nodeBinFile : new File(nodeBinFile);
 
-    if (getOs() === OperatingSystem.Windows) {
+    if (getOs() === OperatingSystem.windows) {
         return new File(inputFile.directory, inputFile.baseName + ".cmd");
     }
     else {
@@ -160,7 +160,7 @@ export function nodeBinForOs(nodeBinFile: File | string): File {
  */
 export async function createCmdLaunchScript(jsFile: File): Promise<Result<File | undefined, string>> {
 
-    if (getOs() !== OperatingSystem.Windows) {
+    if (getOs() !== OperatingSystem.windows) {
         return new SucceededResult(undefined);
     }
 
@@ -217,7 +217,7 @@ export function getLaunchScriptCode(
     // Currently, only Windows is supported.  Will need to generate a bash
     // script on other operating systems, but I'm not going to worry about it
     // right now.
-    if (getOs() !== OperatingSystem.Windows) {
+    if (getOs() !== OperatingSystem.windows) {
         return new FailedResult(`getLaunchScriptCode() is currently only supported on Windows.`);
     }
 

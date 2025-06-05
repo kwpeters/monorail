@@ -108,7 +108,7 @@ describe("Directory", () => {
 
             it("will return / for the name of the filesystem root", () => {
                 const root = new Directory("/");
-                if (getOs() === OperatingSystem.Windows) {
+                if (getOs() === OperatingSystem.windows) {
                     expect(root.dirName).toEqual("C:");
                 }
                 else {
@@ -179,11 +179,17 @@ describe("Directory", () => {
 
 
             it("returns the root of a drive when the directory is a first level directory", () => {
+
+                // This test is only relevant on Windows.
+                if (getOs() !== "windows") {
+                    return;
+                }
+
                 const dir1 = new Directory("c:", "tmp");
                 expect(dir1.parentDir()!.absPath()).toEqual("c:");
 
                 const dir2 = new Directory("/", "tmp");
-                if (getOs() === OperatingSystem.Windows) {
+                if (getOs() === OperatingSystem.windows) {
                     expect(dir2.parentDir()!.absPath()).toEqual("C:");
                 }
                 else {
@@ -232,7 +238,7 @@ describe("Directory", () => {
 
             it("return a string containing the absolute path", () => {
                 const absPath = tmpDir.absPath();
-                if (getOs() === OperatingSystem.Windows) {
+                if (getOs() === OperatingSystem.windows) {
                     expect(_.startsWith(absPath, "C:\\")).toBeTruthy();
                     expect(_.endsWith(absPath, "\\tmp")).toBeTruthy();
                 }
@@ -260,7 +266,7 @@ describe("Directory", () => {
 
                 expect(tmpDir.toString()[0]).not.toEqual("/");
 
-                if (getOs() === OperatingSystem.Windows) {
+                if (getOs() === OperatingSystem.windows) {
                     expect(_.startsWith(path, "C:\\")).toBeTruthy();
                     expect(_.endsWith(path, "\\tmp")).toBeTruthy();
                 }

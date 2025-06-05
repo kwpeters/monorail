@@ -35,7 +35,7 @@ describe("makeNodeScriptExecutable()", () => {
         // The Node.js documentation states "on Windows only the write
         // permission can be changed."  Therefore, this test will not be run on
         // Windows.
-        if (getOs() === OperatingSystem.Windows) {
+        if (getOs() === OperatingSystem.windows) {
             done();
         }
         else {
@@ -76,7 +76,7 @@ describe("createCmdLaunchScript()", () => {
 
 
     it("will create the associated .cmd file", async () => {
-        if (getOs() !== OperatingSystem.Windows) {
+        if (getOs() !== OperatingSystem.windows) {
             return;
         }
 
@@ -87,7 +87,7 @@ describe("createCmdLaunchScript()", () => {
 
 
     it("will create a .cmd file that contains code to launch the specified js file", async () => {
-        if (getOs() !== OperatingSystem.Windows) {
+        if (getOs() !== OperatingSystem.windows) {
             return;
         }
 
@@ -99,7 +99,7 @@ describe("createCmdLaunchScript()", () => {
 
 
     it("returns a file representing the newly created .cmd file", async () => {
-        if (getOs() !== OperatingSystem.Windows) {
+        if (getOs() !== OperatingSystem.windows) {
             return;
         }
 
@@ -111,7 +111,7 @@ describe("createCmdLaunchScript()", () => {
 
 
     it("will overwrite and existing .cmd file", async () => {
-        if (getOs() !== OperatingSystem.Windows) {
+        if (getOs() !== OperatingSystem.windows) {
             return;
         }
 

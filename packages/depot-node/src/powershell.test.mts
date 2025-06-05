@@ -1,5 +1,6 @@
 import * as url from "url";
 import { getLegacyPowerShellExecutable, getModernPowerShellExecutable, getPowerShellExecutable, runPowerShell } from "./powershell.mjs";
+import { getOs } from "./os.mts";
 
 
 const __filename = url.fileURLToPath(import.meta.url);
@@ -9,6 +10,11 @@ const __filename = url.fileURLToPath(import.meta.url);
 describe("getLegacyPowerShellExecutable()", () => {
 
     it("can find powershell.exe", async () => {
+        // This test is only relevant on Windows.
+        if (getOs() !== "windows") {
+            return;
+        }
+
         const resExec = await getLegacyPowerShellExecutable();
         expect(resExec.succeeded).toBeTrue();
         expect(resExec.value!.toString()).toContain("powershell.exe");
@@ -20,6 +26,11 @@ describe("getLegacyPowerShellExecutable()", () => {
 describe("getModernPowerShellExecutable()", () => {
 
     it("can find pwsh.exe", async () => {
+        // This test is only relevant on Windows.
+        if (getOs() !== "windows") {
+            return;
+        }
+
         const resExec = await getModernPowerShellExecutable();
         expect(resExec.succeeded).toBeTrue();
         expect(resExec.value!.toString()).toContain("pwsh.exe");
@@ -31,6 +42,11 @@ describe("getModernPowerShellExecutable()", () => {
 describe("getPowerShellExecutable()", () => {
 
     it("prefers modern powershell", async () => {
+        // This test is only relevant on Windows.
+        if (getOs() !== "windows") {
+            return;
+        }
+
         const resExec = await getPowerShellExecutable();
         expect(resExec.succeeded).toBeTrue();
         expect(resExec.value!.toString()).toContain("pwsh.exe");
@@ -42,6 +58,11 @@ describe("getPowerShellExecutable()", () => {
 describe("runPowerShell()", () => {
 
     it("can run a PowerShell command with no arguments", async () => {
+        // This test is only relevant on Windows.
+        if (getOs() !== "windows") {
+            return;
+        }
+
         const resOutput = await runPowerShell("Get-Process");
         expect(resOutput.succeeded).toBeTrue();
         expect(resOutput.value!).toContain("svchost");
@@ -49,6 +70,11 @@ describe("runPowerShell()", () => {
 
 
     it("can run a PowerShell command with arguments", async () => {
+        // This test is only relevant on Windows.
+        if (getOs() !== "windows") {
+            return;
+        }
+
         // (Get-Item ".\README.md").CreationTime
         const resOutput = await runPowerShell(`(Get-Item "${__filename}").CreationTime`);
         expect(resOutput.succeeded).toBeTrue();

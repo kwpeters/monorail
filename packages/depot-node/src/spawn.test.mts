@@ -4,6 +4,7 @@ import * as fs from "node:fs";
 import * as _ from "lodash-es";
 import {spawn, type SpawnCloseError} from "./spawn.mjs";
 import { getOs, OperatingSystem } from "./os.mjs";
+import { File } from "./file.mjs";
 import { tmpDir } from "./specHelpers.test.mjs";
 
 
@@ -14,43 +15,22 @@ describe("spawn", () => {
     });
 
 
-    it("will run the specified command", (done) => {
-        const os = getOs();
-        const options: cp.SpawnOptions = { cwd: tmpDir.absPath() };
-        let cmd = "ls";
-        if (os === OperatingSystem.Windows) {
-            options.shell = true;
-            cmd = "dir";
-        }
-        const testFilePath = path.join(tmpDir.absPath(), "foo.txt");
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        spawn(cmd, [">", "foo.txt"], options).closePromise
-        .then(() => {
-            const stats = fs.statSync(testFilePath);
-            expect(stats.isFile()).toBeTruthy();
-            done();
-        });
-    });
+    it("will resolve with the stdout text", async () => {
+
+        // Create a dummy file.
+        const dummyFile = new File(tmpDir, "foo.txt");
+        dummyFile.writeSync("hello world");
 
 
-    it("will resolve with the stdout text", (done) => {
-        const os = getOs();
         const options: cp.SpawnOptions = { cwd: tmpDir.absPath() };
         let lsCmd = "ls";
-        if (os === OperatingSystem.Windows) {
+        if (getOs() === OperatingSystem.windows) {
             options.shell = true;
             lsCmd = "dir";
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        spawn(lsCmd, [">", "foo.txt"], options).closePromise
-        .then(() => {
-            return spawn(lsCmd, [], options).closePromise;
-        })
-        .then((output) => {
-            expect(output).toContain("foo.txt");
-            done();
-        });
+        const output = await spawn(lsCmd, [], options).closePromise;
+        expect(output).toContain("foo.txt");
     });
 
 
@@ -58,7 +38,7 @@ describe("spawn", () => {
         let cmd: string;
         let args: Array<string>;
 
-        if (getOs() === OperatingSystem.Windows) {
+        if (getOs() === OperatingSystem.windows) {
             cmd = "c:\\Program Files\\Git\\bin\\sh.exe";
             args = ["-c ", "sleep 10"];
         }
@@ -150,8 +130,8 @@ describe("spawn", () => {
     it("provides the exit code and stderr when the command fails", (done) => {
         const nonExistantFilePath = path.join(tmpDir.absPath(), "xyzzy.txt");
         const os = getOs();
-        const lsCmd = os === OperatingSystem.Windows ? "dir" : "ls";
-        const options = os === OperatingSystem.Windows ? {shell: true} : undefined;
+        const lsCmd = os === OperatingSystem.windows ? "dir" : "ls";
+        const options = os === OperatingSystem.windows ? {shell: true} : undefined;
         spawn(lsCmd, [nonExistantFilePath], options).closePromise
         .catch((err: SpawnCloseError) => {
             expect(err).toBeTruthy();

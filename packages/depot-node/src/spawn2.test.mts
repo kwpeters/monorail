@@ -16,18 +16,23 @@ describe("spawn", () => {
 
 
     it("will run the specified command", async () => {
+
+        // Dummy file so there is "ls" output.
+        const dummyFile = new File(tmpDir, "foo.txt");
+        dummyFile.writeSync("hello world");
+
         const os = getOs();
-        const options: cp.SpawnOptions = { cwd: tmpDir.absPath() };
+        const options: cp.SpawnOptions = { cwd: tmpDir.absPath(), shell: true };
         let cmd = "ls";
-        if (os === OperatingSystem.Windows) {
-            options.shell = true;
+        if (os === OperatingSystem.windows) {
             cmd = "dir";
         }
         const testFilePath = path.join(tmpDir.absPath(), "foo.txt");
-        const spawnResult = await spawn(cmd, [">", "foo.txt"], options).closePromise;
+        const spawnResult = await spawn(cmd, [], options).closePromise;
         expect(spawnResult.succeeded).toBeTruthy();
-        const stats = fs.statSync(testFilePath);
-        expect(stats.isFile()).toBeTruthy();
+        expect(spawnResult.value).toBeDefined();
+        const output = spawnResult.value!;
+        expect(output.length).toBeGreaterThan(0);
     });
 
 
@@ -36,10 +41,9 @@ describe("spawn", () => {
         existingFile.writeSync("This is an existing file that should appear in the following ls.");
 
         const os = getOs();
-        const options: cp.SpawnOptions = { cwd: tmpDir.absPath() };
+        const options: cp.SpawnOptions = { cwd: tmpDir.absPath(), shell: true };
         let lsCmd = "ls";
-        if (os === OperatingSystem.Windows) {
-            options.shell = true;
+        if (os === OperatingSystem.windows) {
             lsCmd = "dir";
         }
 
@@ -53,7 +57,7 @@ describe("spawn", () => {
         let cmd: string;
         let args: Array<string>;
 
-        if (getOs() === OperatingSystem.Windows) {
+        if (getOs() === OperatingSystem.windows) {
             cmd = "c:\\Program Files\\Git\\bin\\sh.exe";
             args = [
                 "-c ",
@@ -82,8 +86,8 @@ describe("spawn", () => {
     it("provides the exit code and stderr when the command fails", async () => {
         const nonExistantFilePath = path.join(tmpDir.absPath(), "xyzzy.txt");
         const os = getOs();
-        const lsCmd = os === OperatingSystem.Windows ? "dir" : "ls";
-        const options = os === OperatingSystem.Windows ? {shell: true} : undefined;
+        const lsCmd = os === OperatingSystem.windows ? "dir" : "ls";
+        const options = os === OperatingSystem.windows ? {shell: true} : undefined;
         const result = await spawn(lsCmd, [nonExistantFilePath], options).closePromise;
         expect(result.failed).toBeTruthy();
 

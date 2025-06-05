@@ -53,8 +53,26 @@ This monorepo contains packages and applications that use the following tools:
    executable can be found using your PATH environment variable.  If you have
    Git installed, this can usually be found in `C:\Program Files\Git\usr\bin`.
 
-4. Enable developer mode.  This must be done so that the unit tests for Symlink
-   can run successfully.
+4. On Windows, enable developer mode.  This must be done so that the unit tests
+   for Symlink can run successfully.
+
+5. The unit tests require the presence of the `sampleGitRepo-src` project.  It
+   must be cloned as a sibling folder to this repo's root folder.  The tags must
+   be present in the cloned repo, so run the following command:
+
+   ```powershell
+   git fetch --tags
+   ```
+
+6. The `GitRepo` unit tests perform Git actions on the above `sampleGitRepo-src`
+   project.  Therefore, you must configure your Git user name and email address
+   in order to run the unit tests.  This is done by running the following
+   commands:
+
+   ```powershell
+   git config --global user.email "you@example.com"
+   git config --global user.name "Your Name"
+   ```
 
 ### Install dependencies
 

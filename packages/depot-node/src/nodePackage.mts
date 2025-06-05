@@ -226,7 +226,7 @@ export class NodePackage {
      */
     public pack(outDir?: Directory): Promise<File> {
         const spawnOptions: cp.SpawnOptions = { cwd: this._pkgDir.toString() };
-        if (getOs() === OperatingSystem.Windows) {
+        if (getOs() === OperatingSystem.windows) {
             // On Windows child_process.spawn() can only run executables, not
             // scripts.  Since npm is a script on windows, we need to set the
             // shell option so that we are not directly running the script, but

@@ -307,7 +307,7 @@ describe("File", () => {
 
 
             it("will change the mode bits to the specified value (non-Windows)", (done) => {
-                if (getOs() !== OperatingSystem.Windows) {
+                if (getOs() !== OperatingSystem.windows) {
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     testFile.chmod(
                         constants.S_IRWXU |
@@ -335,7 +335,7 @@ describe("File", () => {
             });
 
             it("will change the mode bits to the specified value (Windows)", (done) => {
-                if (getOs() === OperatingSystem.Windows) {
+                if (getOs() === OperatingSystem.windows) {
                     // chmod() is implemented very strangely on Windows.
                     //
                     // - First, fs.constants such as constants.S_IRUSR,
@@ -395,7 +395,7 @@ describe("File", () => {
 
 
             it("will change the mode bits to the specified value (non-Windows)", () => {
-                if (getOs() !== OperatingSystem.Windows) {
+                if (getOs() !== OperatingSystem.windows) {
                     testFile.chmodSync(
                         constants.S_IRWXU |
                         constants.S_IRGRP | constants.S_IXGRP |
@@ -424,7 +424,7 @@ describe("File", () => {
                 const file = new File(__filename);
                 const absPath = file.absPath();
 
-                if (getOs() === OperatingSystem.Windows) {
+                if (getOs() === OperatingSystem.windows) {
                     expect(absPath.startsWith("C:\\")).toBeTruthy();
                 }
                 else {
@@ -445,7 +445,7 @@ describe("File", () => {
                 expect(relFile.toString().startsWith(".." + path.sep)).toBeTruthy();
 
                 const absFile = relFile.absolute();
-                if (getOs() === OperatingSystem.Windows) {
+                if (getOs() === OperatingSystem.windows) {
                     expect(absFile.toString().startsWith("C:\\")).toBeTruthy();
                 }
                 else {

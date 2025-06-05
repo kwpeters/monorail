@@ -116,7 +116,7 @@ describe("resolveFileLocation()", () => {
     // });
 
 
-    it("resolves with a failed result when the file is not found", async () => {
+    it("resolves with a failed Result when the file is not found", async () => {
         const result = await resolveFileLocation("aFileThatShouldNeverBeFound.txt", tmpDir);
         expect(result.failed).toBeTruthy();
         if (result.failed) {

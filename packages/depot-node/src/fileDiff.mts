@@ -6,7 +6,7 @@ import {spawn} from "./spawn2.mjs";
 
 export async function showVsCodeDiff(fileA: File, fileB: File, useExisting = false, wait = true): Promise<void> {
 
-    const cmd = getOs() === OperatingSystem.Windows ? "code.cmd" : "code";
+    const cmd = getOs() === OperatingSystem.windows ? "code.cmd" : "code";
 
     const args = [
         ...insertIf(!useExisting, "-n"),
