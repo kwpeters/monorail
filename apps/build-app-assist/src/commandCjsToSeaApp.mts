@@ -5,6 +5,7 @@ import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { File } from "@repo/depot-node/file";
 import { PromiseResult } from "@repo/depot/promiseResult";
+import { getOs, OperatingSystem } from "@repo/depot-node/os";
 
 
 const exec = promisify(childProcess.exec);
@@ -75,10 +76,11 @@ async function handler(argv: ArgumentsCamelCase<IArgsCommand>): Promise<Result<n
         config.inputCjsFile.directory,
         config.inputCjsFile.baseName + "-sea-config.json"
     );
-    const exeFile = new File(
-        config.inputCjsFile.directory,
-        config.exeBaseName + ".exe"
-    );
+    const exeFile = getOs() === OperatingSystem.windows ?
+        // Use the .exe extension on Windows.
+        new File(config.inputCjsFile.directory, config.exeBaseName + ".exe") :
+        // No extension on other OSes.
+        new File(config.inputCjsFile.directory, config.exeBaseName);
 
     const res = await pipeAsync(
         createBundle(config.inputCjsFile, bundleFile),
