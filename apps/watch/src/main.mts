@@ -297,7 +297,7 @@ async function mainImpl(): Promise<Result<number, string>> {
         timerId = undefined;
 
         let spawnOptions: cp.SpawnOptions | undefined;
-        if (getOs() === OperatingSystem.Windows) {
+        if (getOs() === OperatingSystem.windows) {
             spawnOptions = {shell: true};
         }
         spawnResult = spawn(config.cmd, config.cmdArgs, spawnOptions, undefined, process.stdout, process.stderr);

@@ -1,5 +1,5 @@
 // import { Directory } from "./directory.mjs";
-import { getOs, OperatingSystem } from "./os.mts";
+import { getOs, OperatingSystem } from "./os.mjs";
 import { getUserProfileDir } from "./windowsHelpers.mjs";
 
 

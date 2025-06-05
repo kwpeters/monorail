@@ -86,7 +86,7 @@ async function main(): Promise<Result<number, string>> {
     console.log(`Random Int: ${randomInt}`);
     console.log(`Selected:   ${randomFileQuoted}`);
 
-    if (os === OperatingSystem.Windows) {
+    if (os === OperatingSystem.windows) {
 
         if (config.show) {
             // TODO: Create a show() method on File.
