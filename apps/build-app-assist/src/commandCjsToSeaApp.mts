@@ -6,6 +6,7 @@ import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { File } from "@repo/depot-node/file";
 import { PromiseResult } from "@repo/depot/promiseResult";
 import { getOs, OperatingSystem } from "@repo/depot-node/os";
+import { getNodeExecutable } from "@repo/depot-node/nodeUtil";
 
 
 const exec = promisify(childProcess.exec);
@@ -150,28 +151,46 @@ async function createBlob(seaConfigFile: File): Promise<Result<string, string>> 
 
 
 async function copyNodeExecutable(exeFile: File): Promise<Result<string, string>> {
-    const escapedExeFile = exeFile.toString().replace("\\", "\\\\");
-    const cmd = `node -e "require('fs').copyFileSync(process.execPath, '${escapedExeFile}')"`;
+
+    const nodeExeRes = await getNodeExecutable();
+    if (nodeExeRes.failed) {
+        return new FailedResult(`❌ Failed to get Node executable: ${nodeExeRes.error}`);
+    }
+
     try {
-        // Don't use process.execPath from this process.  It may be tsx.
-        await exec(cmd);
-        return new SucceededResult("✅ Successfully copied Node executable.");
+        await nodeExeRes.value.copy(exeFile);
+        return new SucceededResult(`✅ Successfully copied Node executable to ${exeFile.toString()}.`);
     }
     catch (err) {
-        const errTyped = err as childProcess.ExecException & { stdout: string, stderr: string; };
-        return new FailedResult(`❌ Failed to copy node executable. Node exited with ${errTyped.code}. ${errTyped.stderr}`);
+        const errTyped = err as Error;
+        return new FailedResult(`❌ Failed to copy node executable: ${errTyped.message}`);
     }
 }
 
 
 async function removeSignature(exeFile: File): Promise<Result<string, string>> {
-    try {
-        await exec(`signtool remove /s ${exeFile.toString()}`);
-        return new SucceededResult(`✅ Successfully removed executable signature.`);
+
+    const os = getOs();
+
+    if (os === OperatingSystem.windows) {
+        try {
+            await exec(`signtool remove /s ${exeFile.toString()}`);
+            return new SucceededResult(`✅ Successfully removed executable signature.`);
+        }
+        catch (err) {
+            const errTyped = err as childProcess.ExecException & { stdout: string, stderr: string; };
+            return new FailedResult(`❌ Signtool failed to remove signature. Signtool exited with ${errTyped.code}. ${errTyped.stderr}`);
+        }
     }
-    catch (err) {
-        const errTyped = err as childProcess.ExecException & { stdout: string, stderr: string; };
-        return new FailedResult(`❌ Signtool failed to remove signature. Signtool exited with ${errTyped.code}. ${errTyped.stderr}`);
+    else if (os === OperatingSystem.linux) {
+        return new SucceededResult(`✅ Executable signature does not need to be removed on Linux.`);
+    }
+    else if (os === OperatingSystem.darwin) {
+        return new FailedResult(`❌ Removing executable signature on macOS is not supported yet.`);
+        // To add support, see instructions at https://nodejs.org/api/single-executable-applications.html.
+    }
+    else {
+        return new FailedResult(`❌ Don't know how to remove executable signature on unknown OS.`);
     }
 }
 

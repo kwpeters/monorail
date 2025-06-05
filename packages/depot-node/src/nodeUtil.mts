@@ -250,27 +250,27 @@ export function getLaunchScriptCode(
 
 
 /**
- * Gets the path to the Node.js executable.
+ * Gets the path to the Node.js executable.  This works even when this process
+ * is being run by tsx.  This is done by running Node.js itself.
  *
  * @return A promise that resolves with a Result containing the Node.js
  * executable file if successful, or an error message if it fails.
  */
 export async function getNodeExecutable(): Promise<Result<File, string>> {
 
-    const os = getOs();
-    const spawnOut = os === OperatingSystem.windows ?
-        spawn("node", ["-e", "console.log(process.execPath);"]) :
-        spawn("command", ["-v", "node"], {shell: true});
+    const cmd = "node";
+    const args = ["-e", '"console.log(process.execPath);"'];
 
-    const res = await spawnOut.closePromise;
+    const res = await spawn(cmd, args, { shell: true }).closePromise;
     if (res.failed) {
-        return new FailedResult(`Failed to get Node executable path. ${spawnErrorToString(res.error)}`);
+        return new FailedResult(spawnErrorToString(res.error));
     }
+
     const nodeExePath = res.value;
     const nodeExe = new File(nodeExePath);
+
     const exists = await nodeExe.exists();
-    if (exists) {
-        return new SucceededResult(nodeExe);
-    }
-    return new FailedResult(`Node executable "${nodeExe.toString()}" does not exist.`);
+    return exists ?
+        new SucceededResult(nodeExe) :
+        new FailedResult(`Node executable "${nodeExe.toString()}" does not exist.`);
 }
