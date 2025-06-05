@@ -1,6 +1,6 @@
 import * as url from "url";
 import { getLegacyPowerShellExecutable, getModernPowerShellExecutable, getPowerShellExecutable, runPowerShell } from "./powershell.mjs";
-import { getOs } from "./os.mts";
+import { getOs } from "./os.mjs";
 
 
 const __filename = url.fileURLToPath(import.meta.url);
