@@ -49,11 +49,14 @@ async function handler(argv: ArgumentsCamelCase<IArgsCommand>): Promise<Result<n
     const config = configRes.value;
 
     //
-    // Make sure the "bin" directory exists and is empty.
+    // Make sure this monorepo's "bin" directory exists and is empty.
     //
     const binDir = new Directory(config.repoRootDir, "bin");
     await binDir.empty();
 
+    //
+    // Find all of the Node packages in this monorepo.
+    //
     const packagesRes = await NodePackage.find(config.repoRootDir, false);
     if (packagesRes.failed) {
         return packagesRes;
@@ -81,8 +84,17 @@ async function handler(argv: ArgumentsCamelCase<IArgsCommand>): Promise<Result<n
 }
 
 
+/**
+ * Creates scripts that will launch the given Node package's binaries (there can
+ * be multiple).
+ *
+ * @param destDir - The directory where the launch scripts will be created
+    * @param pkg - The Node package for which to create launch scripts
+ * @return If successful, a successful Result containing an array of the created
+ * launch script files.  Otherwise, a failed Result with an error message.
+ */
 async function creatLaunchScriptsForPackage(
-    launchScriptDir: Directory,
+    destDir: Directory,
     pkg: NodePackage
 ): Promise<Result<File[], string>> {
 
@@ -91,7 +103,7 @@ async function creatLaunchScriptsForPackage(
         (binFilesMap) => Array.from(binFilesMap.entries()),
         (entries) => {
             return mapAsync(entries, ([binName, pkgRelativeFile]) => {
-                return createLaunchScript(launchScriptDir, pkg.directory, pkgRelativeFile, binName);
+                return createLaunchScript(destDir, pkg.directory, pkgRelativeFile, binName);
             });
         },
         (results) => Result.allArrayM(results)
@@ -99,14 +111,26 @@ async function creatLaunchScriptsForPackage(
 }
 
 
+/**
+ * Creates a launch script for a given Node package's binary file.
+ *
+ * @param destDir - The directory where the launch script will be created
+ * @param pkgDir - The directory of the Node package that contains the binary
+ *      _pkgRelativeFile_.
+ * @param pkgRelativeFile - The relative path to the binary file in the Node
+ *      package
+ * @param launcherBaseName - The base name of the launcher script
+ * @return If successful, a successful Result containing the created launch
+ * script file.  Otherwise, a failed Result with an error message.
+ */
 async function createLaunchScript(
-    launchScriptDir: Directory,
+    destDir: Directory,
     pkgDir: Directory,
     pkgRelativeFile: File,
     launcherBaseName: string
 ): Promise<Result<File, string>> {
     const absTargetFile = new File(pkgDir, pkgRelativeFile.toString());
-    const resLauncherInfo = getLaunchScriptCode(launchScriptDir, absTargetFile, launcherBaseName);
+    const resLauncherInfo = getLaunchScriptCode(destDir, absTargetFile, launcherBaseName);
     if (resLauncherInfo.failed) {
         return resLauncherInfo;
     }
