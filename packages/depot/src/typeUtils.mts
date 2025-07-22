@@ -3,6 +3,15 @@
  */
 export type EmptyObject = Record<string, never>;
 
+
+/**
+ * For a type T, adds null and undefined to the type of each property.
+ */
+export type MakePropsNullable<T> = {
+    [P in keyof T]: T[P] | null | undefined
+};
+
+
 /**
  * For a type T adds optionality for each property name in TRequiredKeys.
  * TRequiredKeys can be a single property name or a union of property names.
