@@ -118,3 +118,28 @@ export type Immutable<T> =
  * Represents the type of elements in an array T.
  */
 export type ElementType<T> = T extends unknown[] ? T[number] : never;
+
+
+/**
+ * Ensures that all properties in the template object are present in the target object,
+ * filling in any missing properties with the provided default value.
+ *
+ * @param targetObj - The target object to ensure properties on.
+ * @param templateObj - The template object to use as a reference.
+ * @param defaultValue - The default value to use for missing properties.
+ * @return The updated target object with all properties from the template.
+ */
+export function ensureAllProperties<TTemplate extends Record<PropertyKey, unknown>, TValue>(
+    targetObj: Partial<Record<keyof TTemplate, TValue>>,
+    templateObj: TTemplate,
+    defaultValue: TValue
+): Record<keyof TTemplate, TValue> {
+    return Object.keys(templateObj).reduce(
+        (acc, key) => {
+            const typedKey = key as keyof TTemplate;
+            acc[typedKey] = targetObj[typedKey] ?? defaultValue;
+            return acc;
+        },
+        { ...targetObj } as Record<keyof TTemplate, TValue>
+    );
+}

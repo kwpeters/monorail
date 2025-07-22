@@ -1,4 +1,4 @@
-import { type MakePropsNonNullable,
+import { ensureAllProperties, type MakePropsNonNullable,
          type MakePropsNonNullableAndRequired,
          type MakePropsOptional,
          type MakePropsRequired,
@@ -116,4 +116,21 @@ describe("RecursivePartial", () => {
         expect(true).toBeTruthy();
     });
 
+});
+
+
+describe("ensureAllProperties()", () => {
+    it("should fill in missing properties with default values", () => {
+        const target = { propA: 1 };
+        const template = { propA: 1, propB: 2, propC: 3 };
+        const defaultValue = 0;
+
+        const result = ensureAllProperties(target, template, defaultValue);
+
+        expect(result).toEqual({
+            propA: 1,
+            propB: 0,
+            propC: 0
+        });
+    });
 });
