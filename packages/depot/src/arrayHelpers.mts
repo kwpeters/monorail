@@ -337,3 +337,17 @@ export async function chooseFirstAsync<TIn, TFnSuccess, TFnError, TError>(
     // If we got here, non of the inputs produced a successful Result.
     return new FailedResult(errVal);
 }
+
+
+/**
+ * Converts a nullable array to a non-nullable array.
+ *
+ * @param nullableArr - The nullable array to convert
+ * @return The non-nullable array
+ */
+export function fromNullable<T>(nullableArr: T[] | null | undefined): T[] {
+    if (nullableArr === null || nullableArr === undefined) {
+        return [];
+    }
+    return nullableArr;
+}

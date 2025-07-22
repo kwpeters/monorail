@@ -3,7 +3,8 @@ import {
     insertIf, permutations, split, toArray, chooseFirst, chooseFirstAsync,
     hasIndex,
     atOrDefault,
-    lastIndex
+    lastIndex,
+    fromNullable
 } from "./arrayHelpers.mjs";
 import { getTimerPromise } from "./promiseHelpers.mjs";
 import { FailedResult, SucceededResult } from "./result.mjs";
@@ -403,4 +404,25 @@ describe("chooseFirstAsync()", () => {
         expect(numInvocations).toEqual(2);
     });
 
+});
+
+
+describe("fromNullable()", () => {
+
+    it("returns an empty array for null input", () => {
+        const result = fromNullable(null);
+        expect(result).toEqual([]);
+    });
+
+
+    it("returns an empty array for undefined input", () => {
+        const result = fromNullable(undefined);
+        expect(result).toEqual([]);
+    });
+
+
+    it("returns the original array for non-nullable input", () => {
+        const result = fromNullable([1, 2, 3]);
+        expect(result).toEqual([1, 2, 3]);
+    });
 });
