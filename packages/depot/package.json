@@ -44,6 +44,10 @@
             "types": "./src/cdataHelpers.mts",
             "default": "./dist/cdataHelpers.mjs"
         },
+        "./cli-table3": {
+            "types": "./src/cli-table3.mts",
+            "default": "./dist/cli-table3.mjs"
+        },
         "./collection": {
             "types": "./src/collection.mts",
             "default": "./dist/collection.mjs"
@@ -251,6 +255,10 @@
         "./stringI": {
             "types": "./src/stringI.mts",
             "default": "./dist/stringI.mjs"
+        },
+        "./textBlock": {
+            "types": "./src/textBlock.mts",
+            "default": "./dist/textBlock.mjs"
         },
         "./timestampId": {
             "types": "./src/timestampId.mts",
