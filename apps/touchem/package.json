@@ -8,7 +8,7 @@
         "build:ts": "tsc --build",
         "build:sea": "tsx ../build-app-assist/src/index.mts cjsToSeaApp --inputCjsFile ./dist/index.cjs --exeBaseName touchem",
         "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
-        "lint": "eslint ./src",
+        "lint": "eslint --format unix ./src",
         "type-check": "tsc --project tsconfig.ut.json --noEmit",
         "depcheck": "depcheck"
     },
