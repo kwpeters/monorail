@@ -1,8 +1,12 @@
-import { ensureAllProperties, type MakePropsNonNullable,
-         type MakePropsNonNullableAndRequired,
-         type MakePropsOptional,
-         type MakePropsRequired,
-         type RecursivePartial} from "./typeUtils.mjs";
+import {
+    ensureAllProperties,
+    type Prettify,
+    type MakePropsNonNullable,
+    type MakePropsNonNullableAndRequired,
+    type MakePropsOptional,
+    type MakePropsRequired,
+    type RecursivePartial
+} from "./typeUtils.mjs";
 
 
 interface IAllRequired {
@@ -91,7 +95,7 @@ interface ITypeA {
     prop2: {
         prop2a: number,
         prop2b: number,
-    }
+    };
 }
 
 type TypeB = RecursivePartial<ITypeA>;
@@ -134,3 +138,19 @@ describe("ensureAllProperties()", () => {
         });
     });
 });
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Prettify Example
+////////////////////////////////////////////////////////////////////////////////
+
+// UnprettifiedType will display as a deeply nested type in tooltips and error messages.
+type UnprettifiedType =
+    MakePropsOptional<
+        MakePropsNonNullableAndRequired<ISomeOptionalAndNullable, "propB" | "propC">,
+        "propA"
+    >;
+
+
+// PrettifiedType will display as a flattened, readable object type.
+type PrettifiedType = Prettify<UnprettifiedType>;

@@ -143,3 +143,26 @@ export function ensureAllProperties<TTemplate extends Record<PropertyKey, unknow
         { ...targetObj } as Record<keyof TTemplate, TValue>
     );
 }
+
+
+/**
+ * Forces TypeScript to expand and display the full structure of a type in
+ * tooltips and error messages, making complex or composed types more readable.
+ * This is especially useful when working with mapped types, intersections, or
+ * utility types that would otherwise be shown as aliases or references.
+ *
+ * @template T - The type to be expanded and prettified for improved
+ * readability.
+ *
+ * @remarks
+ * The mapped type creates a new type by iterating over all keys in T and
+ * copying their types. This "unwraps" complex type aliases, intersections, or
+ * mapped types, forcing TypeScript to display the full expanded structure
+ * rather than just the alias name. The intersection with {} is a trick that
+ * prompts TypeScript to treat the mapped type as a fresh object type, not just
+ * a reference to the original type. This further encourages TypeScript to show
+ * the expanded, readable form in tooltips and error messages.
+ */
+export type Prettify<T> = {
+  [K in keyof T]: T[K];
+} & {};
