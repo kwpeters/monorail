@@ -26,7 +26,18 @@ their formatting, the following rules do not apply to them.
   files can be found at `packages\eslint-config`.  Visual Studio Code is
   configured to use the `dbaeumer.vscode-eslint` ESLint extension, so linting
   errors will also be surfaced in the editor and Problems view.
-- All source code file names will be either camelCase or kebab-case
+- All source code file names will be either camelCase or kebab-case.
+- Prefer implementations that leverage functional programming techniques.  Make
+  use of the following from the depot package within this monorepo
+  (located at `packages\depot\`):
+
+  | Class/Function | Source Code Location                       |
+  |----------------|-------------------------------------------|
+  | Option<>       | packages\depot\src\option.mts             |
+  | Result<>       | packages\depot\src\result.mts             |
+  | pipe()         | packages\depot\src\pipe.mts               |
+  | pipeAsync()    | packages\depot\src\pipeAsync2.mts         |
+
 - Two blank lines will be inserted between methods and properties within a
   class.
 - All comments must be word wrapped so their text occurs within the first 80
