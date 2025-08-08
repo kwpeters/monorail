@@ -96,8 +96,8 @@ their formatting, the following rules do not apply to them.
 
 ### Unit Test Coding Style
 
-The following rules apply to unit test files (which must include include the
-substring `.test.` in their file name).
+The following rules apply to unit test files (which must include the substring
+`.test.` in their file name).
 
 - Two blank lines should always separate two adjacent `describe()` calls.
 - Two blank lines should always separate two adjacent `it()` (for the Jasmine
