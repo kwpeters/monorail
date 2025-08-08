@@ -26,6 +26,9 @@ their formatting, the following rules do not apply to them.
   files can be found at `packages\eslint-config`.  Visual Studio Code is
   configured to use the `dbaeumer.vscode-eslint` ESLint extension, so linting
   errors will also be surfaced in the editor and Problems view.
+- Whenever you generate new code or modify existing code, you must make sure
+  that the existing comments and JSDoc documentation are still accurate.  If
+  not, you must update them.
 - All source code file names will be either camelCase or kebab-case.
 - Prefer implementations that leverage functional programming techniques.  Make
   use of the following from the depot package within this monorepo
