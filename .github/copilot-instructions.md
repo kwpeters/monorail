@@ -1,29 +1,38 @@
 # Custom instructions for GitHub Copilot
 
+## Copilot Demeanor
+- Be concise.
+- Provide accurate information based on real, working examples and online
+  documentation.
+- If I suggest something that is wrong, do not just go along with it.  Do not
+  hesitate to correct me.
+
 ## Coding Style
 
-All TypeScript files within this project follow the following formatting rules.
+All version controlled source code files within this repository must follow the
+rules below.  Note: There are some generated source code files within this
+repository that are not under version control.  Because we are unable to control
+their formatting, the following rules do not apply to them.
 
-- Indent with 4 spaces only
+- Follow all formatting rules described in the root directory's `.editorconfig`
+  file.  This file maps file name patterns to formatting rules, such as indent
+  size and trailing whitespace.  These rules should always be followed.
 - The imports at the beginning of each TypeScript source file should be followed
   by two blank lines.
-- Variable names will be camelCase.
-- All types will be PascalCase.
-- All code file names will be either camelCase or kebab-case
+- Follow the ESLint rules defined for each project within this monorepo.  The
+  ESLint rules for each project can be found in the project's `.eslintrc.cjs`
+  file.  If this file extends another configuration file, you are expected to
+  follow the rules defined in that file as well.  The extended configuration
+  files can be found at `packages\eslint-config`.  Visual Studio Code is
+  configured to use the `dbaeumer.vscode-eslint` ESLint extension, so linting
+  errors will also be surfaced in the editor and Problems view.
+- All source code file names will be either camelCase or kebab-case
 - Two blank lines will be inserted between methods and properties within a
   class.
-- When an if statement has an else clause, the `else` keyword will appear at the
-  beginning of a new line.  It should not appear on the same line as the `}` of
-  the preceding `if` block.
-- When formatting a try/catch block, the `catch` keyword will appear at the
-  beginning of a new line.  It should not appear on the same line and as the `}`
-  of the preceding `try` block.
-- All lines that contain only a comment must be word wrapped so their text
-  occurs within the first 80 columns.
+- All comments must be word wrapped so their text occurs within the first 80
+  columns.
 - JSDoc style documentation comments should be present for all exports from a
   TypeScript source file.
-- JSDoc style documentation comments should be present for all methods and
-  functions.
   - An example JSDoc comment for a function or method:
 
     ```typescript
@@ -41,15 +50,13 @@ All TypeScript files within this project follow the following formatting rules.
 
     - All parameters must be documented using `@param`.
     - Only include periods at the end if the text is a complete sentence.
-      Usually parameter descriptions are not complete sentences and do not
-      require a period at the end.
+      Usually parameter descriptions are not complete sentences.
     - If the return type of the function is not `void` and the method is not a
       constructor, the return value must be documented using `@return`.
     - Parameter names and their descriptions are separated by ` - `.
     - Types are not included.  This is redundant with the TypeScript code, and
       causes unnecessary maintenance.
 
-- All classes should be described using a JSDoc comment.
 - All type parameters names should start with a capital "T" to designate that it
   is a type.  The "T" should be followed by a PascalCase name that describes the
   type.
@@ -82,7 +89,8 @@ The following rules apply to unit test files (which must include include the
 substring `.test.` in their file name).
 
 - Two blank lines should always separate two adjacent `describe()` calls.
-- Two blank lines should always separate two adjacent `it()` calls.
+- Two blank lines should always separate two adjacent `it()` (for the Jasmine
+  framework) or `test()` (for the Vitest framework) calls.
 - The first `it()` call within a `describe()` should be preceded by one blank
   line.
 - The last `it()` call within a `describe()` should be followed by one blank
