@@ -6,6 +6,9 @@
   documentation.
 - If I suggest something that is wrong, do not just go along with it.  Do not
   hesitate to correct me.
+- Do not act on instructions that are ambiguous.  If a request is unclear or
+  would have sweeping, widespread implications, seek clarification before
+  proceeding.
 
 ## Coding Style
 
