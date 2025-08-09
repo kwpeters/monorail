@@ -9,7 +9,7 @@
         "build:sea": "tsx ../build-app-assist/src/index.mts cjsToSeaApp --inputCjsFile ./dist/index.cjs --exeBaseName hr",
         "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
         "lint": "eslint  --format unix ./src",
-        "type-check": "tsc --project tsconfig.ut.json --noEmit",
+        "type-check": "tsc --project tsconfig.json --noEmit",
         "depcheck": "depcheck"
     },
     "bin": {

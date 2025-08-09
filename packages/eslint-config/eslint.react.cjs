@@ -1,6 +1,6 @@
 const { resolve } = require("node:path");
 
-const project = resolve(process.cwd(), "tsconfig.ut.json");
+const project = resolve(process.cwd(), "tsconfig.json");
 
 /** @type {import("eslint").Linter.Config} */
 module.exports = {
@@ -13,7 +13,7 @@ module.exports = {
             // TODO: Given that the current working directory is correct, we
             // could specify the project as follows:
             //
-            // "./tsconfig.ut.json"
+            // "./tsconfig.json"
             //
             // Doing so would make this file easier to convert to a flat config
             // json file that ESLint 9 uses.

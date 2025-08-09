@@ -1,6 +1,6 @@
 const { resolve } = require("node:path");
 
-const project = resolve(process.cwd(), "tsconfig.ut.json");
+const project = resolve(process.cwd(), "tsconfig.json");
 
 /** @type {import("eslint").Linter.Config} */
 module.exports = {
@@ -14,7 +14,7 @@ module.exports = {
             // converted to a json file, which will make it much easier to
             // migrate to ESLint 9's flat configuration.
             //
-            // "./tsconfig.ut.json"
+            // "./tsconfig.json"
 
             //
             // The following method of specifying project files is not
