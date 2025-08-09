@@ -5,7 +5,7 @@
     "private": true,
     "scripts": {
         "dev": "echo 'Add dev script here'",
-        "build": "tsc --build",
+        "build": "tsc --build tsconfig.src.json",
         "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
         "lint": "eslint --format unix ./src",
         "type-check": "tsc --project tsconfig.ut.json --noEmit",

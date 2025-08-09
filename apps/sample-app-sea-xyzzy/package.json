@@ -5,7 +5,7 @@
     "scripts": {
         "dev": "echo 'Add dev script here'",
         "build": "npm run build:ts && npm run build:sea",
-        "build:ts": "tsc --build",
+        "build:ts": "tsc --build tsconfig.src.json",
         "build:sea": "tsx ../build-app-assist/src/index.mts cjsToSeaApp --inputCjsFile ./dist/index.cjs --exeBaseName sample-app-sea-xyzzy",
         "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
         "lint": "eslint --format unix ./src",

@@ -15,7 +15,7 @@ module.exports = {
             // migrate to ESLint 9's flat configuration.
             //
             // "./tsconfig.ut.json"
-            
+
             //
             // The following method of specifying project files is not
             // preferred.  See the following ESLint documentation that describes

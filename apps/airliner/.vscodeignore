@@ -7,10 +7,10 @@ development.md
 esbuild.js
 jasmine.json
 README.orig.md
-tsconfig.json
+tsconfig.src.json
 tsconfig.ut.json
 vsc-extension-quickstart.md
-**/tsconfig.json
+**/tsconfig.*
 **/eslint.config.mjs
 **/*.map
 **/*.ts
