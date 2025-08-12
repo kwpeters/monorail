@@ -4,11 +4,13 @@ import {
     hasIndex,
     atOrDefault,
     lastIndex,
-    fromNullable
+    fromNullable,
+    insertIfWith
 } from "./arrayHelpers.mjs";
 import { getTimerPromise } from "./promiseHelpers.mjs";
 import { FailedResult, SucceededResult } from "./result.mjs";
 import { getRandomInt } from "./random.mjs";
+import { NoneOption, SomeOption, Option } from "./option.mjs";
 
 
 describe("hasIndex()", () => {
@@ -96,6 +98,39 @@ describe("insertIf", () => {
 
     it("returns an array containing the items when the condition is true", () => {
         expect(insertIf(true, 1, 2, 3)).toEqual([1, 2, 3]);
+    });
+
+});
+
+
+describe("insertIfWith()", () => {
+
+    it("does not invoke the function when the conition is false", () => {
+        const opt = NoneOption.get() as Option<number>;
+        let invocationCounter = 0;
+        const arr = [
+            ...insertIfWith(opt.isSome, () => {
+                invocationCounter++;
+                return [opt.value!.toString()];
+            })
+        ];
+        expect(invocationCounter).toEqual(0);
+        expect(arr.length).toEqual(0);
+    });
+
+
+    it("invokes the function and includes the return values when the condition is true", () => {
+        const opt = new SomeOption(42) as Option<number>;
+        let invocationCounter = 0;
+        const arr = [
+            ...insertIfWith(opt.isSome, () => {
+                invocationCounter++;
+                return [opt.value!.toString()];
+            })
+        ];
+        expect(invocationCounter).toEqual(1);
+        expect(arr.length).toEqual(1);
+        expect(arr[0]).toEqual("42");
     });
 
 });

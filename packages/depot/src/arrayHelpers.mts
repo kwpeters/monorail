@@ -108,6 +108,37 @@ export function insertIf<TItem>(
 
 
 /**
+ * Returns `fn()` when `condition` is truthy and returns [] when it is falsy.
+ * This function and the array spread operator can be used together to
+ * conditionally including array items in an array literal.  This function must
+ * be used instead of insertIf() when condition must be true in order to access
+ * the items to be returned.
+ *
+ * @example
+ * const arr = [
+ *     "always present",
+ *     ...insertIfWith(opt.isSome, () => [opt.value!.toString()]),
+ *     "always present"
+ * ];
+ *
+ * @param condition - The condition that controls whether to insert the items
+ * @param fn - A function that returns the items that will be in the returned
+ * array if `condition` is truthy
+ * @return An array containing the result of `fn()` if `condition` is truthy.  An
+ * empty array if `condition` is falsy.
+ */
+export function insertIfWith<TReturn>(
+    condition: unknown,
+    fn: () => Array<TReturn>
+): Array<TReturn> {
+    if (condition) {
+        return fn();
+    }
+    return [];
+}
+
+
+/**
  * Calculates all possible permutations of an array.
  * @param vals - The values for which all permutations will be calculated.
  * @returns An array in which each value is an array representing one
