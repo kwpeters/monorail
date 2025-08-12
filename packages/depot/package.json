@@ -264,6 +264,10 @@
             "types": "./src/textBlock.mts",
             "default": "./dist/textBlock.mjs"
         },
+        "./theme": {
+            "types": "./src/theme.mts",
+            "default": "./dist/theme.mjs"
+        },
         "./timestampId": {
             "types": "./src/timestampId.mts",
             "default": "./dist/timestampId.mjs"
