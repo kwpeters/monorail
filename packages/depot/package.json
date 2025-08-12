@@ -240,6 +240,10 @@
             "types": "./src/setHelpers.mts",
             "default": "./dist/setHelpers.mjs"
         },
+        "./sourceLocation": {
+            "types": "./src/sourceLocation.mts",
+            "default": "./dist/sourceLocation.mjs"
+        },
         "./storageSize": {
             "types": "./src/storageSize.mts",
             "default": "./dist/storageSize.mjs"
