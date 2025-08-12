@@ -1,5 +1,5 @@
 import { SomeOption, NoneOption } from "./option.mjs";
-import { sourceLocation } from "./sourceLocation.mjs";
+import { offsetToLineColumn, sourceLocation } from "./sourceLocation.mjs";
 
 
 describe("sourceLocation()", () => {
@@ -73,6 +73,28 @@ describe("sourceLocation()", () => {
         );
         expect(opt.isSome).toBeTrue();
         expect(opt.value).toEqual("foo/bar.ts:10:5");
+    });
+
+});
+
+
+describe("offsetToLineColumn()", () => {
+
+    it("when offset is 0 returns line 1 column 1", () => {
+        const res = offsetToLineColumn("text", 0);
+        expect(res).toEqual({ line: 1, column: 1 });
+    });
+
+
+    it("when offset is somewhere in the first line returns line 1 column offset+1", () => {
+        const res = offsetToLineColumn("one hen, two ducks", 5);
+        expect(res).toEqual({ line: 1, column: 6 });
+    });
+
+
+    it("when offset is somewhere other than the first line", () => {
+        const res = offsetToLineColumn("01234\n6789a", 8);
+        expect(res).toEqual({ line: 2, column: 3 });
     });
 
 });

@@ -31,3 +31,28 @@ export function sourceLocation(
     const str = parts.join(":");
     return str ? new SomeOption(str) : NoneOption.get();
 }
+
+
+/**
+ * Converts a character offset to line and column numbers (1-based).
+ *
+ * @param text - The text content
+ * @param offset - The character offset (0-based).
+ * @return An object containing the line and column numbers.
+ */
+export function offsetToLineColumn(text: string, offset: number): { line: number, column: number} {
+    let line = 1;
+    let column = 1;
+
+    for (let i = 0; i < offset && i < text.length; i++) {
+        if (text[i] === "\n") {
+            line++;
+            column = 1;
+        }
+        else {
+            column++;
+        }
+
+    }
+    return { line, column };
+}
