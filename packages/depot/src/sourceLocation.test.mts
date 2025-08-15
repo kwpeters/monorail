@@ -33,7 +33,8 @@ describe("SourceLocation", () => {
             it("when no parts are specified returns a failure", () => {
                 const loc = new SourceLocation(
                     NoneOption.get(),
-                    {line: Number.NaN, column: NoneOption.get()}
+                    {line: new SomeOption(Number.NaN), column: NoneOption.get()},
+                    NoneOption.get()
                 );
                 expect(loc.startToString().failed).toBeTrue();
             });
@@ -42,7 +43,8 @@ describe("SourceLocation", () => {
             it("when column is not specified it is not included", () => {
                 const loc = new SourceLocation(
                     new SomeOption("foo/bar.ts"),
-                    {line: 10, column: NoneOption.get()}
+                    {line: new SomeOption(10), column: NoneOption.get()},
+                    NoneOption.get()
                 );
                 const res = loc.startToString();
                 expect(res.succeeded).toBeTrue();
@@ -53,7 +55,8 @@ describe("SourceLocation", () => {
             it("when line is not specified, line and column are not included", () => {
                 const loc = new SourceLocation(
                     new SomeOption("foo/bar.ts"),
-                    {line: Number.NaN, column: new SomeOption(5)}
+                    {line: new SomeOption(Number.NaN), column: new SomeOption(5)},
+                    NoneOption.get()
                 );
                 const res = loc.startToString();
                 expect(res.succeeded).toBeTrue();
@@ -64,7 +67,8 @@ describe("SourceLocation", () => {
             it("when file is not specified while line and col are, only line and col are included", () => {
                 const loc = new SourceLocation(
                     NoneOption.get(),
-                    {line: 10, column: new SomeOption(5)}
+                    {line: new SomeOption(10), column: new SomeOption(5)},
+                    NoneOption.get()
                 );
                 const res = loc.startToString();
                 expect(res.succeeded).toBeTrue();
@@ -75,7 +79,8 @@ describe("SourceLocation", () => {
             it("when only line is specified, only it is included", () => {
                 const loc = new SourceLocation(
                     NoneOption.get(),
-                    {line: 10, column: NoneOption.get()}
+                    {line: new SomeOption(10), column: NoneOption.get()},
+                    NoneOption.get()
                 );
                 const res = loc.startToString();
                 expect(res.succeeded).toBeTrue();
@@ -86,7 +91,8 @@ describe("SourceLocation", () => {
             it("when only column is specified returns a failure", () => {
                 const loc = new SourceLocation(
                     NoneOption.get(),
-                    {line: Number.NaN, column: new SomeOption(5)}
+                    {line: new SomeOption(Number.NaN), column: new SomeOption(5)},
+                    NoneOption.get()
                 );
                 const res = loc.startToString();
                 expect(res.failed).toBeTrue();
@@ -96,7 +102,8 @@ describe("SourceLocation", () => {
             it("when all three elements provided returns the expected string", () => {
                 const loc = new SourceLocation(
                     new SomeOption("foo/bar.ts"),
-                    {line: 10, column: new SomeOption(5)}
+                    {line: new SomeOption(10), column: new SomeOption(5)},
+                    NoneOption.get()
                 );
                 const res = loc.startToString();
                 expect(res.succeeded).toBeTrue();
@@ -111,8 +118,8 @@ describe("SourceLocation", () => {
             it("when everything is specified, everything is included", () => {
                 const loc = new SourceLocation(
                     new SomeOption("foo/bar.ts"),
-                    {line: 10, column: new SomeOption(5)},
-                    {line: 12, column: new SomeOption(6)}
+                    {line: new SomeOption(10), column: new SomeOption(5)},
+                    new SomeOption({line: new SomeOption(12), column: new SomeOption(6)})
                 );
 
                 expect(loc.codeFrame).toEqual({
@@ -125,7 +132,8 @@ describe("SourceLocation", () => {
             it("when end is not specified, it is undefined", () => {
                 const loc = new SourceLocation(
                     new SomeOption("foo/bar.ts"),
-                    {line: 10, column: new SomeOption(5)}
+                    {line: new SomeOption(10), column: new SomeOption(5)},
+                    NoneOption.get()
                 );
 
                 expect(loc.codeFrame).toEqual({
@@ -138,7 +146,8 @@ describe("SourceLocation", () => {
             it("when only start line is specified, column is undefined", () => {
                 const loc = new SourceLocation(
                     new SomeOption("foo/bar.ts"),
-                    {line: 10, column: NoneOption.get()}
+                    {line: new SomeOption(10), column: NoneOption.get()},
+                    NoneOption.get()
                 );
 
                 expect(loc.codeFrame).toEqual({
@@ -151,8 +160,8 @@ describe("SourceLocation", () => {
             it("when only end line is specified, column is undefined", () => {
                 const loc = new SourceLocation(
                     new SomeOption("foo/bar.ts"),
-                    {line: 10, column: new SomeOption(5)},
-                    {line: 12, column: NoneOption.get()}
+                    {line: new SomeOption(10), column: new SomeOption(5)},
+                    new SomeOption({line: new SomeOption(12), column: NoneOption.get()})
                 );
 
                 expect(loc.codeFrame).toEqual({

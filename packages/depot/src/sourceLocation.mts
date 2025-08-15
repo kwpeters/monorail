@@ -29,7 +29,7 @@ export function offsetToLineColumn(text: string, offset: number): { line: number
 
 
 interface ILineAndCol {
-    line:   number;
+    line:   Option<number>;
     column: Option<number>;
 }
 
@@ -48,13 +48,17 @@ export class SourceLocation {
 
     private readonly _filePath: Option<string>;
     private readonly _start:    ILineAndCol;
-    private readonly _end:      Option<ILineAndCol>;
+    private readonly _optEnd:   Option<ILineAndCol>;
 
 
-    public constructor(filePath: Option<string>, start: ILineAndCol, end?: ILineAndCol) {
-        this._filePath = filePath;
-        this._start = start;
-        this._end = end ? new SomeOption(end) : NoneOption.get();
+    public constructor(
+        optFilePath: Option<string>,
+        start:       ILineAndCol,
+        optEnd:      Option<ILineAndCol>
+    ) {
+        this._filePath = optFilePath;
+        this._start    = start;
+        this._optEnd   = optEnd;
     }
 
 
@@ -78,11 +82,11 @@ export class SourceLocation {
      * @return The ending location string
      */
     public endToString(): Result<string, string> {
-        if (this._end.isNone) {
+        if (this._optEnd.isNone) {
             return new FailedResult("SourceLocation end is not specified.");
         }
 
-        const resStr = this.toString(this._end.value);
+        const resStr = this.toString(this._optEnd.value);
         return resStr;
     }
 
@@ -95,13 +99,15 @@ export class SourceLocation {
     public get codeFrame(): ICodeFrame {
         return {
             start: {
-                line:   this._start.line,
+                line:   this._start.line.defaultValue(1),
                 column: this._start.column.defaultValue(undefined)
             },
-            end: this._end.isSome ? {
-                line:   this._end.value.line,
-                column: this._end.value.column.defaultValue(undefined)
-            } : undefined
+            end: this._optEnd.isSome ?
+                {
+                    line:   this._optEnd.value.line.defaultValue(1),
+                    column: this._optEnd.value.column.defaultValue(undefined)
+                } :
+                undefined
         };
     }
 
@@ -112,7 +118,8 @@ export class SourceLocation {
 
     private toString(location: ILineAndCol): Result<string, string> {
 
-        const lineNum = Number.isNaN(location.line) ? NoneOption.get() : new SomeOption(location.line);
+        const lineNum = location.line
+        .bind((num) => Number.isNaN(num) ? NoneOption.get() : new SomeOption(num));
 
         if (this._filePath.isNone && lineNum.isNone) {
             return new FailedResult(`Cannot form a SourceLocation string when there is no file path and the line number is NaN.`);
