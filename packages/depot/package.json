@@ -80,6 +80,10 @@
             "types": "./src/discriminatedUnion.mts",
             "default": "./dist/discriminatedUnion.mjs"
         },
+        "./disposable": {
+            "types": "./src/disposable.mts",
+            "default": "./dist/disposable.mjs"
+        },
         "./enumHelpers": {
             "types": "./src/enumHelpers.mts",
             "default": "./dist/enumHelpers.mjs"
