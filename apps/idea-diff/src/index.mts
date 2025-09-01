@@ -1,7 +1,7 @@
 import * as os from "node:os";
 import * as url from "node:url";
 import yargs from "yargs/yargs";
-import { glob } from "glob";
+import { globIterate } from "glob";
 import { hideBin } from "yargs/helpers";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
@@ -122,6 +122,12 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
 }
 
 
+/**
+ * Searches for JetBrains IDEA executable.
+ *
+ * @return A SucceededResult containing the found IDEA executable File, or a
+ * FailedResult containing an error message.
+ */
 async function findIde(): Promise<Result<File, string>> {
 
     const resUserProfileDir = await pipeAsync(
@@ -141,12 +147,21 @@ async function findIde(): Promise<Result<File, string>> {
         )
     ];
 
-    const paths = await glob(globs);
-    if (paths.length === 0) {
-        return new FailedResult("Could not find JetBrains IDE executable.");
+    // Because we want the first found result, the following loop will only ever
+    // execute at most once.  ESLint flags this as an error, but it is
+    // intentional.  This async for-of loop is easier to understand that the
+    // recommended fix of using the async iterator itself.
+    //
+    // The downside of doing this search in parallel is that it may not
+    // deterministically find the same executable.  We'll try it this way for
+    // now and change later if that becomes a problem.
+    //
+    // eslint-disable-next-line no-unreachable-loop
+    for await (const curPath of globIterate(globs)) {
+        return new SucceededResult(new File(curPath));
     }
 
-    return new SucceededResult(new File(paths[0]!));
+    return new FailedResult("Could not find JetBrains IDE executable.");
 }
 
 
