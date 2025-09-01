@@ -1,13 +1,17 @@
 import * as os from "node:os";
 import * as url from "node:url";
 import yargs from "yargs/yargs";
+import { glob } from "glob";
 import { hideBin } from "yargs/helpers";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
 import { pipe } from "@repo/depot/pipe";
+import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { Directory } from "@repo/depot-node/directory";
 import { File } from "@repo/depot-node/file";
 import { spawn } from "@repo/depot-node/spawn2";
+import { getUserProfileDir } from "@repo/depot-node/windowsHelpers";
+import { insertIfWith } from "@repo/depot/arrayHelpers";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -119,21 +123,35 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
 
 
 async function findIde(): Promise<Result<File, string>> {
-    const progFilesDir = new Directory("c:", "Program Files", "JetBrains");
-    let foundExe: File | undefined = undefined;
 
-    await progFilesDir.walk((item) => {
-        if (item instanceof File) {
-            if (item.fileName === "rider64.exe" ||
-                item.fileName === "webstorm64.exe") {
-                foundExe = item;
-            }
-        }
-        // Only recurse into directories when an exe has not been found.
-        return foundExe === undefined;
-    });
+    const resUserProfileDir = await pipeAsync(
+        getUserProfileDir(),
+        (res) => Result.mapSuccess((dir) => dir.toString().replaceAll("\\", "/"), res)
+    );
 
-    return foundExe === undefined ?
-        new FailedResult("Could not find JetBrains IDE executable.") :
-        new SucceededResult(foundExe);
+    const globs = [
+        "C:/Program Files/JetBrains/**/rider64.exe",
+        "C:/Program Files/JetBrains/**/webstorm64.exe",
+        "C:/Program Files/JetBrains/**/idea64.exe",
+        ...insertIfWith(
+            resUserProfileDir.succeeded,
+            () => [
+                `${resUserProfileDir.value!}/AppData/Local/Programs/IntelliJ IDEA Community Edition/bin/**/idea64.exe`
+            ]
+        )
+    ];
+
+    const paths = await glob(globs);
+    if (paths.length === 0) {
+        return new FailedResult("Could not find JetBrains IDE executable.");
+    }
+
+    return new SucceededResult(new File(paths[0]!));
 }
+
+
+// function isIdeaExecutable(file: File): boolean {
+//     return file.fileName === "rider64.exe" ||
+//            file.fileName === "webstorm64.exe" ||
+//            file.fileName === "idea64.exe";
+// }
