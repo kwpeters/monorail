@@ -86,6 +86,9 @@ export function anyMatchRegex(strings: Array<string>, regex: RegExp): RegExpExec
  * conditionally including array items in an array literal.  Inspired by
  * http://2ality.com/2017/04/conditional-literal-entries.html.
  *
+ * Note, if any of the `items` expressions are dependent on `condition` being
+ * truthy, use `insertIfWith()` instead.
+ *
  * @example
  * const arr = [
  *     "always present",
