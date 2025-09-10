@@ -113,6 +113,12 @@ export class SomeOption<T> {
     }
 
 
+    public toNullable<TNullable extends undefined | null>(
+        nullableValue: TNullable
+    ): T {
+        return this._value;
+    }
+
 }
 
 
@@ -230,6 +236,13 @@ export class NoneOption {
         fn: (val: never) => string
     ): void {
         // Intentionally empty.
+    }
+
+
+    public toNullable<TNullable extends undefined | null>(
+        nullableValue: TNullable
+    ): TNullable  {
+        return nullableValue;
     }
 
 }
@@ -625,6 +638,14 @@ export namespace Option {
         opt: Option<T>
     ): void {
         opt.throwIfSomeWith(fn);
+    }
+
+
+    export function toNullable<TOption, TNullable extends undefined | null>(
+        nullableValue: TNullable,
+        opt: Option<TOption>
+    ): TOption | TNullable {
+        return opt.toNullable(nullableValue);
     }
 
 }

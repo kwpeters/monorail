@@ -559,4 +559,29 @@ describe("Option namespace", () => {
     });
 
 
+    describe("toNullable()", () => {
+
+        it("when given a SomeOption returns the value", () => {
+            const opt = new SomeOption(5);
+            const nullable = Option.toNullable(null, opt);
+            expect(nullable).toEqual(5);
+        });
+
+
+        it("when given a NoneOption returns the nullableValue null", () => {
+            const opt = NoneOption.get();
+            const nullable = Option.toNullable(null, opt);
+            expect(nullable).toEqual(null);
+        });
+
+
+        it("when given a NoneOption returns the nullableValue undefined", () => {
+            const opt = NoneOption.get();
+            const nullable = Option.toNullable(undefined, opt);
+            expect(nullable).toEqual(undefined);
+        });
+
+    });
+
+
 });
