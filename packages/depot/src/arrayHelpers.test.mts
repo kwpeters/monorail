@@ -5,7 +5,8 @@ import {
     atOrDefault,
     lastIndex,
     fromNullable,
-    insertIfWith
+    insertIfWith,
+    intersperse
 } from "./arrayHelpers.mjs";
 import { getTimerPromise } from "./promiseHelpers.mjs";
 import { FailedResult, SucceededResult } from "./result.mjs";
@@ -131,6 +132,32 @@ describe("insertIfWith()", () => {
         expect(invocationCounter).toEqual(1);
         expect(arr.length).toEqual(1);
         expect(arr[0]).toEqual("42");
+    });
+
+});
+
+
+describe("intersperse()", () => {
+
+    it("returns an empty array when given an empty array", () => {
+        expect(intersperse([], "-")).toEqual([]);
+    });
+
+
+    it("returns the original array when given a single element array", () => {
+        expect(intersperse(["a"], "-")).toEqual(["a"]);
+    });
+
+
+    it("inserts the separator between elements", () => {
+        expect(intersperse(["a", "b", "c"], "-")).toEqual(["a", "-", "b", "-", "c"]);
+    });
+
+
+    it("does not modify the input array", () => {
+        const input = ["a", "b", "c"];
+        intersperse(input, "-");
+        expect(input).toEqual(["a", "b", "c"]);
     });
 
 });

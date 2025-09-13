@@ -142,6 +142,31 @@ export function insertIfWith<TReturn>(
 
 
 /**
+ * Returns a new array that is the same as the input array but with _separator_
+ * inserted between each element.
+ *
+ * @param arr - The input array (not modified)
+ * @param separator - The value to insert between elements
+ * @return The new array with the separator inserted between elements
+ */
+export function intersperse<T>(arr: Array<T>, separator: T): Array<T> {
+    if (arr.length === 0) {
+        return [];
+    }
+
+    const newArr = arr.slice(1).reduce(
+        (acc, cur) => {
+            acc.push(separator, cur);
+            return acc;
+        },
+        [arr[0] as T]
+    );
+
+    return newArr;
+}
+
+
+/**
  * Calculates all possible permutations of an array.
  * @param vals - The values for which all permutations will be calculated.
  * @returns An array in which each value is an array representing one
