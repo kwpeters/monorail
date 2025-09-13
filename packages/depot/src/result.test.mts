@@ -1349,6 +1349,31 @@ describe("Result namespace", () => {
     });
 
 
+    describe("toNullable()", () => {
+
+        it("returns null when given a failed Result", () => {
+            const res = new FailedResult("error message");
+            const val = Result.toNullable(null, res);
+            expect(val).toBeNull();
+        });
+
+
+        it("returns undefined when given a failed Result", () => {
+            const res = new FailedResult("error message");
+            const val = Result.toNullable(undefined, res);
+            expect(val).toBeUndefined();
+        });
+
+
+        it("returns the value when given a successful Result", () => {
+            const res = new SucceededResult(5);
+            const val = Result.toNullable(null, res);
+            expect(val).toEqual(5);
+        });
+
+    });
+
+
     describe("toOption()", () => {
 
         it("returns NoneOption when given a failed Result", () => {
