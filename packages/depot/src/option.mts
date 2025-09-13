@@ -113,8 +113,8 @@ export class SomeOption<T> {
     }
 
 
-    public toNullable<TNullable extends undefined | null>(
-        nullableValue: TNullable
+    public toNullable<TNullish extends undefined | null>(
+        nullishValue: TNullish
     ): T {
         return this._value;
     }
@@ -239,10 +239,10 @@ export class NoneOption {
     }
 
 
-    public toNullable<TNullable extends undefined | null>(
-        nullableValue: TNullable
-    ): TNullable  {
-        return nullableValue;
+    public toNullable<TNullish extends undefined | null>(
+        nullishValue: TNullish
+    ): TNullish  {
+        return nullishValue;
     }
 
 }
@@ -641,11 +641,20 @@ export namespace Option {
     }
 
 
-    export function toNullable<TOption, TNullable extends undefined | null>(
-        nullableValue: TNullable,
+    /**
+     * Converts an Option<T> to a nullable value.  If the Option is a SomeOption, the
+     * value is returned.  If the Option is a NoneOption, the provided nullable
+     * value is returned.
+     *
+     * @param nullishValue - The value to return if the Option is a NoneOption
+     * @param opt - The input Option
+     * @return The resulting nullable value
+     */
+    export function toNullable<TOption, TNullish extends undefined | null>(
+        nullishValue: TNullish,
         opt: Option<TOption>
-    ): TOption | TNullable {
-        return opt.toNullable(nullableValue);
+    ): TOption | TNullish {
+        return opt.toNullable(nullishValue);
     }
 
 }

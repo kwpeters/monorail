@@ -182,6 +182,11 @@ export class SucceededResult<TSuccess> {
     }
 
 
+    public toNullable<TNullish extends undefined | null>(nullishValue: TNullish): TSuccess {
+        return this._value;
+    }
+
+
     public toOption(): Option<TSuccess> {
         return new SomeOption(this._value);
     }
@@ -355,6 +360,11 @@ export class FailedResult<TError> {
     public throwIfSucceededWith(successMsgOrFn: string | ((val: never) => string)): TError;
     public throwIfSucceededWith(successMsgOrFn: string | ((val: never) => string)): TError {
         return this._error;
+    }
+
+
+    public toNullable<TNullish extends undefined | null>(nullishValue: TNullish): TNullish {
+        return nullishValue;
     }
 
 
@@ -1541,6 +1551,23 @@ export namespace Result {
         result: Result<TSuccess, TError>
     ): TError {
         return result.throwIfSucceededWith(errorMsgOrFn);
+    }
+
+
+    /**
+     * Converts a Result to a nullable value.  If the Result is successful, the
+     * value is returned.  If the Result is a failure, the provided nullable
+     * value is returned.
+     *
+     * @param nullishValue - The value to return if the Result is a failure
+     * @param result - The input Result
+     * @return The resulting nullable value
+     */
+    export function toNullable<TSuccess, TError, TNullish extends undefined | null>(
+        nullishValue: TNullish,
+        result: Result<TSuccess, TError>
+    ): TSuccess | TNullish {
+        return result.toNullable(nullishValue);
     }
 
 
