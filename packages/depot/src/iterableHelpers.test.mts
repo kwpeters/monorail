@@ -1,4 +1,5 @@
-import { buildIndex } from "./iterableHelpers.mjs";
+import { buildIndex, findFirstDuplicateBy } from "./iterableHelpers.mjs";
+import { NoneOption, SomeOption } from "./option.mjs";
 
 
 describe("iterableHelpers", () => {
@@ -24,6 +25,34 @@ describe("iterableHelpers", () => {
 
         });
 
+
+    });
+
+});
+
+
+describe("findFirstDuplicateBy()", () => {
+
+    const people = [
+        {first: "Fred", last: "Flintstone"},
+        {first: "Wilma", last: "Flintstone"},
+        {first: "Betty", last: "Rubble"},
+        {first: "Barney", last: "Rubble"}
+    ];
+
+
+    it("returns NoneOption when there are no duplicates", () => {
+
+        const result = findFirstDuplicateBy(people, (p) => p.first);
+        expect(result).toEqual(NoneOption.get());
+
+    });
+
+
+    it("returns SomeOption when a duplicate is found", () => {
+
+        const result = findFirstDuplicateBy(people, (p) => p.last);
+        expect(result).toEqual(new SomeOption({ elem: people[1]!, criterion: "Flintstone" }));
 
     });
 
