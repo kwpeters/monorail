@@ -1,5 +1,5 @@
 import { NoneOption, SomeOption } from "./option.mjs";
-import {matchesAny, setFlags, clearFlags, strToRegExp, extractNamedGroup, includesOrIncludesMatch} from "./regexpHelpers.mjs";
+import {matchesAny, setFlags, clearFlags, strToRegExp, extractNamedGroup, includesStrOrMatch} from "./regexpHelpers.mjs";
 
 
 describe("matchesAny()", () => {
@@ -29,32 +29,32 @@ describe("matchesAny()", () => {
 });
 
 
-describe("includesOrIncludesMatch()", () => {
+describe("includesStrOrMatch()", () => {
 
     it("returns SomeOption when the string is found", () => {
         const strings = ["foo", "bar", "baz"];
-        const result = includesOrIncludesMatch(strings, "bar");
+        const result = includesStrOrMatch(strings, "bar");
         expect(result).toEqual(new SomeOption("bar"));
     });
 
 
     it("returns SomeOption when a matching string is found", () => {
         const strings = ["foo", "bar", "baz"];
-        const result = includesOrIncludesMatch(strings, /ba./);
+        const result = includesStrOrMatch(strings, /ba./);
         expect(result).toEqual(new SomeOption("bar"));
     });
 
 
     it("returns NoneOption when the string is not found", () => {
         const strings = ["foo", "bar", "baz"];
-        const result = includesOrIncludesMatch(strings, "qux");
+        const result = includesStrOrMatch(strings, "qux");
         expect(result).toEqual(NoneOption.get());
     });
 
 
     it("returns NoneOption when no strings match the regex", () => {
         const strings = ["foo", "bar", "baz"];
-        const result = includesOrIncludesMatch(strings, /qux/);
+        const result = includesStrOrMatch(strings, /qux/);
         expect(result).toEqual(NoneOption.get());
     });
 

@@ -38,7 +38,7 @@ export function matchesAny(str: string, regexes: Array<RegExp>): boolean {
  * @param strOrRegex - The string or regular expression to search for
  * @return An Option containing the found string, or NoneOption if not found
  */
-export function includesOrIncludesMatch(strings: Iterable<string>, strOrRegex: string | RegExp): Option<string> {
+export function includesStrOrMatch(strings: Iterable<string>, strOrRegex: string | RegExp): Option<string> {
 
     if (typeof strOrRegex === "string") {
         // The caller provided a string to search the `strings` array for.  We
