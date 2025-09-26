@@ -1,5 +1,5 @@
-import { SomeOption } from "./option.mjs";
-import {matchesAny, setFlags, clearFlags, strToRegExp, extractNamedGroup} from "./regexpHelpers.mjs";
+import { NoneOption, SomeOption } from "./option.mjs";
+import {matchesAny, setFlags, clearFlags, strToRegExp, extractNamedGroup, includesOrIncludesMatch} from "./regexpHelpers.mjs";
 
 
 describe("matchesAny()", () => {
@@ -24,6 +24,38 @@ describe("matchesAny()", () => {
         ];
 
         expect(matchesAny(str, regexes)).toEqual(false);
+    });
+
+});
+
+
+describe("includesOrIncludesMatch()", () => {
+
+    it("returns SomeOption when the string is found", () => {
+        const strings = ["foo", "bar", "baz"];
+        const result = includesOrIncludesMatch(strings, "bar");
+        expect(result).toEqual(new SomeOption("bar"));
+    });
+
+
+    it("returns SomeOption when a matching string is found", () => {
+        const strings = ["foo", "bar", "baz"];
+        const result = includesOrIncludesMatch(strings, /ba./);
+        expect(result).toEqual(new SomeOption("bar"));
+    });
+
+
+    it("returns NoneOption when the string is not found", () => {
+        const strings = ["foo", "bar", "baz"];
+        const result = includesOrIncludesMatch(strings, "qux");
+        expect(result).toEqual(NoneOption.get());
+    });
+
+
+    it("returns NoneOption when no strings match the regex", () => {
+        const strings = ["foo", "bar", "baz"];
+        const result = includesOrIncludesMatch(strings, /qux/);
+        expect(result).toEqual(NoneOption.get());
     });
 
 });

@@ -1,6 +1,7 @@
 import * as _ from "lodash-es";
 import { FailedResult, Result, SucceededResult } from "./result.mjs";
 import { NoneOption, Option, SomeOption } from "./option.mjs";
+import { pipe } from "./pipe2.mjs";
 
 
 /**
@@ -26,6 +27,41 @@ export function createEolRegex(flags?: string): RegExp {
 export function matchesAny(str: string, regexes: Array<RegExp>): boolean {
     const matchesAny = _.some(regexes, (curRegex) => str.match(curRegex));
     return matchesAny;
+}
+
+
+/**
+ * Determines whether the specified collection of strings includes the specified
+ * string or contains a string that matches the specified regular expression.
+ *
+ * @param strings - The collection of strings to be searched
+ * @param strOrRegex - The string or regular expression to search for
+ * @return An Option containing the found string, or NoneOption if not found
+ */
+export function includesOrIncludesMatch(strings: Iterable<string>, strOrRegex: string | RegExp): Option<string> {
+
+    if (typeof strOrRegex === "string") {
+        // The caller provided a string to search the `strings` array for.  We
+        // can just use Array's includes() methods.
+        return pipe(
+            Array.from(strings),
+            (strings) => {
+                const foundStr = strings.find((curStr) => curStr === strOrRegex);
+                return Option.fromNullable(foundStr);
+            }
+        );
+    }
+
+    // strOrRegex is a RegExp.  We have to iterate through the strings and see
+    // if any match.
+    for (const curStr of strings) {
+        if (curStr.match(strOrRegex)) {
+            return new SomeOption(curStr);
+        }
+    }
+
+    // If we got here, no strings matched.
+    return NoneOption.get();
 }
 
 
