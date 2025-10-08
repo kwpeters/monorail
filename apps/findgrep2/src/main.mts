@@ -1,6 +1,7 @@
 import * as os from "node:os";
 import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
+import chalk from "chalk";
 import { Result, SucceededResult, FailedResult } from "@repo/depot/result";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { pipe } from "@repo/depot/pipe2";
@@ -10,6 +11,7 @@ import { readableStreamToText } from "@repo/depot-node/streamHelpers";
 import { FsPath } from "@repo/depot-node/fsPath";
 import { File } from "@repo/depot-node/file";
 import { strToRegExp } from "@repo/depot/regexpHelpers";
+import { highlightMatches } from "@repo/depot-node/chalkHelpers";
 
 
 interface IConfig {
@@ -54,6 +56,8 @@ async function mainImpl(): Promise<Result<number, string>> {
 
     const config = resConfig.value;
     printConfig(config);
+    const totalMatches = await doTextSearch(config);
+    console.log(`Total matches:  ${totalMatches}`);
 
     return new SucceededResult(0);
 }
@@ -155,4 +159,59 @@ function printConfig(config: IConfig): void {
     }
     console.log(`  Text regex: ${config.textRegex.toString()}`);
     console.log();
+}
+
+
+const styles = {
+    fileStyle:      chalk.cyan,
+    fileMatchStyle: chalk.inverse,
+    lineStyle:      chalk.yellow,
+    textMatchStyle: chalk.inverse
+};
+
+
+/**
+ * Searches for text matches across all files in the configuration.
+ *
+ * @param config - The configuration containing files and text regex
+ * @return The total number of matches found across all files
+ */
+async function doTextSearch(config: IConfig): Promise<number> {
+    let totalMatches = 0;
+    for (const curFile of config.files) {
+        const curMatches = await doTextSearchInFile(curFile, config);
+        totalMatches += curMatches;
+
+        // If the current file had matches, print a blank line if the current file.
+        if (curMatches > 0) {
+            console.log();
+        }
+    }
+    return totalMatches;
+}
+
+
+/**
+ * Searches for and displays text matches within a single file.
+ *
+ * @param file - The file to search within
+ * @param config - The configuration containing the text regex to search for
+ * @return The number of matches found in this file
+ */
+async function doTextSearchInFile(file: File, config: IConfig): Promise<number> {
+    const fileText = styles.fileStyle(file.toString());
+    let totalMatches = 0;
+    await file.readLines((lineText, lineNum) => {
+        const [numMatches, highlightedText] = highlightMatches(
+            lineText,
+            config.textRegex,
+            styles.textMatchStyle
+        );
+        totalMatches += numMatches;
+        if (numMatches > 0) {
+            const lineNumText = styles.lineStyle(`:${lineNum}`);
+            console.log(fileText + lineNumText + " - " + highlightedText);
+        }
+    });
+    return totalMatches;
 }
