@@ -93,7 +93,7 @@ function getLogixFile(): Result<File, string> {
 }
 
 
-function isWorkPc(): boolean {
+export function isWorkPc(): boolean {
     // eslint-disable-next-line turbo/no-undeclared-env-vars
     return !!process.env.WORK_PC;
 }
