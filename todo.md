@@ -1,7 +1,5 @@
 # TODO
 
-- Migrate airliner to this repo.
-
 - To aid performance `commandTo` should isolate all of the directory creation
   operations and complete them before performing the file operations.
 
