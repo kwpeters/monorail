@@ -5,7 +5,6 @@ import { PromiseResult } from "@repo/depot/promiseResult";
 import { dayOfWeek } from "@repo/depot/dateHelpers";
 import { File } from "@repo/depot-node/file";
 import { openInEmacs } from "@repo/depot-node/editor";
-import { insertIf } from "@repo/depot/arrayHelpers";
 import { isWorkPc } from "./index.mjs";
 
 
@@ -136,15 +135,18 @@ function getCaptlogFile(): Result<File, string> {
 async function appendDailyTemplate(captlogFile: File): Promise<Result<void, string>> {
     const delimLine = getDailyDelimiterLine();
 
-    const isFriday = dayOfWeek(new Date(Date.now())) === "Friday";
-
-    const template = [
-        ``,
-        delimLine,
-        `** Meetings`,
-        ...insertIf(isWorkPc(), `** Todo`),
-        ...insertIf(isWorkPc() && isFriday, `*** Cull calendar`),
-    ];
+    const template =
+        isWorkPc() ?
+        [
+            ``,
+            delimLine,
+            `** Meetings`,
+            `** Todo`
+        ] :
+        [
+            ``,
+            delimLine
+        ];
 
     const res = await captlogFile.append(template.join(os.EOL), false);
     if (res.failed) {
