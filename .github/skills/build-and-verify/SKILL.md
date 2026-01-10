@@ -72,3 +72,6 @@ project.  Turborepo performs the needed actions in the correct order based on
 the dependencies between the projects and optimizes the process by running tasks
 in parallel where possible and using previously cached output for projects that
 have not changed.
+
+Note:  This project currently only contains TypeScript projects.  It does not
+contain dotnet projects.
