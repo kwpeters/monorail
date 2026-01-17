@@ -1,4 +1,8 @@
-import { getAttr, getBoolAttr, hasRootElem, toXmlDoc } from "./xmlHelpers.mjs";
+import * as xpath from "xpath";
+import { pipeAsync } from "@repo/depot/pipeAsync2";
+import { pipe } from "@repo/depot/pipe2";
+import { Result } from "@repo/depot/result";
+import { toElement, getAttr, getBoolAttr, hasRootElem, toXmlDoc, getPrecedingXmlComment } from "./xmlHelpers.mjs";
 import { File } from "./file.mjs";
 import { tmpDir } from "./specHelpers.test.mjs";
 
@@ -117,4 +121,220 @@ describe("getBoolAttr()", () => {
         const val = getBoolAttr(doc.documentElement, "val");
         expect(val).toBeTrue();
     });
+});
+
+
+describe("getPrecedingXmlComment()", () => {
+
+    it("returns None when element has no preceding comment", async () => {
+        const xmlStr = `
+            <Root>
+                <ElemA>
+                    <ElemB>
+                        <Target/>
+                    </ElemB>
+                </ElemA>
+            </Root>
+        `;
+
+        const targetElement = await pipeAsync(
+            toXmlDoc(xmlStr),
+            Result.throwIfFailed,
+            (doc) => pipe(
+                xpath.select("//Target", doc, true),
+                toElement
+            )
+        );
+
+        const optComment = getPrecedingXmlComment(targetElement);
+        expect(optComment.isNone).toBeTrue();
+    });
+
+
+    it("returns Some with comment text when element has immediate preceding comment", async () => {
+        const xmlStr = `
+            <Root>
+                <ElemA>
+                    <ElemB>
+                        <!-- This is a test comment -->
+                        <Target/>
+                    </ElemB>
+                </ElemA>
+            </Root>
+        `;
+
+        const targetElement = await pipeAsync(
+            toXmlDoc(xmlStr),
+            Result.throwIfFailed,
+            (doc) => pipe(
+                xpath.select("//Target", doc, true),
+                toElement
+            )
+        );
+
+        const optComment = getPrecedingXmlComment(targetElement);
+        expect(optComment.value).toBe("This is a test comment");
+    });
+
+
+    it("returns Some with comment text when preceded by comment with whitespace nodes in between", async () => {
+        const xmlStr = `
+            <Root>
+                <ElemA>
+                    <ElemB>
+                        <!-- Whitespace comment -->
+
+                        <Target/>
+                    </ElemB>
+                </ElemA>
+            </Root>
+        `;
+
+        const targetElement = await pipeAsync(
+            toXmlDoc(xmlStr),
+            Result.throwIfFailed,
+            (doc) => pipe(
+                xpath.select("//Target", doc, true),
+                toElement
+            )
+        );
+
+        const optComment = getPrecedingXmlComment(targetElement);
+        expect(optComment.value).toBe("Whitespace comment");
+    });
+
+
+    it("returns None when element has preceding comment but intervening element", async () => {
+        const xmlStr = `
+            <Root>
+                <ElemA>
+                    <ElemB>
+                        <!-- This comment should not be found -->
+                        <ElemC/>
+                        <Target/>
+                    </ElemB>
+                </ElemA>
+            </Root>
+        `;
+
+        const targetElement = await pipeAsync(
+            toXmlDoc(xmlStr),
+            Result.throwIfFailed,
+            (doc) => pipe(
+                xpath.select("//Target", doc, true),
+                toElement
+            )
+        );
+
+        const optComment = getPrecedingXmlComment(targetElement);
+        expect(optComment.isNone).toBeTrue();
+    });
+
+
+    it("returns Some with first comment text when multiple comments precede element", async () => {
+        const xmlStr = `
+            <Root>
+                <ElemA>
+                    <ElemB>
+                        <!-- Earlier comment -->
+                        <!-- Immediate comment -->
+                        <Target/>
+                    </ElemB>
+                </ElemA>
+            </Root>
+        `;
+
+        const targetElement = await pipeAsync(
+            toXmlDoc(xmlStr),
+            Result.throwIfFailed,
+            (doc) => pipe(
+                xpath.select("//Target", doc, true),
+                toElement
+            )
+        );
+
+        const optComment = getPrecedingXmlComment(targetElement);
+
+        expect(optComment.value).toBe("Immediate comment");
+    });
+
+
+    it("returns None when element is the first child", async () => {
+        const xmlStr = `
+            <Root>
+                <ElemA>
+                    <!-- Parent comment -->
+                    <ElemB>
+                        <Target/>
+                        <!-- Comment after -->
+                    </ElemB>
+                </ElemA>
+            </Root>
+        `;
+
+        const targetElement = await pipeAsync(
+            toXmlDoc(xmlStr),
+            Result.throwIfFailed,
+            (doc) => pipe(
+                xpath.select("//Target", doc, true),
+                toElement
+            )
+        );
+
+        const optComment = getPrecedingXmlComment(targetElement);
+        expect(optComment.isNone).toBeTrue();
+    });
+
+
+    it("handles empty comment text correctly", async () => {
+        const xmlStr = `
+            <Root>
+                <ElemA>
+                    <ElemB>
+                        <!---->
+                        <Target/>
+                    </ElemB>
+                </ElemA>
+            </Root>
+        `;
+
+        const targetElement = await pipeAsync(
+            toXmlDoc(xmlStr),
+            Result.throwIfFailed,
+            (doc) => pipe(
+                xpath.select("//Target", doc, true),
+                toElement
+            )
+        );
+
+        const optComment = getPrecedingXmlComment(targetElement);
+        expect(optComment.value).toBe("");
+    });
+
+
+    it("trims whitespace from comment text", async () => {
+        const xmlStr = `
+            <Root>
+                <ElemA>
+                    <ElemB>
+                        <!--   Padded comment with spaces   -->
+                        <Target/>
+                    </ElemB>
+                </ElemA>
+            </Root>
+        `;
+
+        const targetElement = await pipeAsync(
+            toXmlDoc(xmlStr),
+            Result.throwIfFailed,
+            (doc) => pipe(
+                xpath.select("//Target", doc, true),
+                toElement
+            )
+        );
+
+        const optComment = getPrecedingXmlComment(targetElement);
+        expect(optComment.value).toBe("Padded comment with spaces");
+    });
+
 });

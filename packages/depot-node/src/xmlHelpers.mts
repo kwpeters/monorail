@@ -453,3 +453,30 @@ export function getBoolAttr(elem: Element, attrName: string): boolean {
     );
     return boolVal;
 }
+
+
+/**
+ * Gets the preceding XML comment for the specified element by traversing
+ * backwards through siblings until a Comment node is found.
+ * @param element - The element to find the preceding comment for
+ * @return A Some Option containing the comment text if found, otherwise None
+ */
+export function getPrecedingXmlComment(element: Element): Option<string> {
+    let currentNode: Node | null = element.previousSibling;
+
+    while (currentNode !== null) {
+        if (currentNode.nodeType === currentNode.COMMENT_NODE) {
+            const commentNode = currentNode as Comment;
+            return new SomeOption(commentNode.textContent?.trim() || "");
+        }
+        else if (currentNode.nodeType === currentNode.ELEMENT_NODE) {
+            // If we encounter another element before finding a comment,
+            // then there's no immediate preceding comment.
+            return NoneOption.get();
+        }
+        // Skip text nodes (typically whitespace) and continue searching
+        currentNode = currentNode.previousSibling;
+    }
+
+    return NoneOption.get();
+}
