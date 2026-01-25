@@ -29,8 +29,8 @@ export interface IHasLength {
 
 export function isIHasLength(other: unknown): other is IHasLength {
     const otherX = other as Partial<IHasLength>;
-    return typeof otherX === "number" ||
-        typeof otherX === "bigint";
+    return typeof otherX.length === "number" ||
+        typeof otherX.length === "bigint";
 }
 
 
