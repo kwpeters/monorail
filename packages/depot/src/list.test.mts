@@ -9,6 +9,7 @@ describe("List", () => {
         it("fromArray() can be used to populate a list", () => {
             const list = List.fromArray([1, 2, 3]);
 
+            expect(list.length).toEqual(3);
             expect(list.getAt(0)).toEqual(1);
             expect(list.getAt(1)).toEqual(2);
             expect(list.getAt(2)).toEqual(3);
@@ -141,7 +142,7 @@ describe("List", () => {
 
     describe("splice()", () => {
 
-        it("will do nothing when the delete count is zero and no items to insert are specified", () => {
+        it("will do nothing when the delete count is zero and no insert items are specified", () => {
             const list = List.fromArray([1, 2, 3, 4, 5]);
             const deleted = list.splice(list.begin().offset(1), 0);
             expect(Array.from(list)).toEqual([1, 2, 3, 4, 5]);
