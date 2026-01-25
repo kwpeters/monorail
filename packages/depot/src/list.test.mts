@@ -1,4 +1,5 @@
 import { List, Iterator } from "./list.mjs";
+import { Option, NoneOption, SomeOption } from "./option.mjs";
 import { randomizedArray } from "./random_data.test.mjs";
 
 
@@ -263,6 +264,76 @@ describe("List", () => {
             }
         });
 
+
+    });
+
+
+    describe("findCycleStart()", () => {
+
+        it("returns none for empty list", () => {
+            const list = new List<number>();
+            expect(list.findCycleStart()).toEqual(NoneOption.get());
+        });
+
+
+        describe("for lists without cycles", () => {
+
+            it("returns none for even length list", () => {
+                const list = List.fromArray([1, 2, 3, 4]);
+                expect(list.findCycleStart()).toEqual(NoneOption.get());
+            });
+
+
+            it("returns none for odd length list", () => {
+                const list = List.fromArray([1, 2, 3, 4, 5]);
+                expect(list.findCycleStart()).toEqual(NoneOption.get());
+            });
+
+        });
+
+
+        describe("for lists with cycles", () => {
+
+            it("returns the start node for even length list with cycle", () => {
+                const list = List.fromArray([1, 2, 3, 4]);
+                // Manually create a cycle: last node (4) points to second node (2)
+                let node = list.begin()._getDLNode(); // 1
+                const cycleStart = node.next; // 2
+                node = node.next.next.next; // 4
+                node.next = cycleStart;
+                const result = list.findCycleStart();
+                expect(result).toEqual(new SomeOption(new Iterator(cycleStart)));
+                expect(Option.throwIfNone(result).value).toEqual(2);
+            });
+
+
+            it("returns the start node for odd length list with cycle", () => {
+                const list = List.fromArray([1, 2, 3, 4, 5]);
+                // Manually create a cycle: last node (5) points to second node (2)
+                let node = list.begin()._getDLNode(); // 1
+                const cycleStart = node.next; // 2
+                while (node.next.nodeType === "DLNodeValue") {
+                    node = node.next;
+                }
+                // node is 5
+                node.next = cycleStart;
+                const result = list.findCycleStart();
+                expect(result).toEqual(new SomeOption(new Iterator(cycleStart)));
+                expect(Option.throwIfNone(result).value).toEqual(2);
+            });
+
+
+            it("returns the start node for a self-loop cycle", () => {
+                const list = List.fromArray([1]);
+                // Manually create a self-loop: node points to itself
+                const node = list.begin()._getDLNode(); // 1
+                node.next = node; // Self-loop
+                const result = list.findCycleStart();
+                expect(result).toEqual(new SomeOption(new Iterator(node)));
+                expect(Option.throwIfNone(result).value).toEqual(1);
+            });
+
+        });
 
     });
 

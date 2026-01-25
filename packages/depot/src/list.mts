@@ -1,4 +1,5 @@
 import {advance, partition} from "./algorithm.mjs";
+import { Option, NoneOption, SomeOption } from "./option.mjs";
 
 function link<TValue>(prev: DLNode<TValue>, next: DLNode<TValue>): void {
     prev.next = next;
@@ -299,6 +300,51 @@ export class List<TValue> implements Iterable<TValue> {
 
     public quicksort(): void {
         this.quicksortImpl(this.begin(), this.end());
+    }
+
+
+    /**
+     * Detects if there is a cycle in the list using the fast and slow pointer
+     * technique. If a cycle exists, returns an iterator to the node where the
+     * cycle starts; otherwise, returns none.
+     * @returns An Option containing an iterator to the node where the cycle
+     * starts, or none if no cycle exists.
+     * @note The returned iterator is valid only if the list remains unmodified
+     * after detection.
+     */
+    public findCycleStart(): Option<Iterator<TValue>> {
+        if (this.isEmpty) {
+            return NoneOption.get();
+        }
+
+        let slow: DLNode<TValue> = this._end.next;
+        let fast: DLNode<TValue> = this._end.next;
+
+        // Use fast and slow pointers to detect a cycle.
+        // Fast moves twice as fast as slow. If there's a cycle, fast will
+        // eventually catch up to slow because the cycle creates a loop where
+        // fast gains ground on slow with each step.
+        while (fast.nodeType === "DLNodeValue" && fast.next.nodeType === "DLNodeValue") {
+            slow = slow.next;
+            fast = fast.next.next;
+
+            if (slow === fast) {
+                // Cycle detected. Now find the start of the cycle.
+                // Reset slow2 to the head of the list. Move both slow2 and fast
+                // one step at a time. When they meet again, that point is the
+                // start of the cycle, because the distance from head to cycle
+                // start equals the distance from the meeting point to cycle
+                // start.
+                let slow2: DLNode<TValue> = this._end.next;
+                while (slow2 !== fast) {
+                    slow2 = slow2.next;
+                    fast = fast.next;
+                }
+                return new SomeOption(new Iterator(slow2));
+            }
+        }
+
+        return NoneOption.get();
     }
 
 
