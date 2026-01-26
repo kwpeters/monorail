@@ -1,4 +1,5 @@
-import { factorial, permutations } from "./mathHelpers.mjs";
+import { factorial, permutations, tryBigIntToNumber } from "./mathHelpers.mjs";
+import { Option, NoneOption, SomeOption } from "./option.mjs";
 
 
 describe("factorial()", () => {
@@ -65,6 +66,40 @@ describe("permutations()", () => {
         expect(() => permutations(3, [1])).toThrowError("Each duplicate count must be an integer > 1.");
         expect(() => permutations(3, [2.5])).toThrowError("Each duplicate count must be an integer > 1.");
         expect(() => permutations(3, [4])).toThrowError("Invalid duplicate counts: sum exceeds n or negative uniques.");
+    });
+
+});
+
+
+describe("tryBigIntToNumber()", () => {
+
+    it("returns Some for small BigInts that fit in number", () => {
+        let result = tryBigIntToNumber(0n);
+        expect(result.isSome).toBe(true);
+        expect(result.value).toBe(0);
+
+        result = tryBigIntToNumber(1n);
+        expect(result.isSome).toBe(true);
+        expect(result.value).toBe(1);
+
+        result = tryBigIntToNumber(100n);
+        expect(result.isSome).toBe(true);
+        expect(result.value).toBe(100);
+
+        result = tryBigIntToNumber(9007199254740991n);
+        expect(result.isSome).toBe(true);
+        expect(result.value).toBe(9007199254740991);
+    });
+
+    it("returns None for large BigInts that don't fit", () => {
+        let result = tryBigIntToNumber(9007199254740992n);
+        expect(result.isNone).toBe(true);
+
+        result = tryBigIntToNumber(10000000000000000n);
+        expect(result.isNone).toBe(true);
+
+        result = tryBigIntToNumber(factorial(25));
+        expect(result.isNone).toBe(true);
     });
 
 });

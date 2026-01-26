@@ -1,3 +1,5 @@
+import { Option, NoneOption, SomeOption } from "./option.mjs";
+
 const factorialCache: Array<bigint> = [];
 const FACTORIAL_THRESHOLD = 100;
 
@@ -95,4 +97,29 @@ export function permutations(n: number, duplicateCounts: number[] = []): bigint 
         denominator *= factorial(count);
     }
     return factorial(n) / denominator;
+}
+
+
+/**
+ * Tests if a BigInt can be safely converted to a regular number without
+ * precision loss. Returns Some(number) if convertible, None otherwise.
+ *
+ * @param val - The BigInt to test for conversion.
+ * @return An Option containing the number if conversion is safe, None if not.
+ */
+export function tryBigIntToNumber(val: bigint): Option<number> {
+    // Check if the bigint is within the safe integer range
+    if (val < Number.MIN_SAFE_INTEGER || val > Number.MAX_SAFE_INTEGER) {
+        return NoneOption.get();
+    }
+
+    // Convert to number
+    const num = Number(val);
+
+    // Verify the conversion is exact by converting back
+    if (BigInt(num) !== val) {
+        return NoneOption.get();
+    }
+
+    return new SomeOption(num);
 }
