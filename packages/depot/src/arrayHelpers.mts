@@ -326,9 +326,9 @@ export async function chooseAsync<TIn, TOut, TError>(
     collection: Iterable<TIn>
 ): Promise<Array<TOut>> {
 
-    const promises = [] as Array<Result<TOut, TError> | Promise<Result<TOut, TError>>>;
+    const promises = [] as Array<Promise<Result<TOut, TError>>>;
     for (const curVal of collection) {
-        promises.push(fn(curVal));
+        promises.push(Promise.resolve(fn(curVal)));
     }
 
     const mappedResults = await Promise.all(promises);

@@ -156,7 +156,7 @@ export function toggleComment(linesToToggle: string, precedingLine?: string): st
     // eslint-disable-next-line prefer-named-capture-group
     const firstNonWhitespace = /\s*(\S\S)/m;
     const match = firstNonWhitespace.exec(linesToToggle);
-    if (match && match[1] === "//") {
+    if (match?.[1] === "//") {
         return uncomment(linesToToggle);
     }
     else {

@@ -56,7 +56,7 @@ export class VoMap<TKey, TVal> implements Iterable<[TKey, TVal]>, Map<TKey, TVal
      * with other language features such as for...of, Array.from() and spread
      * operator.
      */
-    *[Symbol.iterator](): IterableIterator<[TKey, TVal]> {
+    *[Symbol.iterator](): MapIterator<[TKey, TVal]> {
         // Get an iterator to the backing store's map, and use it in this
         // implementation.
         const iter = this._backingStore[Symbol.iterator]();
@@ -76,7 +76,7 @@ export class VoMap<TKey, TVal> implements Iterable<[TKey, TVal]>, Map<TKey, TVal
     /**
      * Returns an Iterator the yields this map's key-value pairs.
      */
-    *entries(): IterableIterator<[TKey, TVal]> {
+    *entries(): MapIterator<[TKey, TVal]> {
         // Get an iterator to the backing store's map, and use it in this
         // implementation.
         const iter = this._backingStore[Symbol.iterator]();
@@ -96,7 +96,7 @@ export class VoMap<TKey, TVal> implements Iterable<[TKey, TVal]>, Map<TKey, TVal
     /**
      * Returns an Iterator that yields this map's keys.
      */
-    *keys(): IterableIterator<TKey> {
+    *keys(): MapIterator<TKey> {
         const iter = this._backingStore[Symbol.iterator]();
 
         while (true) {
@@ -114,7 +114,7 @@ export class VoMap<TKey, TVal> implements Iterable<[TKey, TVal]>, Map<TKey, TVal
     /**
      * Returns an Iterator that yields this map's values.
      */
-    *values(): IterableIterator<TVal> {
+    *values(): MapIterator<TVal> {
         const iter = this._backingStore[Symbol.iterator]();
 
         while (true) {

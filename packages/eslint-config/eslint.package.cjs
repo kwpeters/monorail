@@ -6,7 +6,7 @@ const project = resolve(process.cwd(), "tsconfig.json");
 module.exports = {
     parser: "@typescript-eslint/parser",
     "parserOptions": {
-        "tsconfigRootDir": ".",
+        "tsconfigRootDir": process.cwd(),
         "project": [
             project
             // TODO: Given that the cwd is correct we could just specify the TS

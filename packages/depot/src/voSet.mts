@@ -108,7 +108,7 @@ export class VoSet<TVal> implements Iterable<TVal>, ReadonlySet<TVal> {
      * with other language features such as for...of, Array.from() and spread
      * operator.
      */
-    public *[Symbol.iterator](): IterableIterator<TVal> {
+    public *[Symbol.iterator](): SetIterator<TVal> {
         // Use the backing store Set in this implementation.
         const iter = this._backingStore[Symbol.iterator]();
 
@@ -127,7 +127,7 @@ export class VoSet<TVal> implements Iterable<TVal>, ReadonlySet<TVal> {
     /**
      * Returns an Iterator the yields this set's key-value pairs.
      */
-    public *entries(): IterableIterator<[TVal, TVal]> {
+    public *entries(): SetIterator<[TVal, TVal]> {
         // Use the backing store Set for this implementation.
         const iter = this._backingStore[Symbol.iterator]();
 
@@ -146,7 +146,7 @@ export class VoSet<TVal> implements Iterable<TVal>, ReadonlySet<TVal> {
     /**
      * Returns an Iterator that yields this set's keys.
      */
-    public *keys(): IterableIterator<TVal> {
+    public *keys(): SetIterator<TVal> {
         const iter = this._backingStore[Symbol.iterator]();
 
         while (true) {
@@ -164,7 +164,7 @@ export class VoSet<TVal> implements Iterable<TVal>, ReadonlySet<TVal> {
     /**
      * Returns an Iterator that yields this set's values.
      */
-    public *values(): IterableIterator<TVal> {
+    public *values(): SetIterator<TVal> {
         const iter = this._backingStore[Symbol.iterator]();
 
         while (true) {

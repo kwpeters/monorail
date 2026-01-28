@@ -663,7 +663,7 @@ export class Directory {
                 return curSubdir.copy(destDir, true);
             });
 
-            return Promise.all(_.concat<Array<Promise<File | Directory>>>(fileCopyPromises, dirCopyPromises));
+            return Promise.all([...fileCopyPromises, ...dirCopyPromises]);
         })
         .then(() => {
             return destDir;

@@ -293,7 +293,7 @@ export function toPostfix(
             }
 
             const topOperator = operatorStack.pop();
-            if (topOperator === undefined || topOperator.symbol !== "(") {
+            if (topOperator?.symbol !== "(") {
                 return new FailedResult(`Operator stack invalid after finding "(".`);
             }
             // We intentionally do nothing with the popped "(".  Discard it.

@@ -257,7 +257,7 @@ export class GitBranch {
                     // TODO: Convert the following regex to use named capture groups.
                     // eslint-disable-next-line prefer-named-capture-group
                     const matches = /^[*]?\s+([\w/.-]+)\s+([0-9a-fA-F]+)\s+(.*)$/.exec(curLine);
-                    if (matches && matches[1] === this.name) {
+                    if (matches?.[1] === this.name) {
                         acc.push(matches[3]!);
                     }
                     return acc;
