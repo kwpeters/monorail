@@ -1,5 +1,5 @@
 {
-  "$schema": "https://turbo.build/schema.json",
+  "$schema": "https://v2.turborepo.dev/schema.json",
   "ui": "tui",
   // turbo's daemon runs constantly and makes it impossible to delete the
   // node_modules folder.  The daemon can be stopped by running "npx turbo
@@ -11,26 +11,31 @@
   ],
   "tasks": {
     "build": {
+      "description": "Build all packages and applications",
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*", "!README.md", "!**/*.test.mts"],
       "outputs": ["dist"]
     },
     "lint": {
+      "description": "Lint all packages and applications",
         // Linting does not depend on anything from any other project.  So run
         // with maximum parallelism.
       "dependsOn": []
     },
     "dev": {
+      "description": "Start development servers",
       "cache": false,
       "persistent": true
     },
     "test": {
+      "description": "Run unit tests",
         // Running unit tests does not depend on anything from any other
         // project.  So run with maximum parallelism.
         "dependsOn": [],
         "outputs": []
     },
     "type-check": {
+      "description": "compile all packages and applications, including unit tests",
         "dependsOn": [
             "^type-check"
         ],
@@ -42,6 +47,7 @@
         ]
     },
     "depcheck": {
+      "description": "Check for unused and missing dependencies",
         // Running depcheck does not depend on anything from any other
         // project.  So run with maximum parallelism.
         "dependsOn": [],
