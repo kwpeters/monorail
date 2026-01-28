@@ -25,7 +25,7 @@
         "@repo/typescript-config": "*",
         "@stylistic/eslint-plugin": "^2.8.0",
         "@types/jasmine": "^5.1.4",
-        "@types/node": "20.*.*",
+        "@types/node": "25.*.*",
         "@types/yargs": "^17.0.24",
         "@typescript-eslint/eslint-plugin": "^8.6.0",
         "@typescript-eslint/parser": "^8.6.0",
