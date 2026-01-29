@@ -236,7 +236,7 @@ export class NodePackage {
             spawnOptions.shell = true;
         }
 
-        return spawn("npm", ["pack"], spawnOptions)
+        return spawn("npm pack", [], spawnOptions)
         .closePromise
         .then((stdout: string) => {
             return new File(this._pkgDir, stdout);

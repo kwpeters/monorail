@@ -33,7 +33,7 @@ export class NodePackageScript {
 
 
     public run(): ISpawnOutput {
-        const output = spawn("npm", ["run", this.name], {shell: true, cwd: this.nodePkg.directory.toString()});
+        const output = spawn(`npm run ${this.name}`, [], {shell: true, cwd: this.nodePkg.directory.toString()});
         return output;
     }
 }

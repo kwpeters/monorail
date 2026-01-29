@@ -102,7 +102,15 @@ export function spawn(
                 {stdio: [process.stdin, "pipe", "pipe"]}
             );
 
-            childProcess = cp.spawn(cmd, args, spawnOptions);
+            // When shell: true is set, concatenate cmd and args to avoid the
+            // Node.js warning about passing args with shell option.
+            if (spawnOptions.shell === true && args.length > 0) {
+                const fullCommand = `${cmd} ${args.join(" ")}`;
+                childProcess = cp.spawn(fullCommand, [], spawnOptions);
+            }
+            else {
+                childProcess = cp.spawn(cmd, args, spawnOptions);
+            }
 
             const outputStream = stdoutStream || new NullStream();
 

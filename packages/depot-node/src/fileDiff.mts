@@ -16,9 +16,10 @@ export async function showVsCodeDiff(fileA: File, fileB: File, useExisting = fal
         `"${fileB.toString() }"`
     ];
 
+    const commandLine = `${cmd} ${args.join(" ")}`;
     const spawnOptions = { shell: true, windowsVerbatimArguments: true };
 
-    const spawnOut = spawn(cmd, args, spawnOptions);
+    const spawnOut = spawn(commandLine, [], spawnOptions);
     await spawnOut.closePromise;
     return undefined;
 }
