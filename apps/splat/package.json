@@ -6,7 +6,7 @@
         "dev": "echo 'Add dev script here'",
         "build": "npm run build:ts && npm run build:sea",
         "build:ts": "tsc --build tsconfig.src.json",
-        "build:sea": "tsx ../build-app-assist/src/index.mts cjsToSeaApp --inputCjsFile ./dist/index.cjs --exeBaseName splat",
+        "build:sea": "tsx ../build-app-assist/src/index.mts cjsToSeaApp2 --inputCjsFile ./dist/index.cjs --exeBaseName splat",
         "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
         "lint": "eslint --format unix ./src",
         "type-check": "tsc --project tsconfig.json --noEmit",

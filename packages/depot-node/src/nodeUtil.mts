@@ -1,5 +1,7 @@
 import {constants} from "node:fs";
 import {EOL} from "node:os";
+import * as childProcess from "node:child_process";
+import { promisify } from "node:util";
 import * as _ from "lodash-es";
 import { mapAsync } from "@repo/depot/promiseHelpers";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
@@ -9,6 +11,7 @@ import {File} from "./file.mjs";
 import { getOs, OperatingSystem } from "./os.mjs";
 
 
+const exec = promisify(childProcess.exec);
 const SHEBANG = "#!";
 const NODEJS_SHEBANG = "#!/usr/bin/env node";
 
@@ -245,4 +248,24 @@ export function getLaunchScriptCode(
         scriptFile: new File(launchScriptDir, `${baseName}.cmd` ),
         scriptCode: lines.join(EOL)
     });
+}
+
+
+/**
+ * Gets the absolute path to the Node.js executable.
+ *
+ * @return If successful, a successful Result containing the path to the Node
+ *     executable. If unsuccessful, a failed Result with an error message.
+ */
+export async function getNodeExePath(): Promise<Result<File, string>> {
+    try {
+        const cmdGetNodePath = `node -e "console.log(process.execPath)"`;
+        const streamContents = await exec(cmdGetNodePath);
+        const nodeExePath = streamContents.stdout.trim();
+        return new SucceededResult(new File(nodeExePath));
+    }
+    catch (err) {
+        const errTyped = err as childProcess.ExecException & { stdout: string, stderr: string; };
+        return new FailedResult(`Failed to get Node executable path. ${errTyped.stderr}`);
+    }
 }
