@@ -23,7 +23,16 @@ export function launch(cmd: string, args: Array<string>, spawnOptions?: cp.Spawn
         options = Object.assign(options, spawnOptions);
     }
 
-    const childProc = cp.spawn(cmd, args, options);
+    // When shell: true is set, concatenate cmd and args to avoid the
+    // Node.js warning about passing args with shell option.
+    let childProc: cp.ChildProcess;
+    if (options.shell === true && args.length > 0) {
+        const fullCommand = `${cmd} ${args.join(" ")}`;
+        childProc = cp.spawn(fullCommand, [], options);
+    }
+    else {
+        childProc = cp.spawn(cmd, args, options);
+    }
 
     // Unreference the child process so that it will not prevent this process
     // from exiting.
