@@ -204,6 +204,10 @@
             "types": "./src/poll.mts",
             "default": "./dist/poll.mjs"
         },
+        "./positiveInteger": {
+            "types": "./src/positiveInteger.mts",
+            "default": "./dist/positiveInteger.mjs"
+        },
         "./primitiveDataType": {
             "types": "./src/primitiveDataType.mts",
             "default": "./dist/primitiveDataType.mjs"
