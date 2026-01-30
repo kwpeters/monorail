@@ -13,46 +13,46 @@ import { Directory } from "@repo/depot-node/directory";
 //
 // ExecutableSubject
 //
-export const executableSubjectSchema = z.object({
+export const executableSubjectSchema = z.strictObject({
     type:       z.literal("ISubjectExecutable"),
     name:       z.string(),
     executable: z.string(),
     args:       z.array(z.string()),
     cwd:        z.string().optional()
-}).strict();
+});
 export type ExecutableSubject = z.infer<typeof executableSubjectSchema>;
 
 
 //
 // FsItemSubject
 //
-export const fsItemSubjectSchema = z.object({
+export const fsItemSubjectSchema = z.strictObject({
     type: z.literal("ISubjectFsItem"),
     name: z.string(),
     path: z.string()
-}).strict();
+});
 export type FsItemSubject = z.infer<typeof fsItemSubjectSchema>;
 
 
 //
 // UrlSubject
 //
-export const urlSubjectSchema = z.object({
+export const urlSubjectSchema = z.strictObject({
     type: z.literal("ISubjectUrl"),
     name: z.string(),
     url:  z.string()
-}).strict();
+});
 export type UrlSubject = z.infer<typeof urlSubjectSchema>;
 
 
 //
 // ClipboardSubject
 //
-export const clipboardSubjectSchema = z.object({
+export const clipboardSubjectSchema = z.strictObject({
     type: z.literal("ISubjectClipboardText"),
     name: z.string(),
     text: z.string()
-}).strict();
+});
 export type ClipboardSubject = z.infer<typeof clipboardSubjectSchema>;
 
 
