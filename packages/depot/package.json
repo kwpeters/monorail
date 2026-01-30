@@ -172,6 +172,10 @@
             "types": "./src/nonnegativeNumber.mts",
             "default": "./dist/nonnegativeNumber.mjs"
         },
+        "./nonnegativeInteger": {
+            "types": "./src/nonnegativeInteger.mts",
+            "default": "./dist/nonnegativeInteger.mjs"
+        },
         "./numericRange": {
             "types": "./src/numericRange.mts",
             "default": "./dist/numericRange.mjs"
