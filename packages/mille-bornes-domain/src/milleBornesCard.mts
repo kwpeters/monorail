@@ -1,5 +1,6 @@
 import { inspect } from "@repo/depot/inspect";
 import { NoneOption, Option, SomeOption } from "@repo/depot/option";
+import { NonnegativeInteger } from "@repo/depot/nonnegativeInteger";
 
 
 /**
@@ -97,11 +98,11 @@ export function milleBornesCardKeyName(milleBornesCard: MilleBornesCard): MilleB
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
- * A mapped type where keys are MilleBornesCard keys and values are the number
- * of cards.
+ * A mapped type where keys are MilleBornesCard keys and values are the
+ * count of cards as NonnegativeInteger.
  */
 export type CardCounts = {
-    [K in MilleBornesCardKey]: number;
+    [K in MilleBornesCardKey]: NonnegativeInteger;
 };
 
 
@@ -109,26 +110,26 @@ export type CardCounts = {
  * An object containing the standard count of each card type in a standard
  * Mille Bornes deck.
  */
-const standardCardCounts: CardCounts = {
-    dist25:          10,
-    dist50:          10,
-    dist75:          10,
-    dist100:         12,
-    dist200:         4,
-    accident:        3,
-    outOfGas:        3,
-    flatTire:        3,
-    speedLimit:      4,
-    stop:            5,
-    repairs:         6,
-    gasoline:        6,
-    spareTire:       6,
-    endOfSpeedLimit: 6,
-    roll:            14,
-    drivingAce:      1,
-    extraTank:       1,
-    punctureProof:   1,
-    rightOfWay:      1,
+export const standardCardCounts: CardCounts = {
+    dist25:          NonnegativeInteger.create(10),
+    dist50:          NonnegativeInteger.create(10),
+    dist75:          NonnegativeInteger.create(10),
+    dist100:         NonnegativeInteger.create(12),
+    dist200:         NonnegativeInteger.create(4),
+    accident:        NonnegativeInteger.create(3),
+    outOfGas:        NonnegativeInteger.create(3),
+    flatTire:        NonnegativeInteger.create(3),
+    speedLimit:      NonnegativeInteger.create(4),
+    stop:            NonnegativeInteger.create(5),
+    repairs:         NonnegativeInteger.create(6),
+    gasoline:        NonnegativeInteger.create(6),
+    spareTire:       NonnegativeInteger.create(6),
+    endOfSpeedLimit: NonnegativeInteger.create(6),
+    roll:            NonnegativeInteger.create(14),
+    drivingAce:      NonnegativeInteger.create(1),
+    extraTank:       NonnegativeInteger.create(1),
+    punctureProof:   NonnegativeInteger.create(1),
+    rightOfWay:      NonnegativeInteger.create(1),
 };
 
 
