@@ -8,7 +8,7 @@
         "build:ts": "tsc --build tsconfig.src.json",
         "build:sea": "tsx ../build-app-assist/src/index.mts cjsToSeaApp2 --inputCjsFile ./dist/index.cjs --exeBaseName findgrep",
         "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
-        "lint": "eslint --format unix --format unix ./src",
+        "lint": "eslint --format unix ./src",
         "type-check": "tsc --project tsconfig.json --noEmit",
         "depcheck": "depcheck"
     },

@@ -63,7 +63,7 @@
         "build-prod": "npm run type-check && npm run esbuild-prod",
 
         "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
-        "lint": "eslint --format unix --format unix ./src",
+        "lint": "eslint --format unix ./src",
         "type-check": "tsc --project tsconfig.json --noEmit",
         "depcheck": "depcheck",
         "esbuild-dev": "node esbuild.js",
