@@ -4,7 +4,7 @@
     "skip-missing": true,
     "ignores": [
         "@types/jasmine",
-        "jasmine",
-        "postject"
+        "esbuild",
+        "jasmine"
     ]
 }

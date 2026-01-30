@@ -16,7 +16,7 @@
     "dependencies": {
         "@repo/depot": "*",
         "@repo/depot-node": "*",
-        "postject": "^1.0.0-alpha.6",
+        "esbuild": "^0.25.3",
         "yargs": "^17.7.2"
     },
     "devDependencies": {

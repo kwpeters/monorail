@@ -6,8 +6,6 @@
         "@repo/build-app-assist",
         "@types/jasmine",
         "@types/node",
-        "esbuild",
-        "jasmine",
-        "postject"
+        "jasmine"
     ]
 }

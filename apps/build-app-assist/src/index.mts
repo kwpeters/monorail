@@ -6,7 +6,6 @@ import { Result, SucceededResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
 
 // Command modules
-import { def as cmdDefCjsToSeaApp } from "./commandCjsToSeaApp.mjs";
 import { def as cmdDefCjsToSeaApp2 } from "./commandCjsToSeaApp2.mjs";
 import { def as cmdDefCreateRepoBin} from "./commandCreateRepoBin.mjs";
 
@@ -47,14 +46,6 @@ async function main(): Promise<Result<number, string>> {
         [
             "Provides commands that help build apps within this repo."
         ].join(os.EOL)
-    )
-    .command(
-        cmdDefCjsToSeaApp.command,
-        cmdDefCjsToSeaApp.description,
-        cmdDefCjsToSeaApp.builder,
-        async (argv) => {
-            retVal = await cmdDefCjsToSeaApp.handler(argv);
-        }
     )
     .command(
         cmdDefCjsToSeaApp2.command,
