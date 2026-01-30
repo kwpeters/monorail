@@ -110,7 +110,7 @@ export type CardCounts = {
  * An object containing the standard count of each card type in a standard
  * Mille Bornes deck.
  */
-export const standardCardCounts: CardCounts = {
+export const standardCardCounts = {
     dist25:          NonnegativeInteger.create(10),
     dist50:          NonnegativeInteger.create(10),
     dist75:          NonnegativeInteger.create(10),
@@ -130,7 +130,7 @@ export const standardCardCounts: CardCounts = {
     extraTank:       NonnegativeInteger.create(1),
     punctureProof:   NonnegativeInteger.create(1),
     rightOfWay:      NonnegativeInteger.create(1),
-};
+} as const satisfies CardCounts;
 
 
 /**
