@@ -7,7 +7,7 @@ import { type CardCounts, standardCardCounts, MilleBornesCard } from "./milleBor
 describe("createDeck()", () => {
 
     it("creates a deck with the correct number of cards when multiplier is 1", () => {
-        const deck = createDeck(standardCardCounts, PositiveInteger.create(1)).throwIfFailed();
+        const deck = createDeck(standardCardCounts).throwIfFailed();
 
         expect(deck.length).toEqual(106);
         expect(deck.filter((card) => card === MilleBornesCard.dist25).length).toEqual(10);
@@ -71,7 +71,7 @@ describe("createDeck()", () => {
             rightOfWay:      NonnegativeInteger.create(0),
         };
 
-        const result = createDeck(cardCounts, PositiveInteger.create(1));
+        const result = createDeck(cardCounts);
         expect(result.failed).toBeTruthy();
     });
 
@@ -82,7 +82,7 @@ describe("shuffleDeck()", () => {
 
     it("returns a shuffled deck with the same number of cards", () => {
 
-        const unshuffledDeck = createDeck(standardCardCounts, PositiveInteger.create(1)).throwIfFailed();
+        const unshuffledDeck = createDeck(standardCardCounts).throwIfFailed();
         const shuffledDeck = shuffleDeck(unshuffledDeck);
 
         expect(shuffledDeck.length).toEqual(106);
@@ -113,7 +113,7 @@ describe("shuffleDeck()", () => {
             rightOfWay:      NonnegativeInteger.create(1),
         };
 
-        const deck = createDeck(cardCounts, PositiveInteger.create(1)).throwIfFailed();
+        const deck = createDeck(cardCounts).throwIfFailed();
         const shuffledDeck = shuffleDeck(deck);
 
         expect(shuffledDeck.filter((card) => card === MilleBornesCard.dist25).length).toEqual(5);

@@ -27,7 +27,10 @@ export type MilleBornesShuffledDeck = Brand<Array<MilleBornesCard>, "MilleBornes
  * @return If successful, a successful Result containing the new
  * MilleBornesDeck.  Otherwise, a failed Result containing an error message.
  */
-export function createDeck(cardCounts: CardCounts, multiplier: PositiveInteger): Result<MilleBornesDeck, string> {
+export function createDeck(
+    cardCounts: CardCounts,
+    multiplier = PositiveInteger.create(1)
+): Result<MilleBornesDeck, string> {
     const deck: Array<MilleBornesCard> = [];
 
     for (const [cardKey, count] of Object.entries(cardCounts)) {
