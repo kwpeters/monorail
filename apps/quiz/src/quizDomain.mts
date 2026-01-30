@@ -13,7 +13,7 @@ export type PromptSingleLine = z.infer<typeof schemaPromptSingleLine>;
 
 export const schemaPromptMultiLine = z.object({
     type:   z.literal("PromptMultiLine"),
-    prompt: z.array(z.string()).nonempty()
+    prompt: z.array(z.string()).min(1)
 });
 export type PromptMultiLine = z.infer<typeof schemaPromptMultiLine>;
 
@@ -28,7 +28,7 @@ export type Prompt = z.infer<typeof schemaPrompt>;
 export const schemaAnswerCandidates = z.object({
     type:             z.literal("AnswerCandidates"),
     correctCandidate: z.string().min(1),
-    wrongCandidates:  z.array(z.string().min(1)).nonempty()
+    wrongCandidates:  z.array(z.string().min(1)).min(1)
 });
 export type AnswerCandidates = z.infer<typeof schemaAnswerCandidates>;
 
