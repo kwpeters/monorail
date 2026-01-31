@@ -2,7 +2,7 @@ import * as _ from "lodash-es";
 import { PositiveInteger } from "@repo/depot/positiveInteger";
 import { type Brand } from "@repo/depot/brand";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
-import { type CardCounts, MilleBornesCard } from "./milleBornesCard.mjs";
+import { type CardCountFn, MilleBornesCard, schMilleBornesCard } from "./milleBornesCard.mjs";
 
 
 /**
@@ -22,21 +22,21 @@ export type MilleBornesShuffledDeck = Brand<Array<MilleBornesCard>, "MilleBornes
  * The multiplier allows creating decks with multiple copies of the specified
  * card distribution.
  *
- * @param cardCounts - The count of each card type to include in the deck
+ * @param cardCountFn - A function that returns the count of each card type
  * @param multiplier - The number of times to multiply each card count
  * @return If successful, a successful Result containing the new
  * MilleBornesDeck.  Otherwise, a failed Result containing an error message.
  */
 export function createDeck(
-    cardCounts: CardCounts,
+    cardCountFn: CardCountFn,
     multiplier = PositiveInteger.create(1)
 ): Result<MilleBornesDeck, string> {
     const deck: Array<MilleBornesCard> = [];
 
-    for (const [cardKey, count] of Object.entries(cardCounts)) {
-        const card = MilleBornesCard[cardKey as keyof typeof MilleBornesCard];
+    for (const curCard of schMilleBornesCard.options) {
+        const count = cardCountFn(curCard);
         for (let i = 0; i < count * multiplier; i++) {
-            deck.push(card);
+            deck.push(curCard);
         }
     }
 

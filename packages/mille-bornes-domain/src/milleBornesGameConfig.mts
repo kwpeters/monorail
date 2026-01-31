@@ -1,3 +1,4 @@
+import { safeParse } from "@repo/depot/zodHelpers";
 import { z } from "zod";
 
 
@@ -54,3 +55,15 @@ export const schemaMilleBornesGameConfig = z.object({
     }
 );
 export type MilleBornesGameConfig = z.infer<typeof schemaMilleBornesGameConfig>;
+
+
+export const standardMilleBornesGameConfig: MilleBornesGameConfig = safeParse(
+    schemaMilleBornesGameConfig,
+    {
+        raceDistance:    1000,
+        pointsGoal:      5000,
+        numHumanPlayers: 1,
+        numBotPlayers:   1,
+        numTeams:        2
+    }
+).throwIfFailed();

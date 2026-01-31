@@ -1,13 +1,14 @@
 import { NonnegativeInteger } from "@repo/depot/nonnegativeInteger";
 import { PositiveInteger } from "@repo/depot/positiveInteger";
+import { assertNever } from "@repo/depot/never";
 import { createDeck, shuffleDeck } from "./milleBornesDeck.mjs";
-import { type CardCounts, standardCardCounts, MilleBornesCard } from "./milleBornesCard.mjs";
+import { MilleBornesCard, standardCardCountFn } from "./milleBornesCard.mjs";
 
 
 describe("createDeck()", () => {
 
     it("creates a deck with the correct number of cards when multiplier is 1", () => {
-        const deck = createDeck(standardCardCounts).throwIfFailed();
+        const deck = createDeck(standardCardCountFn).throwIfFailed();
 
         expect(deck.length).toEqual(106);
         expect(deck.filter((card) => card === MilleBornesCard.dist25).length).toEqual(10);
@@ -17,29 +18,37 @@ describe("createDeck()", () => {
 
 
     it("creates a deck with multiplied card counts when multiplier is greater than 1", () => {
-        const cardCounts: CardCounts = {
-            dist25:          NonnegativeInteger.create(2),
-            dist50:          NonnegativeInteger.create(2),
-            dist75:          NonnegativeInteger.create(2),
-            dist100:         NonnegativeInteger.create(2),
-            dist200:         NonnegativeInteger.create(2),
-            accident:        NonnegativeInteger.create(1),
-            outOfGas:        NonnegativeInteger.create(1),
-            flatTire:        NonnegativeInteger.create(1),
-            speedLimit:      NonnegativeInteger.create(1),
-            stop:            NonnegativeInteger.create(1),
-            repairs:         NonnegativeInteger.create(1),
-            gasoline:        NonnegativeInteger.create(1),
-            spareTire:       NonnegativeInteger.create(1),
-            endOfSpeedLimit: NonnegativeInteger.create(1),
-            roll:            NonnegativeInteger.create(2),
-            drivingAce:      NonnegativeInteger.create(1),
-            extraTank:       NonnegativeInteger.create(1),
-            punctureProof:   NonnegativeInteger.create(1),
-            rightOfWay:      NonnegativeInteger.create(1),
+        const cardCountFn = (card: MilleBornesCard) => {
+            switch (card) {
+                case MilleBornesCard.dist25:
+                case MilleBornesCard.dist50:
+                case MilleBornesCard.dist75:
+                case MilleBornesCard.dist100:
+                case MilleBornesCard.dist200:
+                    return NonnegativeInteger.create(2);
+                case MilleBornesCard.accident:
+                case MilleBornesCard.outOfGas:
+                case MilleBornesCard.flatTire:
+                case MilleBornesCard.speedLimit:
+                case MilleBornesCard.stop:
+                case MilleBornesCard.repairs:
+                case MilleBornesCard.gasoline:
+                case MilleBornesCard.spareTire:
+                case MilleBornesCard.endOfSpeedLimit:
+                    return NonnegativeInteger.create(1);
+                case MilleBornesCard.roll:
+                    return NonnegativeInteger.create(2);
+                case MilleBornesCard.drivingAce:
+                case MilleBornesCard.extraTank:
+                case MilleBornesCard.punctureProof:
+                case MilleBornesCard.rightOfWay:
+                    return NonnegativeInteger.create(1);
+                default:
+                    assertNever(card);
+                    break;
+            }
         };
-
-        const deck = createDeck(cardCounts, PositiveInteger.create(3)).throwIfFailed();
+        const deck = createDeck(cardCountFn, PositiveInteger.create(3)).throwIfFailed();
 
         expect(deck.length).toEqual(75);
         expect(deck.filter((card) => card === MilleBornesCard.dist25).length).toEqual(6);
@@ -49,29 +58,35 @@ describe("createDeck()", () => {
 
 
     it("returns a FailedResult when all card counts are zero", () => {
-        const cardCounts: CardCounts = {
-            dist25:          NonnegativeInteger.create(0),
-            dist50:          NonnegativeInteger.create(0),
-            dist75:          NonnegativeInteger.create(0),
-            dist100:         NonnegativeInteger.create(0),
-            dist200:         NonnegativeInteger.create(0),
-            accident:        NonnegativeInteger.create(0),
-            outOfGas:        NonnegativeInteger.create(0),
-            flatTire:        NonnegativeInteger.create(0),
-            speedLimit:      NonnegativeInteger.create(0),
-            stop:            NonnegativeInteger.create(0),
-            repairs:         NonnegativeInteger.create(0),
-            gasoline:        NonnegativeInteger.create(0),
-            spareTire:       NonnegativeInteger.create(0),
-            endOfSpeedLimit: NonnegativeInteger.create(0),
-            roll:            NonnegativeInteger.create(0),
-            drivingAce:      NonnegativeInteger.create(0),
-            extraTank:       NonnegativeInteger.create(0),
-            punctureProof:   NonnegativeInteger.create(0),
-            rightOfWay:      NonnegativeInteger.create(0),
+        const cardCountFn = (card: MilleBornesCard) => {
+            switch (card) {
+                case MilleBornesCard.dist25:
+                case MilleBornesCard.dist50:
+                case MilleBornesCard.dist75:
+                case MilleBornesCard.dist100:
+                case MilleBornesCard.dist200:
+                case MilleBornesCard.accident:
+                case MilleBornesCard.outOfGas:
+                case MilleBornesCard.flatTire:
+                case MilleBornesCard.speedLimit:
+                case MilleBornesCard.stop:
+                case MilleBornesCard.repairs:
+                case MilleBornesCard.gasoline:
+                case MilleBornesCard.spareTire:
+                case MilleBornesCard.endOfSpeedLimit:
+                case MilleBornesCard.roll:
+                case MilleBornesCard.drivingAce:
+                case MilleBornesCard.extraTank:
+                case MilleBornesCard.punctureProof:
+                case MilleBornesCard.rightOfWay:
+                    return NonnegativeInteger.create(0);
+                default:
+                    assertNever(card);
+                    break;
+            }
         };
 
-        const result = createDeck(cardCounts);
+        const result = createDeck(cardCountFn);
         expect(result.failed).toBeTruthy();
     });
 
@@ -82,7 +97,7 @@ describe("shuffleDeck()", () => {
 
     it("returns a shuffled deck with the same number of cards", () => {
 
-        const unshuffledDeck = createDeck(standardCardCounts).throwIfFailed();
+        const unshuffledDeck = createDeck(standardCardCountFn).throwIfFailed();
         const shuffledDeck = shuffleDeck(unshuffledDeck);
 
         expect(shuffledDeck.length).toEqual(106);
@@ -91,29 +106,39 @@ describe("shuffleDeck()", () => {
 
 
     it("returns a shuffled deck containing the same cards as the original", () => {
-        const cardCounts: CardCounts = {
-            dist25:          NonnegativeInteger.create(5),
-            dist50:          NonnegativeInteger.create(5),
-            dist75:          NonnegativeInteger.create(5),
-            dist100:         NonnegativeInteger.create(5),
-            dist200:         NonnegativeInteger.create(5),
-            accident:        NonnegativeInteger.create(2),
-            outOfGas:        NonnegativeInteger.create(2),
-            flatTire:        NonnegativeInteger.create(2),
-            speedLimit:      NonnegativeInteger.create(2),
-            stop:            NonnegativeInteger.create(2),
-            repairs:         NonnegativeInteger.create(3),
-            gasoline:        NonnegativeInteger.create(3),
-            spareTire:       NonnegativeInteger.create(3),
-            endOfSpeedLimit: NonnegativeInteger.create(3),
-            roll:            NonnegativeInteger.create(7),
-            drivingAce:      NonnegativeInteger.create(1),
-            extraTank:       NonnegativeInteger.create(1),
-            punctureProof:   NonnegativeInteger.create(1),
-            rightOfWay:      NonnegativeInteger.create(1),
+        const cardCountFn = (card: MilleBornesCard) => {
+            switch (card) {
+                case MilleBornesCard.dist25:
+                case MilleBornesCard.dist50:
+                case MilleBornesCard.dist75:
+                case MilleBornesCard.dist100:
+                case MilleBornesCard.dist200:
+                    return NonnegativeInteger.create(5);
+                case MilleBornesCard.accident:
+                case MilleBornesCard.outOfGas:
+                case MilleBornesCard.flatTire:
+                case MilleBornesCard.speedLimit:
+                case MilleBornesCard.stop:
+                    return NonnegativeInteger.create(2);
+                case MilleBornesCard.repairs:
+                case MilleBornesCard.gasoline:
+                case MilleBornesCard.spareTire:
+                case MilleBornesCard.endOfSpeedLimit:
+                    return NonnegativeInteger.create(3);
+                case MilleBornesCard.roll:
+                    return NonnegativeInteger.create(7);
+                case MilleBornesCard.drivingAce:
+                case MilleBornesCard.extraTank:
+                case MilleBornesCard.punctureProof:
+                case MilleBornesCard.rightOfWay:
+                    return NonnegativeInteger.create(1);
+                default:
+                    assertNever(card);
+                    break;
+            }
         };
 
-        const deck = createDeck(cardCounts).throwIfFailed();
+        const deck = createDeck(cardCountFn).throwIfFailed();
         const shuffledDeck = shuffleDeck(deck);
 
         expect(shuffledDeck.filter((card) => card === MilleBornesCard.dist25).length).toEqual(5);
