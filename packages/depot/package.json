@@ -315,6 +315,10 @@
         "./voSet": {
             "types": "./src/voSet.mts",
             "default": "./dist/voSet.mjs"
+        },
+        "./zodHelpers": {
+            "types": "./src/zodHelpers.mts",
+            "default": "./dist/zodHelpers.mjs"
         }
     },
     "dependencies": {
@@ -325,7 +329,8 @@
         "tweetnacl": "^1.0.3",
         "url-join": "^5.0.0",
         "url-parse": "^1.5.10",
-        "uuid": "^9.0.0"
+        "uuid": "^9.0.0",
+        "zod": "^4.3.6"
     },
     "devDependencies": {
         "@repo/eslint-config": "*",
