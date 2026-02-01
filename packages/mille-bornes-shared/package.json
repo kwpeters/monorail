@@ -1,5 +1,5 @@
 {
-    "name": "@repo/mille-bornes-domain",
+    "name": "@repo/mille-bornes-shared",
     "version": "0.0.0",
     "type": "module",
     "private": true,
