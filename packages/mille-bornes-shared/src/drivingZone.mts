@@ -1,6 +1,4 @@
 import { z } from "zod";
-import { NoneOption, Option } from "@repo/depot/option";
-import { MilleBornesCard } from "./milleBornesCard.mjs";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -13,14 +11,6 @@ export const RollState = schRollState.enum;
 // Enumerating values of RollState:
 //     for (const cur of Object.values(RollState)) {}
 //     for (const cur of schRollState.options) {}
-
-
-
-
-// TODO: Move to cards file.
-type CalamityHazardCard = typeof MilleBornesCard.accident |
-                          typeof MilleBornesCard.outOfGas |
-                          typeof MilleBornesCard.flatTire;
 
 
 export interface IActiveSafetyCardStatus {

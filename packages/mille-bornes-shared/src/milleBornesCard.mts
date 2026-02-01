@@ -1,6 +1,4 @@
 import { z } from "zod";
-import { inspect } from "@repo/depot/inspect";
-import { NoneOption, Option, SomeOption } from "@repo/depot/option";
 import { NonnegativeInteger } from "@repo/depot/nonnegativeInteger";
 import { assertNever } from "@repo/depot/never";
 
@@ -64,6 +62,15 @@ export type MilleBornesCard = z.infer<typeof schMilleBornesCard>;
 //     // Should never happen, but just in case...
 //     throw new Error(`Failed to find key for MilleBornesCard "${milleBornesCard}".`);
 // }
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Card categories
+////////////////////////////////////////////////////////////////////////////////
+
+export type CalamityHazardCard = typeof MilleBornesCard.accident |
+                          typeof MilleBornesCard.outOfGas |
+                          typeof MilleBornesCard.flatTire;
 
 
 ////////////////////////////////////////////////////////////////////////////////
