@@ -12,9 +12,9 @@
         "depcheck": "depcheck"
     },
     "exports": {
-        "./sampleModule": {
-            "types": "./src/sampleModule.mts",
-            "default": "./dist/sampleModule.mjs"
+        "./milleBornesCard": {
+            "types": "./src/milleBornesCard.mts",
+            "default": "./dist/milleBornesCard.mjs"
         }
     },
     "devDependencies": {
@@ -22,7 +22,6 @@
         "@repo/typescript-config": "*",
         "@stylistic/eslint-plugin": "^2.8.0",
         "@types/jasmine": "^5.1.4",
-        "@types/lodash-es": "^4.17.7",
         "@typescript-eslint/eslint-plugin": "^8.6.0",
         "@typescript-eslint/parser": "^8.6.0",
         "eslint": "^8.57.1",
@@ -30,7 +29,6 @@
     },
     "dependencies": {
         "@repo/depot": "*",
-        "lodash-es": "^4.17.21",
         "zod": "^4.3.6"
     }
 }

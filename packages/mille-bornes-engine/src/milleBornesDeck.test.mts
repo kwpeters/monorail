@@ -1,8 +1,8 @@
 import { NonnegativeInteger } from "@repo/depot/nonnegativeInteger";
 import { PositiveInteger } from "@repo/depot/positiveInteger";
 import { assertNever } from "@repo/depot/never";
+import { MilleBornesCard, standardCardCountFn } from "@repo/mille-bornes-shared/milleBornesCard";
 import { createDeck, shuffleDeck } from "./milleBornesDeck.mjs";
-import { MilleBornesCard, standardCardCountFn } from "./milleBornesCard.mjs";
 
 
 describe("createDeck()", () => {

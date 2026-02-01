@@ -2,7 +2,7 @@ import * as _ from "lodash-es";
 import { PositiveInteger } from "@repo/depot/positiveInteger";
 import { type Brand } from "@repo/depot/brand";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
-import { type CardCountFn, MilleBornesCard, schMilleBornesCard } from "./milleBornesCard.mjs";
+import { type CardCountFn, MilleBornesCard, schMilleBornesCard } from "@repo/mille-bornes-shared/milleBornesCard";
 
 
 /**
