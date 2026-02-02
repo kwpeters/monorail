@@ -67,26 +67,36 @@ export type MilleBornesCard = z.infer<typeof schemaMilleBornesCard>;
 ////////////////////////////////////////////////////////////////////////////////
 
 
-export type DistanceCard =
-    typeof MilleBornesCard.dist25 |
-    typeof MilleBornesCard.dist50 |
-    typeof MilleBornesCard.dist75 |
-    typeof MilleBornesCard.dist100 |
-    typeof MilleBornesCard.dist200;
+export const schemaDistanceCard = schemaMilleBornesCard.extract([
+    "dist25",
+    "dist50",
+    "dist75",
+    "dist100",
+    "dist200",
+]);
+export type DistanceCard = z.infer<typeof schemaDistanceCard>;
 
 
-export type CalamityHazardCard =
-    typeof MilleBornesCard.accident |
-    typeof MilleBornesCard.outOfGas |
-    typeof MilleBornesCard.flatTire;
+export const schemaCalamityHazardCard = schemaMilleBornesCard.extract([
+    "accident",
+    "outOfGas",
+    "flatTire",
+]);
+export type CalamityHazardCard = z.infer<typeof schemaCalamityHazardCard>;
 
-export type CalamityRemedyCard =
-    typeof MilleBornesCard.repairs |
-    typeof MilleBornesCard.gasoline |
-    typeof MilleBornesCard.spareTire;
 
-export type SafetyCard =
-    typeof MilleBornesCard.drivingAce |
-    typeof MilleBornesCard.extraTank |
-    typeof MilleBornesCard.punctureProof |
-    typeof MilleBornesCard.rightOfWay;
+export const schemaCalamityRemedyCard = schemaMilleBornesCard.extract([
+    "repairs",
+    "gasoline",
+    "spareTire",
+]);
+export type CalamityRemedyCard = z.infer<typeof schemaCalamityRemedyCard>;
+
+
+export const schemaSafetyCard = schemaMilleBornesCard.extract([
+    "drivingAce",
+    "extraTank",
+    "punctureProof",
+    "rightOfWay",
+]);
+export type SafetyCard = z.infer<typeof schemaSafetyCard>;
