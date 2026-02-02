@@ -4,13 +4,13 @@ import { z } from "zod";
 ////////////////////////////////////////////////////////////////////////////////
 // RollState
 ////////////////////////////////////////////////////////////////////////////////
-export const schRollState = z.enum(["Stopped", "Roll"]);
-export type RollState = z.infer<typeof schRollState>;
+export const schemaRollState = z.enum(["Stopped", "Roll"]);
+export type RollState = z.infer<typeof schemaRollState>;
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export const RollState = schRollState.enum;
+export const RollState = schemaRollState.enum;
 // Enumerating values of RollState:
 //     for (const cur of Object.values(RollState)) {}
-//     for (const cur of schRollState.options) {}
+//     for (const cur of schemaRollState.options) {}
 
 
 export interface IActiveSafetyCardStatus {
@@ -21,7 +21,7 @@ export interface IActiveSafetyCardStatus {
 
 export const schemaDrivingZone = z.strictObject({
 
-    rollState: schRollState,
+    rollState: schemaRollState,
 
 });
 

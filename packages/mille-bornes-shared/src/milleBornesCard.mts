@@ -25,11 +25,11 @@ export const MilleBornesCard = {
     punctureProof:   "Puncture Proof",
     rightOfWay:      "Right of Way",
 } as const;
-export const schMilleBornesCard = z.enum(MilleBornesCard);
-export type MilleBornesCard = z.infer<typeof schMilleBornesCard>;
+export const schemaMilleBornesCard = z.enum(MilleBornesCard);
+export type MilleBornesCard = z.infer<typeof schemaMilleBornesCard>;
 // Enumerating values of MilleBornesCard:
 //     for (const cur of Object.values(MilleBornesCard)) {}
-//     for (const cur of schMilleBornesCard.options) {}
+//     for (const cur of schemaMilleBornesCard.options) {}
 
 
 // /**

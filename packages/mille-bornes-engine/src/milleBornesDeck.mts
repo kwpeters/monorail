@@ -4,7 +4,7 @@ import { type Brand } from "@repo/depot/brand";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { NonnegativeInteger } from "@repo/depot/nonnegativeInteger";
 import { assertNever } from "@repo/depot/never";
-import { MilleBornesCard, schMilleBornesCard } from "@repo/mille-bornes-shared/milleBornesCard";
+import { MilleBornesCard, schemaMilleBornesCard } from "@repo/mille-bornes-shared/milleBornesCard";
 
 
 /**
@@ -81,7 +81,7 @@ export function createDeck(
 ): Result<MilleBornesDeck, string> {
     const deck: Array<MilleBornesCard> = [];
 
-    for (const curCard of schMilleBornesCard.options) {
+    for (const curCard of schemaMilleBornesCard.options) {
         const count = cardCountFn(curCard);
         for (let i = 0; i < count * multiplier; i++) {
             deck.push(curCard);

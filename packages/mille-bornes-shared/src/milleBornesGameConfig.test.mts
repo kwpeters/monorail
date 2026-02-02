@@ -1,5 +1,6 @@
 import { safeParse } from "@repo/depot/zodHelpers";
-import { schemaMilleBornesGameConfig, schemaRaceDistance, schemaPointsGoal, schemaNumHumanPlayers, schemaNumBotPlayers, schemaNumTeams } from "./milleBornesGameConfig.mjs";
+import { schemaMilleBornesGameConfig, schemaRaceDistance, schemaPointsGoal, schemaNumHumanPlayers,
+         schemaNumBotPlayers, schemaNumTeams } from "./milleBornesGameConfig.mjs";
 
 
 describe("schemaRaceDistance", () => {
