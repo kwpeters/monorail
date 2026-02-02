@@ -1,67 +1,69 @@
 import { z } from "zod";
-
+import { optionSchema } from "@repo/depot/schemaUtility";
+import { schemaCalamityHazardCard, schemaDistanceCard } from "./milleBornesCard.mjs";
 
 ////////////////////////////////////////////////////////////////////////////////
-// RollState
-////////////////////////////////////////////////////////////////////////////////
-export const schemaRollState = z.enum(["Stopped", "Roll"]);
-export type RollState = z.infer<typeof schemaRollState>;
+
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export const RollState = schemaRollState.enum;
+export const RollState = {
+    stopped: "Stopped",
+    roll:    "Roll"
+} as const;
+export const schemaRollState = z.enum(RollState);
+export type RollState = z.infer<typeof schemaRollState>;
 // Enumerating values of RollState:
 //     for (const cur of Object.values(RollState)) {}
 //     for (const cur of schemaRollState.options) {}
 
 
-export interface IActiveSafetyCardStatus {
-    isCoupFourre: boolean;
-}
+// /**
+//  * A type representing a valid key in the RollState enumeration.
+//  * Useful when creating mapped types.  For example:
+//  *     export type RollStateCounts = {
+//  *         [K in RollStateKey]: number;
+//  *     };
+//  */
+// export type RollStateKey = keyof typeof RollState;
+//
+//
+// /**
+//  * Gets the key name for a given RollState value.  Useful when indexing
+//  * into a type (probably a mapped type) that has the same keys as
+//  * RollState.
+//  *
+//  * @param rollState - The RollState to find the key of
+//  * @return The key that corresponds to the specified RollState.
+//  */
+// export function rollStateKey(rollState: RollState): RollStateKey {
+//     for (const [key, val] of Object.entries(RollState)) {
+//         if (val === rollState) {
+//             return key as RollStateKey;
+//         }
+//     }
+//
+//     // Should never happen, but just in case...
+//     throw new Error(`Failed to find key for RollState "${rollState}".`);
+// }
 
 
+export const activeSafetyCardStatus = z.strictObject({
+    playedAsCoupFourre: z.boolean()
+});
+export type ActiveSafetyCardStatus = z.infer<typeof activeSafetyCardStatus>;
+
+export const schemaActiveSafetyCards = z.strictObject({
+    drivingAce:    optionSchema(activeSafetyCardStatus),
+    extraTank:     optionSchema(activeSafetyCardStatus),
+    punctureProof: optionSchema(activeSafetyCardStatus),
+    rightOfWay:    optionSchema(activeSafetyCardStatus),
+});
+export type ActiveSafetyCards = z.infer<typeof schemaActiveSafetyCards>;
 
 export const schemaDrivingZone = z.strictObject({
-
-    rollState: schemaRollState,
-
+    rollState:         schemaRollState,
+    speedLimitActive:  z.boolean(),
+    calamityActive:    optionSchema(schemaCalamityHazardCard),
+    activeSafetyCards: schemaActiveSafetyCards,
+    distanceCards:     z.array(schemaDistanceCard)
 });
-
-
-
-
-
-// export class DrivingZone {
-//
-//     // Distance pile (need to know specific cards b/c only 2 200s are allowed)
-//     // Distance travelled.
-//
-//     // The current roll status.
-//     private _rollStatus: RollStatus = RollStatus.stopped;
-//
-//     // Whether a speed limit is active.
-//     private _speedLimitActive: boolean = false;
-//
-//     // Whether a calamity is active (accident, out of gas, flat tire)
-//     private _calamityActive: Option<CalamityHazardCard> = NoneOption.get();
-//
-//     private _drivingAceActive: Option<IActiveSafetyCardStatus> = NoneOption.get();
-//     private _extraTankActive: Option<IActiveSafetyCardStatus> = NoneOption.get();
-//     private _punctureProofActive: Option<IActiveSafetyCardStatus> = NoneOption.get();
-//     private _rightOfWayActive: Option<IActiveSafetyCardStatus> = NoneOption.get();
-//
-//     public get drivingAceActive(): Option<IActiveSafetyCardStatus> {
-//         return this._drivingAceActive;
-//     }
-//
-//     public get extraTankActive(): Option<IActiveSafetyCardStatus> {
-//         return this._extraTankActive;
-//     }
-//
-//     public get punctureProofActive(): Option<IActiveSafetyCardStatus> {
-//         return this._punctureProofActive;
-//     }
-//
-//     public get rightOfWayActive(): Option<IActiveSafetyCardStatus> {
-//         return this._rightOfWayActive;
-//     }
-//
-// }
+export type DrivingZone = z.infer<typeof schemaDrivingZone>;
