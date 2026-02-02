@@ -1,6 +1,4 @@
 import { z } from "zod";
-import { NonnegativeInteger } from "@repo/depot/nonnegativeInteger";
-import { assertNever } from "@repo/depot/never";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -71,53 +69,3 @@ export type MilleBornesCard = z.infer<typeof schMilleBornesCard>;
 export type CalamityHazardCard = typeof MilleBornesCard.accident |
                           typeof MilleBornesCard.outOfGas |
                           typeof MilleBornesCard.flatTire;
-
-
-////////////////////////////////////////////////////////////////////////////////
-// Standard card counts
-////////////////////////////////////////////////////////////////////////////////
-
-
-/**
- * A function type that takes a MilleBornesCard and returns the count of that
- * card.  Used in deck generation.
- */
-
-export type CardCountFn = (card: MilleBornesCard) => NonnegativeInteger;
-
-export const standardCardCountFn: CardCountFn = (card: MilleBornesCard): NonnegativeInteger => {
-    switch (card) {
-        case MilleBornesCard.dist25:
-        case MilleBornesCard.dist50:
-        case MilleBornesCard.dist75:
-            return NonnegativeInteger.create(10);
-        case MilleBornesCard.dist100:
-            return NonnegativeInteger.create(12);
-        case MilleBornesCard.dist200:
-            return NonnegativeInteger.create(4);
-        case MilleBornesCard.accident:
-        case MilleBornesCard.outOfGas:
-        case MilleBornesCard.flatTire:
-            return NonnegativeInteger.create(3);
-        case MilleBornesCard.speedLimit:
-            return NonnegativeInteger.create(4);
-        case MilleBornesCard.stop:
-            return NonnegativeInteger.create(5);
-        case MilleBornesCard.repairs:
-        case MilleBornesCard.gasoline:
-        case MilleBornesCard.spareTire:
-            return NonnegativeInteger.create(6);
-        case MilleBornesCard.endOfSpeedLimit:
-            return NonnegativeInteger.create(6);
-        case MilleBornesCard.roll:
-            return NonnegativeInteger.create(14);
-        case MilleBornesCard.drivingAce:
-        case MilleBornesCard.extraTank:
-        case MilleBornesCard.punctureProof:
-        case MilleBornesCard.rightOfWay:
-            return NonnegativeInteger.create(1);
-        default:
-            assertNever(card);
-            break;
-    }
-};

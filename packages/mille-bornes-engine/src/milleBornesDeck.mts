@@ -2,7 +2,55 @@ import * as _ from "lodash-es";
 import { PositiveInteger } from "@repo/depot/positiveInteger";
 import { type Brand } from "@repo/depot/brand";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
-import { type CardCountFn, MilleBornesCard, schMilleBornesCard } from "@repo/mille-bornes-shared/milleBornesCard";
+import { NonnegativeInteger } from "@repo/depot/nonnegativeInteger";
+import { assertNever } from "@repo/depot/never";
+import { MilleBornesCard, schMilleBornesCard } from "@repo/mille-bornes-shared/milleBornesCard";
+
+
+/**
+ * A function type that takes a MilleBornesCard and returns the count of that
+ * card.  Used in deck generation.
+ */
+
+export type CardCountFn = (card: MilleBornesCard) => NonnegativeInteger;
+
+
+export const standardCardCountFn: CardCountFn = (card: MilleBornesCard): NonnegativeInteger => {
+    switch (card) {
+        case MilleBornesCard.dist25:
+        case MilleBornesCard.dist50:
+        case MilleBornesCard.dist75:
+            return NonnegativeInteger.create(10);
+        case MilleBornesCard.dist100:
+            return NonnegativeInteger.create(12);
+        case MilleBornesCard.dist200:
+            return NonnegativeInteger.create(4);
+        case MilleBornesCard.accident:
+        case MilleBornesCard.outOfGas:
+        case MilleBornesCard.flatTire:
+            return NonnegativeInteger.create(3);
+        case MilleBornesCard.speedLimit:
+            return NonnegativeInteger.create(4);
+        case MilleBornesCard.stop:
+            return NonnegativeInteger.create(5);
+        case MilleBornesCard.repairs:
+        case MilleBornesCard.gasoline:
+        case MilleBornesCard.spareTire:
+            return NonnegativeInteger.create(6);
+        case MilleBornesCard.endOfSpeedLimit:
+            return NonnegativeInteger.create(6);
+        case MilleBornesCard.roll:
+            return NonnegativeInteger.create(14);
+        case MilleBornesCard.drivingAce:
+        case MilleBornesCard.extraTank:
+        case MilleBornesCard.punctureProof:
+        case MilleBornesCard.rightOfWay:
+            return NonnegativeInteger.create(1);
+        default:
+            assertNever(card);
+            return NonnegativeInteger.create(0);
+    }
+};
 
 
 /**
