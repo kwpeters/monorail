@@ -248,6 +248,10 @@
             "types": "./src/result.mts",
             "default": "./dist/result.mjs"
         },
+        "./schemaUtility": {
+            "types": "./src/schemaUtility.mts",
+            "default": "./dist/schemaUtility.mjs"
+        },
         "./setHelpers": {
             "types": "./src/setHelpers.mts",
             "default": "./dist/setHelpers.mjs"
