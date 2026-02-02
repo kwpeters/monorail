@@ -66,6 +66,27 @@ export type MilleBornesCard = z.infer<typeof schemaMilleBornesCard>;
 // Card categories
 ////////////////////////////////////////////////////////////////////////////////
 
-export type CalamityHazardCard = typeof MilleBornesCard.accident |
-                          typeof MilleBornesCard.outOfGas |
-                          typeof MilleBornesCard.flatTire;
+
+export type DistanceCard =
+    typeof MilleBornesCard.dist25 |
+    typeof MilleBornesCard.dist50 |
+    typeof MilleBornesCard.dist75 |
+    typeof MilleBornesCard.dist100 |
+    typeof MilleBornesCard.dist200;
+
+
+export type CalamityHazardCard =
+    typeof MilleBornesCard.accident |
+    typeof MilleBornesCard.outOfGas |
+    typeof MilleBornesCard.flatTire;
+
+export type CalamityRemedyCard =
+    typeof MilleBornesCard.repairs |
+    typeof MilleBornesCard.gasoline |
+    typeof MilleBornesCard.spareTire;
+
+export type SafetyCard =
+    typeof MilleBornesCard.drivingAce |
+    typeof MilleBornesCard.extraTank |
+    typeof MilleBornesCard.punctureProof |
+    typeof MilleBornesCard.rightOfWay;
