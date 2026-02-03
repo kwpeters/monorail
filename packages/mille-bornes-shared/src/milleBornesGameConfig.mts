@@ -1,4 +1,5 @@
 import { safeParse } from "@repo/depot/zodHelpers";
+import type { Immutable } from "@repo/depot/typeUtils";
 import { z } from "zod";
 
 
@@ -61,7 +62,7 @@ export const milleBornesGameConfigSchema =
 export type MilleBornesGameConfig = z.infer<typeof milleBornesGameConfigSchema>;
 
 
-export const standardMilleBornesGameConfig: MilleBornesGameConfig = safeParse(
+export const standardMilleBornesGameConfig: Immutable<MilleBornesGameConfig> = safeParse(
     milleBornesGameConfigSchema,
     {
         raceDistance:    1000,
