@@ -1,14 +1,14 @@
 import { NonnegativeInteger } from "@repo/depot/nonnegativeInteger";
 import { PositiveInteger } from "@repo/depot/positiveInteger";
 import { assertNever } from "@repo/depot/never";
-import { MilleBornesCard, schemaMilleBornesCard } from "@repo/mille-bornes-shared/milleBornesCard";
+import { MilleBornesCard, milleBornesCardSchema } from "@repo/mille-bornes-shared/milleBornesCard";
 import { standardCardCountFn, createDeck, shuffleDeck } from "./milleBornesDeck.mjs";
 
 
 describe("standardCardCountFn()", () => {
 
     it("returns the expected total number of cards", () => {
-        const total = schemaMilleBornesCard.options.reduce((acc, card) => acc + standardCardCountFn(card), 0);
+        const total = milleBornesCardSchema.options.reduce((acc, card) => acc + standardCardCountFn(card), 0);
         expect(total).toEqual(106);
     });
 

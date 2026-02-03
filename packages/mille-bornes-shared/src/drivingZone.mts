@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { optionSchema } from "@repo/depot/schemaUtility";
-import { schemaCalamityHazardCard, schemaDistanceCard } from "./milleBornesCard.mjs";
+import { calamityHazardCardSchema, distanceCardSchema } from "./milleBornesCard.mjs";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -9,12 +9,11 @@ export const RollState = {
     stopped: "Stopped",
     roll:    "Roll"
 } as const;
-export const schemaRollState = z.enum(RollState);
-export type RollState = z.infer<typeof schemaRollState>;
+export const rollStateSchema = z.enum(RollState);
+export type RollState = z.infer<typeof rollStateSchema>;
 // Enumerating values of RollState:
 //     for (const cur of Object.values(RollState)) {}
-//     for (const cur of schemaRollState.options) {}
-
+//     for (const cur of rollStateSchema.options) {}
 
 // /**
 //  * A type representing a valid key in the RollState enumeration.
@@ -46,24 +45,24 @@ export type RollState = z.infer<typeof schemaRollState>;
 // }
 
 
-export const activeSafetyCardStatus = z.strictObject({
+export const activeSafetyCardSchema = z.strictObject({
     playedAsCoupFourre: z.boolean()
 });
-export type ActiveSafetyCardStatus = z.infer<typeof activeSafetyCardStatus>;
+export type ActiveSafetyCard = z.infer<typeof activeSafetyCardSchema>;
 
-export const schemaActiveSafetyCards = z.strictObject({
-    drivingAce:    optionSchema(activeSafetyCardStatus),
-    extraTank:     optionSchema(activeSafetyCardStatus),
-    punctureProof: optionSchema(activeSafetyCardStatus),
-    rightOfWay:    optionSchema(activeSafetyCardStatus),
+export const activeSafetyCardsSchema = z.strictObject({
+    drivingAce:    optionSchema(activeSafetyCardSchema),
+    extraTank:     optionSchema(activeSafetyCardSchema),
+    punctureProof: optionSchema(activeSafetyCardSchema),
+    rightOfWay:    optionSchema(activeSafetyCardSchema),
 });
-export type ActiveSafetyCards = z.infer<typeof schemaActiveSafetyCards>;
+export type ActiveSafetyCards = z.infer<typeof activeSafetyCardsSchema>;
 
-export const schemaDrivingZone = z.strictObject({
-    rollState:         schemaRollState,
+export const drivingZoneSchema = z.strictObject({
+    rollState:         rollStateSchema,
     speedLimitActive:  z.boolean(),
-    calamityActive:    optionSchema(schemaCalamityHazardCard),
-    activeSafetyCards: schemaActiveSafetyCards,
-    distanceCards:     z.array(schemaDistanceCard)
+    calamityActive:    optionSchema(calamityHazardCardSchema),
+    activeSafetyCards: activeSafetyCardsSchema,
+    distanceCards:     z.array(distanceCardSchema)
 });
-export type DrivingZone = z.infer<typeof schemaDrivingZone>;
+export type DrivingZone = z.infer<typeof drivingZoneSchema>;

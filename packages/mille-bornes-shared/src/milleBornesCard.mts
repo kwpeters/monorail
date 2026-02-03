@@ -25,12 +25,11 @@ export const MilleBornesCard = {
     punctureProof:   "Puncture Proof",
     rightOfWay:      "Right of Way",
 } as const;
-export const schemaMilleBornesCard = z.enum(MilleBornesCard);
-export type MilleBornesCard = z.infer<typeof schemaMilleBornesCard>;
+export const milleBornesCardSchema = z.enum(MilleBornesCard);
+export type MilleBornesCard = z.infer<typeof milleBornesCardSchema>;
 // Enumerating values of MilleBornesCard:
 //     for (const cur of Object.values(MilleBornesCard)) {}
-//     for (const cur of schemaMilleBornesCard.options) {}
-
+//     for (const cur of milleBornesCardSchema.options) {}
 
 // /**
 //  * A type representing a valid key in the MilleBornesCard enumeration.
@@ -67,36 +66,36 @@ export type MilleBornesCard = z.infer<typeof schemaMilleBornesCard>;
 ////////////////////////////////////////////////////////////////////////////////
 
 
-export const schemaDistanceCard = schemaMilleBornesCard.extract([
+export const distanceCardSchema = milleBornesCardSchema.extract([
     "dist25",
     "dist50",
     "dist75",
     "dist100",
     "dist200",
 ]);
-export type DistanceCard = z.infer<typeof schemaDistanceCard>;
+export type DistanceCard = z.infer<typeof distanceCardSchema>;
 
 
-export const schemaCalamityHazardCard = schemaMilleBornesCard.extract([
+export const calamityHazardCardSchema = milleBornesCardSchema.extract([
     "accident",
     "outOfGas",
     "flatTire",
 ]);
-export type CalamityHazardCard = z.infer<typeof schemaCalamityHazardCard>;
+export type CalamityHazardCard = z.infer<typeof calamityHazardCardSchema>;
 
 
-export const schemaCalamityRemedyCard = schemaMilleBornesCard.extract([
+export const calamityRemedyCardSchema = milleBornesCardSchema.extract([
     "repairs",
     "gasoline",
     "spareTire",
 ]);
-export type CalamityRemedyCard = z.infer<typeof schemaCalamityRemedyCard>;
+export type CalamityRemedyCard = z.infer<typeof calamityRemedyCardSchema>;
 
 
-export const schemaSafetyCard = schemaMilleBornesCard.extract([
+export const safetyCardSchema = milleBornesCardSchema.extract([
     "drivingAce",
     "extraTank",
     "punctureProof",
     "rightOfWay",
 ]);
-export type SafetyCard = z.infer<typeof schemaSafetyCard>;
+export type SafetyCard = z.infer<typeof safetyCardSchema>;

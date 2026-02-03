@@ -1,132 +1,132 @@
 import { safeParse } from "@repo/depot/zodHelpers";
-import { schemaMilleBornesGameConfig, schemaRaceDistance, schemaPointsGoal, schemaNumHumanPlayers,
-         schemaNumBotPlayers, schemaNumTeams } from "./milleBornesGameConfig.mjs";
+import { milleBornesGameConfigSchema, raceDistanceSchema, pointsGoalSchema, numHumanPlayersSchema,
+         numBotPlayersSchema, numTeamsSchema } from "./milleBornesGameConfig.mjs";
 
 
-describe("schemaRaceDistance", () => {
+describe("raceDistanceSchema", () => {
 
     it("cannot be negative", () => {
-        const res = safeParse(schemaRaceDistance, -25).throwIfSucceeded();
+        const res = safeParse(raceDistanceSchema, -25).throwIfSucceeded();
     });
 
 
     it("cannot be zero", () => {
-        const res = safeParse(schemaRaceDistance, 0).throwIfSucceeded();
+        const res = safeParse(raceDistanceSchema, 0).throwIfSucceeded();
     });
 
 
     it("fails when it is not a mutltiple of 25", () => {
-        safeParse(schemaRaceDistance, 24).throwIfSucceeded();
+        safeParse(raceDistanceSchema, 24).throwIfSucceeded();
     });
 
 
     it("succeeds when it is a mutltiple of 25", () => {
-        safeParse(schemaRaceDistance, 25).throwIfFailed();
+        safeParse(raceDistanceSchema, 25).throwIfFailed();
     });
 
 });
 
 
-describe("schemaPointsGoal", () => {
+describe("pointsGoalSchema", () => {
 
     it("cannot be negative", () => {
-        safeParse(schemaPointsGoal, -1000).throwIfSucceeded();
+        safeParse(pointsGoalSchema, -1000).throwIfSucceeded();
     });
 
 
     it("cannot be zero", () => {
-        safeParse(schemaPointsGoal, 0).throwIfSucceeded();
+        safeParse(pointsGoalSchema, 0).throwIfSucceeded();
     });
 
 
     it("succeeds when it is any positive integer", () => {
-        safeParse(schemaPointsGoal, 5000).throwIfFailed();
+        safeParse(pointsGoalSchema, 5000).throwIfFailed();
     });
 
 });
 
 
-describe("schemaNumHumanPlayers", () => {
+describe("humHumanPlayersSchema", () => {
 
     it("cannot be zero", () => {
-        safeParse(schemaNumHumanPlayers, 0).throwIfSucceeded();
+        safeParse(numHumanPlayersSchema, 0).throwIfSucceeded();
     });
 
 
     it("cannot be negative", () => {
-        safeParse(schemaNumHumanPlayers, -1).throwIfSucceeded();
+        safeParse(numHumanPlayersSchema, -1).throwIfSucceeded();
     });
 
 
     it("cannot be greater than 6", () => {
-        safeParse(schemaNumHumanPlayers, 7).throwIfSucceeded();
+        safeParse(numHumanPlayersSchema, 7).throwIfSucceeded();
     });
 
 
     it("succeeds when it is 1 (minimum)", () => {
-        safeParse(schemaNumHumanPlayers, 1).throwIfFailed();
+        safeParse(numHumanPlayersSchema, 1).throwIfFailed();
     });
 
 
     it("succeeds when it is 6 (maximum)", () => {
-        safeParse(schemaNumHumanPlayers, 6).throwIfFailed();
+        safeParse(numHumanPlayersSchema, 6).throwIfFailed();
     });
 
 });
 
 
-describe("schemaNumBotPlayers", () => {
+describe("numBotPlayersSchema", () => {
 
     it("cannot be negative", () => {
-        safeParse(schemaNumBotPlayers, -1).throwIfSucceeded();
+        safeParse(numBotPlayersSchema, -1).throwIfSucceeded();
     });
 
 
     it("cannot be greater than 5", () => {
-        safeParse(schemaNumBotPlayers, 6).throwIfSucceeded();
+        safeParse(numBotPlayersSchema, 6).throwIfSucceeded();
     });
 
 
     it("succeeds when it is 0 (minimum)", () => {
-        safeParse(schemaNumBotPlayers, 0).throwIfFailed();
+        safeParse(numBotPlayersSchema, 0).throwIfFailed();
     });
 
 
     it("succeeds when it is 5 (maximum)", () => {
-        safeParse(schemaNumBotPlayers, 5).throwIfFailed();
+        safeParse(numBotPlayersSchema, 5).throwIfFailed();
     });
 
 });
 
 
-describe("schemaNumTeams", () => {
+describe("numTeamsSchema", () => {
 
     it("cannot be 1", () => {
-        safeParse(schemaNumTeams, 1).throwIfSucceeded();
+        safeParse(numTeamsSchema, 1).throwIfSucceeded();
     });
 
 
     it("cannot be greater than 3", () => {
-        safeParse(schemaNumTeams, 4).throwIfSucceeded();
+        safeParse(numTeamsSchema, 4).throwIfSucceeded();
     });
 
 
     it("succeeds when it is 2 (minimum)", () => {
-        safeParse(schemaNumTeams, 2).throwIfFailed();
+        safeParse(numTeamsSchema, 2).throwIfFailed();
     });
 
 
     it("succeeds when it is 3 (maximum)", () => {
-        safeParse(schemaNumTeams, 3).throwIfFailed();
+        safeParse(numTeamsSchema, 3).throwIfFailed();
     });
 
 });
 
 
-describe("schemaMilleBornesGameConfig", () => {
+describe("milleBornesGameConfigSchema", () => {
 
     it("fails if the total number of players is not a multiple of the number of teams", () => {
-        safeParse(schemaMilleBornesGameConfig, {
+        safeParse(milleBornesGameConfigSchema, {
             raceDistance:    1000,
             pointsGoal:      5000,
             numHumanPlayers: 3,
@@ -137,7 +137,7 @@ describe("schemaMilleBornesGameConfig", () => {
 
 
     it("succeeds when all game settings are valid", () => {
-        safeParse(schemaMilleBornesGameConfig, {
+        safeParse(milleBornesGameConfigSchema, {
             raceDistance:    1000,
             pointsGoal:      5000,
             numHumanPlayers: 2,
