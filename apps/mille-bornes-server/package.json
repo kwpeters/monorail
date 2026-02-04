@@ -3,6 +3,7 @@
     "version": "0.0.0",
     "private": true,
     "scripts": {
+        "start": "node ./bin/www",
         "dev": "echo 'Add dev script here'",
         "build": "tsc --build tsconfig.src.json",
         "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
@@ -14,12 +15,19 @@
         "mille-bornes-server": "./dist/index.mjs"
     },
     "dependencies": {
-        "@repo/depot": "*"
+        "@repo/depot": "*",
+        "cookie-parser": "~1.4.4",
+        "cors": "^2.8.6",
+        "debug": "~2.6.9",
+        "express": "^5.2.1",
+        "morgan": "~1.9.1"
     },
     "devDependencies": {
         "@repo/eslint-config": "*",
         "@repo/typescript-config": "*",
         "@stylistic/eslint-plugin": "^2.8.0",
+        "@types/cors": "^2.8.19",
+        "@types/express": "^5.0.6",
         "@types/jasmine": "^5.1.4",
         "@typescript-eslint/eslint-plugin": "^8.6.0",
         "@typescript-eslint/parser": "^8.6.0",
