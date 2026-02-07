@@ -1,6 +1,15 @@
 import { safeParse } from "@repo/depot/zodHelpers";
-import { milleBornesGameConfigSchema, raceDistanceSchema, pointsGoalSchema, numHumanPlayersSchema,
-         numBotPlayersSchema, numTeamsSchema } from "./milleBornesGameConfig.mjs";
+import {
+    humanPlayerSchema,
+    milleBornesGameConfigSchema,
+    type MilleBornesGameConfig,
+    numTeamsSchema,
+    pointsGoalSchema,
+    playersSchema,
+    raceDistanceSchema,
+    type HumanPlayer,
+    type Players,
+} from "./milleBornesGameConfig.mjs";
 
 
 describe("raceDistanceSchema", () => {
@@ -46,59 +55,6 @@ describe("pointsGoalSchema", () => {
 });
 
 
-describe("humHumanPlayersSchema", () => {
-
-    it("cannot be zero", () => {
-        safeParse(numHumanPlayersSchema, 0).throwIfSucceeded();
-    });
-
-
-    it("cannot be negative", () => {
-        safeParse(numHumanPlayersSchema, -1).throwIfSucceeded();
-    });
-
-
-    it("cannot be greater than 6", () => {
-        safeParse(numHumanPlayersSchema, 7).throwIfSucceeded();
-    });
-
-
-    it("succeeds when it is 1 (minimum)", () => {
-        safeParse(numHumanPlayersSchema, 1).throwIfFailed();
-    });
-
-
-    it("succeeds when it is 6 (maximum)", () => {
-        safeParse(numHumanPlayersSchema, 6).throwIfFailed();
-    });
-
-});
-
-
-describe("numBotPlayersSchema", () => {
-
-    it("cannot be negative", () => {
-        safeParse(numBotPlayersSchema, -1).throwIfSucceeded();
-    });
-
-
-    it("cannot be greater than 5", () => {
-        safeParse(numBotPlayersSchema, 6).throwIfSucceeded();
-    });
-
-
-    it("succeeds when it is 0 (minimum)", () => {
-        safeParse(numBotPlayersSchema, 0).throwIfFailed();
-    });
-
-
-    it("succeeds when it is 5 (maximum)", () => {
-        safeParse(numBotPlayersSchema, 5).throwIfFailed();
-    });
-
-});
-
-
 describe("numTeamsSchema", () => {
 
     it("cannot be 1", () => {
@@ -123,27 +79,136 @@ describe("numTeamsSchema", () => {
 });
 
 
-describe("milleBornesGameConfigSchema", () => {
+describe("humanPlayerSchema", () => {
 
-    it("fails if the total number of players is not a multiple of the number of teams", () => {
-        safeParse(milleBornesGameConfigSchema, {
-            raceDistance:    1000,
-            pointsGoal:      5000,
-            numHumanPlayers: 3,
-            numBotPlayers:   2,
-            numTeams:        2
-        }).throwIfSucceeded();
+    it("cannot have a name containing zero characters", () => {
+        safeParse(humanPlayerSchema, { type: "HumanPlayer", name: "" } satisfies HumanPlayer).throwIfSucceeded();
     });
 
 
-    it("succeeds when all game settings are valid", () => {
+    it("cannot have a name containing more than 20 characters", () => {
+        safeParse(humanPlayerSchema, { type: "HumanPlayer", name: "ABCDEFGHIJKLMNOPQRSTU" } satisfies HumanPlayer).throwIfSucceeded();
+    });
+
+
+    it("succeeds when all fields are valid", () => {
+        safeParse(humanPlayerSchema, { type: "HumanPlayer", name: "Alice" } satisfies HumanPlayer).throwIfFailed();
+    });
+
+});
+
+
+describe("playersSchema", () => {
+
+    it("fails when there are no players", () => {
+        safeParse(playersSchema, [] satisfies Players).throwIfSucceeded();
+    });
+
+
+    it("fails if there are more than 6 players", () => {
+        safeParse(
+            playersSchema,
+            [
+                { type: "HumanPlayer", name: "Alice" },
+                { type: "BotPlayer",   name: "Bot A" },
+                { type: "BotPlayer",   name: "Bot B" },
+                { type: "BotPlayer",   name: "Bot C" },
+                { type: "BotPlayer",   name: "Bot D" },
+                { type: "BotPlayer",   name: "Bot E" },
+                { type: "BotPlayer",   name: "Bot F" },
+            ] satisfies Players
+        ).throwIfSucceeded();
+    });
+
+
+    it("fails if there are zero human players", () => {
+        safeParse(
+            playersSchema,
+            [
+                { type: "BotPlayer", name: "Bot A" },
+                { type: "BotPlayer", name: "Bot B" },
+            ] satisfies Players
+        ).throwIfSucceeded();
+    });
+
+
+    it("fails if two human players have the same name", () => {
+        safeParse(
+            playersSchema,
+            [
+                { type: "HumanPlayer", name: "Alice" },
+                { type: "HumanPlayer", name: "Alice" },
+            ] satisfies Players
+        ).throwIfSucceeded();
+    });
+
+
+    it("fails if two bots have the same name", () => {
+        safeParse(
+            playersSchema,
+            [
+                { type: "HumanPlayer", name: "Alice" },
+                { type: "BotPlayer",   name: "Bot A" },
+                { type: "BotPlayer",   name: "Bot A" },
+            ] satisfies Players
+        ).throwIfSucceeded();
+    });
+
+
+    it("fails if a human and a bot have the same name", () => {
+        safeParse(
+            playersSchema,
+            [
+                { type: "HumanPlayer", name: "Alex" },
+                { type: "BotPlayer",   name: "Alex" },
+            ] satisfies Players
+        ).throwIfSucceeded();
+    });
+
+
+    it("succeeds when all fields are valid and all constraints are satisfied", () => {
+        safeParse(
+            playersSchema,
+            [
+                { type: "HumanPlayer", name: "Alice" },
+                { type: "BotPlayer",   name: "Bot A" },
+                { type: "HumanPlayer", name: "Bob" },
+                { type: "BotPlayer",   name: "Bot B" },
+            ] satisfies Players
+        ).throwIfFailed();
+    });
+
+});
+
+
+describe("milleBornesGameConfigSchema", () => {
+
+    it("fails if the number of players and number of teams results in non-uniform team sizes", () => {
         safeParse(milleBornesGameConfigSchema, {
-            raceDistance:    1000,
-            pointsGoal:      5000,
-            numHumanPlayers: 2,
-            numBotPlayers:   2,
-            numTeams:        2
-        }).throwIfFailed();
+            raceDistance: 1000,
+            pointsGoal:   5000,
+            numTeams:     2,
+            players:      [
+                { type: "HumanPlayer", name: "Alice" },
+                { type: "BotPlayer",   name: "Bot A" },
+                { type: "BotPlayer",   name: "Bot B" },
+            ],
+        } satisfies MilleBornesGameConfig).throwIfSucceeded();
+    });
+
+
+    it("succeeds when all fields are valid and all constraints are satisfied", () => {
+        safeParse(milleBornesGameConfigSchema, {
+            raceDistance: 1000,
+            pointsGoal:   5000,
+            numTeams:     2,
+            players:      [
+                { type: "HumanPlayer", name: "Alice" },
+                { type: "BotPlayer",   name: "Bot A" },
+                { type: "HumanPlayer", name: "Bob" },
+                { type: "BotPlayer",   name: "Bot B" },
+            ],
+        } satisfies MilleBornesGameConfig).throwIfFailed();
     });
 
 });
