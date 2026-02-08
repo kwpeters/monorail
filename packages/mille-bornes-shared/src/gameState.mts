@@ -12,6 +12,12 @@ export const playerHandSchema = z.array(milleBornesCardSchema).max(7);
 export type PlayerHand = z.infer<typeof playerHandSchema>;
 
 
+export const teamIndexSchema = z.number().min(0).max(2);
+export type TeamIndex = z.infer<typeof teamIndexSchema>;
+
+export const roundIndexSchema = z.number().min(0);
+export type RoundIndex = z.infer<typeof roundIndexSchema>;
+
 
 export const gameStateSchema = z.strictObject({
     gameConfig: milleBornesGameConfigSchema,
@@ -29,13 +35,34 @@ export const gameStateSchema = z.strictObject({
 
     // Last move
 
-    // Team scores (points)
+    // Team scores.  First index is team index.  Second index is round number.
+    teamScores: z.array(z.array(z.number().min(0))),
 })
 .refine(
     (gameState) => gameState.playerHands.length === gameState.gameConfig.players.length,
     {
         message: "Player hand count must match the number of players.",
         path:    ["playerHands"],
+    }
+)
+.refine(
+    (gameState) => gameState.teamScores.length === gameState.gameConfig.numTeams,
+    {
+        message: "Team score count must match the number of teams.",
+        path:    ["teamScores"],
+    }
+)
+.refine(
+    (gameState) => {
+        const [firstTeam, ...otherTeams] = gameState.teamScores;
+        if (firstTeam === undefined) {
+            return true;
+        }
+        return otherTeams.every((teamScores) => teamScores.length === firstTeam.length);
+    },
+    {
+        message: "The scores for each team should contain the same number of rounds.",
+        path:    ["teamScores"],
     }
 );
 export type GameState = z.infer<typeof gameStateSchema>;

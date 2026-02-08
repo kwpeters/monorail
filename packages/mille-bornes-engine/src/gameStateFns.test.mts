@@ -38,4 +38,13 @@ describe("newGame()", () => {
         expect(gameState.discardPile.length).toEqual(0);
     });
 
+
+    it("returns a game state where each team has no scores yet", () => {
+        const gameState = newGame(standardMilleBornesGameConfig, mockShuffledDeckProvider).throwIfFailed();
+        expect(gameState.teamScores.length).toEqual(2);
+        for (const teamScores of gameState.teamScores) {
+            expect(teamScores).toEqual([]);
+        }
+    });
+
 });

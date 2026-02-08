@@ -29,7 +29,7 @@ export function newGame(
             for (let i = 0; i < gameConfig.players.length; i++) {
                 playerHands[i] = [] as Array<MilleBornesCard>;
                 for (let j = 0; j < 6; j++) {
-                    const card = shuffledDeck.pop();
+                    const card = shuffledDeck.shift();
                     if (card === undefined) {
                         throw new Error("Not enough cards in the deck to deal initial hands.");
                     }
@@ -42,11 +42,20 @@ export function newGame(
             //
             const drawPile: Array<MilleBornesCard> = shuffledDeck;
 
+            //
+            // Initialize all team scores to 0.
+            //
+            const teamScores: Array<Array<number>> = [];
+            for (let i = 0; i < gameConfig.numTeams; i++) {
+                teamScores.push([]);
+            }
+
             const gameState = {
                 gameConfig,
                 playerHands,
                 drawPile,
-                discardPile: []
+                discardPile: [],
+                teamScores
             } satisfies GameState;
             return gameState;
         }),
