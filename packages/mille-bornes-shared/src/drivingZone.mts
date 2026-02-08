@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { optionSchema } from "@repo/depot/schemaUtility";
-import { calamityHazardCardSchema, distanceCardSchema } from "./milleBornesCard.mjs";
+import { calamityHazardCardSchema, distanceCardSchema } from "./card.mjs";
 
 ////////////////////////////////////////////////////////////////////////////////
 

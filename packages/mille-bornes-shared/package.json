@@ -20,9 +20,9 @@
             "types": "./src/gameState.mts",
             "default": "./dist/gameState.mjs"
         },
-        "./milleBornesCard": {
-            "types": "./src/milleBornesCard.mts",
-            "default": "./dist/milleBornesCard.mjs"
+        "./card": {
+            "types": "./src/card.mts",
+            "default": "./dist/card.mjs"
         },
         "./gameConfig": {
             "types": "./src/gameConfig.mts",

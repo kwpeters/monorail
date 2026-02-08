@@ -4,7 +4,7 @@ import type { Immutable } from "@repo/depot/typeUtils";
 import { NoneOption } from "@repo/depot/option";
 import { safeParse } from "@repo/depot/zodHelpers";
 import { type GameConfig, gameConfigSchema } from "@repo/mille-bornes-shared/gameConfig";
-import type { MilleBornesCard } from "@repo/mille-bornes-shared/milleBornesCard";
+import type { Card } from "@repo/mille-bornes-shared/card";
 import { type GameState, gameStateSchema, type PlayerHand } from "@repo/mille-bornes-shared/gameState";
 import { RollState, type DrivingZone } from "@repo/mille-bornes-shared/drivingZone";
 import type { ShuffledDeckProvider } from "./milleBornesDeck.mjs";
@@ -29,7 +29,7 @@ export function newGame(
             //
             const playerHands: Array<PlayerHand> = [];
             for (let i = 0; i < gameConfig.players.length; i++) {
-                playerHands[i] = [] as Array<MilleBornesCard>;
+                playerHands[i] = [] as Array<Card>;
                 for (let j = 0; j < 6; j++) {
                     const card = shuffledDeck.shift();
                     if (card === undefined) {
@@ -42,7 +42,7 @@ export function newGame(
             //
             // Put the remaining cards on the draw pile.
             //
-            const drawPile: Array<MilleBornesCard> = shuffledDeck;
+            const drawPile: Array<Card> = shuffledDeck;
 
             //
             // Initialize all team scores to 0.

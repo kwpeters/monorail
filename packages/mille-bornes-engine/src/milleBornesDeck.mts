@@ -4,47 +4,47 @@ import { type Brand } from "@repo/depot/brand";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { NonnegativeInteger } from "@repo/depot/nonnegativeInteger";
 import { assertNever } from "@repo/depot/never";
-import { MilleBornesCard, milleBornesCardSchema } from "@repo/mille-bornes-shared/milleBornesCard";
+import { Card, cardSchema } from "@repo/mille-bornes-shared/card";
 
 
 /**
- * A function type that takes a MilleBornesCard and returns the count of that
+ * A function type that takes a Card and returns the count of that
  * card.  Used in deck generation.
  */
 
-export type CardCountFn = (card: MilleBornesCard) => NonnegativeInteger;
+export type CardCountFn = (card: Card) => NonnegativeInteger;
 
 
-export const standardCardCountFn: CardCountFn = (card: MilleBornesCard): NonnegativeInteger => {
+export const standardCardCountFn: CardCountFn = (card: Card): NonnegativeInteger => {
     switch (card) {
-        case MilleBornesCard.dist25:
-        case MilleBornesCard.dist50:
-        case MilleBornesCard.dist75:
+        case Card.dist25:
+        case Card.dist50:
+        case Card.dist75:
             return NonnegativeInteger.create(10);
-        case MilleBornesCard.dist100:
+        case Card.dist100:
             return NonnegativeInteger.create(12);
-        case MilleBornesCard.dist200:
+        case Card.dist200:
             return NonnegativeInteger.create(4);
-        case MilleBornesCard.accident:
-        case MilleBornesCard.outOfGas:
-        case MilleBornesCard.flatTire:
+        case Card.accident:
+        case Card.outOfGas:
+        case Card.flatTire:
             return NonnegativeInteger.create(3);
-        case MilleBornesCard.speedLimit:
+        case Card.speedLimit:
             return NonnegativeInteger.create(4);
-        case MilleBornesCard.stop:
+        case Card.stop:
             return NonnegativeInteger.create(5);
-        case MilleBornesCard.repairs:
-        case MilleBornesCard.gasoline:
-        case MilleBornesCard.spareTire:
+        case Card.repairs:
+        case Card.gasoline:
+        case Card.spareTire:
             return NonnegativeInteger.create(6);
-        case MilleBornesCard.endOfSpeedLimit:
+        case Card.endOfSpeedLimit:
             return NonnegativeInteger.create(6);
-        case MilleBornesCard.roll:
+        case Card.roll:
             return NonnegativeInteger.create(14);
-        case MilleBornesCard.drivingAce:
-        case MilleBornesCard.extraTank:
-        case MilleBornesCard.punctureProof:
-        case MilleBornesCard.rightOfWay:
+        case Card.drivingAce:
+        case Card.extraTank:
+        case Card.punctureProof:
+        case Card.rightOfWay:
             return NonnegativeInteger.create(1);
         default:
             assertNever(card);
@@ -56,13 +56,13 @@ export const standardCardCountFn: CardCountFn = (card: MilleBornesCard): Nonnega
 /**
  * A branded type representing an ordered Mille Bornes deck of cards.
  */
-export type MilleBornesDeck = Brand<Array<MilleBornesCard>, "MilleBornesDeck">;
+export type MilleBornesDeck = Brand<Array<Card>, "MilleBornesDeck">;
 
 
 /**
  * A branded type representing a shuffled Mille Bornes deck of cards.
  */
-export type MilleBornesShuffledDeck = Brand<Array<MilleBornesCard>, "MilleBornesShuffledDeck">;
+export type MilleBornesShuffledDeck = Brand<Array<Card>, "MilleBornesShuffledDeck">;
 
 
 /**
@@ -79,9 +79,9 @@ export function createDeck(
     cardCountFn: CardCountFn,
     multiplier = PositiveInteger.create(1)
 ): Result<MilleBornesDeck, string> {
-    const deck: Array<MilleBornesCard> = [];
+    const deck: Array<Card> = [];
 
-    for (const curCard of milleBornesCardSchema.options) {
+    for (const curCard of cardSchema.options) {
         const count = cardCountFn(curCard);
         for (let i = 0; i < count * multiplier; i++) {
             deck.push(curCard);

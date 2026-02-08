@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { gameConfigSchema } from "./gameConfig.mjs";
-import { milleBornesCardSchema } from "./milleBornesCard.mjs";
+import { cardSchema } from "./card.mjs";
 import { drivingZoneSchema } from "./drivingZone.mjs";
 
 
@@ -9,7 +9,7 @@ import { drivingZoneSchema } from "./drivingZone.mjs";
  * just drawn and have not yet played).  There may be fewer than 6 cards in
  * situations where the draw pile has been exhausted.
  */
-export const playerHandSchema = z.array(milleBornesCardSchema).max(7);
+export const playerHandSchema = z.array(cardSchema).max(7);
 export type PlayerHand = z.infer<typeof playerHandSchema>;
 
 
@@ -21,10 +21,10 @@ export const gameStateSchema = z.strictObject({
     playerHands: z.array(playerHandSchema),
 
     // Draw pile
-    drawPile: z.array(milleBornesCardSchema),
+    drawPile: z.array(cardSchema),
 
     // Discard pile
-    discardPile: z.array(milleBornesCardSchema),
+    discardPile: z.array(cardSchema),
 
     // Driving zones.  One per team.
     drivingZones: z.array(drivingZoneSchema).min(2).max(3),
