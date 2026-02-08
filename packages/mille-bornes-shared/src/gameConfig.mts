@@ -18,8 +18,6 @@ export const pointsGoalSchema = z.number().positive();
 export type PointsGoal = z.infer<typeof pointsGoalSchema>;
 
 
-////////////////////////////////////////////////////////////////////////////////
-
 export const numTeamsSchema = z.number().int().min(2).max(3);
 export type NumTeams = z.infer<typeof numTeamsSchema>;
 
@@ -29,6 +27,7 @@ export const humanPlayerSchema = z.strictObject({
     name: z.string().min(1).max(20)
 });
 export type HumanPlayer = z.infer<typeof humanPlayerSchema>;
+
 
 export const botPlayerSchema = z.strictObject({
     type: z.literal("BotPlayer"),
@@ -69,7 +68,7 @@ export const playersSchema =
 export type Players = z.infer<typeof playersSchema>;
 
 
-export const milleBornesGameConfigSchema =
+export const gameConfigSchema =
     z.object({
         raceDistance: raceDistanceSchema,
         pointsGoal:   pointsGoalSchema,
@@ -87,14 +86,14 @@ export const milleBornesGameConfigSchema =
             path:    ["players"],
         }
     );
-export type MilleBornesGameConfig = z.infer<typeof milleBornesGameConfigSchema>;
+export type GameConfig = z.infer<typeof gameConfigSchema>;
 
 
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export const standardMilleBornesGameConfig: Immutable<MilleBornesGameConfig> = safeParse(
-    milleBornesGameConfigSchema,
+export const standardGameConfig: Immutable<GameConfig> = safeParse(
+    gameConfigSchema,
     {
         raceDistance: 1000,
         pointsGoal:   5000,
@@ -103,5 +102,5 @@ export const standardMilleBornesGameConfig: Immutable<MilleBornesGameConfig> = s
             { type: "HumanPlayer", name: "Player 1" },
             { type: "BotPlayer", name: "Player 2" }
         ]
-    } satisfies MilleBornesGameConfig
+    } satisfies GameConfig
 ).throwIfFailed();

@@ -3,7 +3,7 @@ import { pipe } from "@repo/depot/pipe2";
 import type { Immutable } from "@repo/depot/typeUtils";
 import { NoneOption } from "@repo/depot/option";
 import { safeParse } from "@repo/depot/zodHelpers";
-import { type MilleBornesGameConfig, milleBornesGameConfigSchema } from "@repo/mille-bornes-shared/milleBornesGameConfig";
+import { type GameConfig, gameConfigSchema } from "@repo/mille-bornes-shared/gameConfig";
 import type { MilleBornesCard } from "@repo/mille-bornes-shared/milleBornesCard";
 import { type GameState, gameStateSchema, type PlayerHand } from "@repo/mille-bornes-shared/gameState";
 import { RollState, type DrivingZone } from "@repo/mille-bornes-shared/drivingZone";
@@ -12,11 +12,11 @@ import type { ShuffledDeckProvider } from "./milleBornesDeck.mjs";
 
 
 export function newGame(
-    gameConfig: Immutable<MilleBornesGameConfig>,
+    gameConfig: Immutable<GameConfig>,
     shuffledDeckProvider: ShuffledDeckProvider
 ): Result<Immutable<GameState>, string> {
     return pipe(
-        safeParse(milleBornesGameConfigSchema, gameConfig),
+        safeParse(gameConfigSchema, gameConfig),
         (resConfig) => resConfig.mapSuccess((gameConfig) => {
 
             //

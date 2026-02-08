@@ -24,9 +24,9 @@
             "types": "./src/milleBornesCard.mts",
             "default": "./dist/milleBornesCard.mjs"
         },
-        "./milleBornesGameConfig": {
-            "types": "./src/milleBornesGameConfig.mts",
-            "default": "./dist/milleBornesGameConfig.mjs"
+        "./gameConfig": {
+            "types": "./src/gameConfig.mts",
+            "default": "./dist/gameConfig.mjs"
         }
     },
     "devDependencies": {

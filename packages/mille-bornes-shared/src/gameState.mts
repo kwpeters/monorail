@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { milleBornesGameConfigSchema } from "./milleBornesGameConfig.mjs";
+import { gameConfigSchema } from "./gameConfig.mjs";
 import { milleBornesCardSchema } from "./milleBornesCard.mjs";
 import { drivingZoneSchema } from "./drivingZone.mjs";
 
@@ -15,7 +15,7 @@ export type PlayerHand = z.infer<typeof playerHandSchema>;
 
 
 export const gameStateSchema = z.strictObject({
-    gameConfig: milleBornesGameConfigSchema,
+    gameConfig: gameConfigSchema,
 
     // Player hands.  One per player.
     playerHands: z.array(playerHandSchema),

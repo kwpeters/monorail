@@ -1,15 +1,15 @@
 import { safeParse } from "@repo/depot/zodHelpers";
 import {
     humanPlayerSchema,
-    milleBornesGameConfigSchema,
-    type MilleBornesGameConfig,
+    gameConfigSchema,
+    type GameConfig,
     numTeamsSchema,
     pointsGoalSchema,
     playersSchema,
     raceDistanceSchema,
     type HumanPlayer,
     type Players,
-} from "./milleBornesGameConfig.mjs";
+} from "./gameConfig.mjs";
 
 
 describe("raceDistanceSchema", () => {
@@ -181,10 +181,10 @@ describe("playersSchema", () => {
 });
 
 
-describe("milleBornesGameConfigSchema", () => {
+describe("gameConfigSchema", () => {
 
     it("fails if the number of players and number of teams results in non-uniform team sizes", () => {
-        safeParse(milleBornesGameConfigSchema, {
+        safeParse(gameConfigSchema, {
             raceDistance: 1000,
             pointsGoal:   5000,
             numTeams:     2,
@@ -193,12 +193,12 @@ describe("milleBornesGameConfigSchema", () => {
                 { type: "BotPlayer",   name: "Bot A" },
                 { type: "BotPlayer",   name: "Bot B" },
             ],
-        } satisfies MilleBornesGameConfig).throwIfSucceeded();
+        } satisfies GameConfig).throwIfSucceeded();
     });
 
 
     it("succeeds when all fields are valid and all constraints are satisfied", () => {
-        safeParse(milleBornesGameConfigSchema, {
+        safeParse(gameConfigSchema, {
             raceDistance: 1000,
             pointsGoal:   5000,
             numTeams:     2,
@@ -208,7 +208,7 @@ describe("milleBornesGameConfigSchema", () => {
                 { type: "HumanPlayer", name: "Bob" },
                 { type: "BotPlayer",   name: "Bot B" },
             ],
-        } satisfies MilleBornesGameConfig).throwIfFailed();
+        } satisfies GameConfig).throwIfFailed();
     });
 
 });
