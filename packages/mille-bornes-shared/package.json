@@ -12,6 +12,10 @@
         "depcheck": "depcheck"
     },
     "exports": {
+        "./drivingZone": {
+            "types": "./src/drivingZone.mts",
+            "default": "./dist/drivingZone.mjs"
+        },
         "./gameState": {
             "types": "./src/gameState.mts",
             "default": "./dist/gameState.mjs"

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { milleBornesGameConfigSchema } from "./milleBornesGameConfig.mjs";
 import { milleBornesCardSchema } from "./milleBornesCard.mjs";
+import { drivingZoneSchema } from "./drivingZone.mjs";
 
 
 /**
@@ -10,6 +11,7 @@ import { milleBornesCardSchema } from "./milleBornesCard.mjs";
  */
 export const playerHandSchema = z.array(milleBornesCardSchema).max(7);
 export type PlayerHand = z.infer<typeof playerHandSchema>;
+
 
 
 export const gameStateSchema = z.strictObject({
@@ -25,7 +27,7 @@ export const gameStateSchema = z.strictObject({
     discardPile: z.array(milleBornesCardSchema),
 
     // Driving zones.  One per team.
-
+    drivingZones: z.array(drivingZoneSchema).min(2).max(3),
 
     // Last move
 
@@ -44,6 +46,13 @@ export const gameStateSchema = z.strictObject({
     {
         message: "Team score count must match the number of teams.",
         path:    ["teamScores"],
+    }
+)
+.refine(
+    (gameState) => gameState.drivingZones.length === gameState.gameConfig.numTeams,
+    {
+        message: "Number of driving zones must match the number of teams.",
+        path:    ["drivingZones"],
     }
 )
 .refine(

@@ -1,10 +1,12 @@
 import { Result } from "@repo/depot/result";
 import { pipe } from "@repo/depot/pipe2";
 import type { Immutable } from "@repo/depot/typeUtils";
+import { NoneOption } from "@repo/depot/option";
 import { safeParse } from "@repo/depot/zodHelpers";
 import { type MilleBornesGameConfig, milleBornesGameConfigSchema } from "@repo/mille-bornes-shared/milleBornesGameConfig";
 import type { MilleBornesCard } from "@repo/mille-bornes-shared/milleBornesCard";
 import { type GameState, gameStateSchema, type PlayerHand } from "@repo/mille-bornes-shared/gameState";
+import { RollState, type DrivingZone } from "@repo/mille-bornes-shared/drivingZone";
 import type { ShuffledDeckProvider } from "./milleBornesDeck.mjs";
 // import { createDeck, shuffleDeck, standardCardCountFn } from "./milleBornesDeck.mjs";
 
@@ -50,12 +52,32 @@ export function newGame(
                 teamScores.push([]);
             }
 
+            //
+            // Initialize one driving zone per team.
+            //
+            const drivingZones = [] as DrivingZone[];
+            for (let i = 0; i < gameConfig.numTeams; i++) {
+                drivingZones[i] = {
+                    rollState:         RollState.stopped,
+                    speedLimitActive:  false,
+                    calamityActive:    NoneOption.get(),
+                    activeSafetyCards: {
+                        drivingAce:    NoneOption.get(),
+                        extraTank:     NoneOption.get(),
+                        punctureProof: NoneOption.get(),
+                        rightOfWay:    NoneOption.get()
+                    },
+                    distanceCards:    []
+                } satisfies DrivingZone;
+            }
+
             const gameState = {
                 gameConfig,
                 playerHands,
                 drawPile,
                 discardPile: [],
-                teamScores
+                teamScores,
+                drivingZones
             } satisfies GameState;
             return gameState;
         }),

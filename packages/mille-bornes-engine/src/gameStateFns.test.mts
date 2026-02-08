@@ -47,4 +47,10 @@ describe("newGame()", () => {
         }
     });
 
+
+    it("returns a game state that has one driving zone per team", () => {
+        const gameState = newGame(standardMilleBornesGameConfig, mockShuffledDeckProvider).throwIfFailed();
+        expect(gameState.drivingZones.length).toEqual(2);
+    });
+
 });
