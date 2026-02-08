@@ -350,7 +350,7 @@ describe("safeParseAsync()", () => {
     it("should handle nested object validation", async () => {
         const schema = z.object({
             user: z.object({
-                email: z.string().email(),
+                email:   z.string().email(),
                 profile: z.object({
                     age: z.number()
                 })
