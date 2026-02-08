@@ -102,3 +102,13 @@ export function shuffleDeck(deck: MilleBornesDeck): MilleBornesShuffledDeck {
     const shuffled = _.shuffle(deck);
     return shuffled as MilleBornesShuffledDeck;
 }
+
+
+export type ShuffledDeckProvider = () => MilleBornesShuffledDeck;
+
+
+export const standardShuffledDeckProvider: ShuffledDeckProvider = () => {
+    const deck = createDeck(standardCardCountFn).throwIfFailed();
+    const shuffled = shuffleDeck(deck);
+    return shuffled;
+};

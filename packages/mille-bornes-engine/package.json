@@ -30,7 +30,7 @@
     },
     "dependencies": {
         "@repo/depot": "*",
-        "lodash-es": "^4.17.21",
-        "@repo/mille-bornes-shared": "*"
+        "@repo/mille-bornes-shared": "*",
+        "lodash-es": "^4.17.21"
     }
 }
