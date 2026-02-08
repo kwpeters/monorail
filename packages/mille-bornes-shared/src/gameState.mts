@@ -12,17 +12,8 @@ export const playerHandSchema = z.array(milleBornesCardSchema).max(7);
 export type PlayerHand = z.infer<typeof playerHandSchema>;
 
 
-export const teamIndexSchema = z.number().min(0).max(2);
-export type TeamIndex = z.infer<typeof teamIndexSchema>;
-
-export const roundIndexSchema = z.number().min(0);
-export type RoundIndex = z.infer<typeof roundIndexSchema>;
-
-
 export const gameStateSchema = z.strictObject({
     gameConfig: milleBornesGameConfigSchema,
-
-    // Driving zones.  One per team.
 
     // Player hands.  One per player.
     playerHands: z.array(playerHandSchema),
@@ -32,6 +23,9 @@ export const gameStateSchema = z.strictObject({
 
     // Discard pile
     discardPile: z.array(milleBornesCardSchema),
+
+    // Driving zones.  One per team.
+
 
     // Last move
 
