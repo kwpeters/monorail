@@ -45,6 +45,16 @@ export function newGame(
             const drawPile: Array<Card> = shuffledDeck;
 
             //
+            // Player at index 0 will be the first dealer.
+            //
+            const currentRoundDealerIndex = 0;
+
+            //
+            // Set the "last move" text
+            //
+            const lastMove = `${gameConfig.players[0]!.name} has dealt the cards.`;
+
+            //
             // Initialize all team scores to 0.
             //
             const teamScores: Array<Array<number>> = [];
@@ -76,8 +86,10 @@ export function newGame(
                 playerHands,
                 drawPile,
                 discardPile: [],
+                drivingZones,
+                currentRoundDealerIndex,
+                lastMove,
                 teamScores,
-                drivingZones
             } satisfies GameState;
             return gameState;
         }),

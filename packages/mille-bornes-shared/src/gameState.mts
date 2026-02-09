@@ -15,24 +15,16 @@ export type PlayerHand = z.infer<typeof playerHandSchema>;
 
 
 export const gameStateSchema = z.strictObject({
-    gameConfig: gameConfigSchema,
-
-    // Player hands.  One per player.
-    playerHands: z.array(playerHandSchema),
-
-    // Draw pile
-    drawPile: z.array(cardSchema),
-
-    // Discard pile
-    discardPile: z.array(cardSchema),
-
+    gameConfig:              gameConfigSchema,
+    playerHands:             z.array(playerHandSchema),
+    drawPile:                z.array(cardSchema),
+    discardPile:             z.array(cardSchema),
     // Driving zones.  One per team.
-    drivingZones: z.array(drivingZoneSchema).min(2).max(3),
-
-    // Last move
-
+    drivingZones:            z.array(drivingZoneSchema).min(2).max(3),
+    currentRoundDealerIndex: z.number().int().min(0).max(6),
+    lastMove:                z.string(),
     // Team scores.  First index is team index.  Second index is round number.
-    teamScores: z.array(z.array(z.number().min(0))),
+    teamScores:              z.array(z.array(z.number().min(0))),
 })
 .refine(
     (gameState) => gameState.playerHands.length === gameState.gameConfig.players.length,
