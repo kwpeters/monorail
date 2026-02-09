@@ -2,6 +2,7 @@ import { z } from "zod";
 import { optionSchema } from "@repo/depot/schemaUtility";
 import { calamityHazardCardSchema, distanceCardSchema } from "./card.mjs";
 
+
 ////////////////////////////////////////////////////////////////////////////////
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -45,11 +46,14 @@ export type RollState = z.infer<typeof rollStateSchema>;
 // }
 
 
+////////////////////////////////////////////////////////////////////////////////
 export const activeSafetyCardSchema = z.strictObject({
     playedAsCoupFourre: z.boolean()
 });
 export type ActiveSafetyCard = z.infer<typeof activeSafetyCardSchema>;
 
+
+////////////////////////////////////////////////////////////////////////////////
 export const activeSafetyCardsSchema = z.strictObject({
     drivingAce:    optionSchema(activeSafetyCardSchema),
     extraTank:     optionSchema(activeSafetyCardSchema),
@@ -58,6 +62,8 @@ export const activeSafetyCardsSchema = z.strictObject({
 });
 export type ActiveSafetyCards = z.infer<typeof activeSafetyCardsSchema>;
 
+
+////////////////////////////////////////////////////////////////////////////////
 export const drivingZoneSchema = z.strictObject({
     rollState:         rollStateSchema,
     speedLimitActive:  z.boolean(),
