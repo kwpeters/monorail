@@ -5,11 +5,11 @@ import * as _ from "lodash-es";
 
 /**
  * Enumerates the external IPv4 addresses
- * @return An object in which the keys are the names of the network interfaces
+ * @return A map in which the keys are the names of the network interfaces
  * and the values are the IPv4 addresses (as strings)
  */
-export function getExternalIpv4Addresses(): {[networkInterfaceName: string]: string} {
-    const foundInterfaces: {[networkInterfaceName: string]: string} = {};
+export function getExternalIpv4Addresses(): Map<string, string> {
+    const foundInterfaces: Map<string, string> = new Map();
 
     const networkInterfaces = os.networkInterfaces();
 
@@ -18,7 +18,7 @@ export function getExternalIpv4Addresses(): {[networkInterfaceName: string]: str
             const addrArray = networkInterfaces[curInterfaceName]!;
             for (const curAddr of addrArray) {
                 if ((curAddr.family === "IPv4") && (!curAddr.internal)) {
-                    foundInterfaces[curInterfaceName] = curAddr.address;
+                    foundInterfaces.set(curInterfaceName, curAddr.address);
                 }
             }
         }
@@ -34,7 +34,7 @@ export function getExternalIpv4Addresses(): {[networkInterfaceName: string]: str
  */
 export function getFirstExternalIpv4Address(): string {
     const addresses = getExternalIpv4Addresses();
-    const address = _.first(_.values(addresses))!;
+    const address = Array.from(addresses.values())[0]!;
     return address;
 }
 

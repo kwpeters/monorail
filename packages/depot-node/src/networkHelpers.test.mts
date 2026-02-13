@@ -41,9 +41,9 @@ function shutdownServer(server: net.Server): Promise<void> {
 
 describe("getExternalIpv4Addresses()", () => {
 
-    it("will return an object with at least one string key", () => {
+    it("will return a map with at least one key-value pair", () => {
         const networkAddresses = getExternalIpv4Addresses();
-        const firstIpAddr = _.values(networkAddresses)[0];
+        const firstIpAddr = Array.from(networkAddresses.values())[0];
         expect(_.isString(firstIpAddr)).toEqual(true);
     });
 
