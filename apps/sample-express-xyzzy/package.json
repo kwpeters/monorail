@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "private": true,
     "scripts": {
-        "start": "node ./dist/bin/www.mjs",
+        "start": "node ./dist/www.mjs",
         "dev": "echo 'Add dev script here'",
         "build-assets": "npx cpx --clean src/public/** ./dist/public",
         "build-tsc": "tsc --build tsconfig.src.json",
