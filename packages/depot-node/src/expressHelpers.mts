@@ -1,4 +1,6 @@
 import express from "express";
+import type { HttpSuccess, HttpError } from "@repo/depot/httpStatusCodes";
+
 
 /**
  * Response body structure for error responses.
@@ -29,7 +31,7 @@ export type SuccessResponseBody<TValue extends Record<string, unknown> & { succe
  */
 export function sendError<TErrDetails = undefined>(
     res: express.Response,
-    statusCode: number,
+    statusCode: HttpError,
     errMsg: string,
     errDetails?: TErrDetails
 ): void {
@@ -52,7 +54,7 @@ export function sendError<TErrDetails = undefined>(
  */
 export function sendSuccess<TValue extends Record<string, unknown> = Record<string, never>>(
     res: express.Response,
-    statusCode: number,
+    statusCode: HttpSuccess,
     value?: TValue
 ): void {
     if (res.headersSent) {
