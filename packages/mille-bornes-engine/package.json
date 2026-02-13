@@ -12,6 +12,14 @@
         "depcheck": "depcheck"
     },
     "exports": {
+        "./gameId": {
+            "types": "./src/gameId.mts",
+            "default": "./dist/gameId.mjs"
+        },
+        "./games": {
+            "types": "./src/games.mts",
+            "default": "./dist/games.mjs"
+        },
         "./milleBornesDeck": {
             "types": "./src/milleBornesDeck.mts",
             "default": "./dist/milleBornesDeck.mjs"

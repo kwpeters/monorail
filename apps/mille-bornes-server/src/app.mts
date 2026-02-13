@@ -3,9 +3,10 @@ import * as path from "node:path";
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors, {type CorsOptions} from "cors";
+import { morganMiddleware } from "./morganMiddleware.mjs";
 import { router as indexRouter } from "./routes/index.mjs";
 import { router as usersRouter } from "./routes/users.mjs";
-import { morganMiddleware } from "./morganMiddleware.mjs";
+import { router as newGameRouter } from "./routes/newGame.mjs";
 
 
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
@@ -54,3 +55,4 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
+app.use("/new-game", newGameRouter);
