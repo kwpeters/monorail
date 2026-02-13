@@ -128,6 +128,10 @@
             "types": "./src/httpConstants.mts",
             "default": "./dist/httpConstants.mjs"
         },
+        "./httpStatusCodes": {
+            "types": "./src/httpStatusCodes.mts",
+            "default": "./dist/httpStatusCodes.mjs"
+        },
         "./indentingWriter": {
             "types": "./src/indentingWriter.mts",
             "default": "./dist/indentingWriter.mjs"
