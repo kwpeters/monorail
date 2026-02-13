@@ -3,11 +3,11 @@ import { FailedResult, Result, SucceededResult } from "./result.mjs";
 
 
 
-fdescribe("pipeWhileSuccessful()", () => {
+describe("pipeWhileSuccessful()", () => {
 
     const fn1 = (n: number) => new SucceededResult(n + 1);
     const fn2 = (n: number) => new SucceededResult(n * 2);
-    const fn3 = (n: number) => n - 3;
+    const fn3 = (n: number) => new SucceededResult(n - 3);
 
 
     it("when no functions are specified the initial value is returned", async () => {
@@ -31,6 +31,7 @@ fdescribe("pipeWhileSuccessful()", () => {
 
         expect(result.failed).toBeTrue();
         expect(result.error).toEqual("error message");
+        expect(subsequentFnInvocations).toEqual(0);
     });
 
 
@@ -67,7 +68,8 @@ fdescribe("pipeWhileSuccessful()", () => {
             Promise.resolve(new SucceededResult(5)),
             fn3
         );
-        expect(result).toBe(2);
+        expect(result.succeeded).toBeTrue();
+        expect(result.value).toBe(2);
     });
 
 
@@ -77,7 +79,8 @@ fdescribe("pipeWhileSuccessful()", () => {
             fn1,
             fn3
         );
-        expect(result).toBe(3);
+        expect(result.succeeded).toBeTrue();
+        expect(result.value).toBe(3);
     });
 
 
@@ -88,7 +91,8 @@ fdescribe("pipeWhileSuccessful()", () => {
             fn2,
             fn3
         );
-        expect(result).toBe(9);
+        expect(result.succeeded).toBeTrue();
+        expect(result.value).toBe(9);
     });
 
 
@@ -99,7 +103,7 @@ fdescribe("pipeWhileSuccessful()", () => {
         // Mix of sync and async functions
         const syncFn = (n: number) => new SucceededResult(n + 5);
         const asyncFn = async (n: number) => Promise.resolve(new SucceededResult(n * 2));
-        const finalAsyncFn = async (n: number) => Promise.resolve(n - 10);
+        const finalAsyncFn = async (n: number) => Promise.resolve(new SucceededResult(n - 10));
 
         const result = await pipeWhileSuccessful(
             syncResult,       // 10
@@ -108,7 +112,8 @@ fdescribe("pipeWhileSuccessful()", () => {
             finalAsyncFn      // 30 - 10 = 20
         );
 
-        expect(result).toBe(20);
+        expect(result.succeeded).toBeTrue();
+        expect(result.value).toBe(20);
     });
 
 });
