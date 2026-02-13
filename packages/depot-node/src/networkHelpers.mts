@@ -94,17 +94,22 @@ export function getAvailableTcpPort(): Promise<number> {
  * available
  * @return An available TCP port number
  */
-export function selectAvailableTcpPort(...preferredPorts: Array<number>): Promise<number> {
+export async function selectAvailableTcpPort(...preferredPorts: Array<number>): Promise<number> {
     // Remove any preferred ports that we know cannot be used.
     _.remove(preferredPorts, (curPort) => curPort === 0);
 
-    return _.reduce<number, Promise<number>>(
-        [...preferredPorts, 0],
-        (acc, curPort) => {
-            return acc.catch(() => isAvailable(curPort));
-        },
-        Promise.reject(undefined)
-    );
+    for (const curPort of [...preferredPorts, 0]) {
+        try {
+            const availablePort = await isAvailable(curPort);
+            return availablePort;
+        }
+        catch (err) {
+            // curPort is not available.
+        }
+    }
+
+    // This should never happen, but just in case...
+    throw new Error("Failed to find an available TCP port.");
 }
 
 
