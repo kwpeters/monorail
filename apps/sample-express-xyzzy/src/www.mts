@@ -5,10 +5,10 @@ import type { ISystemError } from "@repo/depot-node/nodeTypes";
 import { app } from "./app.mjs";
 import { logger } from "./logger.mjs";
 
+
 /**
  * Get port from environment and store in Express.
  */
-
 const port = normalizePort(process.env.PORT || "3000");
 app.set("port", port);
 
@@ -20,7 +20,6 @@ const server = http.createServer(app);
 /**
  * Listen on provided port, on all network interfaces.
  */
-
 server.listen(port);
 server.on("error", onError);
 server.on("listening", onListening);
@@ -49,23 +48,22 @@ function normalizePort(val: string): string | number | false {
 /**
  * Event listener for HTTP server "error" event.
  */
-
 function onError(error: ISystemError) {
     if (error.syscall !== "listen") {
         // eslint-disable-next-line @typescript-eslint/only-throw-error
         throw error;
     }
 
-    const bind = typeof port === "string" ? "Pipe " + port : "Port " + port;
+    const portStr = typeof port === "string" ? "pipe " + port : "port " + port;
 
     // handle specific listen errors with friendly messages
     switch (error.code) {
         case "EACCES":
-            console.error(bind + " requires elevated privileges");
+            console.error(portStr + " requires elevated privileges");
             process.exit(1);
             break;
         case "EADDRINUSE":
-            console.error(bind + " is already in use");
+            console.error(portStr + " is already in use");
             process.exit(1);
             break;
         default:
@@ -80,6 +78,6 @@ function onError(error: ISystemError) {
  */
 function onListening() {
     const addr = server.address();
-    const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr?.port}`;
-    logger.info(`Listening on ${bind}`);
+    const portStr = typeof addr === "string" ? `pipe ${addr}` : `port ${addr?.port}`;
+    logger.info(`Listening on ${portStr}`);
 }
