@@ -5,6 +5,13 @@ export type EmptyObject = Record<string, never>;
 
 
 /**
+ * A type representing a value that can be either a direct value of type T or a
+ * Promise that resolves to a value of type T.
+ */
+export type MaybePromise<T> = Promise<T> | T;
+
+
+/**
  * For a type T, adds null and undefined to the type of each property.
  */
 export type MakePropsNullable<T> = {
