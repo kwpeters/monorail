@@ -200,6 +200,10 @@
             "types": "./src/pipeAsync2.mts",
             "default": "./dist/pipeAsync2.mjs"
         },
+        "./pipeWhileSuccessful": {
+            "types": "./src/pipeWhileSuccessful.mts",
+            "default": "./dist/pipeWhileSuccessful.mjs"
+        },
         "./poll": {
             "types": "./src/poll.mts",
             "default": "./dist/poll.mjs"
