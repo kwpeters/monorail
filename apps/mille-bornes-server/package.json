@@ -18,6 +18,7 @@
     },
     "dependencies": {
         "@repo/depot": "*",
+        "@repo/depot-node": "*",
         "@repo/mille-bornes-engine": "*",
         "@repo/mille-bornes-shared": "*",
         "cookie-parser": "~1.4.4",
