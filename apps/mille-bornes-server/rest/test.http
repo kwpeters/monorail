@@ -1,0 +1,13 @@
+### Create New Game
+POST http://localhost:3000/new-game
+Content-Type: application/json
+
+{
+    "raceDistance": 1000,
+    "pointsGoal":   5000,
+    "numTeams":     2,
+    "players":      [
+        {"type": "HumanPlayer", "name": ""},
+        {"type": "HumanPlayer", "name": "Bob"}
+    ]
+}

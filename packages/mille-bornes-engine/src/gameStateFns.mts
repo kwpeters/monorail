@@ -11,7 +11,7 @@ import type { ShuffledDeckProvider } from "./milleBornesDeck.mjs";
 // import { createDeck, shuffleDeck, standardCardCountFn } from "./milleBornesDeck.mjs";
 
 
-export function newGame(
+export function create(
     gameConfig: Immutable<GameConfig>,
     shuffledDeckProvider: ShuffledDeckProvider
 ): Result<Immutable<GameState>, string> {
