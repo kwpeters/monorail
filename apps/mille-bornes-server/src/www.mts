@@ -2,6 +2,7 @@
 
 import * as http from "node:http";
 import type { ISystemError } from "@repo/depot-node/nodeTypes";
+import { getExternalIpv4Addresses } from "@repo/depot-node/networkHelpers";
 import { app } from "./app.mjs";
 import { logger } from "./logger.mjs";
 
@@ -79,5 +80,10 @@ function onError(error: ISystemError) {
 function onListening() {
     const addr = server.address();
     const portStr = typeof addr === "string" ? `pipe ${addr}` : `port ${addr?.port}`;
-    logger.info(`Listening on ${portStr}`);
+
+    const addresses = getExternalIpv4Addresses();
+    const urls = Array.from(addresses.entries()).map(([name, addr]) => `[${name}] http://${addr}:${port}/`);
+
+    logger.info(`Listening on ${portStr}.`);
+    logger.info(`Accessible at: ${urls.join(", ")}`);
 }
