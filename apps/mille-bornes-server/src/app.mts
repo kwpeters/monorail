@@ -4,6 +4,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import cors, {type CorsOptions} from "cors";
 import { morganMiddleware } from "./morganMiddleware.mjs";
+import {mount as mountPlayers} from "./routes/players.mjs";
 
 
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
@@ -51,6 +52,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 // app.use("/", indexRouter);
-// app.use("/users", usersRouter);
 
 // app.use("/new-game", newGameRouter);
+
+mountPlayers(app);

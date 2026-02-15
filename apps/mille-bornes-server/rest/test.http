@@ -11,3 +11,13 @@ Content-Type: application/json
         {"type": "HumanPlayer", "name": "Bob"}
     ]
 }
+
+
+###
+
+POST http://localhost:3000/players
+Content-Type: application/json
+
+{
+    "name": "fred"
+}

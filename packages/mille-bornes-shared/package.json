@@ -12,21 +12,29 @@
         "depcheck": "depcheck"
     },
     "exports": {
+        "./card": {
+            "types": "./src/card.mts",
+            "default": "./dist/card.mjs"
+        },
         "./drivingZone": {
             "types": "./src/drivingZone.mts",
             "default": "./dist/drivingZone.mjs"
+        },
+        "./gameConfig": {
+            "types": "./src/gameConfig.mts",
+            "default": "./dist/gameConfig.mjs"
         },
         "./gameState": {
             "types": "./src/gameState.mts",
             "default": "./dist/gameState.mjs"
         },
-        "./card": {
-            "types": "./src/card.mts",
-            "default": "./dist/card.mjs"
+        "./player": {
+            "types": "./src/player.mts",
+            "default": "./dist/player.mjs"
         },
-        "./gameConfig": {
-            "types": "./src/gameConfig.mts",
-            "default": "./dist/gameConfig.mjs"
+        "./playerName": {
+            "types": "./src/playerName.mts",
+            "default": "./dist/playerName.mjs"
         }
     },
     "devDependencies": {
