@@ -1,6 +1,7 @@
 import {v4 as uuidv4} from "uuid";
 import { type IEquatable } from "./equate.mjs";
 import { FailedResult, Result, SucceededResult } from "./result.mjs";
+import { hashSync, type HashString } from "./hash.mjs";
 
 
 // This module is a simple wrapper around the uuid package's uuid generator.
@@ -106,7 +107,7 @@ export class Uuid implements IEquatable<Uuid>, IEquatable<string> {
      * @param uuidStr - The string UUID to be normalized
      * @return The normalized version of the specified UUID string.
      */
-    private static toNormalizedString(uuidStr: string): string {
+    public static toNormalizedString(uuidStr: string): string {
         return uuidStr.toLowerCase().replace(/-/g, "");
     }
 
@@ -156,4 +157,12 @@ export class Uuid implements IEquatable<Uuid>, IEquatable<string> {
     public toString(): string {
         return this._uuidStr;
     }
+}
+
+
+
+export function hashUuid(uuid: Uuid): HashString {
+    const normalized = Uuid.toNormalizedString(uuid.toString());
+    const hash = hashSync(normalized);
+    return hash;
 }

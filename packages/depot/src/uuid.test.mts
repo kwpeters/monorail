@@ -1,5 +1,5 @@
 import * as _ from "lodash-es";
-import { UuidFormat, reStrUuidFormatD, reStrUuidFormatN, Uuid, generateUuid } from "./uuid.mjs";
+import { UuidFormat, reStrUuidFormatD, reStrUuidFormatN, Uuid, generateUuid, hashUuid } from "./uuid.mjs";
 
 
 describe("generateUuid()", () => {
@@ -170,4 +170,32 @@ describe("Uuid", () => {
 
         });
     });
+});
+
+
+
+describe("hashUuid()", () => {
+
+    it("returns the same hash for two identical Uuids", () => {
+        const uuidStr = "a1096b4bdb344926997fb97256373e2f";
+        const uuid1 = Uuid.fromString(uuidStr).value!;
+        const uuid2 = Uuid.fromString(uuidStr).value!;
+        expect(hashUuid(uuid1)).toEqual(hashUuid(uuid2));
+    });
+
+
+    it("return the same hash for two Uuids that differ in case", () => {
+        const uuid1 = Uuid.fromString("a1096b4bdb344926997fb97256373e2f").value!;
+        const uuid2 = Uuid.fromString("A1096B4BDB344926997FB97256373E2F").value!;
+        expect(hashUuid(uuid1)).toEqual(hashUuid(uuid2));
+    });
+
+
+    it("return different hashes for to Uuids that are different", () => {
+        const uuid1 = Uuid.fromString("a1096b4bdb344926997fb97256373e2f").value!;
+        const uuid2 = Uuid.fromString("a1096b4bdb344926997fb97256373e2e").value!;
+        //                                                 difference ^
+        expect(hashUuid(uuid1)).not.toEqual(hashUuid(uuid2));
+    });
+
 });
