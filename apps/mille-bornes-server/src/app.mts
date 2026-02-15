@@ -4,7 +4,6 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import cors, {type CorsOptions} from "cors";
 import { morganMiddleware } from "./morganMiddleware.mjs";
-import { mount as mountLobby } from "./routes/lobby.mjs";
 
 
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
@@ -54,5 +53,4 @@ app.use(express.static(path.join(__dirname, "public")));
 // app.use("/", indexRouter);
 // app.use("/users", usersRouter);
 
-mountLobby(app);
 // app.use("/new-game", newGameRouter);
