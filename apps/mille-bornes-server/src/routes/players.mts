@@ -32,6 +32,9 @@ router.post("/", async (req, res) => {
         res, createPlayerResponseSchema,
         (req, reqBody) => {
             const id = Uuid.create(UuidFormat.D);
+
+            // TODO: Need to actually put the player into a collection of human players.
+
             return new SucceededResult({
                 statusCode: HttpSuccess._201_Created,
                 body:       {
