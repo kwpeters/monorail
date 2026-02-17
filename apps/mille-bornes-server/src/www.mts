@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-
 import * as http from "node:http";
+import { Server } from "socket.io";
 import type { ISystemError } from "@repo/depot-node/nodeTypes";
 import { getExternalIpv4Addresses } from "@repo/depot-node/networkHelpers";
 import { app } from "./app.mjs";
@@ -17,6 +17,20 @@ app.set("port", port);
  * Create HTTP server.
  */
 const server = http.createServer(app);
+
+//
+// Create the socket.io server.
+//
+const io = new Server(server);
+
+io.on("connection", (socket) => {
+    logger.info("A client has connected.");
+
+    socket.on("disconnect", () => {
+        logger.info("A client has disconnected.");
+    });
+});
+
 
 /**
  * Listen on provided port, on all network interfaces.
