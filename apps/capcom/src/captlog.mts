@@ -141,7 +141,9 @@ async function appendDailyTemplate(captlogFile: File): Promise<Result<void, stri
             ``,
             delimLine,
             `** Meetings`,
-            `** Todo`
+            `| Time          |                     |`,
+            `|---------------+---------------------|`,
+            `|               |                     |`,
         ] :
         [
             ``,
