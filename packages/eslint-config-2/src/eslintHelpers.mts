@@ -130,7 +130,6 @@ export function getTsConfig(projDir: string): ConfigWithExtendsArray {
                     projectService: true,
                     // Anchors the tsconfig.json search to this directory, mirroring
                     // how the TypeScript compiler resolves config files.
-                    // tsconfigRootDir: import.meta.dirname,
                     tsconfigRootDir: projDir,
                 },
             },
