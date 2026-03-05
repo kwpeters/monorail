@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+
 import type { ConfigWithExtends, ConfigWithExtendsArray } from "@eslint/config-helpers";
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
@@ -9,6 +11,10 @@ import turboConfig from "eslint-config-turbo/flat";
 import globals from "globals";
 
 
+/**
+ * Helper function that gets glob patterns of common files that ESLint should
+ * ignore.
+ */
 export function getIgnorePatterns(): string[] {
     return [
         // Built files
@@ -21,6 +27,13 @@ export function getIgnorePatterns(): string[] {
 }
 
 
+/**
+ * Gets JS/TS base configurations and customizations.
+ *
+ * @param browserGlobals - Whether to include browser globals
+ * @param nodeGlobals - Whether to include Node.js globals
+ * @return The JS/TS base configurations and customizations
+ */
 export function getJsConfig(browserGlobals: boolean, nodeGlobals: boolean): ConfigWithExtendsArray {
 
     const globalsConfig = {
@@ -70,11 +83,7 @@ export function getJsConfig(browserGlobals: boolean, nodeGlobals: boolean): Conf
                     {
                         "allowAllPropertiesOnSameLine": true
                     }
-                ]
-            }
-        },
-        {
-            rules: {
+                ],
                 "max-len": [
                     "error",
                     {
@@ -95,17 +104,23 @@ export function getJsConfig(browserGlobals: boolean, nodeGlobals: boolean): Conf
 }
 
 
+/**
+ * Gets TS base configuration and customizations.
+ *
+ * @param projDir - The project directory (typically `import.meta.dirname`)
+ * @return The TypeScript-specific configurations and customizations
+ */
 export function getTsConfig(projDir: string): ConfigWithExtendsArray {
     return [
-        // Configuration for:
-        // - the core ESLint recommended config (https://www.npmjs.com/package/@eslint/js)
-        // - the typescript-eslint recommended config (https://typescript-eslint.io/users/configs#recommended).
-        // tseslint.configs.recommended,
-        // tseslint.configs.recommendedTypeChecked,
-        tseslint.configs.strictTypeChecked,
-        tseslint.configs.stylisticTypeChecked,
+        // Scope all typescript-eslint rules to TypeScript files only. This
+        // prevents TS rules (both type-aware and non-type-aware) from running
+        // on .md, .css, .json, etc.
         {
             files: ["**/*.{ts,mts,cts}"],
+            extends: [
+                ...tseslint.configs.strictTypeChecked,
+                ...tseslint.configs.stylisticTypeChecked,
+            ],
             languageOptions: {
                 parserOptions: {
                     // Enables TypeScript's language service to automatically find
@@ -119,8 +134,6 @@ export function getTsConfig(projDir: string): ConfigWithExtendsArray {
                     tsconfigRootDir: projDir,
                 },
             },
-        },
-        {
             rules: {
                 "@typescript-eslint/array-type": ["off"],
                 "@typescript-eslint/member-ordering": [
@@ -343,46 +356,62 @@ export function getTsConfig(projDir: string): ConfigWithExtendsArray {
                 "@typescript-eslint/unified-signatures": ["off"],
             }
         },
-        {
-            // disable type-aware linting on JS files
-            files: ["**/*.js", "**/*.json"],
-            extends: [tseslint.configs.disableTypeChecked],
-        }
     ];
 }
 
 
+/**
+ * Gets Turbo linting configuration and customizations.
+ */
 export function getTurboConfig(): ConfigWithExtendsArray {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return turboConfig;
 }
 
 
+/**
+ * Get JSON linting configuration and customizations.
+ */
 export function getJsonConfig(): ConfigWithExtends {
     return { files: ["**/*.json"], plugins: { json }, language: "json/json", extends: ["json/recommended"] }
 }
 
 
+/**
+ * Get JSONC linting configuration and customizations.
+ */
 export function getJsoncConfig(): ConfigWithExtends {
     return { files: ["**/*.jsonc"], plugins: { json }, language: "json/jsonc", extends: ["json/recommended"] };
 }
 
 
+/**
+ * Get JSON5 linting configuration and customizations.
+ */
 export function getJson5Config(): ConfigWithExtends {
     return { files: ["**/*.json5"], plugins: { json }, language: "json/json5", extends: ["json/recommended"] };
 }
 
 
+/**
+ * Get Markdown linting configuration and customizations.
+ */
 export function getMarkdownConfig(): ConfigWithExtends {
     // Fix: The following cast is needed because the Markdown plugin has not been updated
     // to eslint 10 types yet.
-    const markdownPlugin = markdown as any as Plugin;
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
+    const markdownPlugin = markdown as unknown as Plugin;
     return { files: ["**/*.md"], plugins: { markdown: markdownPlugin }, language: "markdown/gfm", extends: ["markdown/recommended"] };
 }
 
 
+/**
+ * Get CSS linting configuration and customizations.
+ */
 export function getCssConfig(): ConfigWithExtends {
     // Fix: The following cast is needed because the CSS plugin has not been updated
     // to eslint 10 types yet.
-    const cssPlugin = css as any as Plugin;
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
+    const cssPlugin = css as unknown as Plugin;
     return { files: ["**/*.css"], plugins: { css: cssPlugin }, language: "css/css", extends: ["css/recommended"] };
 }
