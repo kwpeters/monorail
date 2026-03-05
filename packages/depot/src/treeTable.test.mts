@@ -5,12 +5,12 @@ import { TextBlock } from "./textBlock.mjs";
 
 
 // An empty tree
-const treeEmpty = new Tree<string[]>();
+const __treeEmpty = new Tree<string[]>();
 
 
 // A single node tree
 const treeSingle = new Tree<string[]>();
-const treeSinglen1 = treeSingle.insert(undefined, undefined, ["1", "1a", "1b", "1c"]);
+const __treeSinglen1 = treeSingle.insert(undefined, undefined, ["1", "1a", "1b", "1c"]);
 
 
 // treeFull
@@ -25,12 +25,12 @@ const treeSinglen1 = treeSingle.insert(undefined, undefined, ["1", "1a", "1b", "
 const treeFull = new Tree<string[]>();
 const treeFulln1 = treeFull.insert(undefined, undefined, ["1", "1a", "1b", "1c"]);
 const treeFulln1n1 = treeFull.insert(treeFulln1, undefined, ["1.1", "1.1a", "1.1b", "1.1c"]);
-const treeFulln1n1n1 = treeFull.insert(treeFulln1n1, undefined, ["1.1.1", "1.1.1a", "1.1.1b", "1.1.1c"]);
-const treeFulln1n1n2 = treeFull.insert(treeFulln1n1, undefined, ["1.1.2", "1.1.2a", "1.1.2b", "1.1.2c"]);
-const treeFulln1n2 = treeFull.insert(treeFulln1, undefined, ["1.2", "1.2a", "1.2b", "1.2c"]);
+const __treeFulln1n1n1 = treeFull.insert(treeFulln1n1, undefined, ["1.1.1", "1.1.1a", "1.1.1b", "1.1.1c"]);
+const __treeFulln1n1n2 = treeFull.insert(treeFulln1n1, undefined, ["1.1.2", "1.1.2a", "1.1.2b", "1.1.2c"]);
+const __treeFulln1n2 = treeFull.insert(treeFulln1, undefined, ["1.2", "1.2a", "1.2b", "1.2c"]);
 const treeFulln2 = treeFull.insert(undefined, undefined, ["2", "2a", "2b", "2c"]);
 const treeFulln2n1 = treeFull.insert(treeFulln2, undefined, ["2.1", "2.1a", "2.1b", "2.1c"]);
-const treeFulln2n1n1 = treeFull.insert(treeFulln2n1, undefined, ["2.1.1", "2.1.1a", "2.1.1b", "2.1.1c"]);
+const __treeFulln2n1n1 = treeFull.insert(treeFulln2n1, undefined, ["2.1.1", "2.1.1a", "2.1.1b", "2.1.1c"]);
 
 // treeML (multi-line)
 // ├─ 1
@@ -83,7 +83,7 @@ const tree2n1n1 = tree2.insert(
         TextBlock.fromString("1.1c"),
     ]
 );
-const tree2n1n1n1 = tree2.insert(
+const __tree2n1n1n1 = tree2.insert(
     tree2n1n1,
     undefined,
     [
@@ -93,7 +93,7 @@ const tree2n1n1n1 = tree2.insert(
         TextBlock.fromString("1.1.1c"),
     ]
 );
-const tree2n1n1n2 = tree2.insert(
+const __tree2n1n1n2 = tree2.insert(
     tree2n1n1,
     undefined,
     [
@@ -103,7 +103,7 @@ const tree2n1n1n2 = tree2.insert(
         TextBlock.fromString("1.1.2c"),
     ]
 );
-const tree2n1n2 = tree2.insert(
+const __tree2n1n2 = tree2.insert(
     tree2n1,
     undefined,
     [
@@ -133,7 +133,7 @@ const tree2n2n1 = tree2.insert(
         TextBlock.fromString("2.1c")
     ]
 );
-const tree2n2n1n1 = tree2.insert(
+const __tree2n2n1n1 = tree2.insert(
     tree2n2n1,
     undefined,
     [
@@ -154,7 +154,7 @@ describe("TextTable", () => {
 
             it("fails when the column header array size is zero", () => {
                 const tree = new Tree<TextBlock[]>();
-                const n1 = tree.insert(undefined, undefined, [TextBlock.fromString("1"), TextBlock.fromString("1a")]);
+                const __n1 = tree.insert(undefined, undefined, [TextBlock.fromString("1"), TextBlock.fromString("1a")]);
                 const res = TreeTable.create([], tree);
                 expect(res.failed).toBeTrue();
             });
@@ -162,7 +162,7 @@ describe("TextTable", () => {
 
             it("fails when the column header array size is different than the tree data array size", () => {
                 const tree = new Tree<TextBlock[]>();
-                const n1 = tree.insert(undefined, undefined, [TextBlock.fromString("1"), TextBlock.fromString("1a")]);
+                const __n1 = tree.insert(undefined, undefined, [TextBlock.fromString("1"), TextBlock.fromString("1a")]);
                 const headers = [TextBlock.fromString("tree"), TextBlock.fromString("a"), TextBlock.fromString("b")];
                 const res = TreeTable.create(headers, tree);
                 expect(res.failed).toBeTrue();
@@ -171,7 +171,7 @@ describe("TextTable", () => {
 
             it("succeeds when the column header array size matches the tree data array size", () => {
                 const tree = new Tree<TextBlock[]>();
-                const n1 = tree.insert(undefined, undefined, [TextBlock.fromString("1"), TextBlock.fromString("1a"), TextBlock.fromString("1b")]);
+                const __n1 = tree.insert(undefined, undefined, [TextBlock.fromString("1"), TextBlock.fromString("1a"), TextBlock.fromString("1b")]);
                 const headers = [TextBlock.fromString("tree"), TextBlock.fromString("a"), TextBlock.fromString("a")];
                 const res = TreeTable.create(headers, tree);
                 expect(res.succeeded).toBeTrue();
@@ -199,10 +199,10 @@ describe("TextTable", () => {
                 const tree = new Tree<Array<TextBlock>>();
                 const n1     = tree.insert(undefined, undefined, [toTb("1"),     toTb("1A"),     toTb("1B")]);
                 const n1n1   = tree.insert(n1,        undefined, [toTb("1.1"),   toTb("1.1A"),   toTb("1.1B")]);
-                const n1n1n1 = tree.insert(n1n1,      undefined, [toTb("1.1.1"), toTb("1.1.1A"), toTb("1.1.1B")]);
-                const n1n1n2 = tree.insert(n1n1,      undefined, [toTb("1.1.2"), toTb("1.1.2A"), toTb("1.1.2B")]);
-                const n1n2   = tree.insert(n1,        undefined, [toTb("1.2"),   toTb("1.2A"),   toTb("1.2B")]);
-                const n2     = tree.insert(undefined, undefined, [toTb("2"),     toTb("2A"),     toTb("2B")]);
+                const __n1n1n1 = tree.insert(n1n1,      undefined, [toTb("1.1.1"), toTb("1.1.1A"), toTb("1.1.1B")]);
+                const __n1n1n2 = tree.insert(n1n1,      undefined, [toTb("1.1.2"), toTb("1.1.2A"), toTb("1.1.2B")]);
+                const __n1n2   = tree.insert(n1,        undefined, [toTb("1.2"),   toTb("1.2A"),   toTb("1.2B")]);
+                const __n2     = tree.insert(undefined, undefined, [toTb("2"),     toTb("2A"),     toTb("2B")]);
 
                 const resTable = TreeTable.create(colHeaders, tree);
                 expect(resTable.succeeded).toBeTrue();
@@ -234,10 +234,10 @@ describe("TextTable", () => {
                 const tree = new Tree<Array<TextBlock>>();
                 const n1     = tree.insert(undefined, undefined, [toTb("1"),     toTb("1A"),     toTb("1B")]);
                 const n1n1   = tree.insert(n1,        undefined, [toTb("1.1"),   toTb("1.1A"),   toTb("1.1B")]);
-                const n1n1n1 = tree.insert(n1n1,      undefined, [toTb("1.1.1"), toTb("1.1.1A"), toTb("1.1.1B")]);
-                const n1n1n2 = tree.insert(n1n1,      undefined, [toTb("1.1.2"), toTb("1.1.2A"), toTb("1.1.2B")]);
-                const n1n2   = tree.insert(n1,        undefined, [toTb("1.2"),   toTb("1.2A"),   toTb("1.2B")]);
-                const n2     = tree.insert(undefined, undefined, [toTb("2"),     toTb("2A"),     toTb("2B")]);
+                const __n1n1n1 = tree.insert(n1n1,      undefined, [toTb("1.1.1"), toTb("1.1.1A"), toTb("1.1.1B")]);
+                const __n1n1n2 = tree.insert(n1n1,      undefined, [toTb("1.1.2"), toTb("1.1.2A"), toTb("1.1.2B")]);
+                const __n1n2   = tree.insert(n1,        undefined, [toTb("1.2"),   toTb("1.2A"),   toTb("1.2B")]);
+                const __n2     = tree.insert(undefined, undefined, [toTb("2"),     toTb("2A"),     toTb("2B")]);
 
                 const resTable = TreeTable.create(colHeaders, tree);
                 expect(resTable.succeeded).toBeTrue();
@@ -271,10 +271,10 @@ describe("TextTable", () => {
                 const tree = new Tree<Array<TextBlock>>();
                 const n1     = tree.insert(undefined, undefined, [toTb("1\n1-line2"),     toTb("1A"),     toTb("1B")]);
                 const n1n1   = tree.insert(n1,        undefined, [toTb("1.1"),   toTb("1.1A"),   toTb("1.1B")]);
-                const n1n1n1 = tree.insert(n1n1,      undefined, [toTb("1.1.1\n1.1.1-line2"), toTb("1.1.1A"), toTb("1.1.1B")]);
-                const n1n1n2 = tree.insert(n1n1,      undefined, [toTb("1.1.2"), toTb("1.1.2A"), toTb("1.1.2B")]);
-                const n1n2   = tree.insert(n1,        undefined, [toTb("1.2"),   toTb("1.2A"),   toTb("1.2B")]);
-                const n2     = tree.insert(undefined, undefined, [toTb("2"),     toTb("2A"),     toTb("2B")]);
+                const __n1n1n1 = tree.insert(n1n1,      undefined, [toTb("1.1.1\n1.1.1-line2"), toTb("1.1.1A"), toTb("1.1.1B")]);
+                const __n1n1n2 = tree.insert(n1n1,      undefined, [toTb("1.1.2"), toTb("1.1.2A"), toTb("1.1.2B")]);
+                const __n1n2   = tree.insert(n1,        undefined, [toTb("1.2"),   toTb("1.2A"),   toTb("1.2B")]);
+                const __n2     = tree.insert(undefined, undefined, [toTb("2"),     toTb("2A"),     toTb("2B")]);
 
                 const resTable = TreeTable.create(colHeaders, tree);
                 expect(resTable.succeeded).toBeTrue();
@@ -309,10 +309,10 @@ describe("TextTable", () => {
                 // const n1 = tree.insert(undefined, undefined, [toTb("1"), toTb("1-1\n1-2")])
                 const n1     = tree.insert(undefined, undefined, [toTb("1"),     toTb("1A"),                   toTb("1B")]);
                 const n1n1   = tree.insert(n1,        undefined, [toTb("1.1"),   toTb("1.1A\n1.1A - line2"),   toTb("1.1B")]);
-                const n1n1n1 = tree.insert(n1n1,      undefined, [toTb("1.1.1"), toTb("1.1.1A"),               toTb("1.1.1B")]);
-                const n1n1n2 = tree.insert(n1n1,      undefined, [toTb("1.1.2"), toTb("1.1.2A"),               toTb("1.1.2B")]);
-                const n1n2   = tree.insert(n1,        undefined, [toTb("1.2"),   toTb("1.2A"),                 toTb("1.2B\n1.2B-line2\n1.2B-line3")]);
-                const n2     = tree.insert(undefined, undefined, [toTb("2"),     toTb("2A"),                   toTb("2B")]);
+                const __n1n1n1 = tree.insert(n1n1,      undefined, [toTb("1.1.1"), toTb("1.1.1A"),               toTb("1.1.1B")]);
+                const __n1n1n2 = tree.insert(n1n1,      undefined, [toTb("1.1.2"), toTb("1.1.2A"),               toTb("1.1.2B")]);
+                const __n1n2   = tree.insert(n1,        undefined, [toTb("1.2"),   toTb("1.2A"),                 toTb("1.2B\n1.2B-line2\n1.2B-line3")]);
+                const __n2     = tree.insert(undefined, undefined, [toTb("2"),     toTb("2A"),                   toTb("2B")]);
 
                 const resTable = TreeTable.create(colHeaders, tree);
                 expect(resTable.succeeded).toBeTrue();

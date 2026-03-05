@@ -1,0 +1,34 @@
+import js from "@eslint/js";
+import globals from "globals";
+// import tseslint from "typescript-eslint";
+// import json from "@eslint/json";
+// import markdown from "@eslint/markdown";
+// import css from "@eslint/css";
+import { defineConfig, globalIgnores } from "eslint/config";
+import { getJsConfig, getJsonConfig, getJsoncConfig, getJson5Config,
+         getMarkdownConfig, getCssConfig,
+         getTsConfig,
+         getIgnorePatterns,
+         getTurboConfig} from "@repo/eslint-config-2/eslintHelpers";
+
+
+export default defineConfig([
+    // Glob patterns that specify files ESLint should ignore
+    globalIgnores(getIgnorePatterns()),
+    // JS global definitions, ESLint rule configuration and @stylistic rule configurations
+    getJsConfig(false, false),
+    // TS type checking configuration and @typescript-eslint rule configurations
+    ...getTsConfig(import.meta.dirname),
+    // Turbo recommended rule configuration
+    ...getTurboConfig(),
+    // JSON linting configuration
+    getJsonConfig(),
+    // JSONC linting configuration
+    getJsoncConfig(),
+    // JSON5 linting configuration
+    getJson5Config(),
+    // Markdown linting configuration
+    getMarkdownConfig(),
+    // CSS linting configuration
+    getCssConfig()
+]);

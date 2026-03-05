@@ -598,7 +598,7 @@ export function greatestCommonDivisor(a: number, b: number): number {
         if (b > a) {
             [a, b] = [b, a];
         }
-        while (true) {  // eslint-disable-line no-constant-condition
+        while (true) {
             if (b === 0) {
                 return a;
             }

@@ -25,7 +25,6 @@ export class Deferred<TResolve> {
  * Connects a (source) Promise to a Deferred (sink).
  * @param thePromise - The promise that will serve as input to `theDeferred`
  * @param theDeferred - The Deferred that will sink the output from `thePromise`
- * @return description
  */
 export function connectPromiseToDeferred<TResolve>(
     thePromise: Promise<TResolve>,
@@ -34,6 +33,6 @@ export function connectPromiseToDeferred<TResolve>(
     thePromise
     .then(
         (result: TResolve) => { theDeferred.resolve(result); },
-        (err) => { theDeferred.reject(err); }
+        (err: unknown) => { theDeferred.reject(err); }
     );
 }

@@ -10,7 +10,7 @@ import { FailedResult, Result } from "./result.mjs";
  * @param idx - The index to check
  * @returns True if the array has an item at the specified index, false otherwise
  */
-export function hasIndex<T>(arr: readonly T[], idx: number): boolean {
+export function hasIndex(arr: readonly unknown[], idx: number): boolean {
     // If _idx_ is not an integer, _arr_ does not have that index.
     if (!Number.isInteger(idx)) {
         return false;
@@ -103,7 +103,7 @@ export function anyMatchRegex(strings: Array<string>, regex: RegExp): RegExpExec
  * if `condition` is falsy.
  */
 export function insertIf<TItem>(
-    condition: unknown,  // eslint-disable-line @typescript-eslint/explicit-module-boundary-types
+    condition: unknown,
     ...items: Array<TItem>
 ): Array<TItem> {
     return condition ? items : [];

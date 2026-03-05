@@ -72,6 +72,7 @@ export function getTimerPromise<TResolve>(
  */
 export function getDelayedRejection(ms: number, err: unknown): Promise<never> {
     return new Promise((resolve, reject) => {
+        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
         setTimeout(() => reject(err), ms);
     });
 }
@@ -198,10 +199,12 @@ function retryWhileImpl<TResolve>(
                     // The promise was rejected.
                     if (attemptsSoFar >= maxNumAttempts) {
                         // logger.error("Retry operation failed after " + maxNumAttempts + " attempts.");
+                        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
                         reject(err);
                     }
                     else if (!whilePredicate(err)) {
                         // logger.error("Stopped retrying operation because while predicate returned false." + err);
+                        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
                         reject(err);
                     }
                     else {
@@ -500,7 +503,7 @@ export async function removeAsync<T>(
  * will give you an object type where the keys are taken from T and the values
  * have their associated resolved type.
  */
-export type AllResolveTypes<T extends {[n: string]: Promise<unknown>}> = {
+export type AllResolveTypes<T extends Record<string, Promise<unknown>>> = {
     [P in keyof T]: Awaited<T[P]>
 };
 
@@ -516,7 +519,7 @@ export type AllResolveTypes<T extends {[n: string]: Promise<unknown>}> = {
  * object containing their resolved values.  Otherwise, the first rejection is
  * returned.
  */
-export function allObj<T extends {[n: string]: Promise<unknown>}>(
+export function allObj<T extends Record<string, Promise<unknown>>>(
     namedPromises: T
 ): Promise<AllResolveTypes<T>> {
     const promises = Object.values(namedPromises);

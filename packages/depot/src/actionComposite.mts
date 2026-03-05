@@ -9,7 +9,7 @@ export class ActionComposite implements IAction<void> {
 
 
     public get description(): undefined | string {
-        const descriptions = _.map(this._actions, (curAction) => curAction.description || "<action>");
+        const descriptions = _.map(this._actions, (curAction) => curAction.description ?? "<action>");
         return descriptions.join("\n");
     }
 

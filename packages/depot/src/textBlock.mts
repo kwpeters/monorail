@@ -136,13 +136,13 @@ export class TextBlock implements IHasToString {
 
         for (let lineIdx = 0; lineIdx < this._lines.length; lineIdx++) {
             if (lineIdx === 0) {
-                newLines.push(prefix.first + this._lines[0]);
+                newLines.push(prefix.first + this._lines[0]!);
             }
             else if (lineIdx === lastIdx) {
-                newLines.push(prefix.last + this._lines[lineIdx]);
+                newLines.push(prefix.last + this._lines[lineIdx]!);
             }
             else {
-                newLines.push(prefix.middle + this._lines[lineIdx]);
+                newLines.push(prefix.middle + this._lines[lineIdx]!);
             }
         }
 

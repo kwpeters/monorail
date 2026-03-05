@@ -18,15 +18,15 @@ import { errorToString } from "./errorHelpers.mjs";
 export type PromiseResultSuccessType<T> = [T] extends [Promise<Result<infer X, infer __Y>>] ? X : never;
 export type PromiseResultErrorType<T> = [T] extends [Promise<Result<infer __X, infer Y>>] ? Y : never;
 
-export type AllSuccessTypes<T extends {[n: string]: Promise<Result<unknown, unknown>>; }> = {
+export type AllSuccessTypes<T extends Record<string, Promise<Result<unknown, unknown>>>> = {
     [P in keyof T]: PromiseResultSuccessType<T[P]>
 };
 
-export type AllErrorTypes<T extends {[n: string]: Promise<Result<unknown, unknown>>; }> = {
+export type AllErrorTypes<T extends Record<string, Promise<Result<unknown, unknown>>>> = {
     [P in keyof T]: PromiseResultErrorType<T[P]>
 };
 
-export type PossibleErrors<T extends { [n: string]: Promise<Result<unknown, unknown>>; }> = AllErrorTypes<T>[keyof AllErrorTypes<T>];
+export type PossibleErrors<T extends Record<string, Promise<Result<unknown, unknown>>>> = AllErrorTypes<T>[keyof AllErrorTypes<T>];
 
 
 
@@ -86,6 +86,7 @@ export namespace PromiseResult {
         const result = await pr;
         return result.succeeded ?
             Promise.resolve(result.value) :
+            // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
             Promise.reject(result.error);
     }
 
@@ -162,7 +163,7 @@ export namespace PromiseResult {
             (val) => {
                 return new SucceededResult(val);
             },
-            (err) => {
+            (err: unknown) => {
                 return new FailedResult(errorToString(err));
             }
         );
@@ -206,14 +207,14 @@ export namespace PromiseResult {
      * values are the unwrapped success values. Otherwise, the first failure Result is
      * returned.
      */
-    export async function allObj<T extends {[n: string]: Promise<Result<unknown, unknown>>}>(
+    export async function allObj<T extends Record<string, Promise<Result<unknown, unknown>>>>(
         namedPromiseResults: T
     ): Promise<Result<AllSuccessTypes<T>, PossibleErrors<T>>> {
         const promises = Object.values(namedPromiseResults);
         const res = await PromiseResult.allArrayM(promises);
         if (res.succeeded) {
             // All were successful.  Return an object of the success result values.
-            const successObj = {} as {[n: string]: unknown};
+            const successObj = {} as Record<string, unknown>;
             const keys = Object.keys(namedPromiseResults);
             for (let curIdx = 0; curIdx < keys.length; curIdx++) {
                 successObj[keys[curIdx]!] = res.value[curIdx];
@@ -330,7 +331,7 @@ export namespace PromiseResult {
     >>;
 
     export async function allM<TSA, TFA, TSB, TFB, TSC, TFC, TSD, TFD, TSE, TFE, TSF, TFF, TSG, TFG, TSH, TFH, TSI, TFI,
-                              TSJ, TFJ>(
+        TSJ, TFJ>(
         a: Promise<Result<TSA, TFA>>,
         b: Promise<Result<TSB, TFB>>,
         c: Promise<Result<TSC, TFC>>,
@@ -378,7 +379,7 @@ export namespace PromiseResult {
             // failed Result object.  See promiseResult.forceResult() for a way to
             // wrap a Promise<Result<>> so that it never rejects.
             const errMsg = `Promise for Result unexpectedly rejected. ${errorToString(err)}`;
-            throw new Error(errMsg);
+            throw new Error(errMsg, { cause: err });
         }
 
         if (results.every((res) => res.succeeded)) {
@@ -457,13 +458,13 @@ export namespace PromiseResult {
                         resolve(new FailedResult(indexed));
                     }
                 })
-                .catch((err) => {
+                .catch((err: unknown) => {
                     // This should never happen, because failure is supposed to be
                     // communicated with a Promise that *resolves* (not rejects) with
                     // a failed Result object. See promiseResult.forceResult() for a
                     // way to wrap a Promise<Result<>> so that it never rejects.
                     const errMsg = `Promise for Result unexpectedly rejected. ${errorToString(err)}`;
-                    reject(new Error(errMsg));
+                    reject(new Error(errMsg, { cause: err }));
                 });
             });
         });
@@ -652,7 +653,7 @@ export namespace PromiseResult {
         pr: Promise<Result<TSuccess, TError>> | Result<TSuccess, TError>
     ): Promise<Result<TSuccess, TError | string>> {
         return Promise.resolve(pr)
-        .catch((err) => {
+        .catch((err: unknown) => {
             return new FailedResult(errorToString(err));
         });
     }

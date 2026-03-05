@@ -42,7 +42,7 @@ export function zodResultToResult<TSuccessParseData>(
  * @param input - The unknown input to parse
  * @return A Result containing either the parsed data or error message
  */
-export function safeParse<TSchema extends z.ZodTypeAny>(
+export function safeParse<TSchema extends z.ZodType>(
     schema: TSchema,
     input: unknown
 ): Result<z.infer<TSchema>, string> {
@@ -58,7 +58,7 @@ export function safeParse<TSchema extends z.ZodTypeAny>(
  * @param input - The unknown input to parse
  * @return A Promise of Result containing either the parsed data or error message
  */
-export async function safeParseAsync<TSchema extends z.ZodTypeAny>(
+export async function safeParseAsync<TSchema extends z.ZodType>(
     schema: TSchema,
     input: unknown
 ): Promise<Result<z.infer<TSchema>, string>> {

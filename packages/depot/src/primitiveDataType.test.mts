@@ -8,7 +8,7 @@ describe("NonNegativeInt", () => {
         describe("dataTypeMin", () => {
 
             it("returns the expected minimum value", () => {
-                expect(NonNegativeInt.dataTypeMin).toEqual(0);
+                expect(NonNegativeInt.DATA_TYPE_MIN).toEqual(0);
             });
 
         });
@@ -17,7 +17,7 @@ describe("NonNegativeInt", () => {
         describe("dataTypeMax", () => {
 
             it("returns the expected maximum value", () => {
-                expect(NonNegativeInt.dataTypeMax).toEqual(Number.MAX_SAFE_INTEGER);
+                expect(NonNegativeInt.DATA_TYPE_MAX).toEqual(Number.MAX_SAFE_INTEGER);
             });
 
         });
@@ -80,7 +80,7 @@ describe("NonNegativeInt", () => {
         describe("numBits", () => {
 
             it("returns 64", () => {
-                expect(NonNegativeInt.numBits).toEqual(64);
+                expect(NonNegativeInt.NUM_BITS).toEqual(64);
             });
 
         });
@@ -111,7 +111,7 @@ describe("Int8", () => {
         describe("dataTypeMin", () => {
 
             it("returns the expected minimum value", () => {
-                expect(Int8.dataTypeMin).toEqual(-128);
+                expect(Int8.DATA_TYPE_MIN).toEqual(-128);
             });
 
         });
@@ -120,7 +120,7 @@ describe("Int8", () => {
         describe("dataTypeMax", () => {
 
             it("returns the expected maximum value", () => {
-                expect(Int8.dataTypeMax).toEqual(127);
+                expect(Int8.DATA_TYPE_MAX).toEqual(127);
             });
 
         });
@@ -183,7 +183,7 @@ describe("Int8", () => {
         describe("numBits", () => {
 
             it("returns 8", () => {
-                expect(Int8.numBits).toEqual(8);
+                expect(Int8.NUM_BITS).toEqual(8);
             });
 
         });
@@ -192,7 +192,7 @@ describe("Int8", () => {
         describe("maxBitIndex", () => {
 
             it("returns 7", () => {
-                expect(Int8.maxBitIndex).toEqual(7);
+                expect(Int8.MAX_BIT_INDEX).toEqual(7);
             });
 
         });
@@ -246,7 +246,7 @@ describe("UInt8", () => {
         describe("dataTypeMin", () => {
 
             it("returns the expected minimum value", () => {
-                expect(UInt8.dataTypeMin).toEqual(0);
+                expect(UInt8.DATA_TYPE_MIN).toEqual(0);
             });
 
         });
@@ -255,7 +255,7 @@ describe("UInt8", () => {
         describe("dataTypeMax", () => {
 
             it("returns the expected maximum value", () => {
-                expect(UInt8.dataTypeMax).toEqual(255);
+                expect(UInt8.DATA_TYPE_MAX).toEqual(255);
             });
 
         });
@@ -318,7 +318,7 @@ describe("UInt8", () => {
         describe("numBits", () => {
 
             it("returns 8", () => {
-                expect(UInt8.numBits).toEqual(8);
+                expect(UInt8.NUM_BITS).toEqual(8);
             });
 
         });
@@ -327,7 +327,7 @@ describe("UInt8", () => {
         describe("maxBitIndex", () => {
 
             it("returns 7", () => {
-                expect(UInt8.maxBitIndex).toEqual(7);
+                expect(UInt8.MAX_BIT_INDEX).toEqual(7);
             });
 
         });
@@ -387,7 +387,7 @@ describe("Int16", () => {
         describe("dataTypeMin", () => {
 
             it("returns the expected minimum value", () => {
-                expect(Int16.dataTypeMin).toEqual(-32768);
+                expect(Int16.DATA_TYPE_MIN).toEqual(-32768);
             });
 
         });
@@ -396,7 +396,7 @@ describe("Int16", () => {
         describe("dataTypeMax", () => {
 
             it("returns the expected maximum value", () => {
-                expect(Int16.dataTypeMax).toEqual(32767);
+                expect(Int16.DATA_TYPE_MAX).toEqual(32767);
             });
 
         });
@@ -459,7 +459,7 @@ describe("Int16", () => {
         describe("numBits", () => {
 
             it("returns 16", () => {
-                expect(Int16.numBits).toEqual(16);
+                expect(Int16.NUM_BITS).toEqual(16);
             });
 
         });
@@ -468,7 +468,7 @@ describe("Int16", () => {
         describe("maxBitIndex", () => {
 
             it("returns 15", () => {
-                expect(Int16.maxBitIndex).toEqual(15);
+                expect(Int16.MAX_BIT_INDEX).toEqual(15);
             });
 
         });
@@ -522,7 +522,7 @@ describe("UInt16", () => {
         describe("dataTypeMin", () => {
 
             it("returns the expected minimum value", () => {
-                expect(UInt16.dataTypeMin).toEqual(0);
+                expect(UInt16.DATA_TYPE_MIN).toEqual(0);
             });
 
         });
@@ -531,7 +531,7 @@ describe("UInt16", () => {
         describe("dataTypeMax", () => {
 
             it("returns the expected maximum value", () => {
-                expect(UInt16.dataTypeMax).toEqual(65535);
+                expect(UInt16.DATA_TYPE_MAX).toEqual(65535);
             });
 
         });
@@ -594,7 +594,7 @@ describe("UInt16", () => {
         describe("numBits", () => {
 
             it("returns 16", () => {
-                expect(UInt16.numBits).toEqual(16);
+                expect(UInt16.NUM_BITS).toEqual(16);
             });
 
         });
@@ -603,7 +603,7 @@ describe("UInt16", () => {
         describe("maxBitIndex", () => {
 
             it("returns 15", () => {
-                expect(UInt16.maxBitIndex).toEqual(15);
+                expect(UInt16.MAX_BIT_INDEX).toEqual(15);
             });
 
         });
@@ -663,7 +663,7 @@ describe("Int32", () => {
         describe("dataTypeMin", () => {
 
             it("returns the expected minimum value", () => {
-                expect(Int32.dataTypeMin).toEqual(-2147483648);
+                expect(Int32.DATA_TYPE_MIN).toEqual(-2147483648);
             });
 
         });
@@ -672,7 +672,7 @@ describe("Int32", () => {
         describe("dataTypeMax", () => {
 
             it("returns the expected maximum value", () => {
-                expect(Int32.dataTypeMax).toEqual(2147483647);
+                expect(Int32.DATA_TYPE_MAX).toEqual(2147483647);
             });
 
         });
@@ -735,7 +735,7 @@ describe("Int32", () => {
         describe("numBits", () => {
 
             it("returns 32", () => {
-                expect(Int32.numBits).toEqual(32);
+                expect(Int32.NUM_BITS).toEqual(32);
             });
 
         });
@@ -744,7 +744,7 @@ describe("Int32", () => {
         describe("maxBitIndex", () => {
 
             it("returns 31", () => {
-                expect(Int32.maxBitIndex).toEqual(31);
+                expect(Int32.MAX_BIT_INDEX).toEqual(31);
             });
 
         });
@@ -798,7 +798,7 @@ describe("UInt32", () => {
         describe("dataTypeMin", () => {
 
             it("returns the expected minimum value", () => {
-                expect(UInt32.dataTypeMin).toEqual(0);
+                expect(UInt32.DATA_TYPE_MIN).toEqual(0);
             });
 
         });
@@ -807,7 +807,7 @@ describe("UInt32", () => {
         describe("dataTypeMax", () => {
 
             it("returns the expected maximum value", () => {
-                expect(UInt32.dataTypeMax).toEqual(4294967295);
+                expect(UInt32.DATA_TYPE_MAX).toEqual(4294967295);
             });
 
         });
@@ -870,7 +870,7 @@ describe("UInt32", () => {
         describe("numBits", () => {
 
             it("returns 32", () => {
-                expect(UInt32.numBits).toEqual(32);
+                expect(UInt32.NUM_BITS).toEqual(32);
             });
 
         });
@@ -879,7 +879,7 @@ describe("UInt32", () => {
         describe("maxBitIndex", () => {
 
             it("returns 31", () => {
-                expect(UInt32.maxBitIndex).toEqual(31);
+                expect(UInt32.MAX_BIT_INDEX).toEqual(31);
             });
 
         });
@@ -939,7 +939,7 @@ describe("Int64", () => {
         describe("dataTypeMin", () => {
 
             it("returns the expected minimum value", () => {
-                expect(Int64.dataTypeMin).toEqual(BigInt("-9223372036854775808"));
+                expect(Int64.DATA_TYPE_MIN).toEqual(BigInt("-9223372036854775808"));
             });
 
         });
@@ -948,7 +948,7 @@ describe("Int64", () => {
         describe("dataTypeMax", () => {
 
             it("returns the expected maximum value", () => {
-                expect(Int64.dataTypeMax).toEqual(BigInt("9223372036854775807"));
+                expect(Int64.DATA_TYPE_MAX).toEqual(BigInt("9223372036854775807"));
             });
 
         });
@@ -1001,7 +1001,7 @@ describe("Int64", () => {
         describe("numBits", () => {
 
             it("returns 64", () => {
-                expect(Int64.numBits).toEqual(64);
+                expect(Int64.NUM_BITS).toEqual(64);
             });
 
         });
@@ -1010,7 +1010,7 @@ describe("Int64", () => {
         describe("maxBitIndex", () => {
 
             it("returns 63", () => {
-                expect(Int64.maxBitIndex).toEqual(63);
+                expect(Int64.MAX_BIT_INDEX).toEqual(63);
             });
 
         });
@@ -1064,7 +1064,7 @@ describe("UInt64", () => {
         describe("dataTypeMin", () => {
 
             it("returns the expected minimum value", () => {
-                expect(UInt64.dataTypeMin).toEqual(BigInt(0));
+                expect(UInt64.DATA_TYPE_MIN).toEqual(BigInt(0));
             });
 
         });
@@ -1073,7 +1073,7 @@ describe("UInt64", () => {
         describe("dataTypeMax", () => {
 
             it("returns the expected maximum value", () => {
-                expect(UInt64.dataTypeMax).toEqual(BigInt("18446744073709551615"));
+                expect(UInt64.DATA_TYPE_MAX).toEqual(BigInt("18446744073709551615"));
             });
 
         });
@@ -1126,7 +1126,7 @@ describe("UInt64", () => {
         describe("numBits", () => {
 
             it("returns 64", () => {
-                expect(UInt64.numBits).toEqual(64);
+                expect(UInt64.NUM_BITS).toEqual(64);
             });
 
         });
@@ -1135,7 +1135,7 @@ describe("UInt64", () => {
         describe("maxBitIndex", () => {
 
             it("returns 63", () => {
-                expect(UInt64.maxBitIndex).toEqual(63);
+                expect(UInt64.MAX_BIT_INDEX).toEqual(63);
             });
 
         });
@@ -1196,7 +1196,7 @@ describe("Float32", () => {
         describe("dataTypeMin", () => {
 
             it("returns the expected minimum value", () => {
-                expect(Float32.dataTypeMin).toEqual(-3.4028235e38);
+                expect(Float32.DATA_TYPE_MIN).toEqual(-3.4028235e38);
             });
 
         });
@@ -1205,7 +1205,7 @@ describe("Float32", () => {
         describe("dataTypeMax", () => {
 
             it("returns the expected maximum value", () => {
-                expect(Float32.dataTypeMax).toEqual(3.4028235e38);
+                expect(Float32.DATA_TYPE_MAX).toEqual(3.4028235e38);
             });
 
         });
@@ -1242,7 +1242,7 @@ describe("Float32", () => {
         describe("numBits", () => {
 
             it("returns 32", () => {
-                expect(Float32.numBits).toEqual(32);
+                expect(Float32.NUM_BITS).toEqual(32);
             });
 
         });
@@ -1273,7 +1273,7 @@ describe("Float64", () => {
         describe("dataTypeMin", () => {
 
             it("returns the expected minimum value", () => {
-                expect(Float64.dataTypeMin).toEqual(-Number.MAX_VALUE);
+                expect(Float64.DATA_TYPE_MIN).toEqual(-Number.MAX_VALUE);
             });
 
         });
@@ -1282,7 +1282,7 @@ describe("Float64", () => {
         describe("dataTypeMax", () => {
 
             it("returns the expected maximum value", () => {
-                expect(Float64.dataTypeMax).toEqual(Number.MAX_VALUE);
+                expect(Float64.DATA_TYPE_MAX).toEqual(Number.MAX_VALUE);
             });
 
         });
@@ -1319,7 +1319,7 @@ describe("Float64", () => {
         describe("numBits", () => {
 
             it("returns 64", () => {
-                expect(Float64.numBits).toEqual(64);
+                expect(Float64.NUM_BITS).toEqual(64);
             });
 
         });

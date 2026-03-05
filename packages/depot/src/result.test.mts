@@ -443,7 +443,7 @@ describe("Result namespace", () => {
             }
 
             function stringify(x: number): Result<string, string> {
-                return new SucceededResult(`${x}`);
+                return new SucceededResult(x.toString());
             }
 
             const resultA = pipe(
@@ -1246,7 +1246,8 @@ describe("Result namespace", () => {
             let numInvocations = 0;
             function tapFn(num: number) {
                 numInvocations++;
-                return num++;   // Should have no effect
+                num += 1;  // Should have no effect.
+                return num;
             }
 
             const actual = pipe(

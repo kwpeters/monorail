@@ -27,7 +27,7 @@ describe("Deferred", () => {
     it("will reject with the expected value", (done) => {
         const dfd = new Deferred<number>();
 
-        dfd.promise.catch((err) => {
+        dfd.promise.catch((err: unknown) => {
             expect(err).toEqual(6);
             done();
         });
@@ -65,8 +65,8 @@ describe("connectPromiseToDeferred()", () => {
         connectPromiseToDeferred(sourceDfd.promise, dfd);
 
         dfd.promise
-        .catch((err: Error) => {
-            expect(err.message).toEqual("rejected");
+        .catch((err: unknown) => {
+            expect((err as Error).message).toEqual("rejected");
             done();
         });
     });

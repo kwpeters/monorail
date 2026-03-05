@@ -16,9 +16,15 @@ describe("ActionComposite", () => {
 
         it("contains placeholder text for actions with no description", () => {
             const ac = new ActionComposite();
-            ac.add(new Action(() => { }));
-            ac.add(new Action(() => { }, "action2"));
-            ac.add(new Action(() => { }));
+            ac.add(new Action(() => {
+                // Intentionally empty.
+            }));
+            ac.add(new Action(() => {
+                // Intentionally empty.
+            }, "action2"));
+            ac.add(new Action(() => {
+                // Intentionally empty.
+            }));
             expect(ac.description).toEqual("<action>\naction2\n<action>");
         });
 
@@ -37,9 +43,15 @@ describe("ActionComposite", () => {
         it("return correct number when not empty", () => {
             const ac = new ActionComposite()
             .add(
-                new Action(() => { }),
-                new Action(() => { }),
-                new Action(() => { })
+                new Action(() => {
+                    // Intentionally empty.
+                }),
+                new Action(() => {
+                    // Intentionally empty.
+                }),
+                new Action(() => {
+                    // Intentionally empty.
+                })
             );
             expect(ac.length).toEqual(3);
         });
@@ -65,7 +77,9 @@ describe("ActionComposite", () => {
             const ac = new ActionComposite();
             ac.add(new Action(() => {
                 return getTimerPromise(20, 1)
-                .then(() => {});
+                .then(() => {
+                    // Intentionally empty.
+                });
             }));
 
             ac.add(new Action(() => {
@@ -76,8 +90,11 @@ describe("ActionComposite", () => {
             }));
 
             ac.execute()
-            .catch((err: Error) => {
-                expect(err.message).toEqual("Error message.");
+            .catch((err: unknown) => {
+                expect(err instanceof Error).toBeTrue();
+                if (err instanceof Error) {
+                    expect(err.message).toEqual("Error message.");
+                }
                 done();
             });
         });

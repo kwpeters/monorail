@@ -61,7 +61,6 @@ export async function poll<TReturn, TResult>(
     const startTime = Date.now();
     let   iterationNum = 1;
 
-    // eslint-disable-next-line no-constant-condition
     while (true) {
         const retVal = func();
 

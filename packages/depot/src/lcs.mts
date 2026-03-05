@@ -202,20 +202,26 @@ export function elideEqual<T>(
 
                 const change = similarDiffItems[0]!.change;
 
-                if (change === DiffChangeType.UniqueToX) {
-                    const vals = (similarDiffItems as IDiffItemUniqueToX<T>[]).map((cur) => cur.value);
-                    acc.xParts.push(...vals);
-                }
-                else if (change === DiffChangeType.UniqueToY) {
-                    const vals = (similarDiffItems as IDiffItemUniqueToY<T>[]).map((cur) => cur.value);
-                    acc.yParts.push(...vals);
-                }
-                else if (change === DiffChangeType.Equal) {
-                    acc.xParts.push(elidedVal);
-                    acc.yParts.push(elidedVal);
-                }
-                else {
-                    assertNever(change);
+                switch (change) {
+                    case DiffChangeType.UniqueToX: {
+                        const vals = (similarDiffItems as IDiffItemUniqueToX<T>[]).map((cur) => cur.value);
+                        acc.xParts.push(...vals);
+                        break;
+                    }
+
+                    case DiffChangeType.UniqueToY: {
+                        const vals = (similarDiffItems as IDiffItemUniqueToY<T>[]).map((cur) => cur.value);
+                        acc.yParts.push(...vals);
+                        break;
+                    }
+
+                    case DiffChangeType.Equal:
+                        acc.xParts.push(elidedVal);
+                        acc.yParts.push(elidedVal);
+                        break;
+
+                    default:
+                        assertNever(change);
                 }
                 return acc;
             },

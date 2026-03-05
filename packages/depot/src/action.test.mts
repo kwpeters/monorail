@@ -5,14 +5,21 @@ import { getTimerPromise } from "./promiseHelpers.mjs";
 describe("Action", () => {
 
     it("can be constructed", () => {
-        new Action(() => {});
+        new Action(() => {
+            // Intentionally empty.
+        });
     });
 
 
     describe("description", () => {
 
         it("can be read after creation", () => {
-            const action = new Action(() => {}, "Do something interesting.");
+            const action = new Action(
+                () => {
+                    // Intentionally empty.
+                },
+                "Do something interesting."
+            );
             expect(action.description).toEqual("Do something interesting.");
         });
 

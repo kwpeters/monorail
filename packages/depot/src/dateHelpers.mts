@@ -111,7 +111,7 @@ export function durationString(t1: Date | number, t2: Date | number): string {
     const tEnd   = msToSec(Math.max(msT1, msT2));
     const durationSec = tEnd - tStart;
 
-    const [delimiter] = new Date().toLocaleTimeString(locale).match(/\b[:.]\b/)!;
+    const [delimiter] = /\b[:.]\b/.exec(new Date().toLocaleTimeString(locale))!;
 
     const nonPaddedIntl = Intl.NumberFormat(locale, { minimumIntegerDigits: 1 });
     const paddedIntl = Intl.NumberFormat(locale, { minimumIntegerDigits: 2 });

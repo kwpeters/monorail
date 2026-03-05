@@ -61,7 +61,7 @@ export function numericEnumValToString<T>(enumObject: T, val: T[keyof T]): strin
     // the generated enumeration object too.  These reverse mappings have a key
     // that is the value and a value that is the string symbol name.
 
-    const enumX = enumObject as {[key: string | number]: string};
+    const enumX = enumObject as Record<string | number, string>;
     const valX = val as string | number;
     const str = enumX[valX]!;
     return str;

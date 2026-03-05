@@ -6,23 +6,14 @@ const kilo = 1024;
 ////////////////////////////////////////////////////////////////////////////////
 
 const factors = {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     B:  Math.pow(kilo, 0),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     KB: Math.pow(kilo, 1),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     MB: Math.pow(kilo, 2),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     GB: Math.pow(kilo, 3),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     TB: Math.pow(kilo, 4),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     PB: Math.pow(kilo, 5),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     EB: Math.pow(kilo, 6),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     ZB: Math.pow(kilo, 7),
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     YB: Math.pow(kilo, 8)
 };
 

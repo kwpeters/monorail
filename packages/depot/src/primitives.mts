@@ -11,9 +11,9 @@ export interface IHasToString {
 
 
 export function isIToString(other: unknown): other is IHasToString {
-    const otherAny = other as IHasToString;
-    return otherAny.toString &&
-           typeof otherAny.toString === "function";
+    return other !== null &&
+        other !== undefined &&
+        typeof (other as IHasToString).toString === "function";
 }
 
 
@@ -28,9 +28,11 @@ export interface IHasLength {
 
 
 export function isIHasLength(other: unknown): other is IHasLength {
-    const otherX = other as Partial<IHasLength>;
-    return typeof otherX.length === "number" ||
-        typeof otherX.length === "bigint";
+    return other !== null &&
+        other !== undefined &&
+        (typeof (other as IHasLength).length === "number"
+        // || typeof (other as IHasLength).length === "bigint"
+        );
 }
 
 

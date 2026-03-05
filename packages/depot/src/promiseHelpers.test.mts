@@ -85,7 +85,7 @@ describe("sequence()", () => {
         .then(() => {
             fail("This line should never be executed");
         })
-        .catch((err) => {
+        .catch((err: unknown) => {
             const typedErr = err as {message: string};
             expect(typedErr.message).toBeTruthy();
             expect(typedErr.message).toEqual("error message");
@@ -124,7 +124,7 @@ describe("getDelayedRejection()", () => {
         .then(() => {
             fail("Should never get here.");
         })
-        .catch((err) => {
+        .catch((err: unknown) => {
             expect(isError(err)).toBeTrue();
             expect((err as Error).message).toEqual("bar");
             done();
@@ -201,7 +201,7 @@ describe("retry()", () => {
             () => {
                 fail("The promise should not have resolved.");
             },
-            (err) => {
+            (err: unknown) => {
                 expect(err).toEqual("rejected");
                 done();
             }
@@ -228,16 +228,17 @@ describe("retry()", () => {
  * @returns A function that will return a rejected promise the first n times it
  * is called.
  */
-function getFuncThatWillRejectNTimes<TResolve, TReject>(
+function getFuncThatWillRejectNTimes<TResolve>(
     numFailures: number,
     resolveValue: TResolve,
-    rejectValue: TReject
+    rejectValue: unknown
 ): () => Promise<TResolve> {
     let numFailuresRemaining: number = numFailures;
 
     return () => {
         if (numFailuresRemaining > 0) {
             --numFailuresRemaining;
+            // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
             return Promise.reject(rejectValue);
         }
         return Promise.resolve(resolveValue);
@@ -255,7 +256,7 @@ describe("retryWhile()", () => {
             () => {
                 fail("The promise should not have resolved.");
             },
-            (err) => {
+            (err: unknown) => {
                 expect(err).toEqual("rejected");
                 done();
             }
@@ -325,6 +326,7 @@ describe("promiseWhile()", () => {
                     setTimeout(
                         () => {
                             if (val === "aaa") {
+                                // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
                                 reject("xyzzy");
                                 return;
                             }
@@ -337,7 +339,7 @@ describe("promiseWhile()", () => {
                 });
             }
         )
-        .catch((err) => {
+        .catch((err: unknown) => {
             expect(err).toEqual("xyzzy");
             done();
         });
@@ -650,7 +652,7 @@ describe("mapAsync()", () => {
         };
 
         mapAsync(src, valueFunc)
-        .catch((err) => {
+        .catch((err: unknown) => {
             const typedErr = err as {message: string};
             expect(typedErr.message).toEqual("31 rejected.");
             done();
@@ -680,9 +682,11 @@ describe("augmentAsync()", () => {
         const col = [{ value: 1 }, { value: 2 }, { value: 3 }];
 
         const augmentFn = (input: { value: number; }) => {
-            const isEven = { isEven: input.value % 2 === 0 };
-            return isEven ? Promise.reject("error message") :
-                            Promise.resolve({isEven: isEven as boolean});
+            const isEven = input.value % 2 === 0;
+            return isEven ?
+                // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+                Promise.reject("error message") :
+                Promise.resolve({isEven: isEven as boolean});
         };
 
         try {
@@ -729,7 +733,7 @@ describe("zipWithAsyncValues()", () => {
         };
 
         zipWithAsyncValues(src, valueFunc)
-        .catch((err) => {
+        .catch((err: unknown) => {
             const typedErr = err as {message: string};
             expect(typedErr.message).toEqual("31 rejected.");
             done();
@@ -768,7 +772,7 @@ describe("filterAsync", () => {
         };
 
         filterAsync(src, asyncRejectIfOdd)
-        .catch((err) => {
+        .catch((err: unknown) => {
             const typedErr = err as {message: string};
             expect(typedErr.message).toEqual("31 rejected.");
             done();
@@ -798,6 +802,7 @@ describe("reduceAsync()", () => {
                 [1, 2, 3],
                 (acc, curVal) => {
                     return curVal % 2 === 0 ?
+                        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
                         Promise.reject("error message") :
                         Promise.resolve([...acc, curVal + 1]);
                 },
@@ -851,7 +856,7 @@ describe("partitionAsync", () => {
         };
 
         partitionAsync(src, asyncRejectIfOdd)
-        .catch((err) => {
+        .catch((err: unknown) => {
             const typedErr = err as {message: string};
             expect(typedErr.message).toEqual("31 rejected.");
             done();
@@ -896,7 +901,7 @@ describe("removeAsync", () => {
         };
 
         removeAsync(src, asyncRejectIfOdd)
-        .catch((err) => {
+        .catch((err: unknown) => {
             const typedErr = err as {message: string};
             expect(typedErr.message).toEqual("31 rejected.");
             // `src` should be unmodified.

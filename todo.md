@@ -11,3 +11,20 @@
 - Pull in depot persistentCache
 
 - Pull in depot QuickServer
+
+
+## todo - ESLint 10 migration
+
+- [X] Get linting working in depot (eslint.config.ts).
+- [X] Add eslint-config-turbo
+- [X] Add eslint-import-resolver-typescript?  No
+- [X] Add eslint-plugin-import? No
+- [ ] Get linting working in eslint-config-2.
+- [X] Add stylistic plugin
+- [ ] Convert all project to use eslint-config-2 (to be like depot's)
+      - package.json: Update lint script to: eslint .
+      - package.json: Remove all linting dependencies except "eslint": "^10.0.1"
+      - package.json: Change devDependency to "@repo/eslint-config-2": "*", (emphasis on -2)
+
+- [ ] Migrate rules from packages\eslint-config\eslint.package.cjs
+- [ ] Update Jasmine from 5.3.0 to 6.1.0.

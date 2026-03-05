@@ -20525,7 +20525,6 @@ export function pipeAsync<T001, T002, T003, T004, T005, T006, T007, T008, T009, 
 // ): Promise<Awaited<T200>>;
 
 export function pipeAsync(
-    // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
     v001: MaybePromise<unknown>,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     ...fns: Array<Function>
@@ -20540,4 +20539,3 @@ export function pipeAsync(
         Promise.resolve(v001)
     );
 }
-

@@ -312,6 +312,7 @@ describe("fromPromiseWith()", () => {
 
 
     it("when the Promise rejects a failure Result with a mapped value is returned", async () => {
+        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
         const res = await PromiseResult.fromPromiseWith(Promise.reject("error 37"), errorMapper);
         expect(res.failed).toBeTrue();
         expect(res.error).toBeInstanceOf(Error);
@@ -936,6 +937,7 @@ describe("forceResult()", () => {
 
 
     it("when the Promise rejects a failure Result containing a string is returned", async () => {
+        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
         const pr = Promise.reject("error 34");
         const res = await PromiseResult.forceResult(pr);
         expect(res.failed).toBeTrue();

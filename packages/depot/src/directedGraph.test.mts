@@ -19,7 +19,7 @@ function getGraph1(): [Set<string>, Array<IEdge<string, string>>] {
 
 
 function getGraph2(): [Set<string>, Array<IEdge<string, string>>] {
-    const vertices: Set<string> = new Set(["u", "v", "w", "x", "y", "z"]);
+    const vertices = new Set<string>(["u", "v", "w", "x", "y", "z"]);
     const edges: Array<IEdge<string, string>> = [
         // Ordered to match Cormen p. 479.
         {fromVertex: "u", toVertex: "v", edgeAttr: "uv"},

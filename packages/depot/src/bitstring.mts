@@ -6,11 +6,11 @@ import { Result, FailedResult, SucceededResult } from "./result.mjs";
  * A type that represents valid bit numbers for a given data type
  */
 export type BitNumber<TDataType> =
-  TDataType extends UInt8 ? 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 :
-  TDataType extends UInt16 ? 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 :
-  TDataType extends UInt32 ? 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
+    TDataType extends UInt8 ? 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 :
+    TDataType extends UInt16 ? 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 :
+    TDataType extends UInt32 ? 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
                     16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 | 31 :
-  never;
+    never;
 
 
 /**
@@ -194,7 +194,7 @@ function bitfieldDefinitionsAreValid<TBackingValue extends UInt8 | UInt16 | UInt
     bitfieldDefs: BitfieldsDef<TBackingValue>
 ): Result<BitfieldsDef<TBackingValue>, string> {
     const minBitNum = 0;
-    const maxBitNum = backingValue.static.numBits - 1;
+    const maxBitNum = backingValue.static.NUM_BITS - 1;
 
     for (const [bitfieldName, bitfieldDef] of Object.entries(bitfieldDefs)) {
 
@@ -231,7 +231,7 @@ function bitfieldDefinitionsAreValid<TBackingValue extends UInt8 | UInt16 | UInt
     }
 
     // Make sure that none of the ranges specified in _defs_ overlap.
-    const usedBits = Array(backingValue.static.numBits).fill(false) as boolean[];
+    const usedBits = Array(backingValue.static.NUM_BITS).fill(false) as boolean[];
     for (const [name, bitRange] of Object.entries(bitfieldDefs)) {
         const highBit = bitRange.type === "BitfieldDefBookends" ? bitRange.highBit :
             bitRange.lowBit + bitRange.numBits - 1;

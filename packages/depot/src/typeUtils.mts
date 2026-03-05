@@ -171,5 +171,5 @@ export function ensureAllProperties<TTemplate extends Record<PropertyKey, unknow
  * the expanded, readable form in tooltips and error messages.
  */
 export type Prettify<T> = {
-  [K in keyof T]: T[K];
+    [K in keyof T]: T[K];
 } & {};

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
 /* eslint-disable @typescript-eslint/no-namespace */
 /* eslint-disable max-len */
 
@@ -22,21 +23,15 @@ export class SucceededResult<TSuccess> {
         this._value = value;
     }
 
-    public get succeeded(): true {
-        return true;
-    }
+    public readonly succeeded = true;
 
     public get value(): TSuccess {
         return this._value;
     }
 
-    public get failed(): false {
-        return false;
-    }
+    public readonly failed = false;
 
-    public get error(): undefined {
-        return undefined;
-    }
+    public readonly error = undefined;
 
     public toString(): string {
         return isIToString(this._value) ?
@@ -201,17 +196,15 @@ export class FailedResult<TError> {
         this._error = error;
     }
 
-    public get succeeded(): false {
-        return false;
-    }
 
-    public get value(): undefined {
-        return undefined;
-    }
+    public readonly succeeded = false;
 
-    public get failed(): true {
-        return true;
-    }
+
+    public readonly value = undefined;
+
+
+    public readonly failed = true;
+
 
     public get error(): TError {
         return this._error;
@@ -411,7 +404,7 @@ export type ResultErrorType<T> = [T] extends [Result<infer __X, infer Y>] ? Y : 
  *     //     op2: number;
  *     // };
  */
-export type AllSuccessTypes<T extends { [n: string]: Result<unknown, unknown>; }> = {
+export type AllSuccessTypes<T extends Record<string, Result<unknown, unknown>>> = {
     [P in keyof T]: ResultSuccessType<T[P]>
 };
 
@@ -420,7 +413,7 @@ export type AllSuccessTypes<T extends { [n: string]: Result<unknown, unknown>; }
  * type will give you an object type where the keys are taken from T and the
  * values have the associated Result error types.
  */
-export type AllErrorTypes<T extends { [n: string]: Result<unknown, unknown>; }> = {
+export type AllErrorTypes<T extends Record<string, Result<unknown, unknown>>> = {
     [P in keyof T]: ResultErrorType<T[P]>
 };
 
@@ -445,7 +438,7 @@ export type AllErrorTypes<T extends { [n: string]: Result<unknown, unknown>; }> 
  * @param param - Description
  * @return Description
  */
-export type PossibleErrors<T extends { [n: string]: Result<unknown, unknown>; }> = AllErrorTypes<T>[keyof AllErrorTypes<T>];
+export type PossibleErrors<T extends Record<string, Result<unknown, unknown>>> = AllErrorTypes<T>[keyof AllErrorTypes<T>];
 
 
 
@@ -466,14 +459,14 @@ export namespace Result {
      * object having the same keys and the values are the Result values.
      * Otherwise, the first failure Result is returned.
      */
-    export function allObj<T extends { [n: string]: Result<unknown, unknown>; }>(
+    export function allObj<T extends Record<string, Result<unknown, unknown>>>(
         namedResults: T
     ): Result<AllSuccessTypes<T>, PossibleErrors<T>> {
         const results = Object.values(namedResults);
         const firstFailureIdx = results.findIndex((res) => res.failed);
         if (firstFailureIdx === -1) {
             // All were successful.  Return an object of the success result values.
-            const successObj: {[k: string]: unknown} = {};
+            const successObj: Record<string, unknown> = {};
             for (const [name, res] of Object.entries(namedResults)) {
                 successObj[name] = res.value;
             }
@@ -773,9 +766,7 @@ export namespace Result {
             (curResult): curResult is FailedResult<TError> => curResult instanceof FailedResult
         );
 
-        const retVal = firstFailure ?
-            firstFailure :
-            new SucceededResult(resultsCollection.map((curResult): TSuccess => curResult.value!));
+        const retVal = firstFailure ?? new SucceededResult(resultsCollection.map((curResult): TSuccess => curResult.value!));
         return retVal;
     }
 

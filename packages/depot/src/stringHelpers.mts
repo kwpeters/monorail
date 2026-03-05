@@ -479,7 +479,7 @@ export function parseDecInt(intStr: string): Result<number, string> {
  * attribute on an input element.
  */
 export const ipAddrRegexString: string =
-                 "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$";
+    "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$";
 
 const ipAddrRegex: RegExp = new RegExp("^" + ipAddrRegexString + "$");
 
@@ -570,7 +570,7 @@ export function containsNestedPairs(pairings: Array<IPairing>, str: string): boo
             str,
             (curChar: string, index: number) => {
                 return _.some(allTokens, (curToken) => {
-                    const isMatch = str.substr(index, curToken.length) === curToken;
+                    const isMatch = str.slice(index, index + curToken.length) === curToken;
                     if (isMatch) {
                         foundToken = curToken;
                     }

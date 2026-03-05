@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/prefer-promise-reject-errors */
 type NodeCallback<TSuccess> = (err: unknown, result?: TSuccess) => void;
 
 /**

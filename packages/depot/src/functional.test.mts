@@ -64,6 +64,7 @@ describe("applyMappersAsync()", () => {
 
     it("will reject when one of the mappers rejects", async () => {
         const inputs = [1];
+        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
         const rejectingMapper: (n: number) => Promise<number> = async () => Promise.reject("test error");
         try {
             await applyMappersAsync(inputs, [rejectingMapper]);

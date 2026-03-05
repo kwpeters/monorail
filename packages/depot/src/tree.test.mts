@@ -69,8 +69,8 @@ describe("Tree", () => {
 
             it("returns 0 for a tree that contains only top level itemsE", () => {
                 const tree = new Tree<string>();
-                const n1 = tree.insert(undefined, undefined, "1");
-                const n2 = tree.insert(undefined, undefined, "2");
+                const __n1 = tree.insert(undefined, undefined, "1");
+                const __n2 = tree.insert(undefined, undefined, "2");
 
                 expect(tree.maxDepth).toEqual(0);
             });
@@ -171,7 +171,7 @@ describe("Tree", () => {
                 const tree = new Tree<string>();
                 const n1 = tree.insert(undefined, undefined, "1");
                 const n1n1 = tree.insert(n1, undefined, "1.1");
-                const n1n1n1 = tree.insert(n1n1, undefined, "1.1.1");
+                const __n1n1n1 = tree.insert(n1n1, undefined, "1.1.1");
 
                 expect(tree.depth(n1)).toEqual(0);
             });
@@ -210,7 +210,7 @@ describe("Tree", () => {
             it("when a first sibling is specified returns undefined", () => {
                 const tree = new Tree<string>();
                 const n1 = tree.insert(undefined, undefined, "1");
-                const n2 = tree.insert(undefined, undefined, "2");
+                const __n2 = tree.insert(undefined, undefined, "2");
 
                 const prevSibling = tree.prevSibling(n1);
                 expect(prevSibling).toBeUndefined();
@@ -233,7 +233,7 @@ describe("Tree", () => {
 
             it("when a last sibling is specified returns undefined", () => {
                 const tree = new Tree<string>();
-                const n1 = tree.insert(undefined, undefined, "1");
+                const __n1 = tree.insert(undefined, undefined, "1");
                 const n2 = tree.insert(undefined, undefined, "2");
 
                 const nextSibling = tree.nextSibling(n2);

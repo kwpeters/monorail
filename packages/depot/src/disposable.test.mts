@@ -5,6 +5,7 @@ describe("makeDisposable()", () => {
 
     it("returns an object with the original object's properties", () => {
         const person = {first: "Daenerys", last: "Targaryen"};
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
         const disposable = makeDisposable(person, () => {});
 
         expect(disposable.first).toEqual("Daenerys");
@@ -17,11 +18,11 @@ describe("makeDisposable()", () => {
 
         // Invoke an IIFE to create a scope for `disposable`.
         (function (): void {
-            using disposable = makeDisposable(
+            using __disposable = makeDisposable(
                 {value: 42},
                 (x) => { x.value = 43; disposed = true; }
             );
-        })();       // `disposable` will be disposed here.
+        })();       // `__disposable` will be disposed here.
 
         // Since disposable is no longer in scope, we cannot make any assertions
         // on it, but we can check that the closed over variables were updated.
@@ -35,6 +36,7 @@ describe("makeAsyncDisposable()", () => {
 
     it("returns an object with the original object's properties", () => {
         const person = {first: "Daenerys", last: "Targaryen"};
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
         const disposable = makeDisposable(person, () => {});
 
         expect(disposable.first).toBe("Daenerys");
@@ -47,13 +49,13 @@ describe("makeAsyncDisposable()", () => {
 
         // Invoke an IIFE to create a scope for `disposable`.
         await (async function (): Promise<void> {
-            await using disposable = makeAsyncDisposable(
+            await using __disposable = makeAsyncDisposable(
                 {value: 42},
                 async (x) => { await Promise.resolve(0);  x.value = 43; disposed = true; }
             );
-        })();       // `disposable` will be disposed here.
+        })();       // `__disposable` will be disposed here.
 
-        // Since disposable is no longer in scope, we cannot make any assertions
+        // Since __disposable is no longer in scope, we cannot make any assertions
         // on it, but we can check that the closed over variables were updated.
         expect(disposed).toBeTrue();
     });

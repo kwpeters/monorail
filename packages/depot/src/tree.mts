@@ -37,15 +37,17 @@ export interface IReadonlyTree<TPayload> {
     firstChild(parent: ITreeNode<TPayload> | undefined): Readonly<ITreeNode<TPayload>> | undefined;
     prevSibling(node: ITreeNode<TPayload>): ITreeNode<TPayload> | undefined;
     nextSibling(node: ITreeNode<TPayload>): Readonly<ITreeNode<TPayload>> | undefined;
-    traverseDF(subtreeRoot: ITreeNode<TPayload> | undefined,
-               includeSubtreeRoot: boolean
+    traverseDF(
+        subtreeRoot: ITreeNode<TPayload> | undefined,
+        includeSubtreeRoot: boolean
     ): IterableIterator<ITreeNode<TPayload>>;
     traverseBF(
         subtreeRoot: ITreeNode<TPayload> | undefined,
         includeSubtreeRoot: boolean
     ): IterableIterator<ITreeNode<TPayload>>;
-    map<TOut>(fn: (srcVal: TPayload, srcNode: ITreeNode<TPayload>, srcTree: Tree<TPayload>,
-                   dstParent: ITreeNode<TOut> | undefined, dstTree: Tree<TOut>) => TOut
+    map<TOut>(
+        fn: (srcVal: TPayload, srcNode: ITreeNode<TPayload>, srcTree: Tree<TPayload>,
+            dstParent: ITreeNode<TOut> | undefined, dstTree: Tree<TOut>) => TOut
     ): Tree<TOut>;
     filter(fn: (srcVal: TPayload, srcNode: ITreeNode<TPayload>, srcTree: Tree<TPayload>) => boolean
     ): Tree<TPayload>;
@@ -296,8 +298,8 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      * @return A depth-first iterator
      */
     public *traverseDF(
-        subtreeRoot:        ITreeNode<TPayload> | undefined = undefined,
-        includeSubtreeRoot: boolean                         = false
+        subtreeRoot?:        ITreeNode<TPayload>,
+        includeSubtreeRoot:  boolean              = false
     ): IterableIterator<ITreeNode<TPayload>> {
 
         if (subtreeRoot && includeSubtreeRoot) {
@@ -329,8 +331,8 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      * @return A breadth-first iterator
      */
     public *traverseBF(
-        subtreeRoot:        ITreeNode<TPayload> | undefined = undefined,
-        includeSubtreeRoot: boolean                         = true
+        subtreeRoot?:        ITreeNode<TPayload>,
+        includeSubtreeRoot: boolean             = true
     ): IterableIterator<ITreeNode<TPayload>> {
 
         if (includeSubtreeRoot && subtreeRoot) {
@@ -391,7 +393,7 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      * @return The leaf node iterator
      */
     public *leafNodes(
-        subtreeRoot: ITreeNode<TPayload> | undefined = undefined,
+        subtreeRoot?: ITreeNode<TPayload>,
         includeSubtreeRoot: boolean = true
     ): IterableIterator<ITreeNode<TPayload>> {
         for (const curNode of this.traverseDF(subtreeRoot, includeSubtreeRoot)) {
@@ -414,11 +416,11 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      * @return The path iterator
      */
     public *leafNodePaths(
-        subtreeRoot: ITreeNode<TPayload> | undefined = undefined,
+        subtreeRoot?: ITreeNode<TPayload>,
         includeSubtreeRoot: boolean = true
     ): IterableIterator<Array<ITreeNode<TPayload>>> {
 
-        const root = subtreeRoot === undefined ? this._root : subtreeRoot;
+        const root = subtreeRoot ?? this._root;
         if (subtreeRoot === undefined) {
             includeSubtreeRoot = false;
         }
@@ -453,7 +455,7 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      * _includeSubtreeRoot_.
      */
     public *nodePathsDF(
-        subtreeRoot: ITreeNode<TPayload> | undefined = undefined,
+        subtreeRoot?: ITreeNode<TPayload>,
         includeSubtreeRoot: boolean = true
     ): IterableIterator<Array<ITreeNode<TPayload>>> {
         for (const curNode of this.traverseDF(subtreeRoot, includeSubtreeRoot)) {
@@ -489,7 +491,7 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      */
     public map<TOut>(
         fn: (srcVal: TPayload, srcNode: ITreeNode<TPayload>, srcTree: Tree<TPayload>,
-             dstParent: ITreeNode<TOut> | undefined, dstTree: Tree<TOut>) => TOut
+            dstParent: ITreeNode<TOut> | undefined, dstTree: Tree<TOut>) => TOut
     ): Tree<TOut> {
         const dstTree = new Tree<TOut>();
         this.mapChildNodes(this._root, dstTree, dstTree._root, fn);
@@ -588,8 +590,12 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
         srcParent: TreeNode<TPayload>,
         dstTree:   Tree<TOut>,
         dstParent: TreeNode<TOut>,
-        fn:        (srcVal: TPayload, srcNode: ITreeNode<TPayload>, srcTree: Tree<TPayload>,
-                    dstParent: ITreeNode<TOut> | undefined, dstTree: Tree<TOut>) => TOut
+        fn:        (
+            srcVal: TPayload,
+            srcNode: ITreeNode<TPayload>,
+            srcTree: Tree<TPayload>,
+            dstParent: ITreeNode<TOut> | undefined,
+            dstTree: Tree<TOut>) => TOut
     ): void {
 
         for (const curSrcNode of srcParent.children) {

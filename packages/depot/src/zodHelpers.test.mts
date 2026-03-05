@@ -1,6 +1,5 @@
 import * as z from "zod";
 import { zodErrorToString, zodResultToResult, safeParse, safeParseAsync } from "./zodHelpers.mjs";
-import { SucceededResult, FailedResult } from "./result.mjs";
 import { pipe } from "./pipe2.mjs";
 import { pipeAsync } from "./pipeAsync2.mjs";
 
@@ -60,7 +59,7 @@ describe("zodErrorToString()", () => {
         const schema = z.object({
             user: z.object({
                 profile: z.object({
-                    email: z.string().email()
+                    email: z.email()
                 })
             })
         });
@@ -82,7 +81,7 @@ describe("zodErrorToString()", () => {
         const schema = z.object({
             name:  z.string(),
             age:   z.number(),
-            email: z.string().email()
+            email: z.email()
         });
         const result = schema.safeParse({
             name:  123,
@@ -262,7 +261,7 @@ describe("safeParse()", () => {
     it("should handle nested object validation failure", () => {
         const schema = z.object({
             user: z.object({
-                email: z.string().email()
+                email: z.email()
             })
         });
         const err = pipe(
@@ -350,7 +349,7 @@ describe("safeParseAsync()", () => {
     it("should handle nested object validation", async () => {
         const schema = z.object({
             user: z.object({
-                email:   z.string().email(),
+                email:   z.email(),
                 profile: z.object({
                     age: z.number()
                 })
@@ -371,7 +370,7 @@ describe("safeParseAsync()", () => {
     it("should handle nested object validation failure", async () => {
         const schema = z.object({
             user: z.object({
-                email: z.string().email()
+                email: z.email()
             })
         });
         const err = await pipeAsync(

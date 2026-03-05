@@ -9,6 +9,7 @@ type BarId = Brand<Uuid, "BarId">;
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function fooOp(foo: FooId): void {
+    // Intentionally empty.
 }
 
 

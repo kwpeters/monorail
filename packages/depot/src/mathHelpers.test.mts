@@ -1,5 +1,4 @@
 import { factorial, permutations, tryBigIntToNumber } from "./mathHelpers.mjs";
-import { Option, NoneOption, SomeOption } from "./option.mjs";
 
 
 describe("factorial()", () => {

@@ -14,10 +14,7 @@ export class LazyValue<T> {
 
     ////////////////////////////////////////////////////////////////////////////////
     public get value(): T {
-        if (this._cachedValue === undefined) {
-            this._cachedValue = this._computeFn();
-        }
-
+        this._cachedValue ??= this._computeFn();
         return this._cachedValue;
     }
 

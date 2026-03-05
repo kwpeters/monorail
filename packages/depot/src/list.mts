@@ -21,15 +21,10 @@ class DLNodeEnd<TValue> {
 
 
     // Discriminant.
-    public get nodeType(): "DLNodeEnd" {
-        return "DLNodeEnd";
-    }
+    public readonly nodeType = "DLNodeEnd" as const;
 
 
     public get prev(): DLNode<TValue> {
-        if (this._prev === undefined) {
-            throw new Error("DLNodeEnd instance has not been linked to a previous node.");
-        }
         return this._prev;
     }
 
@@ -38,11 +33,7 @@ class DLNodeEnd<TValue> {
     }
 
 
-    // eslint-disable-next-line @typescript-eslint/member-ordering
     public get next(): DLNode<TValue> {
-        if (this._next === undefined) {
-            throw new Error("DLNodeEnd instance has not been linked to a next node.");
-        }
         return this._next;
     }
 
@@ -74,9 +65,7 @@ class DLNodeValue<TValue> {
 
 
     // Discriminant.
-    public get nodeType(): "DLNodeValue" {
-        return "DLNodeValue";
-    }
+    public readonly nodeType = "DLNodeValue" as const;
 
 
     public get prev(): DLNode<TValue> {
@@ -92,7 +81,6 @@ class DLNodeValue<TValue> {
     }
 
 
-    // eslint-disable-next-line @typescript-eslint/member-ordering
     public get next(): DLNode<TValue> {
         if (this._next === undefined) {
             throw new Error("DLNodeValue instance has not been linked to a next node.");
@@ -106,7 +94,6 @@ class DLNodeValue<TValue> {
     }
 
 
-    // eslint-disable-next-line @typescript-eslint/member-ordering
     public get value(): TValue {
         return this._value;
     }
@@ -115,7 +102,6 @@ class DLNodeValue<TValue> {
     public set value(val: TValue) {
         this._value = val;
     }
-
 
 }
 
@@ -396,7 +382,7 @@ export class List<TValue> implements Iterable<TValue> {
 
             // If this is the first node inserted, remember it so we can return
             // it.
-            nodeRet = nodeRet || newNode;
+            nodeRet = nodeRet ?? newNode;
         }
 
         // Since we checked the size of the `values` array at the beginning of
@@ -533,7 +519,6 @@ export class Iterator<TValue> implements Iterator<TValue> {
     }
 
 
-    // eslint-disable-next-line @typescript-eslint/member-ordering
     public get value(): TValue {
         if (this._curNode.nodeType === "DLNodeEnd") {
             throw new Error("Attempted to get value from an iterator at end().");
@@ -542,7 +527,6 @@ export class Iterator<TValue> implements Iterator<TValue> {
         return this._curNode.value;
     }
 
-    // eslint-disable-next-line @typescript-eslint/member-ordering
     public set value(val: TValue) {
         if (this._curNode.nodeType === "DLNodeEnd") {
             throw new Error("Cannot set value of end element.");
@@ -570,7 +554,9 @@ export class Iterator<TValue> implements Iterator<TValue> {
 
     private _isAtBegin(): boolean {
         const isOnEndOfZeroLengthList = this._curNode.nodeType === "DLNodeEnd" &&
+                                        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                                         this._curNode.prev === undefined &&
+                                        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                                         this._curNode.next === undefined;
         if (isOnEndOfZeroLengthList) {
             return true;

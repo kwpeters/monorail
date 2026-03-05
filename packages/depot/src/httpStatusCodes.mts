@@ -3,7 +3,6 @@
 import { z } from "zod";
 
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const HttpSuccess = {
     _200_OK:                          200,
     _201_Created:                     201,
@@ -56,7 +55,6 @@ export function successHttpStatusCodeKey(successHttpStatusCode: HttpSuccess): Ht
 ////////////////////////////////////////////////////////////////////////////////
 
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const HttpError = {
     _400_BadRequest:                    400,
     _401_Unauthorized:                  401,

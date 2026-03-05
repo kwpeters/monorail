@@ -166,8 +166,8 @@ function getTokenizers(): Array<ITokenizer> {
                 const regexWhole = /^(?<leadingws>\s*)(?<whole>\d+)(?<trailingws>\s*)/;
                 const regexFrac = /^(?<leadingws>\s*)(?<num>\d+)\/(?<den>\d+)(?<trailingws>\s*)/;
                 const regexWholeAndFrac = /^(?<leadingws>\s*)(?<whole>\d+)(?<reqws>\s+)(?<num>\d+)\/(?<den>\d+)(?<trailingws>\s*)/;
-                return regexWholeAndFrac.exec(remainingText) ||
-                       regexFrac.exec(remainingText) ||
+                return (regexWholeAndFrac.exec(remainingText) ??
+                       regexFrac.exec(remainingText)) ??
                        regexWhole.exec(remainingText);
             },
             tokenCreatorFn: (match: RegExpExecArray, fullExpression: string, startIndex: number, endIndex: number) => {
@@ -223,7 +223,6 @@ export function tokenize(input: string): Result<Array<ExpressionToken>, string> 
 
     while (remainingExpression.length > 0) {
 
-        // eslint-disable-next-line @typescript-eslint/no-loop-func
         const foundTokenizer = find(tokenizers, (curTokenizer) => curTokenizer.matcherFn(remainingExpression));
         if (foundTokenizer) {
             const matchedText = foundTokenizer.predicateReturn[0];
@@ -272,44 +271,58 @@ export function toPostfix(
     while (!_.isEmpty(input)) {
         const curToken = input.pop()!;
 
-        if (curToken.type === "IExpressionTokenNumber") {
-            output.push(curToken);
-        }
-        else if (curToken.type === "IExpressionTokenOperator" && curToken.symbol === "(") {
-            operatorStack.push(curToken);
-        }
-        else if (curToken.type === "IExpressionTokenOperator" && curToken.symbol === ")") {
-            if (_.isEmpty(operatorStack)) {
-                return new FailedResult(`Operator stack exhaused while finding "(".  Mismatched parenthesis.`);
-            }
-            let firstInOperatorStack = _.last(operatorStack)!;
-            while (firstInOperatorStack.symbol !== "(") {
-                output.push(operatorStack.pop()!);      // Move the operator from the top of the operator stack to the output queue.
+        switch (curToken.type) {
+            case "IExpressionTokenNumber":
+                output.push(curToken);
+                break;
 
-                if (_.isEmpty(operatorStack)) {
-                    return new FailedResult(`Operator stack exhaused while finding "(".  Mismatched parenthesis.`);
+            case "IExpressionTokenOperator":
+                switch (curToken.symbol) {
+                    case "(":
+                        operatorStack.push(curToken);
+                        break;
+
+                    case ")": {
+                        if (_.isEmpty(operatorStack)) {
+                            return new FailedResult(`Operator stack exhaused while finding "(".  Mismatched parenthesis.`);
+                        }
+                        let firstInOperatorStack = _.last(operatorStack)!;
+                        while (firstInOperatorStack.symbol !== "(") {
+                            output.push(operatorStack.pop()!);      // Move the operator from the top of the operator stack to the output queue.
+
+                            if (_.isEmpty(operatorStack)) {
+                                return new FailedResult(`Operator stack exhaused while finding "(".  Mismatched parenthesis.`);
+                            }
+                            firstInOperatorStack = _.last(operatorStack)!;
+                        }
+
+                        const topOperator = operatorStack.pop();
+                        if (topOperator?.symbol !== "(") {
+                            return new FailedResult(`Operator stack invalid after finding "(".`);
+                        }
+                        // We intentionally do nothing with the popped "(".  Discard it.
+                        break;
+                    }
+
+                    default: {
+                        // Handles "*", "/", "+", "-"
+                        let firstInOperatorStack = _.last(operatorStack);
+                        while (firstInOperatorStack !== undefined &&                     // While there is an operator on the operator stack AND
+                            firstInOperatorStack.symbol !== "(" &&                       // it is not a left parenthesis AND
+                            (firstInOperatorStack.precedence > curToken.precedence ||    // (it has greater precedence than the current token OR
+                                                                                         //  the same precedence AND the current token is left-associative)
+                                (firstInOperatorStack.precedence === curToken.precedence && curToken.associativity === "left-to-right"))
+                        ) {
+                            output.push(operatorStack.pop()!);
+                            firstInOperatorStack = _.last(operatorStack);
+                        }
+                        operatorStack.push(curToken);
+                    }
                 }
-                firstInOperatorStack = _.last(operatorStack)!;
-            }
+                break;
 
-            const topOperator = operatorStack.pop();
-            if (topOperator?.symbol !== "(") {
-                return new FailedResult(`Operator stack invalid after finding "(".`);
-            }
-            // We intentionally do nothing with the popped "(".  Discard it.
-        }
-        else if (curToken.type === "IExpressionTokenOperator") {
-            let firstInOperatorStack = _.last(operatorStack);
-            while (firstInOperatorStack !== undefined &&                     // While there is an operator on the operator stack AND
-                firstInOperatorStack.symbol !== "(" &&                       // it is not a left parenthesis AND
-                (firstInOperatorStack.precedence > curToken.precedence ||    // (it has greater precedence than the current token OR
-                                                                             //  the same precedence AND the current token is left-associative)
-                    (firstInOperatorStack.precedence === curToken.precedence && curToken.associativity === "left-to-right"))
-            ) {
-                output.push(operatorStack.pop()!);
-                firstInOperatorStack = _.last(operatorStack);
-            }
-            operatorStack.push(curToken);
+            default:
+                assertNever(curToken);
         }
     }
 
@@ -339,23 +352,27 @@ export function evaluate(input: string): Result<Fraction, string> {
 
     const stack: Array<Fraction> = [];
     for (const curToken of postfixResult.value) {
-        if (curToken.type === "IExpressionTokenNumber") {
-            stack.push(curToken.value);
-        }
-        else if (curToken.type === "IExpressionTokenOperator") {
-            const traits = symbolToTraits(curToken.symbol);
+        switch (curToken.type) {
+            case "IExpressionTokenNumber":
+                stack.push(curToken.value);
+                break;
 
-            // The stack should have enough values on it to provide a value for
-            // each operator argument.
-            if (stack.length < traits.numArguments!) {
-                return new FailedResult(`Not enough arguments for operator ${curToken.symbol} at index ${curToken.startIndex}.`);
+            case "IExpressionTokenOperator": {
+                const traits = symbolToTraits(curToken.symbol);
+
+                // The stack should have enough values on it to provide a value for
+                // each operator argument.
+                if (stack.length < traits.numArguments!) {
+                    return new FailedResult(`Not enough arguments for operator ${curToken.symbol} at index ${curToken.startIndex}.`);
+                }
+
+                const resultVal = traits.evaluate!(stack);
+                stack.push(resultVal);
+                break;
             }
 
-            const resultVal = traits.evaluate!(stack);
-            stack.push(resultVal);
-        }
-        else {
-            assertNever(curToken);
+            default:
+                assertNever(curToken);
         }
     }
 

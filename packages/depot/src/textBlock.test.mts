@@ -1,6 +1,5 @@
 import { TextBlock } from "./textBlock.mjs";
 import { pipe } from "./pipe2.mjs";
-import { NonNegativeInt } from "./primitiveDataType.mjs";
 
 
 describe("TextBlock", () => {

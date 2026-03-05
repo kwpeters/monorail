@@ -1,4 +1,4 @@
-import { UInt8, UInt16 } from "./primitiveDataType.mjs";
+import { UInt8 } from "./primitiveDataType.mjs";
 import { Bitstring } from "./bitstring.mjs";
 import { pipe } from "./pipe2.mjs";
 
@@ -159,6 +159,8 @@ describe("Bitstring", () => {
                     UInt8.create(0b1_01_10_101).throwIfFailed(),
                     bitfieldDefs
                 );
+
+                expect(res.succeeded).toBeTrue();
             });
 
         });

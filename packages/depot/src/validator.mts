@@ -87,6 +87,6 @@ export function validate<TSubject>(
 
 
 /// A validator that always says the subject is valid.
-export function alwaysValid<TSubject>(subject: TSubject): boolean {
+export function alwaysValid(subject: unknown): boolean {
     return true;
 }

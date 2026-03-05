@@ -187,11 +187,11 @@ export class DirectedGraph<TVertex, TEdge> {
 ////////////////////////////////////////////////////////////////////////////////
 // Dag (Directed Acyclic Graph)
 ////////////////////////////////////////////////////////////////////////////////
-export class Dag {
-    private constructor() {
-        // TODO: Implement this.
-    }
-}
+// export class Dag {
+//     private constructor() {
+//         // TODO: Implement this.
+//     }
+// }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Helper Functions
@@ -219,10 +219,10 @@ function bfs<TVertex, TEdge>(
     }
 
     // Initialize data structures.
-    const color: Map<TVertex, PaintedColor> = new Map();
-    const dist: Map<TVertex, number> = new Map();
-    const pred: Map<TVertex, TVertex | undefined> = new Map();
-    const discovered: Set<TVertex> = new Set();
+    const color = new Map<TVertex, PaintedColor>();
+    const dist = new Map<TVertex, number>();
+    const pred = new Map<TVertex, TVertex | undefined>();
+    const discovered = new Set<TVertex>();
 
     const nonSourceVertices = difference(allVertices, new Set([source]));
     for (const curNonSourceVertex of nonSourceVertices) {
@@ -280,10 +280,10 @@ function bfs<TVertex, TEdge>(
 function dfs<TVertex, TEdge>(
     adjMap: AdjacencyMap<TVertex, TEdge>
 ): IDfsResult<TVertex> {
-    const color: Map<TVertex, PaintedColor> = new Map();
-    const pred: Map<TVertex, TVertex | undefined> = new Map();
-    const discoveryTimestamp: Map<TVertex, number> = new Map();
-    const finishTimestamp: Map<TVertex, number> = new Map();
+    const color = new Map<TVertex, PaintedColor>();
+    const pred = new Map<TVertex, TVertex | undefined>();
+    const discoveryTimestamp = new Map<TVertex, number>();
+    const finishTimestamp = new Map<TVertex, number>();
     const edgeClassification: AdjacencyMap<TVertex, EdgeClassification> = new Map();
 
     for (const curVertex of adjMap.keys()) {

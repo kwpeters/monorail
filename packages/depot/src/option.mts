@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
 /* eslint-disable @typescript-eslint/no-namespace */
 
 
@@ -14,13 +15,9 @@ export class SomeOption<T> {
         this._value = value;
     }
 
-    public get isSome(): true {
-        return true;
-    }
+    public readonly isSome = true;
 
-    public get isNone(): false {
-        return false;
-    }
+    public readonly isNone = false;
 
     public get value(): T {
         return this._value;
@@ -148,13 +145,9 @@ export class NoneOption {
         // Intentionally empty
     }
 
-    public get isSome(): false {
-        return false;
-    }
+    public readonly isSome = false;
 
-    public get isNone(): true {
-        return true;
-    }
+    public readonly isNone = true;
 
     public get value(): undefined {
         return undefined;
@@ -280,7 +273,7 @@ export type OptionSomeType<T> = [T] extends [Option<infer X>] ? X : never;
  *     //     opt2: number;
  *     // };
  */
-export type AllSomeTypes<T extends { [n: string]: Option<unknown>; }> = {
+export type AllSomeTypes<T extends Record<string, Option<unknown>>> = {
     [P in keyof T]: OptionSomeType<T[P]>
 };
 
@@ -303,9 +296,7 @@ export namespace Option {
         collection: Array<Option<T>>
     ): Option<Array<T>> {
         const firstNone = collection.find((curOpt): curOpt is NoneOption => curOpt instanceof NoneOption);
-        return firstNone ?
-            firstNone :
-            new SomeOption(collection.map((curOpt) => (curOpt as SomeOption<T>).value));
+        return firstNone ?? new SomeOption(collection.map((curOpt) => (curOpt as SomeOption<T>).value));
     }
 
 
@@ -318,14 +309,14 @@ export namespace Option {
      * object having the same keys and the values are the Option values.
      * Otherwise, a none Option is returned.
      */
-    export function allObj<T extends { [n: string]: Option<unknown>; }>(
+    export function allObj<T extends Record<string, Option<unknown>>>(
         namedOptions: T
     ): Option<AllSomeTypes<T>> {
         const options = Object.values(namedOptions);
         const firstNoneIdx = options.findIndex((opt) => opt.isNone);
         if (firstNoneIdx === -1) {
             // All were Some.  Return an object of the some values.
-            const someValuesObj: { [k: string]: unknown; } = {};
+            const someValuesObj: Record<string, unknown> = {};
             for (const [name, opt] of Object.entries(namedOptions)) {
                 someValuesObj[name] = (opt as SomeOption<unknown>).value;
             }
