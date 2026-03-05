@@ -27,4 +27,6 @@
       - package.json: Change devDependency to "@repo/eslint-config-2": "*", (emphasis on -2)
 
 - [ ] Migrate rules from packages\eslint-config\eslint.package.cjs
+- [ ] Remove the eslint-config package
+- [ ] Rename eslint-config-2 to eslint-config
 - [ ] Update Jasmine from 5.3.0 to 6.1.0.
