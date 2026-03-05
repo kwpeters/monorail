@@ -19,7 +19,7 @@
 - [X] Add eslint-config-turbo
 - [X] Add eslint-import-resolver-typescript?  No
 - [X] Add eslint-plugin-import? No
-- [ ] Get linting working in eslint-config-2.
+- [X] Get linting working in eslint-config-2.
 - [X] Add stylistic plugin
 - [ ] Convert all project to use eslint-config-2 (to be like depot's)
       - package.json: Update lint script to: eslint .
