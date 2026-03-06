@@ -8,7 +8,7 @@
         "build:ts": "tsc --build tsconfig.src.json",
         "build:sea": "tsx ../build-app-assist/src/index.mts cjsToSeaApp2 --inputCjsFile ./dist/index.cjs --exeBaseName rmrf",
         "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
-        "lint": "eslint --format unix ./src",
+        "lint": "eslint .",
         "type-check": "tsc --project tsconfig.json --noEmit",
         "depcheck": "depcheck"
     },
@@ -22,15 +22,12 @@
     },
     "devDependencies": {
         "@repo/build-app-assist": "*",
-        "@repo/eslint-config": "*",
+        "@repo/eslint-config-2": "*",
         "@repo/typescript-config": "*",
-        "@stylistic/eslint-plugin": "^2.8.0",
         "@types/jasmine": "^5.1.4",
         "@types/node": "25.*.*",
         "@types/yargs": "^17.0.24",
-        "@typescript-eslint/eslint-plugin": "^8.6.0",
-        "@typescript-eslint/parser": "^8.6.0",
-        "eslint": "^8.57.1",
+        "eslint": "^10.0.1",
         "jasmine": "^5.3.0"
     }
 }

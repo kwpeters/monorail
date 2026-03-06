@@ -5,10 +5,11 @@ import { Result, SucceededResult, FailedResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { isBlank, splitIntoLines } from "@repo/depot/stringHelpers";
+import { NoneOption, SomeOption } from "@repo/depot/option";
 import { type FsItem, fsPathToFsItem, updateTimes } from "@repo/depot-node/fsItem";
 import { readableStreamToText } from "@repo/depot-node/streamHelpers";
 import { FsPath } from "@repo/depot-node/fsPath";
-import { NoneOption, SomeOption } from "@repo/depot/option";
+import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 
 
 interface IConfig {
@@ -97,7 +98,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
         }
     )
     .help()
-    .wrap(process.stdout.columns ?? 80)
+    .wrap(getStdoutColumns())
     .argv;
 
     if (!argv.atime && !argv.mtime) {

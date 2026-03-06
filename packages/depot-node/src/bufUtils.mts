@@ -140,7 +140,7 @@ export function hexDump(theBuffer: Buffer): string {
     while (outputBytes < theBuffer.length) {
 
         // Get a "sub-buffer" of the bytes that will be printed on the current line.
-        const subBuf: Buffer = theBuffer.slice(outputBytes, outputBytes + HEX_DUMP_BYTES_PER_LINE);
+        const subBuf: Buffer = theBuffer.subarray(outputBytes, outputBytes + HEX_DUMP_BYTES_PER_LINE);
         // Get the string for the current line.
         const line: string = hexDumpLine(subBuf);
 

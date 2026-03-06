@@ -265,7 +265,7 @@ describe("File", () => {
             it("rejects when called on a nonexistant file", (done) => {
                 const file = new File(tmpDir, "foo.txt");
                 file.getSiblingFiles()
-                .catch((err) => {
+                .catch((err: unknown) => {
                     done();
                 });
             });
@@ -1404,7 +1404,7 @@ describe("File", () => {
                 expect(inputFile.existsSync()).toBeUndefined();
 
                 try {
-                    await inputFile.readLines((lineText, lineNum) => {});
+                    await inputFile.readLines((lineText, lineNum) => { /* Intentionally empty */ });
                     fail("Should never get here.");
                 }
                 catch (err) {

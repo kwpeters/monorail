@@ -28,8 +28,8 @@ interface IArgsCommand {
     exeBaseName:  string;
 }
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-const builder = (yargs: Argv<NonNullable<unknown>>) => {
+
+const builder = (yargs: Argv) => {
     return  yargs
     .usage(commandDescription)
     .option(

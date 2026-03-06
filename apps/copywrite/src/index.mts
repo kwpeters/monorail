@@ -1,10 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
-
 import * as url from "node:url";
 import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
 import { Result, SucceededResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
+import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
+
 import * as commandUpdate from "./commandUpdate.mjs";
 import * as commandFull from "./commandFull.mjs";
 import * as commandDiff from "./commandDiff.mjs";
@@ -39,7 +39,7 @@ async function main(): Promise<Result<number, string>> {
     .command(commandDiff)
     .command(commandTo)
     .help()
-    .wrap(process.stdout.columns ?? 80)
+    .wrap(getStdoutColumns())  // Use 80 cols when undefined or 0.
     .argv;
 
     return new SucceededResult(0);

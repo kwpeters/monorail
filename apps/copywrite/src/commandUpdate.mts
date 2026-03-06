@@ -102,7 +102,7 @@ export async function handler(args: Arguments): Promise<void> {
                 true
             )
             .then((shouldContinue) => {
-                return shouldContinue ? filePairs : Promise.reject("Aborted by user.");
+                return shouldContinue ? filePairs : Promise.reject(new Error("Aborted by user."));
             });
         }
     })

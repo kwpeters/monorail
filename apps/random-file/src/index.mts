@@ -8,6 +8,7 @@ import { PromiseResult } from "@repo/depot/promiseResult";
 import { Directory } from "@repo/depot-node/directory";
 import { getOs, OperatingSystem } from "@repo/depot-node/os";
 import { spawn } from "@repo/depot-node/spawn2";
+import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 
 
 if (runningThisScript()) {
@@ -64,7 +65,7 @@ async function getConfiguration(): Promise<IConfig> {
             describe:     "show the file"
         }
     )
-    .wrap(process.stdout.columns ?? 80)
+    .wrap(getStdoutColumns())
     .argv;
 
     return {

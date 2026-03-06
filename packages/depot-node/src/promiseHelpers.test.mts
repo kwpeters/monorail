@@ -58,7 +58,7 @@ describe("eventToPromise()", () => {
 
     it("will reject with the reject event's payload", (done) => {
         eventToPromise(ee, "resolve", "reject")
-        .catch((err) => {
+        .catch((err: unknown) => {
             expect(err).toEqual("error message");
             done();
         });

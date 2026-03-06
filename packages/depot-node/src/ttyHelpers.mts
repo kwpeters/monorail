@@ -11,7 +11,7 @@ import { readableStreamToText } from "./streamHelpers.mjs";
  * @return The number of columns
  */
 export function getStdoutColumns(defaultNumCols: number = 80): number {
-    return process.stdout.columns ?? defaultNumCols;
+    return process.stdout.columns || defaultNumCols;
 }
 
 

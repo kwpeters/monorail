@@ -35,7 +35,7 @@ export class GitBranch {
      * @return A promise for a boolean that will indicate whether branchName is
      * valid.  This promise will never reject.
      */
-    public static isValidBranchName(this: void, branchName: string): Promise<boolean> {
+    public static isValidBranchName(this: unknown, branchName: string): Promise<boolean> {
         // A Git branch name cannot:
         // - Have a path component that begins with "."
         // - Have a double dot ".."
@@ -145,7 +145,7 @@ export class GitBranch {
     private constructor(repo: GitRepo, branchName: string, remoteName?: string) {
         this._repo = repo;
         this._name = branchName;
-        this._remoteName = remoteName || undefined;
+        this._remoteName = remoteName;
     }
 
 

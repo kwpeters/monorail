@@ -9,7 +9,7 @@ import { PromiseResult } from "@repo/depot/promiseResult";
 import { Directory } from "@repo/depot-node/directory";
 import { NodePackage } from "@repo/depot-node/nodePackage";
 import { NodePackageScript } from "@repo/depot-node/nodePackageScript";
-import { hr } from "@repo/depot-node/ttyHelpers";
+import { getStdoutColumns, hr } from "@repo/depot-node/ttyHelpers";
 import { spawnErrorToString } from "@repo/depot-node/spawn2";
 
 
@@ -80,7 +80,7 @@ async function main(): Promise<Result<number, string>> {
         console.log(`${icon}  ${curNodePackage.directory.toString()}`);
     });
 
-    const scripts = nodePackagesWithScript.reduce(
+    const scripts = nodePackagesWithScript.reduce<Array<NodePackageScript>>(
         (acc, pkg) => {
             const scriptsRes = pkg.getScripts();
             if (scriptsRes.succeeded) {
@@ -91,7 +91,7 @@ async function main(): Promise<Result<number, string>> {
                 return acc;
             }
         },
-        [] as Array<NodePackageScript>
+        []
     );
 
     //
@@ -164,7 +164,7 @@ async function getConfig(): Promise<Result<IConfig, string>> {
         describe: "The name of the npm script to run",
         type:     "string"
     })
-    .wrap(process.stdout.columns ?? 80)
+    .wrap(getStdoutColumns())
     .argv;
 
     //

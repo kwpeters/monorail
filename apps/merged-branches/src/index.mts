@@ -8,6 +8,7 @@ import { Directory } from "@repo/depot-node/directory";
 import { GitBranch } from "@repo/depot-node/gitBranch";
 import { GitRepo } from "@repo/depot-node/gitRepo";
 import { type IChoiceString, promptForChoice } from "@repo/depot-node/prompts";
+import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 
 //
 // This script finds the branches that have been merged into the specified
@@ -46,7 +47,7 @@ async function main(): Promise<Result<number, string>> {
         ].join(os.EOL)
     )
     .help()
-    .wrap(process.stdout.columns ?? 80)
+    .wrap(getStdoutColumns())
     .argv;
 
     const destBranch = argv._[0] as string;

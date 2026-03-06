@@ -73,6 +73,7 @@ describe("spawn", () => {
         .then(() => {
             fail("closePromise should reject when the child process is killed.");
         })
+        // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
         .catch((reason: SpawnCloseError) => {
             if (reason.type === "ISpawnExitError") {
                 expect(reason.exitCode).toEqual(null);
@@ -153,6 +154,7 @@ describe("spawn", () => {
         const lsCmd = os === OperatingSystem.Windows ? "dir" : "ls";
         const options = os === OperatingSystem.Windows ? {shell: true} : undefined;
         spawn(lsCmd, [nonExistantFilePath], options).closePromise
+        // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
         .catch((err: SpawnCloseError) => {
             expect(err).toBeTruthy();
 
@@ -171,6 +173,7 @@ describe("spawn", () => {
 
     it("provides the expected system error information when the process fails to start", (done) => {
         spawn("notarealcommand.exe", []).closePromise
+        // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
         .catch((err: SpawnCloseError) => {
             if (err.type !== "ISpawnSystemError") {
                 fail("Should have gotten an ISpawnSystemError.");

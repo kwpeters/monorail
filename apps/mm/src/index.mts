@@ -53,24 +53,33 @@ async function main(): Promise<Result<number, string>> {
     const chosenSubject = await promptForChoiceFuzzy("subject:", configRes.value, (subject) => subject.name);
     let res: Result<string, string>;
 
-    if (chosenSubject.type === "ISubjectExecutable") {
-        const chosenCommand = await promptForChoiceFuzzy("command:", executableCommandDefinitions, (commandDef) => commandDef.name);
-        res = await Promise.resolve(chosenCommand.fn(chosenSubject));
-    }
-    else if (chosenSubject.type === "ISubjectFsItem") {
-        const chosenCommand = await promptForChoiceFuzzy("command:", fsItemCommandDefinitions, (commandDef) => commandDef.name);
-        res = await Promise.resolve(chosenCommand.fn(chosenSubject));
-    }
-    else if (chosenSubject.type === "ISubjectUrl") {
-        const chosenCommand = await promptForChoiceFuzzy("command:", urlCommandDefinitions, (commandDef) => commandDef.name);
-        res = await Promise.resolve(chosenCommand.fn(chosenSubject));
-    }
-    else if (chosenSubject.type === "ISubjectClipboardText") {
-        const chosenCommand = await promptForChoiceFuzzy("command:", clipboardCommandDefinitions, (commandDef) => commandDef.name);
-        res = await Promise.resolve(chosenCommand.fn(chosenSubject));
-    }
-    else {
-        assertNever(chosenSubject);
+    switch (chosenSubject.type) {
+        case "ISubjectExecutable": {
+            const chosenCommand = await promptForChoiceFuzzy("command:", executableCommandDefinitions, (commandDef) => commandDef.name);
+            res = await Promise.resolve(chosenCommand.fn(chosenSubject));
+            break;
+        }
+
+        case "ISubjectFsItem": {
+            const chosenCommand = await promptForChoiceFuzzy("command:", fsItemCommandDefinitions, (commandDef) => commandDef.name);
+            res = await Promise.resolve(chosenCommand.fn(chosenSubject));
+            break;
+        }
+
+        case "ISubjectUrl": {
+            const chosenCommand = await promptForChoiceFuzzy("command:", urlCommandDefinitions, (commandDef) => commandDef.name);
+            res = await Promise.resolve(chosenCommand.fn(chosenSubject));
+            break;
+        }
+
+        case "ISubjectClipboardText": {
+            const chosenCommand = await promptForChoiceFuzzy("command:", clipboardCommandDefinitions, (commandDef) => commandDef.name);
+            res = await Promise.resolve(chosenCommand.fn(chosenSubject));
+            break;
+        }
+
+        default:
+            assertNever(chosenSubject);
     }
 
     if (res.failed) {

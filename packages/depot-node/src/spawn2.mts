@@ -20,7 +20,7 @@ export interface ISpawnSystemError extends ISystemError {
 }
 
 export function isISpawnSystemError(a: unknown): a is ISpawnSystemError {
-    return (a as ISpawnSystemError).type === "ISpawnSystemError";
+    return typeof a === "object" && a !== null && (a as { type: unknown }).type === "ISpawnSystemError";
 }
 
 
@@ -39,7 +39,7 @@ export interface ISpawnExitError {
 }
 
 export function isISpawnExitError(a: unknown): a is ISpawnExitError {
-    return (a as ISpawnExitError).type === "ISpawnExitError";
+    return typeof a === "object" && a !== null && (a as { type: unknown }).type === "ISpawnExitError";
 }
 
 /**
@@ -115,7 +115,7 @@ export function spawn(
 
     if (description) {
         console.log("--------------------------------------------------------------------------------");
-        console.log(`${description}`);
+        console.log(description);
         console.log(`    ${cmdLineRepresentation}`);
         console.log("--------------------------------------------------------------------------------");
     }
@@ -142,13 +142,13 @@ export function spawn(
                 childProcess = cp.spawn(cmd, args, spawnOptions);
             }
 
-            const outputStream = stdoutStream || new NullStream();
+            const outputStream = stdoutStream ?? new NullStream();
 
             childProcess.stdout!
             .pipe(stdoutCollector)
             .pipe(outputStream);
 
-            const errorStream = stderrStream || new NullStream();
+            const errorStream = stderrStream ?? new NullStream();
 
             childProcess.stderr!
             .pipe(stderrCollector)  // to capture stderr in case child process errors

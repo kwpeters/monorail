@@ -6,7 +6,7 @@ import { type FsItem } from "./fsItem.mjs";
 import { OperatingSystem, getOs } from "./os.mjs";
 
 
-export async function launchAdmin(executable: File, cwd: Directory | undefined = undefined): Promise<boolean> {
+export async function launchAdmin(executable: File, cwd?: Directory): Promise<boolean> {
     // pwsh.exe -Command "Start-Process -Verb RunAs <executable>"
     const cmd = "pwsh.exe";
     const args = [

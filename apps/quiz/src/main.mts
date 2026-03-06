@@ -80,16 +80,19 @@ async function askFlashcard(
     allowedAttempts = 3
 ): Promise<boolean> {
 
-    if (flashcard.prompt.type === "PromptSingleLine") {
-        console.log(wrap(flashcard.prompt.prompt, { width: getStdoutColumns(), indent: "" }));
-    }
-    else if (flashcard.prompt.type === "PromptMultiLine") {
-        flashcard.prompt.prompt.forEach((line) => {
-            console.log(wrap(line, { width: getStdoutColumns(), indent: "" }));
-        });
-    }
-    else {
-        assertNever(flashcard.prompt);
+    switch (flashcard.prompt.type) {
+        case "PromptSingleLine":
+            console.log(wrap(flashcard.prompt.prompt, { width: getStdoutColumns(), indent: "" }));
+            break;
+
+        case "PromptMultiLine":
+            flashcard.prompt.prompt.forEach((line) => {
+                console.log(wrap(line, { width: getStdoutColumns(), indent: "" }));
+            });
+            break;
+
+        default:
+            assertNever(flashcard.prompt);
     }
 
     let attemptsRemaining = allowedAttempts;
@@ -99,24 +102,29 @@ async function askFlashcard(
         let correctAnswer = "";
         let userIsCorrect = false;
 
-        if (flashcard.answer.type === "AnswerCandidates") {
-            const allCandidates = _.shuffle([
-                flashcard.answer.correctCandidate,
-                ...flashcard.answer.wrongCandidates
-            ]);
+        switch (flashcard.answer.type) {
+            case "AnswerCandidates": {
+                const allCandidates = _.shuffle([
+                    flashcard.answer.correctCandidate,
+                    ...flashcard.answer.wrongCandidates
+                ]);
 
-            const choices = allCandidates.map((cur) => ({ name: cur, value: cur }));
-            const usersAnswer = await promptForChoice("Your answer:", choices);
-            correctAnswer = flashcard.answer.correctCandidate;
-            userIsCorrect = usersAnswer === correctAnswer;
-        }
-        else if (flashcard.answer.type === "AnswerText") {
-            const usersAnswer = await promptForString("Your answer: ");
-            correctAnswer = flashcard.answer.answer;
-            userIsCorrect = usersAnswer === correctAnswer;
-        }
-        else {
-            assertNever(flashcard.answer);
+                const choices = allCandidates.map((cur) => ({ name: cur, value: cur }));
+                const usersAnswer = await promptForChoice("Your answer:", choices);
+                correctAnswer = flashcard.answer.correctCandidate;
+                userIsCorrect = usersAnswer === correctAnswer;
+                break;
+            }
+
+            case "AnswerText": {
+                const usersAnswer = await promptForString("Your answer: ");
+                correctAnswer = flashcard.answer.answer;
+                userIsCorrect = usersAnswer === correctAnswer;
+                break;
+            }
+
+            default:
+                assertNever(flashcard.answer);
         }
 
         if (userIsCorrect) {
@@ -196,7 +204,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
             }
         )
         .help()
-        .wrap(process.stdout.columns ?? 80)
+        .wrap(getStdoutColumns())
         .argv;
 
     // Get the input files specified as command line arguments.

@@ -13,6 +13,7 @@ import { File } from "@repo/depot-node/file";
 import { ListenerTracker } from "@repo/depot-node/listenerTracker";
 import { spawn, type ISpawnResult } from "@repo/depot-node/spawn";
 import { getOs, OperatingSystem } from "@repo/depot-node/os";
+import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 
 
 const DEBOUNCE_DELAY = 1500;
@@ -85,7 +86,7 @@ async function getConfiguration(): Promise<IWatchConfig> {
             describe:     "Ignore activity for files matching the specified regex (can be used multiple times)"
         }
     )
-    .wrap(process.stdout.columns ?? 80)
+    .wrap(getStdoutColumns())
     .argv;
 
     //
@@ -159,7 +160,7 @@ async function mainImpl(): Promise<Result<number, string>> {
     // Setup keypresses so that they too can trigger the command.
     //
     emitKeypressEvents(process.stdin);
-    if (process.stdin.isTTY && process.stdin.setRawMode) {
+    if (process.stdin.isTTY && typeof process.stdin.setRawMode === "function") {
         process.stdin.setRawMode(true);
         process.stdin.on("keypress", onKeypress);
     }

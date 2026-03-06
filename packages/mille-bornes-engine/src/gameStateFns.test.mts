@@ -1,9 +1,9 @@
-import { standardGameConfig } from "@repo/mille-bornes-shared/gameConfig";
-import { create } from "./gameStateFns.mjs";
+// import { standardGameConfig } from "@repo/mille-bornes-shared/gameConfig";
+// import { create } from "./gameStateFns.mjs";
 import { createDeck, standardCardCountFn, type MilleBornesShuffledDeck } from "./milleBornesDeck.mjs";
 
 
-const mockShuffledDeckProvider = () => {
+const __mockShuffledDeckProvider = () => {
     const deck = createDeck(standardCardCountFn).throwIfFailed();
     // The returned deck will not be shuffled.  This will help the tests be deterministic.
     return deck as unknown as MilleBornesShuffledDeck;

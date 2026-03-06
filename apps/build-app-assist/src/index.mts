@@ -4,6 +4,8 @@ import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
 import { Result, SucceededResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
+import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
+
 
 // Command modules
 import { def as cmdDefCjsToSeaApp2 } from "./commandCjsToSeaApp2.mjs";
@@ -64,7 +66,7 @@ async function main(): Promise<Result<number, string>> {
         }
     )
     .help()
-    .wrap(process.stdout.columns ?? 80)
+    .wrap(getStdoutColumns())
     .argv;
 
     return retVal;

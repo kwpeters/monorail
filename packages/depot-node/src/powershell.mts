@@ -18,7 +18,7 @@ import { spawn, spawnErrorToString } from "./spawn2.mjs";
 export async function getLegacyPowerShellExecutable(): Promise<Result<File, string>> {
     // Try to find the old PowerShell (powershell.exe).
     // eslint-disable-next-line turbo/no-undeclared-env-vars
-    let systemRoot = process.env.SystemRoot || ["C:", "Windows"].join("/");
+    let systemRoot = process.env.SystemRoot ?? ["C:", "Windows"].join("/");
     systemRoot = systemRoot.replace(/\\/g, "/");
     const legacyPowershellPattern = [systemRoot, "System32", "WindowsPowerShell", "**", "powershell.exe"].join("/");
 

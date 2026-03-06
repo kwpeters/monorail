@@ -22,6 +22,7 @@ import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { Directory } from "@repo/depot-node/directory";
 import { File } from "@repo/depot-node/file";
 import { FileComparer } from "@repo/depot-node/diffDirectories";
+import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 
 
 export async function main(): Promise<number> {
@@ -46,7 +47,7 @@ async function mainImpl(): Promise<Result<number, string>> {
         ].join(os.EOL)
     )
     .help()
-    .wrap(process.stdout.columns ?? 80)
+    .wrap(getStdoutColumns())
     .argv;
 
     const outDirStr = argv._[0] as string;

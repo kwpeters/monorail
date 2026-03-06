@@ -276,10 +276,11 @@ export class File {
         return fsp.lstat(this._filePath)
         .then(
             (stats) => {
-                return stats && !stats.isDirectory() ?
+                return !stats.isDirectory() ?
                     fsp.unlink(this._filePath) :
                     Promise.resolve();
             },
+            // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
             (err: NodeJS.ErrnoException) => {
                 if (err.code !== "ENOENT") {
                     throw err;
@@ -298,10 +299,8 @@ export class File {
         try {
             // Use lstat() so that we test for the existence of the symbolic link,
             // not the existence of the file it targets.
-            const stats = fs.lstatSync(this._filePath);
-            if (stats) {
-                fs.unlinkSync(this._filePath);
-            }
+            const __stats = fs.lstatSync(this._filePath);
+            fs.unlinkSync(this._filePath);
         }
         catch (err) {
             if ((err as NodeJS.ErrnoException).code === "ENOENT") {
@@ -763,6 +762,7 @@ export class File {
      *
      * @return The parsed data contained in this file
      */
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
     public readJsonSync<T>(): T {
         const text = this.readSync();
         return JSON.parse(text) as T;
@@ -780,7 +780,7 @@ export class File {
      */
     public readLines(callbackFn: ReadLinesCallback): Promise<void> {
         // Detect the encoding of the file
-        let encoding = (chardet.detectFileSync(this._filePath) || "utf8");
+        let encoding = (chardet.detectFileSync(this._filePath) ?? "utf8");
 
         // If we detected UTF-16LE, we'll use that.  Otherwise, we'll use utf8.
         encoding = encoding === "UTF-16LE" ? "UTF-16LE" : "utf8";
@@ -847,12 +847,14 @@ function copyFile(sourceFilePath: string, destFilePath: string, options?: ICopyO
         const writeListenerTracker = new ListenerTracker(writeStream);
 
         readListenerTracker.on("error", (err) => {
+            // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
             reject(err);
             readListenerTracker.removeAll();
             writeListenerTracker.removeAll();
         });
 
         writeListenerTracker.on("error", (err) => {
+            // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
             reject(err);
             readListenerTracker.removeAll();
             writeListenerTracker.removeAll();
@@ -933,17 +935,17 @@ export async function stringsToFiles(
 
     const [extantFiles, nonExtantFiles] = await pipeAsync(
         mapAsync(fsPaths, async (fsPath) => {
-            let isFile = false;
+            let isFile: boolean;
             try {
                 const stats = await fsp.stat(fsPath.toString());
-                isFile = !!stats && stats.isFile();
+                isFile = stats.isFile();
             }
             catch (err) {
                 isFile = false;
             }
             return { fsPath, isFile };
         }),
-        (objs) => _.partition(objs, (obj) => !!obj.isFile)
+        (objs) => _.partition(objs, (obj) => obj.isFile)
     );
 
     return pipeAsync(

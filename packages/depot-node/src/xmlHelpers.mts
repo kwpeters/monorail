@@ -25,7 +25,7 @@ export async function toXmlDoc(arg: File | string): Promise<Result<Document, str
     let errorMsg: string | undefined;
     const parser = new xmldom.DOMParser({
         errorHandler: {
-            warning:    (msg) => {},
+            warning:    (msg) => { /* intentionally empty */ },
             error:      (msg) => { errorMsg = JSON.stringify(msg); },
             fatalError: (msg) => { errorMsg = JSON.stringify(msg); }
         }
@@ -37,6 +37,7 @@ export async function toXmlDoc(arg: File | string): Promise<Result<Document, str
     // to successfully parse the text and convert it into a DOM.  When this
     // happens, documentElement will be null or there will be error
     // elements in the DOM.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!doc.documentElement || doc.getElementsByTagName("parsererror").length > 0) {
         return new FailedResult(`Failed to parse ${sourceName}.`);
     }
@@ -192,11 +193,14 @@ export function isDocument(val: unknown): val is Document {
  * @return true if _o_ is a Node; false otherwise.
  */
 export function isNode(o: unknown): o is Node {
+    if (!o) {
+        return false;
+    }
+
     const subject = o as Node;
-    return subject &&
-        typeof subject === "object" &&
-        typeof subject.nodeType === "number" &&
-        typeof subject.nodeName === "string";
+    return typeof subject === "object" &&
+           typeof subject.nodeType === "number" &&
+           typeof subject.nodeName === "string";
 }
 
 
@@ -320,8 +324,8 @@ export function tryToElement<TElem extends Element = Element>(subject: null | xp
 }
 
 
-export function toElement<TElem extends Element = Element>(subject: Node | null): TElem;
-export function toElement<TElem extends Element = Element>(subject: xpath.SelectReturnType): TElem;
+export function toElement(subject: Node | null): Element;
+export function toElement(subject: xpath.SelectReturnType): Element;
 export function toElement<TElem extends Element = Element>(subject: null | xpath.SelectReturnType): TElem {
     const opt = tryToElement(subject);
     if (opt.isSome) {
@@ -467,6 +471,7 @@ export function getPrecedingXmlComment(element: Element): Option<string> {
     while (currentNode !== null) {
         if (currentNode.nodeType === currentNode.COMMENT_NODE) {
             const commentNode = currentNode as Comment;
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             return new SomeOption(commentNode.textContent?.trim() || "");
         }
         else if (currentNode.nodeType === currentNode.ELEMENT_NODE) {

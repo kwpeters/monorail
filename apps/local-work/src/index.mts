@@ -8,6 +8,7 @@ import { indent } from "@repo/depot/stringHelpers";
 import { Directory } from "@repo/depot-node/directory";
 import { File } from "@repo/depot-node/file";
 import { GitRepo } from "@repo/depot-node/gitRepo";
+import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 
 
 if (runningThisScript()) {
@@ -69,7 +70,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
         ].join(os.EOL)
     )
     .help()
-    .wrap(process.stdout.columns ?? 80)
+    .wrap(getStdoutColumns())
     .argv;
 
     const dirArg = argv._[0] as string;

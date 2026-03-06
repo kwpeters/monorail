@@ -15,12 +15,12 @@ import {
 describe("raceDistanceSchema", () => {
 
     it("cannot be negative", () => {
-        const res = safeParse(raceDistanceSchema, -25).throwIfSucceeded();
+        const __res = safeParse(raceDistanceSchema, -25).throwIfSucceeded();
     });
 
 
     it("cannot be zero", () => {
-        const res = safeParse(raceDistanceSchema, 0).throwIfSucceeded();
+        const __res = safeParse(raceDistanceSchema, 0).throwIfSucceeded();
     });
 
 

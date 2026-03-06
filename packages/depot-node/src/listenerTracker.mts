@@ -15,8 +15,9 @@ import {EventEmitter} from "node:events";
 export class ListenerTracker {
 
     private readonly _emitter: EventEmitter;
+    // An object where each key is an event name and the value is an array of handler functions.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private _listenerMap:      { [eventName: string]: Array<(...args: Array<any>) => void>; };
+    private _listenerMap:      Record<string, Array<(...args: Array<any>) => void>>;
 
     /**
      * Creates a new ListenerTracker that can be used to track listeners for the
@@ -88,9 +89,7 @@ export class ListenerTracker {
         eventName: string,
         listenerCallback: (...args: Array<any>) => void  // eslint-disable-line @typescript-eslint/no-explicit-any
     ): void {
-        if (!this._listenerMap[eventName]) {
-            this._listenerMap[eventName] = [];
-        }
+        this._listenerMap[eventName] ??= [];
         this._listenerMap[eventName].push(listenerCallback);
     }
 

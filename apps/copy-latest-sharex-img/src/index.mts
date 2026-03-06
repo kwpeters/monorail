@@ -12,6 +12,7 @@ import { File } from "@repo/depot-node/file";
 import { getMostRecentlyModified } from "@repo/depot-node/filesystemHelpers";
 import { getOneDriveDir, getUserProfileDir } from "@repo/depot-node/windowsHelpers";
 import { FsPath } from "@repo/depot-node/fsPath";
+import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 
 
 if (runningThisScript()) {
@@ -79,7 +80,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
             ].join(os.EOL)
         )
         .help()
-        .wrap(process.stdout.columns ?? 80)
+        .wrap(getStdoutColumns())
         .argv;
 
     // Get the destination image file positional parameter.

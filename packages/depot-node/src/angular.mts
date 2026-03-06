@@ -109,7 +109,7 @@ export async function lintFiles(
     }
 
     const output = result.error.stdout;
-    const matches = output.match(ngLintOutputRegex);
+    const matches = ngLintOutputRegex.exec(output);
     if (!matches) {
         const errMsg = `Output from "ng lint" does not match expected text.  ${output}`;
         return new FailedResult(errMsg);

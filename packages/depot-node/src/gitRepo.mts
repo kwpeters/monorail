@@ -105,14 +105,14 @@ export class GitRepo {
         let srcStr: string;
 
         if (src instanceof Url) {
-            repoDirName = dirName || gitUrlToProjectName(src.toString());
+            repoDirName = dirName ?? gitUrlToProjectName(src.toString());
             const protocols = src.getProtocols();
             srcStr = protocols.length < 2 ?
                 src.toString() :
                 src.replaceProtocol("https").toString();
         }
         else {
-            repoDirName = dirName || src.dirName;
+            repoDirName = dirName ?? src.dirName;
             // The path to the source repo must be made absolute, because when
             // we execute the "git clone" command, the cwd will be `parentDir`.
             srcStr = src.absPath();
@@ -253,16 +253,16 @@ export class GitRepo {
      * @return A Promise for an object where the remote names are the keys and
      * the remote URL is the value.
      */
-    public remotes(): Promise<{[name: string]: string}> {
+    public remotes(): Promise<Record<string, string>> {
         return spawn("git", ["remote", "-vv"], {cwd: this._dir.toString()})
         .closePromise
         .then((stdout) => {
             const lines = splitIntoLines(stdout);
-            const remotes: {[name: string]: string} = {};
+            const remotes: Record<string, string> = {};
             lines.forEach((curLine) => {
                 // TODO: Convert the following regex to use named capture groups.
                 // eslint-disable-next-line prefer-named-capture-group
-                const match = curLine.match(/^(\w+)\s+(.*)\s+\(\w+\)$/);
+                const match = /^(\w+)\s+(.*)\s+\(\w+\)$/.exec(curLine);
                 if (match) {
                     remotes[match[1]!] = match[2]!;
                 }
@@ -300,12 +300,8 @@ export class GitRepo {
             }
 
             // Look for the project name in package.json.
-            const packageJson = new File(this._dir, "package.json").readJsonSync<IPackageJson>();
-            if (packageJson) {
-                return packageJson.name;
-            }
-
-            return undefined;
+            const packageJson = new File(this._dir, "package.json").readJsonSync<Partial<IPackageJson>>();
+            return packageJson.name;
         })
         .then((projName) => {
             if (projName) {
@@ -390,13 +386,13 @@ export class GitRepo {
     public deleteTag(tagName: string): Promise<GitRepo> {
         return spawn("git", ["tag", "--delete", tagName], {cwd: this._dir.toString()})
         .closePromise
+        // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
         .catch((err: ISpawnExitError) => {
             if (err.stderr.includes("not found")) {
                 // The specified tag name was not found.  We are still
                 // successful.
             }
             else {
-                // eslint-disable-next-line @typescript-eslint/only-throw-error
                 throw err;
             }
         })
@@ -614,7 +610,7 @@ export class GitRepo {
         .then(() => {
             return;
         })
-        .catch((err) => {
+        .catch((err: unknown) => {
             console.log(`Error pushing current branch: ${JSON.stringify(err)}`);
             throw err;
         });
@@ -747,7 +743,7 @@ export class GitRepo {
         return spawn("git", args, {cwd: this._dir.toString()}).closePromise
         .then(
             () => { return; },
-            (err) => {
+            (err: unknown) => {
                 console.log(`Error fetching from ${remoteName} remote: ${JSON.stringify(err)}`);
                 throw err;
             }

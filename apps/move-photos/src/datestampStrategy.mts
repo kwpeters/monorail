@@ -24,7 +24,7 @@ const dateRegex = /(?<date>(?<year>(?:20|19)\d\d)(?:[-_])?(?<month>[01]\d)(?:[-_
 export function datestampStrategyFilePath(source: File, destDir: Directory): Promise<DatestampDeduction> {
     const absPath = source.absPath();
 
-    const matchResult = absPath.match(dateRegex);
+    const matchResult = dateRegex.exec(absPath);
     if (!matchResult) {
         return Promise.resolve({
             confidence:  ConfidenceLevel.NoClue,

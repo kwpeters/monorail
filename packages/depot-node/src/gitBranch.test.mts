@@ -105,7 +105,7 @@ describe("GitBranch", () => {
                 const repo = (await GitRepo.fromDirectory(repoDir)).value!;
                 const result = await GitBranch.create(repo, "feature/feature_name");
                 expect(result.succeeded).toBeTrue();
-                expect(result.value! instanceof GitBranch).toBeTrue();
+                expect((result.value!) instanceof GitBranch).toBeTrue();
             });
 
 

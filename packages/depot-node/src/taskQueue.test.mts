@@ -314,13 +314,13 @@ describe("TaskQueue", () => {
         const t1Prom = queue.push(t1)
         .then(
             (val) => (t1Value = val),
-            (err) => (t1Error = err as Error)
+            (err: unknown) => (t1Error = err as Error)
         );
 
         const t2Prom = queue.push(t2)
         .then(
             (val) => (t2Value = val),
-            (err) => (t2Error = err as Error)
+            (err: unknown) => (t2Error = err as Error)
         );
 
         // Cancel the tasks before they have a chance to complete.
@@ -359,13 +359,13 @@ describe("TaskQueue", () => {
         const t1Prom = queue.push(t1)
         .then(
             (val) => (t1Value = val),
-            (err) => (t1Error = err as Error)
+            (err: unknown) => (t1Error = err as Error)
         );
 
         const t2Prom = queue.push(t2)
         .then(
             (val) => (t2Value = val),
-            (err) => (t2Error = err as Error)
+            (err: unknown) => (t2Error = err as Error)
         );
 
         // Cancel the tasks before they have a chance to complete.

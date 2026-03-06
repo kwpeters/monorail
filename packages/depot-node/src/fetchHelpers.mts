@@ -72,7 +72,7 @@ export function getFetchWithHeader(
         const headers = new Headers(init?.headers);
         headers.append(headerName, headerValue);
 
-        const newInit = {...(init || {}), ...{headers}};
+        const newInit = {...(init ?? {}), ...{headers}};
         return innerFetch(url, newInit);
     };
     return fetchWithHeader;

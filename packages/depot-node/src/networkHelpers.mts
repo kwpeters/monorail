@@ -9,7 +9,7 @@ import * as _ from "lodash-es";
  * and the values are the IPv4 addresses (as strings)
  */
 export function getExternalIpv4Addresses(): Map<string, string> {
-    const foundInterfaces: Map<string, string> = new Map();
+    const foundInterfaces = new Map<string, string>();
 
     const networkInterfaces = os.networkInterfaces();
 

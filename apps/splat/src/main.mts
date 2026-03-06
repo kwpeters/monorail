@@ -4,6 +4,7 @@ import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
 import { glob } from "glob";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
+import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 
 
 export async function main(): Promise<number> {
@@ -47,7 +48,7 @@ async function mainImpl(): Promise<Result<number, string>> {
             }
         )
         .help()
-        .wrap(process.stdout.columns ?? 80)
+        .wrap(getStdoutColumns())
         .argv;
 
     if (argv._.length === 0) {
@@ -60,11 +61,11 @@ async function mainImpl(): Promise<Result<number, string>> {
     });
 
     // Treat all globs that start with "!" as ignore globs.
-    let [ignoreGlobs, includeGlobs] =
+    const [ignoreGlobsWithInitialBang, includeGlobs] =
         _.partition(allGlobs, (pattern) => pattern.startsWith("!"));
 
     // For each ignore glob, remove the initial "!".
-    ignoreGlobs = ignoreGlobs.map((pattern) => pattern.slice(1));
+    const ignoreGlobs = ignoreGlobsWithInitialBang.map((pattern) => pattern.slice(1));
 
     // Do the search.
     const paths =

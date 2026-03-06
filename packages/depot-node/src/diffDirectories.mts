@@ -48,34 +48,35 @@ export class FileCompareAction {
      *     successfully or rejects if it failed.
      */
     public execute(): Promise<void> {
-        if (this._actionType === FileCompareActionType.CopyLeft) {
-            return this._files.rightFile.copy(this._files.leftFile)
-            .then(() => { return; });
-        }
-        else if (this._actionType === FileCompareActionType.CopyRight) {
-            return this._files.leftFile.copy(this._files.rightFile)
-            .then(() => { return; });
-        }
-        else if (this._actionType === FileCompareActionType.DeleteLeft) {
-            return this._files.leftFile.delete();
-        }
-        else if (this._actionType === FileCompareActionType.DeleteRight) {
-            return this._files.rightFile.delete();
-        }
-        else if (this._actionType === FileCompareActionType.DeleteBoth) {
-            return Promise.all(
-                [
-                    this._files.leftFile.delete(),
-                    this._files.rightFile.delete()
-                ]
-            )
-            .then(() => { return; });
-        }
-        else if (this._actionType === FileCompareActionType.Skip) {
-            return Promise.resolve();
-        }
-        else {
-            assertNever(this._actionType);
+        switch (this._actionType) {
+            case FileCompareActionType.CopyLeft:
+                return this._files.rightFile.copy(this._files.leftFile)
+                .then(() => { return; });
+
+            case FileCompareActionType.CopyRight:
+                return this._files.leftFile.copy(this._files.rightFile)
+                .then(() => { return; });
+
+            case FileCompareActionType.DeleteLeft:
+                return this._files.leftFile.delete();
+
+            case FileCompareActionType.DeleteRight:
+                return this._files.rightFile.delete();
+
+            case FileCompareActionType.DeleteBoth:
+                return Promise.all(
+                    [
+                        this._files.leftFile.delete(),
+                        this._files.rightFile.delete()
+                    ]
+                )
+                .then(() => { return; });
+
+            case FileCompareActionType.Skip:
+                return Promise.resolve();
+
+            default:
+                assertNever(this._actionType);
         }
     }
 }
@@ -164,41 +165,55 @@ export class FileComparer implements IFilesToCompare {
         const actions: Array<FileCompareAction> = [];
 
         if (isLeftOnly) {
-            if (actionPriority === ActionPriority.SyncLeftToRight) {
-                actions.push(new FileCompareAction(this, FileCompareActionType.CopyRight));
-                actions.push(new FileCompareAction(this, FileCompareActionType.Skip));
-                actions.push(new FileCompareAction(this, FileCompareActionType.DeleteLeft));
-            }
-            else if (actionPriority === ActionPriority.SyncRightToLeft) {
-                actions.push(new FileCompareAction(this, FileCompareActionType.DeleteLeft));
-                actions.push(new FileCompareAction(this, FileCompareActionType.Skip));
-                actions.push(new FileCompareAction(this, FileCompareActionType.CopyRight));
-            }
-            else if (actionPriority === ActionPriority.PRESERVE) {
-                // No action priority specified.  Give priority to preserving
-                // files.
-                actions.push(new FileCompareAction(this, FileCompareActionType.CopyRight));
-                actions.push(new FileCompareAction(this, FileCompareActionType.Skip));
-                actions.push(new FileCompareAction(this, FileCompareActionType.DeleteLeft));
+            switch (actionPriority) {
+                case ActionPriority.SyncLeftToRight:
+                    actions.push(new FileCompareAction(this, FileCompareActionType.CopyRight));
+                    actions.push(new FileCompareAction(this, FileCompareActionType.Skip));
+                    actions.push(new FileCompareAction(this, FileCompareActionType.DeleteLeft));
+                    break;
+
+                case ActionPriority.SyncRightToLeft:
+                    actions.push(new FileCompareAction(this, FileCompareActionType.DeleteLeft));
+                    actions.push(new FileCompareAction(this, FileCompareActionType.Skip));
+                    actions.push(new FileCompareAction(this, FileCompareActionType.CopyRight));
+                    break;
+
+                case ActionPriority.PRESERVE:
+                    // No action priority specified.  Give priority to preserving
+                    // files.
+                    actions.push(new FileCompareAction(this, FileCompareActionType.CopyRight));
+                    actions.push(new FileCompareAction(this, FileCompareActionType.Skip));
+                    actions.push(new FileCompareAction(this, FileCompareActionType.DeleteLeft));
+                    break;
+
+                default:
+                    assertNever(actionPriority);
             }
         }
         else if (isRightOnly) {
-            if (actionPriority === ActionPriority.SyncLeftToRight) {
-                actions.push(new FileCompareAction(this, FileCompareActionType.DeleteRight));
-                actions.push(new FileCompareAction(this, FileCompareActionType.Skip));
-                actions.push(new FileCompareAction(this, FileCompareActionType.CopyLeft));
-            }
-            else if (actionPriority === ActionPriority.SyncRightToLeft) {
-                actions.push(new FileCompareAction(this, FileCompareActionType.CopyLeft));
-                actions.push(new FileCompareAction(this, FileCompareActionType.Skip));
-                actions.push(new FileCompareAction(this, FileCompareActionType.DeleteRight));
-            }
-            else if (actionPriority === ActionPriority.PRESERVE) {
-                // No action priority specified.  Give priority to preserving
-                // files.
-                actions.push(new FileCompareAction(this, FileCompareActionType.CopyLeft));
-                actions.push(new FileCompareAction(this, FileCompareActionType.Skip));
-                actions.push(new FileCompareAction(this, FileCompareActionType.DeleteRight));
+            switch (actionPriority) {
+                case ActionPriority.SyncLeftToRight:
+                    actions.push(new FileCompareAction(this, FileCompareActionType.DeleteRight));
+                    actions.push(new FileCompareAction(this, FileCompareActionType.Skip));
+                    actions.push(new FileCompareAction(this, FileCompareActionType.CopyLeft));
+                    break;
+
+                case ActionPriority.SyncRightToLeft:
+                    actions.push(new FileCompareAction(this, FileCompareActionType.CopyLeft));
+                    actions.push(new FileCompareAction(this, FileCompareActionType.Skip));
+                    actions.push(new FileCompareAction(this, FileCompareActionType.DeleteRight));
+                    break;
+
+                case ActionPriority.PRESERVE:
+                    // No action priority specified.  Give priority to preserving
+                    // files.
+                    actions.push(new FileCompareAction(this, FileCompareActionType.CopyLeft));
+                    actions.push(new FileCompareAction(this, FileCompareActionType.Skip));
+                    actions.push(new FileCompareAction(this, FileCompareActionType.DeleteRight));
+                    break;
+
+                default:
+                    assertNever(actionPriority);
             }
         }
         else if (isInBoth) {

@@ -8,6 +8,7 @@ import { pipe } from "@repo/depot/pipe2";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { File } from "@repo/depot-node/file";
 import { openVscodeDiff } from "@repo/depot-node/editor";
+import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -129,7 +130,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
             }
         )
         .help()
-        .wrap(process.stdout.columns ?? 80)
+        .wrap(getStdoutColumns())
         .argv;
 
     // If the initial "." was included in the extension, remove it.

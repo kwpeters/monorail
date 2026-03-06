@@ -223,6 +223,7 @@ export class Symlink {
                     return new FailedResult(`Cannot delete symlink "${this._symlinkPath}" because the item in the filesystem is not a symbolic link.`);
                 }
             },
+            // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
             (err: NodeJS.ErrnoException) => {
                 if (err.code === "ENOENT") {
                     // Nothing exists in the filesystem.  Consider the deletion successful.
@@ -350,7 +351,7 @@ export class Symlink {
      */
     public async followAll(): Promise<Result<Directory | File, string>> {
 
-        // eslint-disable-next-line @typescript-eslint/no-this-alias, consistent-this
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
         let curFsItem: File | Directory | Symlink = this;
         while (curFsItem instanceof Symlink) {
             const res: Result<Directory | File | Symlink, string> = await curFsItem.followOnce();

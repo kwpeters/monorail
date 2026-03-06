@@ -1,6 +1,5 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-// eslint-disable-next-line import/no-unresolved
 import * as vscode from "vscode";
 import * as _ from "lodash-es";
 import { toggleComment } from "@repo/depot/comment";

@@ -468,9 +468,7 @@ export class BufReader {
 
         // If not specified, the number of bytes to read will be the number of
         // bytes left in the source buffer.
-        if (numBytes === undefined) {
-            numBytes = this._theBuffer.length - this._curIndex;
-        }
+        numBytes ??= this._theBuffer.length - this._curIndex;
         const endIndex = this._curIndex + numBytes;
 
         // If the caller has specified that we read more bytes than what

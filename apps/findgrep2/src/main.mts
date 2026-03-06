@@ -12,6 +12,7 @@ import { FsPath } from "@repo/depot-node/fsPath";
 import { File } from "@repo/depot-node/file";
 import { strToRegExp } from "@repo/depot/regexpHelpers";
 import { highlightMatches } from "@repo/depot-node/chalkHelpers";
+import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 
 
 interface IConfig {
@@ -81,7 +82,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
         ].join(os.EOL)
     )
     .help()
-    .wrap(process.stdout.columns ?? 80)
+    .wrap(getStdoutColumns())
     .argv;
 
     //

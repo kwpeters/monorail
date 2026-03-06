@@ -47,14 +47,14 @@ export async function deleteFsItem(fsItem: FsItem): Promise<Result<FsItem, strin
         return fsItem.delete()
         .then(
             () => new SucceededResult(fsItem),
-            (err) => new FailedResult(errorToString(err))
+            (err: unknown) => new FailedResult(errorToString(err))
         );
     }
     else if (fsItem instanceof File) {
         return fsItem.delete()
         .then(
             () => new SucceededResult(fsItem),
-            (err) => new FailedResult(errorToString(err))
+            (err: unknown) => new FailedResult(errorToString(err))
         );
     }
     else if (fsItem instanceof Symlink) {

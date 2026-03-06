@@ -776,7 +776,7 @@ describe("Directory", () => {
                 .then(() => {
                     fail("The above call to contents() should have rejected.");
                 })
-                .catch((err) => {
+                .catch((err: unknown) => {
                     done();
                 });
             });

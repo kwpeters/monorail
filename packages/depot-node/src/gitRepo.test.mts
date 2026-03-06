@@ -1,6 +1,6 @@
 import path from "node:path";
 import * as url from "node:url";
-import * as _ from "lodash-es";
+import * as ld from "lodash-es";
 import {Url} from "@repo/depot/url";
 import {CommitHash} from "@repo/depot/commitHash";
 import {generateUuid, UuidFormat} from "@repo/depot/uuid";
@@ -118,9 +118,9 @@ describe("GitRepo", () => {
                 const repo = await GitRepo.clone(sampleRepoDir, tmpDir);
                 const files = await repo.files();
 
-                expect(_.findIndex(files, {fileName: "package.json"})).toBeGreaterThanOrEqual(0);
-                expect(_.findIndex(files, {fileName: "README.md"})).toBeGreaterThanOrEqual(0);
-                expect(_.findIndex(files, {fileName: "LICENSE"})).toBeGreaterThanOrEqual(0);
+                expect(ld.findIndex(files, {fileName: "package.json"})).toBeGreaterThanOrEqual(0);
+                expect(ld.findIndex(files, {fileName: "README.md"})).toBeGreaterThanOrEqual(0);
+                expect(ld.findIndex(files, {fileName: "LICENSE"})).toBeGreaterThanOrEqual(0);
             });
 
         });
@@ -365,7 +365,7 @@ describe("GitRepo", () => {
                 const repo = (await GitRepo.fromDirectory(repoDir)).value!;
                 const branches = await repo.getBranches();
                 expect(branches.length).toBeGreaterThan(0);
-                expect(_.map(branches, "name")).toContain("master");
+                expect(ld.map(branches, "name")).toContain("master");
             });
 
 
@@ -578,7 +578,7 @@ describe("GitRepo", () => {
                 // In repo2, fetch.  You should now have the new tag.
                 await repo2.fetch("origin", true);
                 const tags = await repo2.tags();
-                expect(_.includes(tags, tagName)).toEqual(true);
+                expect(ld.includes(tags, tagName)).toEqual(true);
 
                 // By default a normal "git fetch" will get the new tag, because
                 // it points to an object that is downloaded.  So technically,
@@ -796,7 +796,7 @@ describe("GitRepo", () => {
                 const featureBranch = (await GitBranch.create(workingRepo, branchName)).value!;
                 await workingRepo.checkoutBranch(featureBranch, true);
 
-                let branches = await workingRepo.getBranches(true);
+                await workingRepo.getBranches(true);
 
                 // Add a file.
                 const newFile = new File(workingRepo.directory, `${uuid}.txt`);
@@ -813,8 +813,8 @@ describe("GitRepo", () => {
                 expect(deleteResult.succeeded).toBeTrue();
 
                 // The branch should no longer appear in the list of branches.
-                branches = await workingRepo.getBranches();
-                const found = _.find(branches, (curBranch) => curBranch.equals(featureBranch));
+                const branches = await workingRepo.getBranches();
+                const found = ld.find(branches, (curBranch) => curBranch.equals(featureBranch));
                 expect(found).toBeUndefined();
             }, 10 * 1000);
         });
@@ -852,7 +852,7 @@ describe("GitRepo", () => {
                 // Finally, get the merged local branches.
                 const mergedBranchesResult = await workingRepo.getMergedBranches(undefined, true, false);
                 expect(mergedBranchesResult.succeeded).toBeTrue();
-                const foundFeatureBranch = _.find(
+                const foundFeatureBranch = ld.find(
                     mergedBranchesResult.value,
                     (curBranch) => curBranch.name === branchName
                 );
@@ -892,7 +892,7 @@ describe("GitRepo", () => {
                 // Finally, get the merged remote branches.
                 const mergedBranchesResult = await workingRepo.getMergedBranches(undefined, false, true);
                 expect(mergedBranchesResult.succeeded).toBeTrue();
-                const foundFeatureBranch = _.find(
+                const foundFeatureBranch = ld.find(
                     mergedBranchesResult.value,
                     (curBranch) => curBranch.name === branchName
                 );
@@ -932,13 +932,13 @@ describe("GitRepo", () => {
                 // Finally, get the merged remote branches.
                 const mergedBranchesResult = await workingRepo.getMergedBranches(undefined, true, true);
                 expect(mergedBranchesResult.succeeded).toBeTrue();
-                const foundFeatureBranches = _.filter(
+                const foundFeatureBranches = ld.filter(
                     mergedBranchesResult.value,
                     (curBranch) => curBranch.name === branchName
                 );
                 expect(foundFeatureBranches.length).toEqual(2);
 
-                const stringRepresentations = _.map(foundFeatureBranches, (curBranch) => curBranch.toString());
+                const stringRepresentations = ld.map(foundFeatureBranches, (curBranch) => curBranch.toString());
                 expect(stringRepresentations).toContain(branchName);
                 expect(stringRepresentations).toContain(`origin/${branchName}`);
 
@@ -980,13 +980,13 @@ describe("GitRepo", () => {
                 // Finally, get the merged remote branches.
                 const mergedBranchesResult = await workingRepo.getMergedBranches(mainBranch, true, true);
                 expect(mergedBranchesResult.succeeded).toBeTrue();
-                const foundFeatureBranches = _.filter(
+                const foundFeatureBranches = ld.filter(
                     mergedBranchesResult.value,
                     (curBranch) => curBranch.name === branchName
                 );
                 expect(foundFeatureBranches.length).toEqual(2);
 
-                const stringRepresentations = _.map(foundFeatureBranches, (curBranch) => curBranch.toString());
+                const stringRepresentations = ld.map(foundFeatureBranches, (curBranch) => curBranch.toString());
                 expect(stringRepresentations).toContain(branchName);
                 expect(stringRepresentations).toContain(`origin/${branchName}`);
 

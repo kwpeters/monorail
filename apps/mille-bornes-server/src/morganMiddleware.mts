@@ -22,7 +22,7 @@ const stream: StreamOptions = {
 // we already told to the logger that it should print
 // only warning and error messages in production.
 function shouldSkip() {
-    const env = process.env.NODE_ENV || "development";
+    const env = process.env.NODE_ENV ?? "development";
     // Skip if not in development mode.
     // In other words, log when in development mode.
     return env !== "development";

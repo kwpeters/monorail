@@ -20,7 +20,7 @@ function startServerAtFirstAvailablePort(): Promise<IServerInfo> {
 
             if (!address ||
                 typeof address === "string") {
-                reject(new Error(`Server is listening but has invalid address ${address || "null"}.`));
+                reject(new Error(`Server is listening but has invalid address ${address ?? "null"}.`));
             }
             else {
                 resolve({server, port: address.port});

@@ -8,6 +8,7 @@ import { insertIf } from "@repo/depot/arrayHelpers";
 import { Directory } from "@repo/depot-node/directory";
 import { GitRepo } from "@repo/depot-node/gitRepo";
 import { spawn, spawnErrorToString } from "@repo/depot-node/spawn2";
+import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 
 
 if (runningThisScript()) {
@@ -53,7 +54,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
             describe:     "Only check the files.  Do not fix them."
         }
     )
-    .wrap(process.stdout.columns ?? 80)
+    .wrap(getStdoutColumns())
     .argv;
 
     return new SucceededResult({check: argv.check});

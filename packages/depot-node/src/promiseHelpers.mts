@@ -27,6 +27,7 @@ export function eventToPromise<TResolve>(
             if (rejectEventName) {
                 tracker.once(rejectEventName, (err: unknown) => {
                     tracker.removeAll();
+                    // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
                     reject(err);
                 });
             }

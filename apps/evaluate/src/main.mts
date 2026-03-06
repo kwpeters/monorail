@@ -3,6 +3,7 @@ import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
 import { evaluate } from "@repo/depot/expression";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
+import { getStdoutColumns } from "@repo/depot-node/ttyHelpers"
 
 
 export async function main(): Promise<number> {
@@ -29,7 +30,7 @@ async function mainImpl(): Promise<Result<number, string>> {
         )
         .demandCommand()
         .help()
-        .wrap(process.stdout.columns ?? 80)
+        .wrap(getStdoutColumns())
         .argv;
 
     if (argv._.length === 0) {

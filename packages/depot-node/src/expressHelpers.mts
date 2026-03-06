@@ -33,16 +33,16 @@ export type SuccessResponseBody<TValue extends Record<string, unknown> & { succe
  * @param errMsg - Human-readable error message
  * @param errDetails - Optional additional error details
  */
-export function sendError<TErrDetails = undefined>(
+export function sendError(
     res: express.Response,
     statusCode: HttpError,
     errMsg: string,
-    errDetails?: TErrDetails
+    errDetails?: unknown
 ): void {
     if (res.headersSent) {
         return;
     }
-    const body: ErrorResponseBody<TErrDetails> = errDetails !== undefined
+    const body = errDetails !== undefined
         ? {success: false, errMsg, errDetails}
         : {success: false, errMsg};
     res.status(statusCode).json(body);
@@ -56,10 +56,10 @@ export function sendError<TErrDetails = undefined>(
  * @param statusCode - HTTP status code for the success response
  * @param value - Optional payload to include in the response body
  */
-export function sendSuccess<TValue extends Record<string, unknown> = Record<string, never>>(
+export function sendSuccess(
     res: express.Response,
     statusCode: HttpSuccess,
-    value?: TValue
+    value?: Record<string, unknown>
 ): void {
     if (res.headersSent) {
         return;
@@ -124,7 +124,7 @@ export interface IHandlerError {
  * - If all validations pass, a success response is sent with the specified status code
  */
 export async function handleRoute<
-    TReqSchema extends z.ZodTypeAny,
+    TReqSchema extends z.ZodType,
     TResSchema extends z.ZodType<Record<string, unknown>>
 >(
     req: express.Request,
@@ -133,9 +133,9 @@ export async function handleRoute<
     resBodySchema: TResSchema | undefined,
     handlerFn: (
         req:     express.Request,
-        reqBody: TReqSchema extends z.ZodTypeAny ? z.infer<TReqSchema> : undefined
+        reqBody: TReqSchema extends z.ZodType ? z.infer<TReqSchema> : undefined
     ) => MaybePromise<Result<
-        IHandlerSuccess<TResSchema extends z.ZodTypeAny ? z.infer<TResSchema> : undefined>,
+        IHandlerSuccess<TResSchema extends z.ZodType ? z.infer<TResSchema> : undefined>,
         IHandlerError
     >>
 ): Promise<void> {

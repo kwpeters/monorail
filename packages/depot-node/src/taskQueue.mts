@@ -86,7 +86,7 @@ export class TaskQueue extends EventEmitter {
      * @param err - The error that pending tasks will reject with
      */
     public cancelAllPending(err?: unknown): void {
-        err = err || new Error("Task cancelled because its TaskQueue was cancelled.");
+        err = err ?? new Error("Task cancelled because its TaskQueue was cancelled.");
 
         while (this._tasks.length > 0) {
             const curTask = this._tasks.pop();

@@ -11,7 +11,7 @@ import("./main.mjs")
         process.exit(exitCode);
     }
 })
-.catch((err) => {
+.catch((err: unknown) => {
     console.error(JSON.stringify(err));
     process.exit(-1);
 });

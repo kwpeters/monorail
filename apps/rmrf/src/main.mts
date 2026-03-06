@@ -5,7 +5,7 @@ import { Result, SucceededResult, FailedResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { deleteFsItem, type FsItem, stringsToFsItems } from "@repo/depot-node/fsItem";
-import { getStdinPipedLines } from "@repo/depot-node/ttyHelpers";
+import { getStdinPipedLines, getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 
 
 interface IConfig {
@@ -67,7 +67,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
         ].join(os.EOL)
     )
     .help()
-    .wrap(process.stdout.columns ?? 80)
+    .wrap(getStdoutColumns())
     .argv;
 
     const inputStrings = argv._.filter((cur) => typeof cur === "string");

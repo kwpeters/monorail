@@ -16,7 +16,7 @@ winston.addColors(_.mapValues(config, (val) => val.color));
 
 
 function getLevel() {
-    const env = process.env.NODE_ENV || "development";
+    const env = process.env.NODE_ENV ?? "development";
     const isDevelopment = env === "development";
 
     // Show all debug and more severe messages in development mode.

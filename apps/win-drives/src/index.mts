@@ -14,6 +14,7 @@ import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
 import { Directory } from "@repo/depot-node/directory";
 import { spawn, spawnErrorToString } from "@repo/depot-node/spawn2";
+import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 
 
 if (runningThisScript()) {
@@ -82,7 +83,7 @@ async function main(): Promise<Result<number, string>> {
         ].join(os.EOL)
     )
     .help()
-    .wrap(process.stdout.columns ?? 80)
+    .wrap(getStdoutColumns())
     .argv;
 
 

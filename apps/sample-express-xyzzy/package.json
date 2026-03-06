@@ -9,7 +9,7 @@
         "build-tsc": "tsc --build tsconfig.src.json",
         "build": "npm-run-all --parallel build-tsc build-assets",
         "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
-        "lint": "eslint --format unix ./src",
+        "lint": "eslint .",
         "type-check": "tsc --project tsconfig.json --noEmit",
         "depcheck": "depcheck"
     },
@@ -27,18 +27,15 @@
         "winston": "^3.19.0"
     },
     "devDependencies": {
-        "@repo/eslint-config": "*",
+        "@repo/eslint-config-2": "*",
         "@repo/typescript-config": "*",
-        "@stylistic/eslint-plugin": "^2.8.0",
         "@types/cookie-parser": "^1.4.10",
         "@types/cors": "^2.8.19",
         "@types/express": "^5.0.6",
         "@types/jasmine": "^5.1.4",
         "@types/lodash-es": "^4.17.7",
         "@types/morgan": "^1.9.4",
-        "@typescript-eslint/eslint-plugin": "^8.6.0",
-        "@typescript-eslint/parser": "^8.6.0",
-        "eslint": "^8.57.1",
+        "eslint": "^10.0.1",
         "jasmine": "^5.3.0"
     }
 }

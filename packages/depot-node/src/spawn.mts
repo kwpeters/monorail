@@ -38,8 +38,9 @@ export interface ISpawnResult {
 export type SpawnCloseError = ISpawnSystemError | ISpawnExitError;
 
 export function isSpawnCloseError(a: unknown): a is SpawnCloseError {
-    return (a as SpawnCloseError).type === "ISpawnSystemError" ||
-           (a as SpawnCloseError).type === "ISpawnExitError";
+    return typeof a === "object" && a !== null &&
+        ((a as { type: unknown }).type === "ISpawnSystemError" ||
+         (a as { type: unknown }).type === "ISpawnExitError");
 }
 
 export interface ISpawnSystemError extends ISystemError {
@@ -84,7 +85,7 @@ export function spawn(
 
     if (description) {
         console.log("--------------------------------------------------------------------------------");
-        console.log(`${description}`);
+        console.log(description);
         console.log(`    ${cmdLineRepresentation}`);
         console.log("--------------------------------------------------------------------------------");
     }
@@ -112,19 +113,20 @@ export function spawn(
                 childProcess = cp.spawn(cmd, args, spawnOptions);
             }
 
-            const outputStream = stdoutStream || new NullStream();
+            const outputStream = stdoutStream ?? new NullStream();
 
             childProcess.stdout!
             .pipe(stdoutCollector)
             .pipe(outputStream);
 
-            const errorStream = stderrStream || new NullStream();
+            const errorStream = stderrStream ?? new NullStream();
 
             childProcess.stderr!
             .pipe(stderrCollector)  // to capture stderr in case child process errors
             .pipe(errorStream);
 
             childProcess.once("error", (err: ISystemError) => {
+                // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
                 reject({type: "ISpawnSystemError", ...err});
             });
 
@@ -144,6 +146,7 @@ export function spawn(
                             if (description) {
                                 console.log(`Child process failed: ${cmdLineRepresentation}`);
                             }
+                            // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
                             reject({
                                 type:     "ISpawnExitError",
                                 exitCode: exitCode,

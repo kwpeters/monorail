@@ -2,6 +2,8 @@ import * as os from "node:os";
 import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
 import { Result, SucceededResult } from "@repo/depot/result";
+import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
+
 import {def as defImport} from "./importCommand.mjs";
 import {def as defFix} from "./fixCommand.mjs";
 
@@ -45,7 +47,7 @@ async function mainImpl(): Promise<Result<number, string>> {
         }
     )
     .help()
-    .wrap(process.stdout.columns ?? 80)
+    .wrap(getStdoutColumns())
     .argv;
 
     return retVal;

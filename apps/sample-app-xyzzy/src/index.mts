@@ -1,6 +1,9 @@
 import * as url from "node:url";
-import { Result, SucceededResult } from "@repo/depot/result";
+import { Result, SucceededResult, FailedResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
+import { Directory } from "@repo/depot-node/directory";
+import { resolveFileLocation } from "@repo/depot-node/filesystemHelpers";
+import { NodePackage } from "@repo/depot-node/nodePackage";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -32,7 +35,22 @@ function runningThisScript(): boolean {
 ////////////////////////////////////////////////////////////////////////////////
 
 async function main(): Promise<Result<number, string>> {
-    await Promise.resolve(0);
-    console.log("hello world");
+
+    const thisDir = new Directory(import.meta.dirname);
+
+    const res = await resolveFileLocation("package.json", thisDir);
+    if (res.failed) {
+        return new FailedResult(`Failed to find package.json: ${res.error}`);
+    }
+
+    const packageJsonFile = res.value;
+
+    try {
+        const nodePackage = await NodePackage.fromDirectory(packageJsonFile.directory);
+        console.log(`Hello from the ${nodePackage.projectName} project.`);
+    } catch (err) {
+        return new FailedResult(`Failed to create NodePackage from directory "${packageJsonFile.directory.toString()}".`);
+    }
+
     return new SucceededResult(0);
 }

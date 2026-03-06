@@ -7,6 +7,7 @@ import { PromiseResult } from "@repo/depot/promiseResult";
 import { launchAdmin } from "@repo/depot-node/windowsHelpers";
 import { File } from "@repo/depot-node/file";
 import { Directory } from "@repo/depot-node/directory";
+import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 
 
 if (runningThisScript()) {
@@ -52,7 +53,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
         }
     )
     .help()
-    .wrap(process.stdout.columns ?? 80)
+    .wrap(getStdoutColumns())
     .argv;
 
     const executableStr = argv._[0] as string | undefined;

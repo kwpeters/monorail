@@ -21,7 +21,7 @@ export function reducePathParts(pathParts: Array<PathPart>): string {
 
             // If the current part is a string that starts with a Windows drive
             // letter, reset and use only the current part.
-            const curPathPartStr = curPathPart.toString();
+            const curPathPartStr = curPathPart;
             if (windowsDriveLetterPathRegex.test(curPathPartStr)) {
                 return curPathPartStr;
             }

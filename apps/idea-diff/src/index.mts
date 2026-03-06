@@ -7,11 +7,12 @@ import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
 import { pipe } from "@repo/depot/pipe";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
+import { insertIfWith } from "@repo/depot/arrayHelpers";
 import { Directory } from "@repo/depot-node/directory";
 import { File } from "@repo/depot-node/file";
 import { spawn } from "@repo/depot-node/spawn2";
 import { getUserProfileDir } from "@repo/depot-node/windowsHelpers";
-import { insertIfWith } from "@repo/depot/arrayHelpers";
+import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -84,7 +85,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
         ].join(os.EOL)
     )
     .help()
-    .wrap(process.stdout.columns ?? 80)
+    .wrap(getStdoutColumns())
     .argv;
 
     function isDirOrFile(val: string): Result<Directory | File, string> {

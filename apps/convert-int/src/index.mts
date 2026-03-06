@@ -7,6 +7,7 @@ import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
 import { BufBuilder } from "@repo/depot-node/bufBuilder";
 import { BufReader } from "@repo/depot-node/bufReader";
+import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 
 
 if (runningThisScript()) {
@@ -44,7 +45,7 @@ async function getConfiguration(): Promise<IConfig> {
         ].join(os.EOL)
     )
     .help()
-    .wrap(process.stdout.columns ?? 80)
+    .wrap(getStdoutColumns())
     .argv;
 
     return {

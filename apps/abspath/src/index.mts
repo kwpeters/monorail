@@ -6,6 +6,7 @@ import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { Result, SucceededResult } from "@repo/depot/result";
 import { File } from "@repo/depot-node/file";
 import { getUncPath } from "@repo/depot-node/windowsHelpers";
+import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -92,7 +93,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
             ].join(os.EOL)
         )
         .help()
-        .wrap(process.stdout.columns ?? 80)
+        .wrap(getStdoutColumns())
         .argv;
 
     const files = await pipeAsync(

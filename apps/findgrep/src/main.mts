@@ -19,6 +19,7 @@ import { pipe } from "@repo/depot/pipe";
 import { Option } from "@repo/depot/option";
 import { highlightMatches } from "@repo/depot-node/chalkHelpers";
 import { Directory } from "@repo/depot-node/directory";
+import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -108,7 +109,7 @@ async function getConfiguration(): Promise<Result<IFindGrepConfig, string>> {
             describe:     "Ignore paths that match the specified regex"
         }
     )
-    .wrap(process.stdout.columns ?? 80)
+    .wrap(getStdoutColumns())
     .argv;
 
     // Get the path regex positional argument.
@@ -133,7 +134,7 @@ async function getConfiguration(): Promise<Result<IFindGrepConfig, string>> {
 
     // Get the path ignore regexes from the --pathIgnore arguments.
     const pathIgnoreArrRes =
-    new SucceededResult(toArray<string>(argv.pathIgnore as string | Array<string>)) as Result<string[], string>;
+        new SucceededResult(toArray<string>(argv.pathIgnore as string | Array<string>)) as Result<string[], string>;
     const pathIgnoresResult = pipe(pathIgnoreArrRes)
     .pipe((r) => Result.bind((v) => Result.mapWhileSuccessful(v, strToRegExp), r))
     .end();
@@ -202,6 +203,7 @@ async function doTextSearch(config: IFindGrepConfig): Promise<number> {
             }
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (matchesFoundInCurrentFile) {
             // The current file produced output.  Leave a blank line after it.
             console.log();

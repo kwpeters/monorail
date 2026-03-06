@@ -322,10 +322,10 @@ export class Directory {
                 const createFuncs = dirsToCreate.map((dirToCreate: string) => {
                     return (): Promise<void> => {
                         return fsp.mkdir(dirToCreate)
+                        // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
                         .catch((err: ISystemError) => {
                             // If the directory already exists, just keep going.
                             if (err.code !== "EEXIST") {
-                                // eslint-disable-next-line @typescript-eslint/only-throw-error
                                 throw err;
                             }
                         });
@@ -985,7 +985,7 @@ export class Directory {
             // Adjust the parts.  Get rid of the first two empty parts and
             // prefix the new first part with "\\".
             parts = parts.slice(2);
-            parts[0] = "\\\\" + parts[0];
+            parts[0] = "\\\\" + parts[0]!;
         }
 
         return parts;

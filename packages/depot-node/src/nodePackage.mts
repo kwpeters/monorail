@@ -19,10 +19,10 @@ export interface IPackageJson {
     description:     string;
     main:            string;
     repository:      {type: string, url: string} | undefined;
-    devDependencies: {[packageName: string]: string};
-    dependencies:    {[packageName: string]: string};
-    bin:             { [binName: string]: string; };
-    scripts:         { [scriptName: string]: string } | undefined;
+    devDependencies: Record<string, string>;
+    dependencies:    Record<string, string>;
+    bin:             Record<string, string> | undefined;
+    scripts:         Record<string, string> | undefined;
 }
 
 
@@ -125,24 +125,21 @@ export class NodePackage {
 
     public get config(): IPackageJson {
         // If the package.json file has not been read yet, read it now.
-        if (this._config === undefined) {
-            this._config = new File(this._pkgDir, "package.json").readJsonSync<IPackageJson>();
-        }
-
+        this._config ??= new File(this._pkgDir, "package.json").readJsonSync<IPackageJson>();
         return this._config;
     }
 
 
     // TODO: Write unit tests for the following method.
     public get projectName(): string {
-        return this.config?.repository?.url ?
-            gitUrlToProjectName(this.config?.repository.url) :
+        return this.config.repository?.url ?
+            gitUrlToProjectName(this.config.repository.url) :
             this.config.name;
     }
 
 
     /**
-     * Gets a map of bin files for this package.  The key is the the bin name
+     * Gets a map of bin files for this package.  The key is the bin name
      * and the value is the path to the file.
      */
     public get bin(): ReadonlyMap<string, string> {
@@ -278,7 +275,7 @@ export class NodePackage {
         tmpDir = tmpDir.absolute();
 
         if (publishDir.equals(tmpDir)) {
-            return Promise.reject("When publishing, publishDir cannot be the same as tmpDir");
+            return Promise.reject(new Error("When publishing, publishDir cannot be the same as tmpDir"));
         }
 
         return this.pack(tmpDir)
