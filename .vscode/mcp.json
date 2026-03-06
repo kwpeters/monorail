@@ -1,0 +1,12 @@
+{
+	"servers": {
+		"ESLint": {
+			"type": "stdio",
+			"command": "npx",
+			"args": [
+				"@eslint/mcp@latest"
+			]
+		}
+	},
+	"inputs": []
+}
