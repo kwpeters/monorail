@@ -96,6 +96,12 @@ export function getJsConfig(browserGlobals: boolean, nodeGlobals: boolean): Conf
                         "exceptAfterOverload": true
                     }
                 ],
+                "@stylistic/object-property-newline": [
+                    "error",
+                    {
+                        "allowAllPropertiesOnSameLine": true
+                    }
+                ],
                 "@stylistic/quotes": [
                     "error",
                     "double",
@@ -214,12 +220,6 @@ export function getJsConfig(browserGlobals: boolean, nodeGlobals: boolean): Conf
                         "ArrayExpression": "first",
                         "ObjectExpression": "first",
                         "ImportDeclaration": "first"
-                    }
-                ],
-                "@stylistic/object-property-newline": [
-                    "error",
-                    {
-                        "allowAllPropertiesOnSameLine": true
                     }
                 ],
                 "max-len": [
@@ -416,6 +416,10 @@ export function getTsConfig(projDir: string): ConfigWithExtendsArray {
             },
             rules: {
                 "@typescript-eslint/array-type": ["off"],
+                // Disable core rule before configuring @typescript-eslint extension rule (Appendix B requirement)
+                "default-param-last": "off",
+                "@typescript-eslint/default-param-last": ["error"],
+                "@typescript-eslint/explicit-module-boundary-types": ["error"],
                 "@typescript-eslint/member-ordering": [
                     "error",
                     {
@@ -608,20 +612,16 @@ export function getTsConfig(projDir: string): ConfigWithExtendsArray {
                         ]
                     }
                 ],
-                // Disable core rule before configuring @typescript-eslint extension rule (Appendix B requirement)
-                "default-param-last": "off",
-                "@typescript-eslint/default-param-last": ["error"],
-                "@typescript-eslint/explicit-module-boundary-types": ["error"],
                 "@typescript-eslint/no-confusing-void-expression": ["off", { ignoreArrowShorthand: true }],
                 "@typescript-eslint/no-empty-object-type": "error",
                 "@typescript-eslint/no-explicit-any": "warn",
                 // Disable core rule before configuring @typescript-eslint extension rule (Appendix B requirement)
+                "no-inferrable-types": "off",
+                "@typescript-eslint/no-inferrable-types": ["off"],
+                // Disable core rule before configuring @typescript-eslint extension rule (Appendix B requirement)
                 "no-loop-func": "off",
                 "@typescript-eslint/no-loop-func": ["error"],
                 "@typescript-eslint/no-namespace": "off",
-                // Disable core rule before configuring @typescript-eslint extension rule (Appendix B requirement)
-                "no-inferrable-types": "off",
-                "@typescript-eslint/no-inferrable-types": ["off"],
                 "@typescript-eslint/no-non-null-assertion": ["off"],
                 "@typescript-eslint/no-unnecessary-boolean-literal-compare": ["error"],
                 "@typescript-eslint/no-unnecessary-condition": [
@@ -681,9 +681,6 @@ export function getTsConfig(projDir: string): ConfigWithExtendsArray {
                 "**/*.{test,spec}.{js,mjs,cjs}"
             ],
             rules: {
-                "@typescript-eslint/no-empty-function": "off",
-                "@typescript-eslint/no-unused-vars": "off",
-                "@typescript-eslint/no-floating-promises": "off",
                 // Disable core rule before configuring @typescript-eslint extension rule (Appendix B requirement)
                 "dot-notation": "off",
                 "@typescript-eslint/dot-notation": [
@@ -694,6 +691,9 @@ export function getTsConfig(projDir: string): ConfigWithExtendsArray {
                         "allowProtectedClassPropertyAccess": true
                     }
                 ],
+                "@typescript-eslint/no-empty-function": "off",
+                "@typescript-eslint/no-floating-promises": "off",
+                "@typescript-eslint/no-unused-vars": "off",
             }
         },
     ];
