@@ -308,7 +308,7 @@ describe("File", () => {
 
             it("will change the mode bits to the specified value (non-Windows)", (done) => {
                 if (getOs() !== OperatingSystem.Windows) {
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
                     testFile.chmod(
                         constants.S_IRWXU |
                         constants.S_IRGRP | constants.S_IXGRP |
@@ -358,7 +358,6 @@ describe("File", () => {
                     // other: r x
                     const newMode = 0o755;
 
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     testFile.chmod(newMode)
                     .then((testFile) => {
                         const afterStats = testFile.existsSync();
@@ -476,7 +475,6 @@ describe("File", () => {
 
                 expect(fileA.existsSync()).toBeFalsy();
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 fileA.delete()
                 .then(() => {
                     done();
@@ -525,7 +523,6 @@ describe("File", () => {
 
                 const dstDir = new Directory(tmpDir, "dst");
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 srcFile.copy(dstDir)
                 .then((dstFile) => {
                     expect(dstFile.existsSync()).toBeTruthy();
@@ -542,7 +539,6 @@ describe("File", () => {
 
                 const dstDir = new Directory(tmpDir, "dst");
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 srcFile.copy(dstDir, "dest.txt")
                 .then((dstFile) => {
                     expect(dstFile.existsSync()).toBeTruthy();
@@ -559,7 +555,6 @@ describe("File", () => {
 
                 const dstFile = new File(tmpDir, "dst", "dest.txt");
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 srcFile.copy(dstFile)
                 .then((dstFile) => {
                     expect(dstFile.existsSync()).toBeTruthy();
@@ -613,7 +608,6 @@ describe("File", () => {
                 const srcFile = new File(tmpDir, "src", "src.txt");
                 srcFile.writeSync("new");
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 srcFile.copy(oldDstFile)
                 .then((newDstFile) => {
                     expect(newDstFile.existsSync()).toBeTruthy();
@@ -637,7 +631,7 @@ describe("File", () => {
                 // making sure that the timestamp deltas are within the
                 // allowable 1 second.
                 setTimeout(() => {
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
                     srcFile.copy(dstFile)
                     .then(() => {
                         // We get the source file's stats after the copy has
@@ -803,7 +797,6 @@ describe("File", () => {
 
                 const dstDir = new Directory(tmpDir, "dst");
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 srcFile.move(dstDir)
                 .then((dstFile) => {
                     expect(srcFile.existsSync()).toBeFalsy();
@@ -821,7 +814,6 @@ describe("File", () => {
 
                 const dstDir = new Directory(tmpDir, "dst");
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 srcFile.move(dstDir, "dest.txt")
                 .then((dstFile) => {
                     expect(srcFile.existsSync()).toBeFalsy();
@@ -839,7 +831,6 @@ describe("File", () => {
 
                 const dstFile = new File(tmpDir, "dst", "dest.txt");
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 srcFile.move(dstFile)
                 .then((dstFile) => {
                     expect(srcFile.existsSync()).toBeFalsy();
@@ -894,7 +885,6 @@ describe("File", () => {
                 const srcFile = new File(tmpDir, "src", "src.txt");
                 srcFile.writeSync("new");
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 srcFile.move(oldDstFile)
                 .then((newDstFile) => {
                     expect(srcFile.existsSync()).toBeFalsy();
@@ -927,7 +917,6 @@ describe("File", () => {
                     // after the move the source file will no longer exist.
                     const srcStats = srcFile.existsSync();
 
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     srcFile.move(dstFile)
                     .then(() => {
                         const dstStats = dstFile.existsSync();
@@ -1103,7 +1092,6 @@ describe("File", () => {
                 const dir = new Directory(tmpDir, "foo", "bar");
                 const file = new File(dir, "file.txt");
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 file.write("hello world")
                 .then(() => {
                     expect(dir.existsSync()).toBeTruthy();
@@ -1118,7 +1106,6 @@ describe("File", () => {
                 const dir = new Directory(tmpDir, "foo", "bar");
                 const file = new File(dir, "file.txt");
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 file.write("hello world")
                 .then(() => {
                     return file.read();
@@ -1192,7 +1179,6 @@ describe("File", () => {
                 const dir = new Directory(tmpDir, "foo", "bar");
                 const file = new File(dir, "file.json");
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 file.writeJson({foo: "bar"})
                 .then(() => {
                     expect(dir.existsSync()).toBeTruthy();
@@ -1206,7 +1192,6 @@ describe("File", () => {
                 const dir = new Directory(tmpDir, "foo", "bar");
                 const file = new File(dir, "file.json");
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 file.writeJson({foo: "bar"})
                 .then(() => {
                     return file.readJson<{foo: string}>();
@@ -1251,7 +1236,6 @@ describe("File", () => {
                 const file = new File(tmpDir, "src", "file.txt");
                 file.writeSync("abc");
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 file.getHash()
                 .then((hash) => {
                     expect(hash).toEqual("900150983cd24fb0d6963f7d28e17f72");
@@ -1284,7 +1268,6 @@ describe("File", () => {
                 const file = new File(dir, "file.txt");
                 file.writeSync("12345");
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 file.read()
                 .then((text) => {
                     expect(text).toEqual("12345");
@@ -1333,7 +1316,6 @@ describe("File", () => {
                 const file = new File(dir, "file.txt");
                 file.writeSync(JSON.stringify({foo: "bar"}));
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 file.readJson<{foo: string}>()
                 .then((data) => {
                     expect(data.foo).toEqual("bar");

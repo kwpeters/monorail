@@ -5,8 +5,7 @@ describe("makeDisposable()", () => {
 
     it("returns an object with the original object's properties", () => {
         const person = {first: "Daenerys", last: "Targaryen"};
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        const disposable = makeDisposable(person, () => {});
+        const disposable = makeDisposable(person, () => { /* Intentionally empty */ });
 
         expect(disposable.first).toEqual("Daenerys");
         expect(disposable.last).toEqual("Targaryen");
@@ -36,8 +35,7 @@ describe("makeAsyncDisposable()", () => {
 
     it("returns an object with the original object's properties", () => {
         const person = {first: "Daenerys", last: "Targaryen"};
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        const disposable = makeDisposable(person, () => {});
+        const disposable = makeDisposable(person, () => { /* Intentionally empty */ });
 
         expect(disposable.first).toBe("Daenerys");
         expect(disposable.last).toBe("Targaryen");

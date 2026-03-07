@@ -3,11 +3,9 @@ import { type Brand } from "./brand.mjs";
 
 
 type FooId = Brand<Uuid, "FooId">;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 type BarId = Brand<Uuid, "BarId">;
 
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function fooOp(foo: FooId): void {
     // Intentionally empty.
 }

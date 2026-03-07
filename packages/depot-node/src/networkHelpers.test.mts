@@ -63,7 +63,7 @@ describe("isTcpPortAvailable()", () => {
         const server = net.createServer();
         server.unref();
         server.listen({port}, () => {
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
             isTcpPortAvailable(port)
             .then((portIsAvailable) => {
                 expect(portIsAvailable).toEqual(false);

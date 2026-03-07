@@ -32,7 +32,7 @@ describe("NodePackage", () => {
 
 
             it("will create a new instance when given a valid directory", (done) => {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
                 NodePackage.fromDirectory(pkgDir)
                 .then((pkg: NodePackage) => {
                     expect(pkg).toBeTruthy();
@@ -52,7 +52,7 @@ describe("NodePackage", () => {
         describe("config", () => {
 
             it("will return properties read from package.json", (done) => {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
                 NodePackage.fromDirectory(pkgDir)
                 .then((pkg) => {
                     expect(pkg.config.name.length).toBeGreaterThan(0);
@@ -70,7 +70,7 @@ describe("NodePackage", () => {
 
             it("will produce a .tgz file", (done) => {
                 const pkgDir = new Directory(__dirname, "..");
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
                 NodePackage.fromDirectory(pkgDir)
                 .then((pkg) => {
                     return pkg.pack();
@@ -86,7 +86,7 @@ describe("NodePackage", () => {
 
             it("will place the .tgz in the package directory when an output directory is not specified", (done) => {
                 const pkgDir = new Directory(__dirname, "..");
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
                 NodePackage.fromDirectory(pkgDir)
                 .then((pkg) => {
                     return pkg.pack();
@@ -102,7 +102,7 @@ describe("NodePackage", () => {
 
             it("will place the .tgz in the specified output directory", (done) => {
                 const pkgDir = new Directory(__dirname, "..");
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
                 NodePackage.fromDirectory(pkgDir)
                 .then((pkg) => {
                     return pkg.pack(tmpDir);
@@ -131,7 +131,6 @@ describe("NodePackage", () => {
                 const pubDir = new Directory(tmpDir, "publish");
                 const pubTmpDir = new Directory(tmpDir, "tmp");
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 NodePackage.fromDirectory(pkgDir)
                 .then((pkg) => {
                     return pkg.publish(pubDir, true, pubTmpDir);

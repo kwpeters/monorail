@@ -3,7 +3,7 @@ import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
 import { evaluate } from "@repo/depot/expression";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
-import { getStdoutColumns } from "@repo/depot-node/ttyHelpers"
+import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 
 
 export async function main(): Promise<number> {

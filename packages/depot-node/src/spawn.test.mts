@@ -23,7 +23,7 @@ describe("spawn", () => {
             cmd = "dir";
         }
         const testFilePath = path.join(tmpDir.absPath(), "foo.txt");
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
         spawn(cmd, [">", "foo.txt"], options).closePromise
         .then(() => {
             const stats = fs.statSync(testFilePath);
@@ -42,7 +42,6 @@ describe("spawn", () => {
             lsCmd = "dir";
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         spawn(lsCmd, [">", "foo.txt"], options).closePromise
         .then(() => {
             return spawn(lsCmd, [], options).closePromise;
@@ -188,7 +187,7 @@ describe("spawn", () => {
 
     it("will set the specified environment variables", (done) => {
         const env = _.assign({}, process.env, {xyzzy: "xyzzy-xyzzy"});
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
         spawn("node", ["-e", "console.log(process.env.xyzzy);"], {env: env})
         .closePromise
         .then((output) => {

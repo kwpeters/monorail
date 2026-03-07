@@ -153,5 +153,4 @@ type UnprettifiedType =
 
 
 // PrettifiedType will display as a flattened, readable object type.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 type PrettifiedType = Prettify<UnprettifiedType>;

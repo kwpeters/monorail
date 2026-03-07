@@ -74,14 +74,12 @@ describe("TaskQueue", () => {
         const t2Prom: Promise<number> = queue.push(ti2.task);
         expect(queue.length).toEqual(0);
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         t1Prom
         .then((value: number) => {
             expect(value).toEqual(1);
             expect(queue.length).toEqual(0);
             ti2.deferred.resolve(2);
 
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             t2Prom.then((value) => {
                 expect(value).toEqual(2);
                 expect(queue.length).toEqual(0);
@@ -115,7 +113,7 @@ describe("TaskQueue", () => {
 
         // Let the first task complete.
         ti1.deferred.resolve(1);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
         t1Prom
         .then(() => {
             queue.run();                // Let the second task run
@@ -146,14 +144,12 @@ describe("TaskQueue", () => {
         const t2Prom: Promise<number> = queue.push(ti2.task);
         expect(queue.length).toEqual(1);
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         t1Prom
         .then((value: number) => {
             expect(value).toEqual(1);
             expect(queue.length).toEqual(0);
             ti2.deferred.resolve(2);
 
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             t2Prom
             .then((value) => {
                 expect(value).toEqual(2);
@@ -182,7 +178,7 @@ describe("TaskQueue", () => {
 
         const taskInfo1 = createTask<number>();
         const taskInfo2 = createTask<number>();
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
         queue.push(taskInfo1.task)
         .then(() => {
             // The drained event should not have fired, because handlers should
@@ -190,7 +186,6 @@ describe("TaskQueue", () => {
             // should not emit the drained event.
             expect(numDrainedEvents).toEqual(0);
 
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             getTimerPromise(10, 5)
             .then(() => taskInfo2.deferred.resolve(2));
 
@@ -225,7 +220,6 @@ describe("TaskQueue", () => {
         const task1 = createTimerTask(200, undefined);
         const task2 = createTimerTask(200, undefined);
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         queue.push(task1)
         .then(() => {
             // task1 is now complete.  The client should always be given the
@@ -279,7 +273,6 @@ describe("TaskQueue", () => {
             .then(() => (t3HasResolved = true));
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         queue.push(task1)
         .then(() => {
             return queue.push(task2);
@@ -288,7 +281,6 @@ describe("TaskQueue", () => {
             return queue.push(task3);
         });
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         queue.drain()
         .then(() => {
             expect(t1HasResolved).toBeTruthy();
@@ -327,7 +319,6 @@ describe("TaskQueue", () => {
         // Only task1 should have had a chance to start.
         queue.cancelAllPending(new Error("queue is cancelled"));
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         Promise.allSettled([t1Prom, t2Prom])
         .then(() => {
             // In-progress tasks should complete normally and return their
@@ -372,7 +363,6 @@ describe("TaskQueue", () => {
         // Only task1 should have had a chance to start.
         queue.cancelAllPending();
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         Promise.allSettled([t1Prom, t2Prom])
         .then(() => {
             // In-progress tasks should complete normally and return their
@@ -399,7 +389,6 @@ describe("TaskQueue", () => {
             return Promise.resolve(1);
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         queue.push(task);
         expect(queue.length).toEqual(1);  // task should not be run
         expect(taskHasRun).toBeFalsy();   // task should not be run
@@ -413,31 +402,26 @@ describe("TaskQueue", () => {
         const ti2: ITaskInfo<number> = createTask<number>();
         const ti3: ITaskInfo<number> = createTask<number>();
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         queue.push(ti1.task);
         expect(queue.length).toEqual(1);
         queue.run();
         expect(queue.length).toEqual(0);
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         queue.drain()
         .then(() => {
             // The queue has now drained and should have paused itself.
             // So if another task is pushed, it should not start running
             // immediately.
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             queue.push(ti2.task);
             expect(queue.length).toEqual(1);
             queue.run();
             expect(queue.length).toEqual(0);
 
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             queue.drain()
             .then(() => {
                 // The queue has now drained and should have paused itself.
                 // So if another task is pushed, it should not start running
                 // immediately.
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 queue.push(ti3.task);
                 expect(queue.length).toEqual(1);
 
@@ -464,7 +448,6 @@ describe("TaskQueue", () => {
         queue.run();
         const taskProm = queue.push(task);
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         taskProm
         .then(() => {
             expect(taskHasRun).toBeTruthy();
@@ -502,7 +485,6 @@ describe("TaskQueue", () => {
         const t3Prom = queue.push(task3, 3);
 
         // Setup code that will check the results.
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         Promise.all([t1Prom, t2Prom, t3Prom])
         .then(() => {
             expect(log).toEqual([3, 2, 1]);

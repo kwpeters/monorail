@@ -40,7 +40,7 @@ describe("logger", () => {
 
         it("will add the new listener", () => {
             const initialListenerCount = logger.numListeners();
-            logger.addListener(() => { /* Intentionally empty */});
+            logger.addListener(() => { /* Intentionally empty */ });
             expect(logger.numListeners()).toEqual(initialListenerCount + 1);
         });
 

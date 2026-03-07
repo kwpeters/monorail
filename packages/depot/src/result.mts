@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
-/* eslint-disable @typescript-eslint/no-namespace */
 /* eslint-disable max-len */
 
 import * as _ from "lodash-es";

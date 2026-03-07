@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
-/* eslint-disable @typescript-eslint/no-namespace */
 
 
 import { inspect } from "./inspect.mjs";
@@ -402,7 +401,7 @@ export namespace Option {
      * @returns  The output array
      */
     export function choose<TIn, TOut>(
-        fn: (v: TIn,) => Option<TOut>,
+        fn: (v: TIn) => Option<TOut>,
         input: Iterable<TIn>
     ): Array<TOut> {
         const inputArr = Array.from(input);

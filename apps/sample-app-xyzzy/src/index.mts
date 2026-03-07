@@ -48,7 +48,8 @@ async function main(): Promise<Result<number, string>> {
     try {
         const nodePackage = await NodePackage.fromDirectory(packageJsonFile.directory);
         console.log(`Hello from the ${nodePackage.projectName} project.`);
-    } catch (err) {
+    }
+    catch (err) {
         return new FailedResult(`Failed to create NodePackage from directory "${packageJsonFile.directory.toString()}".`);
     }
 

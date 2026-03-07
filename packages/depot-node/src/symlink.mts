@@ -351,7 +351,7 @@ export class Symlink {
      */
     public async followAll(): Promise<Result<Directory | File, string>> {
 
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        // eslint-disable-next-line consistent-this, @typescript-eslint/no-this-alias
         let curFsItem: File | Directory | Symlink = this;
         while (curFsItem instanceof Symlink) {
             const res: Result<Directory | File | Symlink, string> = await curFsItem.followOnce();

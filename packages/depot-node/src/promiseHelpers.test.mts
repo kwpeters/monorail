@@ -8,7 +8,7 @@ describe("eventToPromise()", () => {
 
 
     it("will resolve with the resolve event's payload", (done) => {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
         eventToPromise(ee, "resolve", "reject")
         .then((result) => {
             expect(result).toEqual(5);
@@ -20,7 +20,7 @@ describe("eventToPromise()", () => {
 
 
     it("once resolved, there will be no listeners", (done) => {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
         eventToPromise(ee, "resolve", "reject")
         .then(() => {
             expect(ee.listenerCount("resolve")).toEqual(0);
@@ -46,7 +46,7 @@ describe("eventToPromise()", () => {
         );
 
         ee.emit("other", 5);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
         getTimerPromise(10, 0)
         .then(() => {
             expect(promiseResolved).toEqual(false);

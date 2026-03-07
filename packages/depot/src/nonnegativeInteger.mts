@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-namespace */
 import { type Brand } from "./brand.mjs";
 import { FailedResult, Result, SucceededResult } from "./result.mjs";
 

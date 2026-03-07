@@ -65,7 +65,7 @@ describe("ActionComposite", () => {
 
         it("with zero actions completes successfully", (done) => {
             const ac = new ActionComposite();
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
             ac.execute()
             .then(() => {
                 done();
@@ -119,7 +119,6 @@ describe("ActionComposite", () => {
                 });
             }));
 
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             ac.execute()
             .then(() => {
                 expect(action1Done).toBeTruthy();

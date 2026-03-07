@@ -27,7 +27,6 @@ describe("sequence()", () => {
             }
         ];
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         sequence(tasks, 100)
         .then((result) => {
             expect(result).toEqual(400);
@@ -53,7 +52,6 @@ describe("sequence()", () => {
             }
         ];
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         sequence(tasks, 100)
         .then((result) => {
             expect(result).toEqual(400);
@@ -103,7 +101,6 @@ describe("getTimerPromise()", () => {
         const start = Date.now();
         const delayMs = 200;
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         getTimerPromise(delayMs, "foo")
         .then((val) => {
             expect(val).toEqual("foo");
@@ -143,7 +140,6 @@ describe("conditionalTask", () => {
             return Promise.resolve(5);
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         conditionalTask(true, task, 10)
         .then((result) => {
             expect(result).toEqual(5);
@@ -161,7 +157,6 @@ describe("conditionalTask", () => {
             return Promise.resolve(5);
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         conditionalTask(false, task, 10)
         .then((result) => {
             expect(result).toEqual(10);
@@ -294,7 +289,7 @@ describe("promiseWhile()", () => {
 
     it("will loop until the predicate returns false", (done) => {
         let val = "";
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
         promiseWhile(
             () => {
                 return val.length < 5;
@@ -520,7 +515,6 @@ describe("delaySettle()", () => {
             expect(p2DelayedState).toEqual("pending");
         });
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         p1
         .then(() => {
             // p2 is rejected

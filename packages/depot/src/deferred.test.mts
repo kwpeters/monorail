@@ -14,7 +14,6 @@ describe("Deferred", () => {
     it("will resolve with the expected value", (done) => {
         const dfd = new Deferred<number>();
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         dfd.promise.then((result) => {
             expect(result).toEqual(4);
             done();
@@ -48,7 +47,6 @@ describe("connectPromiseToDeferred()", () => {
 
         connectPromiseToDeferred(prom, dfd);
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         dfd.promise
         .then((result) => {
             expect(result).toEqual(3);

@@ -428,7 +428,7 @@ describe("Directory", () => {
 
             it("will resolve with the Directory instance", (done) => {
                 const dir = new Directory(tmpDir, "foo");
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
                 dir.ensureExists()
                 .then((resultDir) => {
                     expect(resultDir.absPath()).toEqual(dir.absPath());
@@ -515,7 +515,7 @@ describe("Directory", () => {
             it("resolves with the Directory instance", (done) => {
                 const dir = new Directory(tmpDir, "foo");
                 dir.ensureExistsSync();
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
                 dir.empty()
                 .then((resultDir) => {
                     expect(resultDir.absPath()).toEqual(dir.absPath());
@@ -586,7 +586,7 @@ describe("Directory", () => {
 
             it("will resolve when the specified directory does not exist", (done) => {
                 const dir = new Directory(tmpDir, "xyzzy");
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
                 dir.delete()
                 .then(() => {
                     done();
@@ -693,7 +693,6 @@ describe("Directory", () => {
                 fileB.writeSync("File B");
                 fileC.writeSync("File C");
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 tmpDir.contents()
                 .then((result: IDirectoryContents) => {
                     expect(result.subdirs.length).toEqual(2);
@@ -717,7 +716,6 @@ describe("Directory", () => {
                 dotFile.writeSync("foo");
                 dotFolder.ensureExistsSync();
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 tmpDir.contents()
                 .then((contents: IDirectoryContents) => {
                     expect(contents.files.length).toEqual(1);
@@ -747,7 +745,6 @@ describe("Directory", () => {
                 fileB.writeSync("File B");
                 fileC.writeSync("File C");
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 tmpDir.contents(true)
                 .then((result: IDirectoryContents) => {
                     expect(result.subdirs.length).toEqual(3);
@@ -1006,7 +1003,6 @@ describe("Directory", () => {
                 const destDir = new Directory(tmpDir, "dest");
                 destDir.ensureExistsSync();
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 srcDir.copy(destDir, true)
                 .then((counterpartDestDir) => {
                     // Should resolve with the counterpart of the source folder.
@@ -1054,7 +1050,6 @@ describe("Directory", () => {
                 const destDir = new Directory(tmpDir, "dest");
                 destDir.ensureExistsSync();
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 srcDir.copy(destDir, false)
                 .then((counterpartDestDir) => {
                     // Should resolve with the counterpart of the source folder.
@@ -1327,7 +1322,6 @@ describe("Directory", () => {
                 const dstDir = new Directory(tmpDir, "dst");
                 expect(dstDir.existsSync()).toBeFalsy();
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 srcDir.move(dstDir, true)
                 .then(() => {
                     expect(dstDir.existsSync()).toBeTruthy();
@@ -1343,7 +1337,6 @@ describe("Directory", () => {
                 fileA.writeSync("test");
                 const dstDir = new Directory(tmpDir, "dst");
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 srcDir.move(dstDir, true)
                 .then((newDir) => {
                     // The destination directory should have been created.
@@ -1370,7 +1363,6 @@ describe("Directory", () => {
                 fileA.writeSync("test");
                 const dstDir = new Directory(tmpDir, "dst");
 
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 srcDir.move(dstDir, false)
                 .then((newDir) => {
                     // The destination directory should have been created.
@@ -1401,7 +1393,7 @@ describe("Directory", () => {
                 srcFile.writeSync("test");
 
                 const destDir = new Directory(tmpDir, "dest");
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
                 srcDir.move(destDir, false)
                 .then((newDir) => {
                     expect(newDir.toString()).toEqual(path.join("tmp", "dest"));

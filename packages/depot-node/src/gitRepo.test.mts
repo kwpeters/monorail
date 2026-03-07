@@ -129,7 +129,7 @@ describe("GitRepo", () => {
         describe("remotes()", () => {
 
             it("will return the correct map of remotes", (done) => {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
                 GitRepo.fromDirectory(repoDir)
                 .then((repoResult) => {
                     return repoResult.value!.remotes();
@@ -147,7 +147,7 @@ describe("GitRepo", () => {
         describe("name()", () => {
 
             it("will return the name of the repo", (done) => {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
                 GitRepo.fromDirectory(repoDir)
                 .then((repoResult) => {
                     return repoResult.value!.name();
@@ -165,7 +165,7 @@ describe("GitRepo", () => {
         describe("directory", () => {
 
             it("will return the directory of the repo", (done) => {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
                 GitRepo.fromDirectory(repoDir)
                 .then((repoResult) => {
                     const repo = repoResult.value!;
@@ -207,7 +207,6 @@ describe("GitRepo", () => {
         describe("tags()", () => {
 
             it("will list the tags applied to the repository", (done) => {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 GitRepo.fromDirectory(repoDir)
                 .then((repoResult) => {
                     return repoResult.value!.tags();
@@ -225,7 +224,7 @@ describe("GitRepo", () => {
         describe("hasTag()", () => {
 
             it("will return true for a tag that exists", (done) => {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
                 GitRepo.fromDirectory(repoDir)
                 .then((repoResult) => {
                     return repoResult.value!.hasTag("aTag");
@@ -238,7 +237,7 @@ describe("GitRepo", () => {
 
 
             it("will return false for a tag that does not exists", (done) => {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
                 GitRepo.fromDirectory(repoDir)
                 .then((repoResult) => {
                     return repoResult.value!.hasTag("xyzzy");
@@ -260,7 +259,7 @@ describe("GitRepo", () => {
 
 
             beforeEach((done) => {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
                 GitRepo.fromDirectory(repoDir)
                 .then((repoResult) => {
                     theRepo = repoResult.value!;
@@ -273,7 +272,7 @@ describe("GitRepo", () => {
 
 
             it("will resolve when the specified tag is created", (done) => {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
                 theRepo.createTag(unitTestTag)
                 .then(() => {
                     return theRepo.hasTag(unitTestTag);
@@ -297,7 +296,7 @@ describe("GitRepo", () => {
 
 
             it("will resolve when the tag already exists but force is set to true", (done) => {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
                 theRepo.createTag(unitTestTag)
                 .then(() => {
                     return theRepo.createTag(unitTestTag, "", true);
@@ -332,7 +331,7 @@ describe("GitRepo", () => {
 
 
             it("will resolve if the specified tag does not exist", (done) => {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
                 theRepo.deleteTag("xyzzy")
                 .then(() => {
                     done();
@@ -341,7 +340,7 @@ describe("GitRepo", () => {
 
 
             it("will resolve when the tag is deleted", (done) => {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
                 theRepo.createTag(unitTestTag)
                 .then(() => {
                     return theRepo.deleteTag(unitTestTag);

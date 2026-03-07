@@ -23,7 +23,7 @@ export interface IArgsFix {
     photoLibDir: string;
 }
 
-
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 const builder = (yargs: Argv) => {
     return  yargs
     .option(
