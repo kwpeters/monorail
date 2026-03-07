@@ -78,7 +78,15 @@ module.exports = {
             "rules": {
                 "@typescript-eslint/no-empty-function": "off",
                 "@typescript-eslint/no-unused-vars": "off",
-                "@typescript-eslint/no-floating-promises": "off"
+                "@typescript-eslint/no-floating-promises": "off",
+                "@typescript-eslint/dot-notation": [
+                    "error",
+                    {
+                        // Allow unit tests to make assertions about private and protected fields.
+                        "allowPrivateClassPropertyAccess": true,
+                        "allowProtectedClassPropertyAccess": true
+                    }
+                ],
             }
         }
     ],
@@ -164,14 +172,6 @@ module.exports = {
         ],
         "@typescript-eslint/default-param-last": [
             "error"
-        ],
-        "@typescript-eslint/dot-notation": [
-            "error",
-            {
-                // Allow unit tests to make assertions about private and protected fields.
-                "allowPrivateClassPropertyAccess": true,
-                "allowProtectedClassPropertyAccess": true
-            }
         ],
         "@typescript-eslint/explicit-module-boundary-types": [
             "error"

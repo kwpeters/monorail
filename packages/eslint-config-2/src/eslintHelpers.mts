@@ -1,3 +1,4 @@
+/* eslint-disable @stylistic/key-spacing */
 /* eslint-disable @typescript-eslint/naming-convention */
 
 import type { ConfigWithExtends, ConfigWithExtendsArray } from "@eslint/config-helpers";
@@ -53,6 +54,143 @@ export function getJsConfig(browserGlobals: boolean, nodeGlobals: boolean): Conf
                 globals: globalsConfig
             },
             rules: {
+                "@stylistic/brace-style": [
+                    "error",
+                    "stroustrup",
+                    {
+                        "allowSingleLine": true
+                    }
+                ],
+                "@stylistic/comma-dangle": [
+                    "error",
+                    "only-multiline"
+                ],
+                "@stylistic/comma-spacing": "error",
+                "@stylistic/function-call-spacing": ["error"],
+                "@stylistic/key-spacing": [
+                    "error",
+                    {
+                        "beforeColon": false,
+                        "afterColon": true,
+                        "mode": "minimum",
+                        "align": {
+                            "beforeColon": false,
+                            "afterColon": true,
+                            "on": "value",
+                            "mode": "strict"
+                        }
+                    }
+                ],
+                "@stylistic/keyword-spacing": [
+                    "error",
+                    {
+                        "before": true,
+                        "after": true
+                    }
+                ],
+                "@stylistic/lines-between-class-members": [
+                    "error",
+                    "always",
+                    {
+                        "exceptAfterSingleLine": true,
+                        "exceptAfterOverload": true
+                    }
+                ],
+                "@stylistic/quotes": [
+                    "error",
+                    "double",
+                    {
+                        "avoidEscape": true,
+                        "allowTemplateLiterals": "always"
+                    }
+                ],
+                "@stylistic/semi": [
+                    "error",
+                    "always"
+                ],
+                "@stylistic/space-before-function-paren": [
+                    "error",
+                    {
+                        "anonymous": "always",
+                        "named": "never",
+                        "asyncArrow": "always"
+                    }
+                ],
+                "@stylistic/type-annotation-spacing": ["error"],
+                "accessor-pairs": "off",
+                "array-bracket-newline": [
+                    "error",
+                    "consistent"
+                ],
+                "array-bracket-spacing": [
+                    "error",
+                    "never"
+                ],
+                "array-callback-return": "off",
+                "arrow-body-style": "off",
+                "arrow-parens": [
+                    "error",
+                    "always"
+                ],
+                "arrow-spacing": [
+                    "error",
+                    {
+                        "before": true,
+                        "after": true
+                    }
+                ],
+                "block-scoped-var": "error",
+                "block-spacing": "error",
+                "camelcase": "off",
+                "comma-style": [
+                    "error",
+                    "last"
+                ],
+                "computed-property-spacing": [
+                    "error",
+                    "never"
+                ],
+                "consistent-this": [
+                    "error",
+                    "self"
+                ],
+                "curly": "error",
+                "default-case-last": "error",
+                "default-param-last": "off",
+                "dot-location": [
+                    "error",
+                    "property"
+                ],
+                "dot-notation": "off",
+                "eol-last": "error",
+                "eqeqeq": [
+                    "error",
+                    "always"
+                ],
+                "func-name-matching": [
+                    "error",
+                    "always",
+                    {
+                        "considerPropertyDescriptor": true,
+                        "includeCommonJSModuleExports": true
+                    }
+                ],
+                "func-names": "off",
+                "function-paren-newline": [
+                    "error",
+                    "consistent"
+                ],
+                "grouped-accessor-pairs": [
+                    "error",
+                    "getBeforeSet"
+                ],
+                "guard-for-in": "error",
+                "implicit-arrow-linebreak": [
+                    "error",
+                    "beside"
+                ],
+                "linebreak-style": "off",
+                "indent": ["off"],
                 "@stylistic/indent": [
                     "error",
                     4,
@@ -97,10 +235,153 @@ export function getJsConfig(browserGlobals: boolean, nodeGlobals: boolean): Conf
                         "ignoreRegExpLiterals": true
                     }
                 ],
+                "new-parens": "error",
+                "no-constructor-return": "error",
+                "no-duplicate-imports": "error",
+                "no-eq-null": "error",
+                "no-eval": [
+                    "error",
+                    {
+                        "allowIndirect": true
+                    }
+                ],
+                "no-extend-native": "error",
+                "no-extra-bind": "error",
+                "no-implicit-coercion": [
+                    "error",
+                    {
+                        "boolean": false,
+                        "number": true,
+                        "string": true
+                    }
+                ],
+                "no-implied-eval": "error",
+                "no-lone-blocks": "error",
+                "no-loop-func": "off",
+                "no-new-func": "error",
+                "no-new-wrappers": "error",
+                "no-promise-executor-return": "error",
+                "no-return-await": "error",
+                "no-self-compare": "error",
+                "no-sequences": "error",
+                "no-template-curly-in-string": "error",
+                "no-trailing-spaces": "error",
+                "no-underscore-dangle": ["off"],
+                "no-unmodified-loop-condition": "error",
+                "no-unneeded-ternary": "error",
+                "no-unreachable-loop": "error",
+                "no-unsafe-optional-chaining": [
+                    "error",
+                    {
+                        "disallowArithmeticOperators": true
+                    }
+                ],
+                "no-unused-expressions": "off",
+                "no-unused-vars": "off",
+                "no-useless-backreference": "error",
+                "no-useless-call": "error",
+                "no-useless-computed-key": [
+                    "error",
+                    {
+                        "enforceForClassMembers": true
+                    }
+                ],
+                "no-useless-rename": "error",
+                "no-var": "error",
+                "no-void": "off",
+                "no-whitespace-before-property": "error",
+                "object-curly-newline": [
+                    "error",
+                    {
+                        "consistent": true
+                    }
+                ],
+                "object-property-newline": [
+                    "error",
+                    {
+                        "allowAllPropertiesOnSameLine": true
+                    }
+                ],
+                "object-shorthand": ["off"],
+                "one-var": [
+                    "error",
+                    {
+                        "var": "never",
+                        "let": "never",
+                        "const": "never",
+                        "separateRequires": true
+                    }
+                ],
+                "one-var-declaration-per-line": [
+                    "error",
+                    "always"
+                ],
+                "prefer-arrow/prefer-arrow-functions": "off",
+                "prefer-const": [
+                    "error",
+                    {
+                        "destructuring": "all"
+                    }
+                ],
                 "prefer-named-capture-group": ["error"],
+                "prefer-object-spread": "error",
+                "prefer-rest-params": "error",
+                "prefer-spread": "error",
+                "radix": [
+                    "error",
+                    "always"
+                ],
+                "require-atomic-updates": ["error"],
+                "require-await": "off",
+                "rest-spread-spacing": "error",
+                "semi-spacing": [
+                    "error",
+                    {
+                        "before": false,
+                        "after": true
+                    }
+                ],
+                "semi-style": [
+                    "error",
+                    "last"
+                ],
+                "space-before-blocks": [
+                    "error",
+                    "always"
+                ],
+                "space-in-parens": ["off"],
+                "space-infix-ops": ["error"],
+                "space-unary-ops": [
+                    "error",
+                    {
+                        "words": true,
+                        "nonwords": false
+                    }
+                ],
+                "spaced-comment": [
+                    "error",
+                    "always",
+                    {
+                        "exceptions": [
+                            "-",
+                            "+",
+                            "=",
+                            "/",
+                            "*"
+                        ],
+                        "markers": [
+                            "/"
+                        ]
+                    }
+                ],
+                "switch-colon-spacing": "error",
+                "wrap-iife": [
+                    "error",
+                    "any"
+                ],
             }
         }
-    ]
+    ];
 }
 
 
@@ -327,15 +608,34 @@ export function getTsConfig(projDir: string): ConfigWithExtendsArray {
                         ]
                     }
                 ],
+                // Disable core rule before configuring @typescript-eslint extension rule (Appendix B requirement)
+                "default-param-last": "off",
+                "@typescript-eslint/default-param-last": ["error"],
+                "@typescript-eslint/explicit-module-boundary-types": ["error"],
                 "@typescript-eslint/no-confusing-void-expression": ["off", { ignoreArrowShorthand: true }],
+                "@typescript-eslint/no-empty-object-type": "error",
+                "@typescript-eslint/no-explicit-any": "warn",
+                // Disable core rule before configuring @typescript-eslint extension rule (Appendix B requirement)
+                "no-loop-func": "off",
+                "@typescript-eslint/no-loop-func": ["error"],
+                "@typescript-eslint/no-namespace": "off",
+                // Disable core rule before configuring @typescript-eslint extension rule (Appendix B requirement)
+                "no-inferrable-types": "off",
                 "@typescript-eslint/no-inferrable-types": ["off"],
                 "@typescript-eslint/no-non-null-assertion": ["off"],
+                "@typescript-eslint/no-unnecessary-boolean-literal-compare": ["error"],
                 "@typescript-eslint/no-unnecessary-condition": [
                     "error",
                     {
                         allowConstantLoopConditions: true, // It's common to have while(true) loops that break internally
                     }
                 ],
+                "@typescript-eslint/no-unsafe-function-type": "error",
+                // Disable core rule before configuring @typescript-eslint extension rule (Appendix B requirement)
+                "no-unused-expressions": "off",
+                "@typescript-eslint/no-unused-expressions": "error",
+                // Disable core rule before configuring @typescript-eslint extension rule (Appendix B requirement)
+                "no-unused-vars": "off",
                 "@typescript-eslint/no-unused-vars": [
                     "error",
                     {
@@ -345,6 +645,25 @@ export function getTsConfig(projDir: string): ConfigWithExtendsArray {
                         "caughtErrors": "none"
                     }
                 ],
+                "@typescript-eslint/no-wrapper-object-types": "error",
+                "@typescript-eslint/prefer-for-of": ["error"],
+                "@typescript-eslint/prefer-function-type": ["error"],
+                "@typescript-eslint/prefer-includes": ["error"],
+                "@typescript-eslint/prefer-literal-enum-member": [
+                    "error",
+                    {
+                        "allowBitwiseExpressions": true
+                    }
+                ],
+                "@typescript-eslint/prefer-optional-chain": ["error"],
+                "@typescript-eslint/prefer-readonly": ["error"],
+                "@typescript-eslint/prefer-reduce-type-parameter": ["off"],
+                "@typescript-eslint/prefer-return-this-type": ["error"],
+                "@typescript-eslint/prefer-string-starts-ends-with": ["error"],
+                "@typescript-eslint/prefer-ts-expect-error": ["error"],
+                // Disable core rule before configuring @typescript-eslint extension rule (Appendix B requirement)
+                "require-await": "off",
+                "@typescript-eslint/require-await": "error",
                 "@typescript-eslint/restrict-template-expressions": ["error", {allowNumber: true}],
                 "@typescript-eslint/unbound-method": [
                     "error",
@@ -353,6 +672,28 @@ export function getTsConfig(projDir: string): ConfigWithExtendsArray {
                     }
                 ],
                 "@typescript-eslint/unified-signatures": ["off"],
+            }
+        },
+        // Test file overrides
+        {
+            files: [
+                "**/*.{test,spec}.{ts,mts,cts}",
+                "**/*.{test,spec}.{js,mjs,cjs}"
+            ],
+            rules: {
+                "@typescript-eslint/no-empty-function": "off",
+                "@typescript-eslint/no-unused-vars": "off",
+                "@typescript-eslint/no-floating-promises": "off",
+                // Disable core rule before configuring @typescript-eslint extension rule (Appendix B requirement)
+                "dot-notation": "off",
+                "@typescript-eslint/dot-notation": [
+                    "error",
+                    {
+                        // Allow unit tests to make assertions about private and protected fields.
+                        "allowPrivateClassPropertyAccess": true,
+                        "allowProtectedClassPropertyAccess": true
+                    }
+                ],
             }
         },
     ];
@@ -372,7 +713,7 @@ export function getTurboConfig(): ConfigWithExtendsArray {
  * Get JSON linting configuration and customizations.
  */
 export function getJsonConfig(): ConfigWithExtends {
-    return { files: ["**/*.json"], plugins: { json }, language: "json/json", extends: ["json/recommended"] }
+    return { files: ["**/*.json"], plugins: { json }, language: "json/json", extends: ["json/recommended"] };
 }
 
 
