@@ -10,6 +10,26 @@
   would have sweeping, widespread implications, seek clarification before
   proceeding.
 
+## Monorepo Organization and Tasks
+
+This repository is a monorepo that uses npm workspaces to manage intra-repo dependencies and turbo to manage tasks across the projects.  The projects are reusable packages and applications written in TypeScript.  Some projects target Node.js and others target the browser environment.  Reusable packages are in the `/packages` directory and applications are in the `/apps` directory.  Each package and application has its own `package.json` file.  The root directory also contains a `package.json` file that defines some common development dependencies and scripts.
+
+The following are some commonly used top level commands that use turbo to run scripts across all projects in this monorepo:
+
+- `npm run build` - Runs the TypeScript compiler on all production code in all projects. Unit test files (`*.test.mts`) are not included.
+- `npm run lint` - Runs ESLint on all project to check for common errors and enforce the monorepo's coding conventions.
+- `npm run test` - Runs every project's unit tests.
+- `npm run createBin` - Creates lauch scripts for every application.  The resulting `bin` directory can be placed in the `PATH` environment variable to allow the applications to be launched easily from the command line.
+- `npm run depcheck` - Checks for missing and unused dependencies in all projects.
+- `npm run all` - Runs the (above) `build`, `lint`, `test`, `createBin` and `depcheck` scripts in all projects.  This is a convenient way to build and analyze the production code and create scripts that can launch the built applications.
+-`npm run type-check` - Similar to `build` except unit test files are also compiled.  No files are emitted, because only the compiler warnings and errors are of interest.  This is a convenient way to check for type errors in both production code and unit test code.
+
+The most convenient way to run all of these script is to run the following from this monorepo's root directory:
+
+```powershell
+npm run all && npm run type-check
+```
+
 ## Coding Style
 
 All version controlled source code files within this repository must follow the
@@ -26,9 +46,9 @@ their formatting, the following rules do not apply to them.
   ESLint rules for each project can be found in the project's `.eslintrc.cjs`
   file.  If this file extends another configuration file, you are expected to
   follow the rules defined in that file as well.  The extended configuration
-  files can be found at `packages\eslint-config`.  Visual Studio Code is
+  files can be found at `packages\eslint-config-2`.  Visual Studio Code is
   configured to use the `dbaeumer.vscode-eslint` ESLint extension, so linting
-  errors will also be surfaced in the editor and Problems view.
+  errors will also be appear in the editor and Problems view.
 - Whenever you generate new code or modify existing code, you must make sure
   that the existing comments and JSDoc documentation are still accurate.  If
   not, you must update them.
