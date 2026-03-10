@@ -1,5 +1,6 @@
 import * as path from "node:path";
 import { Stats } from "node:fs";
+import { glob } from "glob";
 import * as _ from "lodash-es";
 import { assertNever } from "@repo/depot/never";
 import { Directory } from "./directory.mjs";
@@ -448,41 +449,20 @@ export async function diffDirectories(
     rightDir: Directory,
     includeIdentical = false
 ): Promise<Array<DiffDirFileItem>> {
-    //
-    // Create an array of DiffDirFileItems for the files in the left directory.
-    //
-    const leftPromise = leftDir.contents(true)
-    .then(
-        (leftContents) => leftContents.files,
-        () => []     // Left directory does not exist.
-    )
-    .then((leftFiles) => {
-        return _.map(
-            leftFiles,
-            (curLeftFile) => DiffDirFileItem.create(leftDir, rightDir,
-                                                    path.relative(leftDir.toString(), curLeftFile.toString()))
-        );
-    });
-
-    //
-    // Create an array of DiffDirFileItems for the files in the right directory.
-    //
-    const rightPromise = rightDir.contents(true)
-    .then(
-        (rightContents) => rightContents.files,
-        () => []    // Right directory does not exist.
-    )
-    .then((rightFiles) => {
-        return _.map(
-            rightFiles,
-            (curRightFile) => DiffDirFileItem.create(leftDir,
-                                                     rightDir,
-                                                     path.relative(rightDir.toString(), curRightFile.toString()))
-        );
-    });
+    const [leftRelativeFilePaths, rightRelativeFilePaths] = await Promise.all([
+        getRelativeFilePathsRecursively(leftDir),
+        getRelativeFilePathsRecursively(rightDir)
+    ]);
 
     // Combine the left and right files into a single array.
-    let diffDirFileItems: Array<DiffDirFileItem> = _.concat<DiffDirFileItem>(await leftPromise, await rightPromise);
+    let diffDirFileItems: Array<DiffDirFileItem> = [
+        ...leftRelativeFilePaths.map(
+            (curRelativeFilePath) => DiffDirFileItem.create(leftDir, rightDir, curRelativeFilePath)
+        ),
+        ...rightRelativeFilePaths.map(
+            (curRelativeFilePath) => DiffDirFileItem.create(leftDir, rightDir, curRelativeFilePath)
+        )
+    ];
 
     // If a file exists in both left and right, we don't want it to be
     // represented twice.  So make the list unique based on the file's relative
@@ -493,17 +473,12 @@ export async function diffDirectories(
     // If not including identical files, remove them.
     //
     if (!includeIdentical) {
-        const identicalPromises = _.map(diffDirFileItems,
-                                        (curDiffDirFileItem) => curDiffDirFileItem.bothExistAndIdentical());
+        const identicalPromises = diffDirFileItems
+        .map((curDiffDirFileItem) => curDiffDirFileItem.bothExistAndIdentical());
         const isIdenticalValues = await Promise.all(identicalPromises);
 
-        // Zip each DiffDirFileItem with the boolean indicating whether its files are identical.
-        const pairs = _.zip(diffDirFileItems, isIdenticalValues);
-
-        diffDirFileItems = _.chain(pairs)
-        .filter((curPair) => !curPair[1])    // Keep items that are not identical.
-        .map((curPair) => curPair[0]!)       // Convert from pair back to DiffDirFileItem.
-        .value();
+        diffDirFileItems = diffDirFileItems
+        .filter((_, index) => !isIdenticalValues[index]);
     }
 
     //
@@ -513,4 +488,20 @@ export async function diffDirectories(
     diffDirFileItems = _.sortBy(diffDirFileItems, (curDiffDirFileItem) => curDiffDirFileItem.relativeFilePath);
 
     return diffDirFileItems;
+}
+
+
+async function getRelativeFilePathsRecursively(rootDir: Directory): Promise<Array<string>> {
+    try {
+        const relativeFilePaths = await glob("**/*", {
+            cwd:   rootDir.toString(),
+            dot:   true,
+            nodir: true
+        });
+
+        return relativeFilePaths.map((curPath) => path.normalize(curPath));
+    }
+    catch {
+        return []; // Directory does not exist.
+    }
 }
