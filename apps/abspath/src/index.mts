@@ -6,7 +6,7 @@ import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { Result, SucceededResult } from "@repo/depot/result";
 import { File } from "@repo/depot-node/file";
 import { getUncPath } from "@repo/depot-node/windowsHelpers";
-import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
+import { getStdinPipedLines, getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -89,7 +89,10 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
             [
                 "Converts the specified paths to absolute paths.",
                 "",
-                "abspath <path1> <path2>..."
+                "abspath <path1> <path2>...",
+                "",
+                "Specifying items by piping input into this app:",
+                "splat **/package.json | abspath",
             ].join(os.EOL)
         )
         .help()
@@ -100,6 +103,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
         argv._,
         // Silently disregard any number arguments.
         (args) => args.filter((arg): arg is string => typeof arg === "string"),
+        async (inputStrings) => [...inputStrings, ...await getStdinPipedLines()],
         (strArgs) => strArgs.map((strArg) => new File(strArg))
     );
 
