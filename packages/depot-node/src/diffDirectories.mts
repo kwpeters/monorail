@@ -7,8 +7,17 @@ import {File} from "./file.mjs";
 
 
 export enum ActionPriority {
-    PRESERVE   = "preserve",
+    /**
+     * No action priority specified.  Give priority to preserving files.
+     */
+    Preserve   = "preserve",
+    /**
+     * Give priority to the left directory.
+     */
     SyncLeftToRight = "sync left to right",
+    /**
+     * Give priority to the right directory.
+     */
     SyncRightToLeft = "sync right to left"
 }
 
@@ -178,7 +187,7 @@ export class FileComparer implements IFilesToCompare {
                     actions.push(new FileCompareAction(this, FileCompareActionType.CopyRight));
                     break;
 
-                case ActionPriority.PRESERVE:
+                case ActionPriority.Preserve:
                     // No action priority specified.  Give priority to preserving
                     // files.
                     actions.push(new FileCompareAction(this, FileCompareActionType.CopyRight));
@@ -204,7 +213,7 @@ export class FileComparer implements IFilesToCompare {
                     actions.push(new FileCompareAction(this, FileCompareActionType.DeleteRight));
                     break;
 
-                case ActionPriority.PRESERVE:
+                case ActionPriority.Preserve:
                     // No action priority specified.  Give priority to preserving
                     // files.
                     actions.push(new FileCompareAction(this, FileCompareActionType.CopyLeft));
