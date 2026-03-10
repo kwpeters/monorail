@@ -9,7 +9,7 @@ import { tmpDir } from "./specHelpers.test.mjs";
 
 describe("diffDirectories()", () => {
 
-    describe("", () => {
+    describe("when both directories contain common and unique files", () => {
         let leftDir: Directory;
         let rightDir: Directory;
 
@@ -94,7 +94,7 @@ describe("diffDirectories()", () => {
     });
 
 
-    describe("", () => {
+    describe("when both directories contain a single common, identical file", () => {
         let leftDir: Directory;
         let rightDir: Directory;
 
@@ -182,7 +182,7 @@ describe("diffDirectories()", () => {
     });
 
 
-    describe("", () => {
+    describe("when the results include only left-only and right-only files", () => {
         let leftDir:  Directory;
         let rightDir: Directory;
 
@@ -220,7 +220,7 @@ describe("diffDirectories()", () => {
     });
 
 
-    describe("", () => {
+    describe("when directories contain left-only, right-only, and conflicting common files", () => {
         let leftDir:  Directory;
         let rightDir: Directory;
 
