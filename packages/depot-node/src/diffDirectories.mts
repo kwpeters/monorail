@@ -505,6 +505,12 @@ export class DiffDirFileItem {
 
 
 export interface IDiffDirectoriesOptions {
+    /** Whether to include files that exist only in the left directory in the
+     * returned results. */
+    includeLeftOnly:  boolean;
+    /** Whether to include files that exist only in the right directory in the
+     * returned results. */
+    includeRightOnly: boolean;
     /** Whether to include files that are identical in both directories in the
      * returned results.  If true, identical files will be included with a
      * 0-length array of actions. */
@@ -518,6 +524,8 @@ export interface IDiffDirectoriesOptions {
 }
 
 const defaultDiffDirectoriesOptions: IDiffDirectoriesOptions = {
+    includeLeftOnly:  true,
+    includeRightOnly: true,
     includeIdentical: false,
     includePatterns:  ["**/*"],
     excludePatterns:  []
@@ -537,7 +545,13 @@ export async function diffDirectories(
     rightDir: Directory,
     options: Partial<IDiffDirectoriesOptions> = {}
 ): Promise<Array<DiffDirFileItem>> {
-    const { includeIdentical, includePatterns, excludePatterns } = { ...defaultDiffDirectoriesOptions, ...options };
+    const {
+        includeLeftOnly,
+        includeRightOnly,
+        includeIdentical,
+        includePatterns,
+        excludePatterns
+    } = { ...defaultDiffDirectoriesOptions, ...options };
     const [leftRelativeFilePaths, rightRelativeFilePaths] = await Promise.all([
         getRelativeFilePathsRecursively(leftDir, includePatterns, excludePatterns),
         getRelativeFilePathsRecursively(rightDir, includePatterns, excludePatterns)
@@ -557,6 +571,40 @@ export async function diffDirectories(
     // represented twice.  So make the list unique based on the file's relative
     // path.
     diffDirFileItems = _.uniqBy(diffDirFileItems, (curDiffDirFileItem) => curDiffDirFileItem.relativeFilePath);
+
+    if (!includeLeftOnly || !includeRightOnly) {
+        const existenceValues = await Promise.all(
+            diffDirFileItems.map(
+                async (curDiffDirFileItem) => {
+                    const [isLeftOnly, isRightOnly] = await Promise.all([
+                        curDiffDirFileItem.isLeftOnly(),
+                        curDiffDirFileItem.isRightOnly()
+                    ]);
+
+                    return {
+                        isLeftOnly:  isLeftOnly,
+                        isRightOnly: isRightOnly
+                    };
+                }
+            )
+        );
+
+        diffDirFileItems = diffDirFileItems.filter((_, index) => {
+            const existenceValue = existenceValues[index]!;
+
+            // If we don't want left-only files and it is left-only, return false.
+            if (!includeLeftOnly && existenceValue.isLeftOnly) {
+                return false;
+            }
+
+            // If we don't want right-only files and it is right-only, return false.
+            if (!includeRightOnly && existenceValue.isRightOnly) {
+                return false;
+            }
+
+            return true;
+        });
+    }
 
     //
     // If not including identical files, remove them.

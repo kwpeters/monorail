@@ -26,6 +26,8 @@ interface IConfig {
     actionPriority:   ActionPriority;
     includePatterns:  Array<string>;
     excludePatterns:  Array<string>;
+    includeLeftOnly:  boolean;
+    includeRightOnly: boolean;
     includeIdentical: boolean;
 }
 
@@ -64,6 +66,24 @@ export function builder(argv: Argv): Argv {
             type:         "boolean",
             default:      false,
             describe:     "Include files that are identical in both directories"
+        }
+    )
+    .option(
+        "include-left-only",
+        {
+            demandOption: false,
+            type:         "boolean",
+            default:      true,
+            describe:     "Include files that exist only in the left directory"
+        }
+    )
+    .option(
+        "include-right-only",
+        {
+            demandOption: false,
+            type:         "boolean",
+            default:      true,
+            describe:     "Include files that exist only in the right directory"
         }
     )
     .option(
@@ -110,6 +130,14 @@ export function builder(argv: Argv): Argv {
     .example(
         `$0 diff2 -e **/node_modules/**/* -e **/.turbo/**/* -e **/dist/**/* \\path\\to\\left\\dir \\path\\to\\right\\dir`,
         `Compare \\path\\to\\left\\dir and \\path\\to\\right\\dir, excluding node_modules, turbo cache and dist directories. Multiple -e flags can be used to specify multiple exclude patterns.`
+    )
+    .example(
+        `$0 diff2 --include-left-only=false \\path\\to\\left\\dir \\path\\to\\right\\dir`,
+        `Omit files that exist only in the left directory, showing only right-only and files present in both.`
+    )
+    .example(
+        `$0 diff2 --include-right-only=false \\path\\to\\left\\dir \\path\\to\\right\\dir`,
+        `Omit files that exist only in the right directory, showing only left-only and files present in both.`
     );
 }
 
@@ -118,6 +146,8 @@ export async function handler(args: Arguments): Promise<void> {
     const config = getConfiguration(args);
 
     const diffItems = await diffDirectories(config.leftDir, config.rightDir, {
+        includeLeftOnly:  config.includeLeftOnly,
+        includeRightOnly: config.includeRightOnly,
         includeIdentical: config.includeIdentical,
         includePatterns:  config.includePatterns,
         excludePatterns:  config.excludePatterns
@@ -193,6 +223,8 @@ function getConfiguration(args: Arguments): IConfig {
         actionPriority:   actionPriority,
         includePatterns:  includePatterns,
         excludePatterns:  excludePatterns,
+        includeLeftOnly:  !!args["include-left-only"],
+        includeRightOnly: !!args["include-right-only"],
         includeIdentical: !!args["include-identical"]
     };
 }

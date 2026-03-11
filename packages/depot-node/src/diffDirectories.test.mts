@@ -487,4 +487,53 @@ describe("diffDirectories()", () => {
     });
 
 
+    describe("when left-only and right-only filters are specified", () => {
+        let leftDir:  Directory;
+        let rightDir: Directory;
+
+        beforeEach(() => {
+            tmpDir.emptySync();
+
+            leftDir = new Directory(tmpDir, "left");
+            rightDir = new Directory(tmpDir, "right");
+
+            const leftOnly = new File(leftDir, "left-only.txt");
+            leftOnly.writeSync("left only");
+
+            const rightOnly = new File(rightDir, "right-only.txt");
+            rightOnly.writeSync("right only");
+
+            const leftBoth = new File(leftDir, "both.txt");
+            leftBoth.writeSync("left both");
+
+            const rightBoth = new File(rightDir, "both.txt");
+            rightBoth.writeSync("right both");
+        });
+
+
+        it("filters out left-only files when includeLeftOnly is false", async () => {
+            const results = await diffDirectories(leftDir, rightDir, { includeLeftOnly: false });
+
+            expect(results.length).toEqual(2);
+            expect(results[0]!.relativeFilePath).toEqual("both.txt");
+            expect(await results[0]!.isInBoth()).toEqual(true);
+            expect(results[1]!.relativeFilePath).toEqual("right-only.txt");
+            expect(await results[1]!.isRightOnly()).toEqual(true);
+        });
+
+
+        it("filters out right-only files when includeRightOnly is false", async () => {
+            const results = await diffDirectories(leftDir, rightDir, { includeRightOnly: false });
+
+            expect(results.length).toEqual(2);
+            expect(results[0]!.relativeFilePath).toEqual("both.txt");
+            expect(await results[0]!.isInBoth()).toEqual(true);
+            expect(results[1]!.relativeFilePath).toEqual("left-only.txt");
+            expect(await results[1]!.isLeftOnly()).toEqual(true);
+        });
+
+
+    });
+
+
 });
