@@ -2,6 +2,7 @@ import * as path from "node:path";
 import { Stats } from "node:fs";
 import { glob } from "glob";
 import * as _ from "lodash-es";
+import * as z from "zod";
 import { assertNever } from "@repo/depot/never";
 import { Directory } from "./directory.mjs";
 import {File} from "./file.mjs";
@@ -294,6 +295,58 @@ async function filesAreIdentical(
 }
 
 
+////////////////////////////////////////////////////////////////////////////////
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export const DiffDirFileStatus = {
+    neitherExist: "neitherExist",
+    leftOnly:     "leftOnly",
+    rightOnly:    "rightOnly",
+    identical:    "identical",
+    different:    "different"
+} as const;
+export const schemaDiffDirFileStatus = z.enum(DiffDirFileStatus);
+export type DiffDirFileStatus = z.infer<typeof schemaDiffDirFileStatus>;
+// Enumerating values of DiffDirFileStatus:
+//     for (const cur of Object.values(DiffDirFileStatus)) {}
+//     for (const cur of schemaDiffDirFileStatus.options) {}
+
+
+/**
+ * A type representing a valid key in the DiffDirFileStatus enumeration.
+ * Useful when creating mapped types.  For example:
+ *     export type DiffDirFileStatusCounts = {
+ *         [K in DiffDirFileStatusKey]: number;
+ *     };
+ */
+export type DiffDirFileStatusKey = keyof typeof DiffDirFileStatus;
+
+
+/**
+ * Gets the key name for a given DiffDirFileStatus value.  Useful when indexing
+ * into a type (probably a mapped type) that has the same keys as
+ * DiffDirFileStatus.
+ *
+ * @param diffDirFileStatus - The DiffDirFileStatus to find the key of
+ * @return The key that corresponds to the specified DiffDirFileStatus.
+ */
+export function diffDirFileStatusKey(diffDirFileStatus: DiffDirFileStatus): DiffDirFileStatusKey {
+    for (const [key, val] of Object.entries(DiffDirFileStatus)) {
+        if (val === diffDirFileStatus) {
+            return key as DiffDirFileStatusKey;
+        }
+    }
+
+    // Should never happen, but just in case...
+    throw new Error(`Failed to find key for DiffDirFileStatus "${diffDirFileStatus}".`);
+}
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+
 export class DiffDirFileItem {
     /**
      * Creates a new instance.
@@ -424,12 +477,33 @@ export class DiffDirFileItem {
     }
 
 
+    public async status(): Promise<DiffDirFileStatus> {
+        const [leftExists, rightExists] = await Promise.all([
+            this._files.leftFile.exists(),
+            this._files.rightFile.exists()
+        ]);
+
+        if (leftExists && !rightExists) {
+            return DiffDirFileStatus.leftOnly;
+        }
+        if (!leftExists && rightExists) {
+            return DiffDirFileStatus.rightOnly;
+        }
+        if (leftExists && rightExists) {
+            const identical = await this.bothExistAndIdentical();
+            return identical ? DiffDirFileStatus.identical : DiffDirFileStatus.different;
+        }
+
+        return DiffDirFileStatus.neitherExist;
+
+    }
+
+
     public actions(actionPriority: ActionPriority): Promise<Array<FileCompareAction>> {
         const actions = this._files.actions(actionPriority);
         return actions;
     }
 }
-
 
 
 export interface IDiffDirectoriesOptions {
