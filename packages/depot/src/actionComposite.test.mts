@@ -16,15 +16,9 @@ describe("ActionComposite", () => {
 
         it("contains placeholder text for actions with no description", () => {
             const ac = new ActionComposite();
-            ac.add(new Action(() => {
-                // Intentionally empty.
-            }));
-            ac.add(new Action(() => {
-                // Intentionally empty.
-            }, "action2"));
-            ac.add(new Action(() => {
-                // Intentionally empty.
-            }));
+            ac.add(new Action(() => {}));
+            ac.add(new Action(() => {}, "action2"));
+            ac.add(new Action(() => {}));
             expect(ac.description).toEqual("<action>\naction2\n<action>");
         });
 
@@ -43,15 +37,9 @@ describe("ActionComposite", () => {
         it("return correct number when not empty", () => {
             const ac = new ActionComposite()
             .add(
-                new Action(() => {
-                    // Intentionally empty.
-                }),
-                new Action(() => {
-                    // Intentionally empty.
-                }),
-                new Action(() => {
-                    // Intentionally empty.
-                })
+                new Action(() => {}),
+                new Action(() => {}),
+                new Action(() => {})
             );
             expect(ac.length).toEqual(3);
         });
@@ -77,9 +65,7 @@ describe("ActionComposite", () => {
             const ac = new ActionComposite();
             ac.add(new Action(() => {
                 return getTimerPromise(20, 1)
-                .then(() => {
-                    // Intentionally empty.
-                });
+                .then(() => {});
             }));
 
             ac.add(new Action(() => {

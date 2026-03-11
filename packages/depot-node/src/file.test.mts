@@ -1386,7 +1386,7 @@ describe("File", () => {
                 expect(inputFile.existsSync()).toBeUndefined();
 
                 try {
-                    await inputFile.readLines((lineText, lineNum) => { /* Intentionally empty */ });
+                    await inputFile.readLines((lineText, lineNum) => {});
                     fail("Should never get here.");
                 }
                 catch (err) {

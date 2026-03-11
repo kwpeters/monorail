@@ -6,9 +6,7 @@ type FooId = Brand<Uuid, "FooId">;
 type BarId = Brand<Uuid, "BarId">;
 
 
-function fooOp(foo: FooId): void {
-    // Intentionally empty.
-}
+function fooOp(foo: FooId): void {}
 
 
 // Since branding is a typing technique, there are no runnable unit tests. The

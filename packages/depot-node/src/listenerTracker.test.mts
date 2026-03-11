@@ -61,16 +61,16 @@ describe("ListenerTracker", () => {
         const ee = new EventEmitter();
         const tracker = new ListenerTracker(ee);
 
-        tracker.on("event-a", () => { /* Intentionally empty */ });
+        tracker.on("event-a", () => {});
         expect(ee.listenerCount("event-a")).toEqual(1);
 
-        tracker.on("event-a", () => { /* Intentionally empty */ });
+        tracker.on("event-a", () => {});
         expect(ee.listenerCount("event-a")).toEqual(2);
 
-        tracker.once("event-a", () => { /* Intentionally empty */ });
+        tracker.once("event-a", () => {});
         expect(ee.listenerCount("event-a")).toEqual(3);
 
-        tracker.once("event-a", () => { /* Intentionally empty */ });
+        tracker.once("event-a", () => {});
         expect(ee.listenerCount("event-a")).toEqual(4);
 
         tracker.removeAll();
