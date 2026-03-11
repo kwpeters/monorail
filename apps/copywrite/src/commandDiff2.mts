@@ -108,8 +108,8 @@ export function builder(argv: Argv): Argv {
         false
     )
     .example(
-        `$0 diff2 -e **/node_modules/**/* -e **/.turbo/**/* \\path\\to\\left\\dir \\path\\to\\right\\dir`,
-        `Compare \\path\\to\\left\\dir and \\path\\to\\right\\dir, excluding node_modules and turbo cache directories. Multiple -e flags can be used to specify multiple exclude patterns.`
+        `$0 diff2 -e **/node_modules/**/* -e **/.turbo/**/* -e **/dist/**/* \\path\\to\\left\\dir \\path\\to\\right\\dir`,
+        `Compare \\path\\to\\left\\dir and \\path\\to\\right\\dir, excluding node_modules, turbo cache and dist directories. Multiple -e flags can be used to specify multiple exclude patterns.`
     );
 }
 
