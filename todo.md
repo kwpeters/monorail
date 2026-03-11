@@ -9,4 +9,4 @@
 
 - Pull in depot QuickServer
 
-- [ ] Update Jasmine from 5.3.0 to 6.1.0.
+- [ ] Upgrade to TS 6
