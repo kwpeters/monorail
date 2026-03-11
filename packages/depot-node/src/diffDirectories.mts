@@ -432,23 +432,32 @@ export class DiffDirFileItem {
 
 
 
+export interface IDiffDirectoriesOptions {
+    /** Whether to include files that are identical in both directories in the
+     * returned results.  If true, identical files will be included with a
+     * 0-length array of actions. */
+    includeIdentical: boolean;
+}
+
+const defaultDiffDirectoriesOptions: IDiffDirectoriesOptions = {
+    includeIdentical: false
+};
+
+
 /**
  * Compares (recursively) the files within two directories.
  * @param leftDir - The left directory to be compared
  * @param rightDir - The right directory to be compared
- * @param actionPriority - The action being performed so that the actions
- *     associated with each result can be prioritized.
- * @param includeIdentical - Whether to include files that are identical in both
- *     `leftDir` and `rightDir` in the returned results.  If true, identical
- *     files will be included with a 0-length array of actions.
+ * @param options - Options that control the behavior of the comparison
  * @return An array of items representing the differences found between
  *     `leftDir` and `rightDir`.
  */
 export async function diffDirectories(
     leftDir: Directory,
     rightDir: Directory,
-    includeIdentical = false
+    options: Partial<IDiffDirectoriesOptions> = {}
 ): Promise<Array<DiffDirFileItem>> {
+    const { includeIdentical } = { ...defaultDiffDirectoriesOptions, ...options };
     const [leftRelativeFilePaths, rightRelativeFilePaths] = await Promise.all([
         getRelativeFilePathsRecursively(leftDir),
         getRelativeFilePathsRecursively(rightDir)
