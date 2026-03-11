@@ -435,7 +435,7 @@ describe("diffDirectories()", () => {
 
 
         it("excludes files that do not match the pattern", async () => {
-            const results = await diffDirectories(leftDir, rightDir, { includePattern: ["**/*.txt"] });
+            const results = await diffDirectories(leftDir, rightDir, { includePatterns: ["**/*.txt"] });
 
             // Only the .txt file should appear; both .log files must be absent.
             expect(results.length).toEqual(1);
