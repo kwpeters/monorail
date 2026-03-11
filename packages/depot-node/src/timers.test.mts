@@ -55,7 +55,6 @@ describe("Timeout", () => {
 
             t1.start();
 
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             getTimerPromise(50, undefined)
             .then(() => {
                 expect(t1.isRunning()).toEqual(true);
@@ -90,7 +89,6 @@ describe("Timeout", () => {
 
             t1.start();
 
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             getTimerPromise(50, undefined)
             .then(() => {
                 t1.start();
