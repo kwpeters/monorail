@@ -406,4 +406,45 @@ describe("diffDirectories()", () => {
     });
 
 
+    describe("when an includePattern option is specified", () => {
+        let leftDir:  Directory;
+        let rightDir: Directory;
+
+        beforeEach(() => {
+            tmpDir.emptySync();
+
+            leftDir  = new Directory(tmpDir, "left");
+            rightDir = new Directory(tmpDir, "right");
+
+            // A .txt file present in both directories.
+            const leftTxt = new File(leftDir, "readme.txt");
+            leftTxt.writeSync("left readme");
+            const rightTxt = new File(rightDir, "readme.txt");
+            rightTxt.writeSync("right readme");
+
+            // A .log file present only in the left directory — should be
+            // excluded by a *.txt-only pattern.
+            const leftLog = new File(leftDir, "debug.log");
+            leftLog.writeSync("left log");
+
+            // A .log file present only in the right directory — should also be
+            // excluded.
+            const rightLog = new File(rightDir, "server.log");
+            rightLog.writeSync("right log");
+        });
+
+
+        it("excludes files that do not match the pattern", async () => {
+            const results = await diffDirectories(leftDir, rightDir, { includePattern: ["**/*.txt"] });
+
+            // Only the .txt file should appear; both .log files must be absent.
+            expect(results.length).toEqual(1);
+            expect(results[0]!.relativeFilePath).toEqual("readme.txt");
+            expect(await results[0]!.isInBoth()).toEqual(true);
+        });
+
+
+    });
+
+
 });

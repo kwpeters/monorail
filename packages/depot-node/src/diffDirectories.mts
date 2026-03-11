@@ -437,10 +437,14 @@ export interface IDiffDirectoriesOptions {
      * returned results.  If true, identical files will be included with a
      * 0-length array of actions. */
     includeIdentical: boolean;
+    /** Glob patterns specifying which files to include in the comparison.  If
+     * not specified, all files are included. */
+    includePattern:   Array<string>;
 }
 
 const defaultDiffDirectoriesOptions: IDiffDirectoriesOptions = {
-    includeIdentical: false
+    includeIdentical: false,
+    includePattern:   ["**/*"]
 };
 
 
@@ -457,10 +461,10 @@ export async function diffDirectories(
     rightDir: Directory,
     options: Partial<IDiffDirectoriesOptions> = {}
 ): Promise<Array<DiffDirFileItem>> {
-    const { includeIdentical } = { ...defaultDiffDirectoriesOptions, ...options };
+    const { includeIdentical, includePattern } = { ...defaultDiffDirectoriesOptions, ...options };
     const [leftRelativeFilePaths, rightRelativeFilePaths] = await Promise.all([
-        getRelativeFilePathsRecursively(leftDir),
-        getRelativeFilePathsRecursively(rightDir)
+        getRelativeFilePathsRecursively(leftDir, includePattern),
+        getRelativeFilePathsRecursively(rightDir, includePattern)
     ]);
 
     // Combine the left and right files into a single array.
@@ -500,9 +504,12 @@ export async function diffDirectories(
 }
 
 
-async function getRelativeFilePathsRecursively(rootDir: Directory): Promise<Array<string>> {
+async function getRelativeFilePathsRecursively(
+    rootDir:        Directory,
+    includePattern: Array<string>
+): Promise<Array<string>> {
     try {
-        const relativeFilePaths = await glob("**/*", {
+        const relativeFilePaths = await glob(includePattern, {
             cwd:   rootDir.toString(),
             dot:   true,
             nodir: true
