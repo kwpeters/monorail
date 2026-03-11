@@ -8,7 +8,6 @@ import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 import * as commandUpdate from "./commandUpdate.mjs";
 import * as commandFull from "./commandFull.mjs";
 import * as commandDiff from "./commandDiff.mjs";
-import * as commandDiff2 from "./commandDiff2.mjs";
 import * as commandTo from "./commandTo.mjs";
 
 
@@ -37,7 +36,6 @@ async function main(): Promise<Result<number, string>> {
     .command(commandUpdate)
     .command(commandFull)
     .command(commandDiff)
-    .command(commandDiff2)
     .command(commandTo)
     .help()
     .wrap(getStdoutColumns())  // Use 80 cols when undefined or 0.
