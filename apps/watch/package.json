@@ -27,11 +27,11 @@
         "@repo/build-app-assist": "*",
         "@repo/eslint-config-2": "*",
         "@repo/typescript-config": "*",
-        "@types/jasmine": "^5.1.4",
+        "@types/jasmine": "^6.0.0",
         "@types/lodash-es": "^4.17.7",
         "@types/node": "^25.4.0",
         "@types/yargs": "^17.0.24",
         "eslint": "^10.0.1",
-        "jasmine": "^5.3.0"
+        "jasmine": "^6.1.0"
     }
 }

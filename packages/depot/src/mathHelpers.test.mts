@@ -1,4 +1,4 @@
-import { factorial, permutations, tryBigIntToNumber } from "./mathHelpers.mjs";
+import { factorial, numPermutations, tryBigIntToNumber } from "./mathHelpers.mjs";
 
 
 describe("factorial()", () => {
@@ -33,38 +33,38 @@ describe("factorial()", () => {
 });
 
 
-describe("permutations()", () => {
+describe("numPermutations()", () => {
 
     it("returns n! for all unique elements", () => {
-        expect(permutations(0)).toEqual(1n);
-        expect(permutations(1)).toEqual(1n);
-        expect(permutations(2)).toEqual(2n);
-        expect(permutations(3)).toEqual(6n);
-        expect(permutations(4)).toEqual(24n);
+        expect(numPermutations(0)).toEqual(1n);
+        expect(numPermutations(1)).toEqual(1n);
+        expect(numPermutations(2)).toEqual(2n);
+        expect(numPermutations(3)).toEqual(6n);
+        expect(numPermutations(4)).toEqual(24n);
     });
 
     it("calculates permutations with duplicates", () => {
         // 3 elements: 2 duplicates, 1 unique -> 3! / (2! * 1!) = 6 / 2 = 3
-        expect(permutations(3, [2])).toEqual(3n);
+        expect(numPermutations(3, [2])).toEqual(3n);
         // 5 elements: 2 groups of 2 duplicates -> 5! / (2! * 2! * 1!) = 120 / 4 = 30
-        expect(permutations(5, [2, 2])).toEqual(30n);
+        expect(numPermutations(5, [2, 2])).toEqual(30n);
         // 4 elements: 3 duplicates, 1 unique -> 4! / (3! * 1!) = 24 / 6 = 4
-        expect(permutations(4, [3])).toEqual(4n);
+        expect(numPermutations(4, [3])).toEqual(4n);
     });
 
     it("handles empty duplicate array", () => {
-        expect(permutations(3, [])).toEqual(6n);
+        expect(numPermutations(3, [])).toEqual(6n);
     });
 
     it("throws error for invalid n", () => {
-        expect(() => permutations(-1)).toThrowError("n must be a non-negative integer.");
-        expect(() => permutations(1.5)).toThrowError("n must be a non-negative integer.");
+        expect(() => numPermutations(-1)).toThrowError("n must be a non-negative integer.");
+        expect(() => numPermutations(1.5)).toThrowError("n must be a non-negative integer.");
     });
 
     it("throws error for invalid duplicate counts", () => {
-        expect(() => permutations(3, [1])).toThrowError("Each duplicate count must be an integer > 1.");
-        expect(() => permutations(3, [2.5])).toThrowError("Each duplicate count must be an integer > 1.");
-        expect(() => permutations(3, [4])).toThrowError("Invalid duplicate counts: sum exceeds n or negative uniques.");
+        expect(() => numPermutations(3, [1])).toThrowError("Each duplicate count must be an integer > 1.");
+        expect(() => numPermutations(3, [2.5])).toThrowError("Each duplicate count must be an integer > 1.");
+        expect(() => numPermutations(3, [4])).toThrowError("Invalid duplicate counts: sum exceeds n or negative uniques.");
     });
 
 });

@@ -77,7 +77,7 @@ export function factorial(val: number): bigint {
  * // Two groups of duplicates: 5! / (2! * 2! * 1!) = 30
  * permutations(5, [2, 2]) // 30n
  */
-export function permutations(n: number, duplicateCounts: number[] = []): bigint {
+export function numPermutations(n: number, duplicateCounts: number[] = []): bigint {
     if (!Number.isInteger(n) || n < 0) {
         throw new Error("n must be a non-negative integer.");
     }
