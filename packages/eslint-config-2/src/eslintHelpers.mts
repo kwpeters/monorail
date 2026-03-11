@@ -54,6 +54,8 @@ export function getJsConfig(browserGlobals: boolean, nodeGlobals: boolean): Conf
                 globals: globalsConfig
             },
             rules: {
+                "block-spacing": "off",
+                "@stylistic/block-spacing": ["error", "always"],
                 "@stylistic/brace-style": [
                     "error",
                     "stroustrup",
@@ -146,7 +148,6 @@ export function getJsConfig(browserGlobals: boolean, nodeGlobals: boolean): Conf
                     }
                 ],
                 "block-scoped-var": "error",
-                "block-spacing": "error",
                 "camelcase": "off",
                 "comma-style": [
                     "error",
