@@ -16,7 +16,7 @@
     "dependencies": {
         "@repo/depot": "*",
         "@repo/depot-node": "*",
-        "glob": "^10.3.3",
+        "glob": "^13.0.6",
         "yargs": "^17.7.2"
     },
     "devDependencies": {

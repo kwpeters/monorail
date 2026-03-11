@@ -10,5 +10,3 @@
 - Pull in depot QuickServer
 
 - [ ] Update Jasmine from 5.3.0 to 6.1.0.
-
-- [ ] Update version of glob.

@@ -17,7 +17,7 @@
     },
     "dependencies": {
         "@repo/depot": "*",
-        "glob": "^10.3.3",
+        "glob": "^13.0.6",
         "lodash-es": "^4.17.21",
         "yargs": "^17.7.2"
     },
