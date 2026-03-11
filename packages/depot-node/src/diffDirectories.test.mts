@@ -447,4 +447,44 @@ describe("diffDirectories()", () => {
     });
 
 
+    describe("when excludePatterns option is specified", () => {
+        let leftDir:  Directory;
+        let rightDir: Directory;
+
+        beforeEach(() => {
+            tmpDir.emptySync();
+
+            leftDir = new Directory(tmpDir, "left");
+            rightDir = new Directory(tmpDir, "right");
+
+            // Create a file in left that will be excluded.
+            const leftExcluded = new File(leftDir, "excluded-left.log");
+            leftExcluded.writeSync("left excluded");
+
+            // Create a file in left that will be included.
+            const leftIncluded = new File(leftDir, "included.txt");
+            leftIncluded.writeSync("left included");
+
+            // Create a file in right that will be excluded.
+            const rightExcluded = new File(rightDir, "excluded-right.log");
+            rightExcluded.writeSync("right excluded");
+
+            // Create a file in right that will be included.
+            const rightIncluded = new File(rightDir, "included.txt");
+            rightIncluded.writeSync("right included");
+        });
+
+
+        it("excludes files matching the exclude patterns", async () => {
+            const results = await diffDirectories(leftDir, rightDir, { excludePatterns: ["**/*.log"] });
+
+            // Should only have the .txt files, not the .log files.
+            expect(results.length).toEqual(1);
+            expect(results[0]!.relativeFilePath).toEqual("included.txt");
+        });
+
+
+    });
+
+
 });

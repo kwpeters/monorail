@@ -440,11 +440,15 @@ export interface IDiffDirectoriesOptions {
     /** Glob patterns specifying which files to include in the comparison.  If
      * not specified, all files are included. */
     includePatterns:  Array<string>;
+    /** Glob patterns specifying which files to exclude from the comparison.  If
+     * not specified, no files are excluded. */
+    excludePatterns:  Array<string>;
 }
 
 const defaultDiffDirectoriesOptions: IDiffDirectoriesOptions = {
     includeIdentical: false,
-    includePatterns:  ["**/*"]
+    includePatterns:  ["**/*"],
+    excludePatterns:  []
 };
 
 
@@ -461,10 +465,10 @@ export async function diffDirectories(
     rightDir: Directory,
     options: Partial<IDiffDirectoriesOptions> = {}
 ): Promise<Array<DiffDirFileItem>> {
-    const { includeIdentical, includePatterns } = { ...defaultDiffDirectoriesOptions, ...options };
+    const { includeIdentical, includePatterns, excludePatterns } = { ...defaultDiffDirectoriesOptions, ...options };
     const [leftRelativeFilePaths, rightRelativeFilePaths] = await Promise.all([
-        getRelativeFilePathsRecursively(leftDir, includePatterns),
-        getRelativeFilePathsRecursively(rightDir, includePatterns)
+        getRelativeFilePathsRecursively(leftDir, includePatterns, excludePatterns),
+        getRelativeFilePathsRecursively(rightDir, includePatterns, excludePatterns)
     ]);
 
     // Combine the left and right files into a single array.
@@ -506,13 +510,15 @@ export async function diffDirectories(
 
 async function getRelativeFilePathsRecursively(
     rootDir:         Directory,
-    includePatterns: Array<string>
+    includePatterns: Array<string>,
+    excludePatterns: Array<string>
 ): Promise<Array<string>> {
     try {
         const relativeFilePaths = await glob(includePatterns, {
-            cwd:   rootDir.toString(),
-            dot:   true,
-            nodir: true
+            cwd:    rootDir.toString(),
+            dot:    true,
+            nodir:  true,
+            ignore: excludePatterns
         });
 
         return relativeFilePaths.map((curPath) => path.normalize(curPath));
