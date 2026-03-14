@@ -160,6 +160,10 @@
             "types": "./src/list.mts",
             "default": "./dist/list.mjs"
         },
+        "./lruCache": {
+            "types": "./src/lruCache.mts",
+            "default": "./dist/lruCache.mjs"
+        },
         "./mapHelpers": {
             "types": "./src/mapHelpers.mts",
             "default": "./dist/mapHelpers.mjs"

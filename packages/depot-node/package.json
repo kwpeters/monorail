@@ -148,6 +148,10 @@
             "types": "./src/pathHelpers.mts",
             "default": "./dist/pathHelpers.mjs"
         },
+        "./persistentCache": {
+            "types": "./src/persistentCache.mts",
+            "default": "./dist/persistentCache.mjs"
+        },
         "./prefixStream": {
             "types": "./src/prefixStream.mts",
             "default": "./dist/prefixStream.mjs"
