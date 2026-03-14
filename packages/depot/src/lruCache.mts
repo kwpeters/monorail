@@ -1,6 +1,7 @@
 import { List, Iterator } from "./list.mjs";
 import { VoMap } from "./voMap.mjs";
 import { type HashFn } from "./hash.mjs";
+import type { MaybePromise } from "./typeUtils.mjs";
 import { Option, NoneOption, SomeOption } from "./option.mjs";
 
 
@@ -223,6 +224,30 @@ export class LruCache<TKey, TValue> {
         this._frequencyList.splice(this._frequencyList.begin(), 0, listItem);
         this._lookupMap.set(key, this._frequencyList.begin());
         return new SomeOption(listItem.value);
+    }
+
+
+    /**
+     * Gets the value associated with the specified key. If the key is not
+     * present, computes a value using the provided factory, stores it, and
+     * returns it.
+     *
+     * When the key is already present, the item is marked as most recently
+     * used (same recency semantics as get()).
+     *
+     * @param key - The key to look up or create
+     * @param factory - Function used to compute the value when key is missing
+     * @returns The extant or newly-computed value
+     */
+    public async getOrSet(key: TKey, factory: () => MaybePromise<TValue>): Promise<TValue> {
+        const existing = this.get(key);
+        if (existing.isSome) {
+            return existing.value;
+        }
+
+        const value = await factory();
+        this.set(key, value);
+        return value;
     }
 
 

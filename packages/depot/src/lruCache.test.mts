@@ -479,6 +479,86 @@ describe("LruCache", () => {
     });
 
 
+    describe("getOrSet()", () => {
+
+        it("returns existing value and does not call factory", async () => {
+            const cache = new LruCache<Person, number>(2, hashPerson);
+            cache.set(fred, 40);
+
+            let numFactoryCalls = 0;
+            const value = await cache.getOrSet(fred, () => {
+                numFactoryCalls += 1;
+                return 99;
+            });
+
+            expect(value).toEqual(40);
+            expect(numFactoryCalls).toEqual(0);
+        });
+
+
+        it("calls factory once, stores value, and returns it when key is missing", async () => {
+            const cache = new LruCache<Person, number>(2, hashPerson);
+
+            let numFactoryCalls = 0;
+            const value = await cache.getOrSet(fred, () => {
+                numFactoryCalls += 1;
+                return 40;
+            });
+
+            expect(value).toEqual(40);
+            expect(numFactoryCalls).toEqual(1);
+            expect(cache.get(fred)).toEqual(new SomeOption(40));
+        });
+
+
+        it("treats cache hit as a use and updates recency", async () => {
+            const cache = new LruCache<Person, number>(2, hashPerson);
+
+            cache.set(fred, 40);
+            cache.set(wilma, 34);
+
+            // Hit should mark fred as MRU.
+            await cache.getOrSet(fred, () => 999);
+            cache.set(barney, 37);
+
+            expect(cache.get(wilma)).toEqual(NoneOption.get());
+            expect(cache.get(fred)).toEqual(new SomeOption(40));
+            expect(cache.get(barney)).toEqual(new SomeOption(37));
+        });
+
+
+        it("respects capacity when inserting missing key", async () => {
+            const cache = new LruCache<Person, number>(2, hashPerson);
+            cache.set(fred, 40);
+            cache.set(wilma, 34);
+
+            const value = await cache.getOrSet(barney, () => 37);
+
+            expect(value).toEqual(37);
+            expect(cache.size).toEqual(2);
+            expect(cache.get(fred)).toEqual(NoneOption.get());
+            expect(cache.get(wilma)).toEqual(new SomeOption(34));
+            expect(cache.get(barney)).toEqual(new SomeOption(37));
+        });
+
+
+        it("accepts a factory that returns a promise", async () => {
+            const cache = new LruCache<Person, number>(2, hashPerson);
+
+            let numFactoryCalls = 0;
+            const value = await cache.getOrSet(fred, () => {
+                numFactoryCalls += 1;
+                return Promise.resolve(40);
+            });
+
+            expect(value).toEqual(40);
+            expect(numFactoryCalls).toEqual(1);
+            expect(cache.get(fred)).toEqual(new SomeOption(40));
+        });
+
+    });
+
+
     describe("set()", () => {
 
         it("adds new items and they can be retrieved", () => {
