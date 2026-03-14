@@ -5,8 +5,6 @@
 
 - Pull in depot argInquirer
 
-- Pull in depot persistentCache
-
 - Pull in depot QuickServer
 
 - [ ] Upgrade to TS 6
