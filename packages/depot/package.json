@@ -260,6 +260,10 @@
             "types": "./src/result.mts",
             "default": "./dist/result.mjs"
         },
+        "./resolutionPipeline": {
+            "types": "./src/resolutionPipeline.mts",
+            "default": "./dist/resolutionPipeline.mjs"
+        },
         "./schemaUtility": {
             "types": "./src/schemaUtility.mts",
             "default": "./dist/schemaUtility.mjs"
