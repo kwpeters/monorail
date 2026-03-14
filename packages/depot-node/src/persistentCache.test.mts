@@ -1,5 +1,6 @@
 import { generateUuid } from "@repo/depot/uuid";
 import { NoneOption, SomeOption } from "@repo/depot/option";
+import { hashStringFastSync, type HashString } from "@repo/depot/hash";
 import { getIllegalChars, PersistentCache } from "./persistentCache.mjs";
 import { tmpDir } from "./specHelpers.test.mjs";
 import { Directory } from "./directory.mjs";
@@ -80,9 +81,78 @@ describe("PersistentCache", () => {
             });
 
 
+            it("rejects when memoryCapacity is zero", async () => {
+                await expectRejectMessage(
+                    () => PersistentCache.create(generateUuid(), {dir: tmpDir.toString(), memoryCapacity: 0}),
+                    /memoryCapacity must be a positive integer when specified/
+                );
+            });
+
+
+            it("rejects when memoryCapacity is negative", async () => {
+                await expectRejectMessage(
+                    () => PersistentCache.create(generateUuid(), {dir: tmpDir.toString(), memoryCapacity: -1}),
+                    /memoryCapacity must be a positive integer when specified/
+                );
+            });
+
+
+            it("rejects when memoryCapacity is not an integer", async () => {
+                await expectRejectMessage(
+                    () => PersistentCache.create(generateUuid(), {dir: tmpDir.toString(), memoryCapacity: 1.5}),
+                    /memoryCapacity must be a positive integer when specified/
+                );
+            });
+
+
             it("creates a PersistentCache instance", async () => {
                 const cache = await PersistentCache.create(generateUuid(), {dir: tmpDir.toString()});
                 expect(cache).toBeTruthy();
+            });
+
+
+            it("uses keyHashFn when memoryCapacity is specified", async () => {
+                let numHashCalls = 0;
+                const keyHashFn = (key: string): HashString => {
+                    numHashCalls += 1;
+                    return hashStringFastSync(key);
+                };
+
+                const cache = await PersistentCache.create<string>(
+                    generateUuid(),
+                    {dir: tmpDir.toString(), memoryCapacity: 2, keyHashFn}
+                );
+
+                await cache.set("keyA", "valueA");
+                expect(numHashCalls).toBeGreaterThan(0);
+            });
+
+
+            it("does not use keyHashFn when memoryCapacity is omitted", async () => {
+                const throwingHashFn = (): HashString => {
+                    throw new Error("keyHashFn should not be used");
+                };
+
+                const cache = await PersistentCache.create<string>(
+                    generateUuid(),
+                    {dir: tmpDir.toString(), keyHashFn: throwingHashFn}
+                );
+
+                await expectAsync(cache.set("key", "value")).toBeResolved();
+            });
+
+
+            it("uses default hash when memoryCapacity is specified and keyHashFn is omitted", async () => {
+                const cache = await PersistentCache.create<string>(
+                    generateUuid(),
+                    {dir: tmpDir.toString(), memoryCapacity: 1}
+                );
+
+                await cache.set("keyA", "valueA");
+                await cache.set("keyB", "valueB");
+
+                // keyA should have been evicted from memory but remain on disk.
+                expect(await cache.has("keyA")).toBeTrue();
             });
 
 
@@ -124,9 +194,42 @@ describe("PersistentCache", () => {
             });
 
 
+            it("throws when memoryCapacity is zero", () => {
+                expect(() => {
+                    PersistentCache.createSync(generateUuid(), {dir: tmpDir.toString(), memoryCapacity: 0});
+                }).toThrowError(/memoryCapacity must be a positive integer when specified/);
+            });
+
+
+            it("throws when memoryCapacity is negative", () => {
+                expect(() => {
+                    PersistentCache.createSync(generateUuid(), {dir: tmpDir.toString(), memoryCapacity: -1});
+                }).toThrowError(/memoryCapacity must be a positive integer when specified/);
+            });
+
+
+            it("throws when memoryCapacity is not an integer", () => {
+                expect(() => {
+                    PersistentCache.createSync(generateUuid(), {dir: tmpDir.toString(), memoryCapacity: 1.5});
+                }).toThrowError(/memoryCapacity must be a positive integer when specified/);
+            });
+
+
             it("creates a PersistentCache instance", () => {
                 const cacheName = generateUuid();
                 const cache = PersistentCache.createSync(cacheName, {dir: tmpDir.toString()});
+                expect(cache).toBeTruthy();
+            });
+
+
+            it("accepts keyHashFn when memoryCapacity is specified", () => {
+                const keyHashFn = (key: string): HashString => hashStringFastSync(key);
+
+                const cache = PersistentCache.createSync(
+                    generateUuid(),
+                    {dir: tmpDir.toString(), memoryCapacity: 2, keyHashFn}
+                );
+
                 expect(cache).toBeTruthy();
             });
 
@@ -218,6 +321,19 @@ describe("PersistentCache", () => {
                 const cache = await PersistentCache.create<string>(generateUuid(), {dir: tmpDir.toString()});
                 await cache.set("key", "value");
                 expect(await cache.has("key")).toBeTrue();
+            });
+
+
+            it("returns true for an evicted key that still exists on disk", async () => {
+                const cache = await PersistentCache.create<string>(
+                    generateUuid(),
+                    {dir: tmpDir.toString(), memoryCapacity: 1}
+                );
+
+                await cache.set("keyA", "valueA");
+                await cache.set("keyB", "valueB");
+
+                expect(await cache.has("keyA")).toBeTrue();
             });
 
 
@@ -329,6 +445,26 @@ describe("PersistentCache", () => {
                 const opt = await cache.get("key");
                 expect(opt).toBeInstanceOf(SomeOption);
                 expect((opt as SomeOption<string>).value).toEqual("fallback");
+            });
+
+
+            it("uses persisted value when key was evicted from bounded memory cache", async () => {
+                const cache = await PersistentCache.create<string>(
+                    generateUuid(),
+                    {dir: tmpDir.toString(), memoryCapacity: 1}
+                );
+
+                await cache.set("keyA", "valueA");
+                await cache.set("keyB", "valueB");
+
+                let numFactoryCalls = 0;
+                const val = await cache.getOrSet("keyA", () => {
+                    numFactoryCalls += 1;
+                    return "newValue";
+                });
+
+                expect(val).toEqual("valueA");
+                expect(numFactoryCalls).toEqual(0);
             });
 
         });

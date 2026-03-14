@@ -1,3 +1,5 @@
+import { hashStringFastSync, type HashFn } from "@repo/depot/hash";
+import { LruCache } from "@repo/depot/lruCache";
 import { NoneOption, Option, SomeOption } from "@repo/depot/option";
 import type { MaybePromise } from "@repo/depot/typeUtils";
 import { Directory } from "./directory.mjs";
@@ -10,11 +12,38 @@ export interface IPersistentCacheOptions {
      * The directory where the cache will be persisted.  Default is process.cwd().
      */
     dir: string;
+
+    /**
+     * Maximum number of entries in the in-memory cache.
+     *
+     * Leave undefined for an unbounded in-memory cache.
+     *
+     * Set this to a positive integer to bound memory usage, which is
+     * recommended for long-running processes that could otherwise accumulate a
+     * large number of cached entries.
+     */
+    memoryCapacity?: number;
+
+    /**
+     * Hash function used for in-memory keys when memoryCapacity is specified.
+     *
+     * If omitted, hashStringFastSync is used.
+     */
+    keyHashFn?: HashFn<string>;
 }
 
 const defaultCacheOptions = {
     dir: process.cwd()
 } satisfies IPersistentCacheOptions;
+
+
+interface IMemoryCache<T> {
+    has(key: string): boolean;
+    get(key: string): T | undefined;
+    set(key: string, value: T): void;
+    delete(key: string): boolean;
+    clear(): void;
+}
 
 
 /**
@@ -46,10 +75,16 @@ export class PersistentCache<T> {
             throw new Error(`Directory "${resolvedOptions.dir}" does not exist.`);
         }
 
+        validateMemoryCapacityOption(resolvedOptions.memoryCapacity);
+
         // Create the directory for the cache being created.
         const cacheDir = new Directory(rootDir, name);
         await cacheDir.ensureExists();
-        return new PersistentCache<T>(cacheDir);
+        return new PersistentCache<T>(
+            cacheDir,
+            resolvedOptions.memoryCapacity,
+            resolvedOptions.keyHashFn
+        );
     }
 
 
@@ -72,16 +107,22 @@ export class PersistentCache<T> {
             throw new Error(`Directory "${resolvedOptions.dir}" does not exist.`);
         }
 
+        validateMemoryCapacityOption(resolvedOptions.memoryCapacity);
+
         // Create the directory for the cache being created.
         const cacheDir = new Directory(rootDir, name);
         cacheDir.ensureExistsSync();
-        return new PersistentCache<T>(cacheDir);
+        return new PersistentCache<T>(
+            cacheDir,
+            resolvedOptions.memoryCapacity,
+            resolvedOptions.keyHashFn
+        );
     }
 
 
     // region Instance Data Members
     private readonly _cacheDir: Directory;
-    private readonly _memCache = new Map<string, CacheEntry<T>>();
+    private readonly _memCache: IMemoryCache<CacheEntry<T>>;
     // endregion
 
 
@@ -90,9 +131,17 @@ export class PersistentCache<T> {
      * be created with the static `create()` method.
      * @param cacheDir - The directory for this cache.  This directory is
      * created in create() because it is async.
+     * @param memoryCapacity - In-memory cache capacity. If undefined, in-memory
+     * cache is unbounded.
+     * @param keyHashFn - Hash function used when memoryCapacity is specified.
      */
-    private constructor(cacheDir: Directory) {
+    private constructor(
+        cacheDir: Directory,
+        memoryCapacity?: number,
+        keyHashFn?: HashFn<string>
+    ) {
         this._cacheDir = cacheDir;
+        this._memCache = createMemoryCache<CacheEntry<T>>(memoryCapacity, keyHashFn);
     }
 
 
@@ -413,4 +462,50 @@ class CacheEntry<T> {
     public get payload(): T {
         return this._payload;
     }
+}
+
+
+function validateMemoryCapacityOption(memoryCapacity: number | undefined): void {
+    if (memoryCapacity === undefined) {
+        return;
+    }
+
+    if (!Number.isInteger(memoryCapacity) || memoryCapacity <= 0) {
+        throw new Error("memoryCapacity must be a positive integer when specified");
+    }
+}
+
+
+function createMemoryCache<T>(
+    memoryCapacity: number | undefined,
+    keyHashFn: HashFn<string> | undefined
+): IMemoryCache<T> {
+    if (memoryCapacity === undefined) {
+        return new Map<string, T>();
+    }
+
+    const resolvedHashFn = keyHashFn ?? hashStringFastSync;
+    const lru = new LruCache<string, T>(memoryCapacity, resolvedHashFn);
+    return {
+        has(key: string): boolean {
+            return lru.has(key);
+        },
+
+        get(key: string): T | undefined {
+            const opt = lru.get(key);
+            return opt.isSome ? opt.value : undefined;
+        },
+
+        set(key: string, value: T): void {
+            lru.set(key, value);
+        },
+
+        delete(key: string): boolean {
+            return lru.delete(key);
+        },
+
+        clear(): void {
+            lru.clear();
+        }
+    };
 }

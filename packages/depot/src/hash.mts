@@ -83,6 +83,29 @@ export function hashSync(
 }
 
 
+/**
+ * A fast, non-cryptographic hash for strings.
+ *
+ * This uses FNV-1a over UTF-16 code units and returns an 8-character hex
+ * string. It is intended for high-throughput hash table keying where speed is
+ * favored over cryptographic strength.
+ *
+ * @param str - The string to hash
+ * @return The hashed value of the string
+ */
+export function hashStringFastSync(str: string): HashString {
+    let hash = 0x811c9dc5;
+
+    for (let i = 0; i < str.length; i += 1) {
+        hash ^= str.charCodeAt(i);
+        hash = Math.imul(hash, 0x01000193) >>> 0;
+    }
+
+    const hashStr = hash.toString(16).padStart(8, "0");
+    return hashStr as HashString;
+}
+
+
 // Node.js implementation
 //
 // export function hash(
