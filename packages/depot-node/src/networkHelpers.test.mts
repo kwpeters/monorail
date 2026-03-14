@@ -1,7 +1,9 @@
 import * as net from "node:net";
+import * as http from "node:http";
 import * as _ from "lodash-es";
+import { FailedResult, SucceededResult } from "@repo/depot/result";
 import { getExternalIpv4Addresses, isTcpPortAvailable, getAvailableTcpPort,
-         selectAvailableTcpPort} from "./networkHelpers.mjs";
+         selectAvailableTcpPort, determinePort, urlIsGettable } from "./networkHelpers.mjs";
 
 
 interface IServerInfo {
@@ -91,6 +93,47 @@ describe("getAvailableTcpPort()", () => {
 });
 
 
+describe("urlIsGettable()", () => {
+
+    it("returns true when the URL is reachable", async () => {
+        const serverInfo = await startServerAtFirstAvailablePort();
+        await shutdownServer(serverInfo.server);
+
+        const server = http.createServer((_req, res) => {
+            res.statusCode = 200;
+            res.end("ok");
+        });
+
+        await new Promise<void>((resolve, reject) => {
+            server.on("error", reject);
+            server.listen({port: serverInfo.port}, () => {
+                resolve();
+            });
+        });
+
+        const gettable = await urlIsGettable(`http://127.0.0.1:${serverInfo.port}`);
+        expect(gettable).toEqual(true);
+
+        await new Promise<void>((resolve) => {
+            server.close(() => {
+                resolve();
+            });
+        });
+    });
+
+
+    it("returns false when the URL is unreachable", async () => {
+        const serverInfo = await startServerAtFirstAvailablePort();
+        await shutdownServer(serverInfo.server);
+
+        const gettable = await urlIsGettable(`http://127.0.0.1:${serverInfo.port}`);
+        expect(gettable).toEqual(false);
+    });
+
+
+});
+
+
 describe("selectAvailableTcpPort()", () => {
 
     it("will select a preferred port when it is not in use", async () => {
@@ -129,6 +172,42 @@ describe("selectAvailableTcpPort()", () => {
             shutdownServer(serverInfo1.server),
             shutdownServer(serverInfo2.server)
         ]);
+    });
+
+
+});
+
+
+describe("determinePort()", () => {
+
+    it("returns succeeded result with required port when it is available", async () => {
+        const serverInfo = await startServerAtFirstAvailablePort();
+        await shutdownServer(serverInfo.server);
+
+        const result = await determinePort({requiredPort: serverInfo.port});
+
+        expect(result).toEqual(new SucceededResult(serverInfo.port));
+    });
+
+
+    it("returns failed result when required port is not available", async () => {
+        const serverInfo = await startServerAtFirstAvailablePort();
+
+        const result = await determinePort({requiredPort: serverInfo.port});
+
+        expect(result).toEqual(new FailedResult(`Required port ${serverInfo.port} is not available.`));
+
+        await shutdownServer(serverInfo.server);
+    });
+
+
+    it("returns succeeded result with preferred port when it is available", async () => {
+        const serverInfo = await startServerAtFirstAvailablePort();
+        await shutdownServer(serverInfo.server);
+
+        const result = await determinePort({preferredPort: serverInfo.port});
+
+        expect(result).toEqual(new SucceededResult(serverInfo.port));
     });
 
 

@@ -1,6 +1,7 @@
 import * as os from "node:os";
 import * as net from "node:net";
 import * as _ from "lodash-es";
+import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 
 
 /**
@@ -87,6 +88,23 @@ export function getAvailableTcpPort(): Promise<number> {
 
 
 /**
+ * Determines whether a URL can be fetched with an HTTP GET request.
+ * @param url - The URL to fetch
+ * @return A promise that resolves with true when the request completes and
+ * false when it fails
+ */
+export async function urlIsGettable(url: string): Promise<boolean> {
+    try {
+        await fetch(url, { method: "GET" });
+        return true;
+    }
+    catch {
+        return false;
+    }
+}
+
+
+/**
  * Gets an available TCP port number, choosing from the optional preferred ports
  * first.  If none of those are available, the first available TCP port is
  * returned.
@@ -116,4 +134,42 @@ export async function selectAvailableTcpPort(...preferredPorts: Array<number>): 
 export interface IPortConfig {
     requiredPort?:  number;
     preferredPort?: number;
+}
+
+
+/**
+ * Determines a TCP port that a server can run at.
+ * @param portConfig - Object describing the port requirements/preferences
+ * @return A promise that resolves with Result containing either an available
+ * TCP port number or an error message if a required port is not available.
+ */
+export async function determinePort(portConfig?: IPortConfig): Promise<Result<number, string>> {
+    portConfig = portConfig ?? {};
+
+    let port: number;
+
+    if (!portConfig.requiredPort) {
+        // There is no required port.  Yield 0.
+        port = 0;
+    }
+    else {
+        // There is a required port.  If it is available, use it.  Otherwise
+        // reject.
+        const portIsAvailable = await isTcpPortAvailable(portConfig.requiredPort);
+        if (portIsAvailable) {
+            port = portConfig.requiredPort;
+        }
+        else {
+            return new FailedResult(`Required port ${portConfig.requiredPort} is not available.`);
+        }
+    }
+
+    // If we have decided on a port, use it.
+    if (port) {
+        return new SucceededResult(port);
+    }
+
+    // If the client specified a preferred port, try to use that.
+    // If not available, select a random one.
+    return new SucceededResult(await selectAvailableTcpPort(portConfig.preferredPort ?? 0));
 }
