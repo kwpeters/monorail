@@ -1,10 +1,34 @@
 import { generateUuid } from "@repo/depot/uuid";
+import { NoneOption, SomeOption } from "@repo/depot/option";
 import { getIllegalChars, PersistentCache } from "./persistentCache.mjs";
 import { tmpDir } from "./specHelpers.test.mjs";
 import { Directory } from "./directory.mjs";
+import { File } from "./file.mjs";
 
 
 describe("PersistentCache", () => {
+
+    function getIllegalNames(): Array<string> {
+        const names = [
+            "",
+            " ",
+            ".",
+            ".."
+        ];
+
+        if (process.platform === "win32") {
+            names.push(
+                "CON",
+                "NUL",
+                "COM1",
+                "LPT1",
+                "trailingSpace ",
+                "trailingDot."
+            );
+        }
+
+        return names;
+    }
 
     async function expectRejectMessage(
         operation: () => Promise<unknown>,
@@ -30,11 +54,13 @@ describe("PersistentCache", () => {
         describe("create()", () => {
 
             it("rejects when the cache name contains an illegal character", async () => {
-                const illegalChars = getIllegalChars();
+                const badNames = getIllegalChars().map((curIllegalChar) => {
+                    return "foo" + curIllegalChar + "bar";
+                })
+                .concat(getIllegalNames());
 
-                const promises = illegalChars.map((curIllegalChar) => {
-                    const name = "foo" + curIllegalChar + "bar";
-                    return PersistentCache.create<string>(name, {dir: tmpDir.toString()});
+                const promises = badNames.map((badName) => {
+                    return PersistentCache.create<string>(badName, {dir: tmpDir.toString()});
                 });
 
                 const inspections = await Promise.allSettled(promises);
@@ -42,7 +68,7 @@ describe("PersistentCache", () => {
                 .filter((curInspection) => curInspection.status === "rejected")
                 .length;
 
-                expect(numRejections).toEqual(illegalChars.length);
+                expect(numRejections).toEqual(badNames.length);
             });
 
 
@@ -75,10 +101,12 @@ describe("PersistentCache", () => {
         describe("createSync", () => {
 
             it("throws when the cache name contains an illegal character", () => {
-                const illegalChars = getIllegalChars();
+                const badNames = getIllegalChars().map((curIllegalChar) => {
+                    return "foo" + curIllegalChar + "bar";
+                })
+                .concat(getIllegalNames());
 
-                for (const curIllegalChar of illegalChars) {
-                    const name = "foo" + curIllegalChar + "bar";
+                for (const name of badNames) {
                     expect(() => {
                         PersistentCache.createSync<string>(name, {dir: tmpDir.toString()});
                     }).toThrowError(/Illegal cache name/i);
@@ -118,14 +146,17 @@ describe("PersistentCache", () => {
 
     describe("instance", () => {
 
-        describe("put()", () => {
+        describe("set()", () => {
 
             it("will reject when an illegal character appears in the key name", async () => {
-                const illegalChars = getIllegalChars();
+                const badKeyNames = getIllegalChars().map((curIllegalChar) => {
+                    return "foo" + curIllegalChar + "bar";
+                })
+                .concat(getIllegalNames());
 
                 const cache = await PersistentCache.create<string>(generateUuid(), {dir: tmpDir.toString()});
-                const promises = illegalChars.map((curIllegalChar) => {
-                    return cache.put("foo" + curIllegalChar + "bar", "quux");
+                const promises = badKeyNames.map((badKeyName) => {
+                    return cache.set(badKeyName, "quux");
                 });
 
                 const inspections = await Promise.allSettled(promises);
@@ -133,26 +164,28 @@ describe("PersistentCache", () => {
                 .filter((curInspection) => curInspection.status === "rejected")
                 .length;
 
-                expect(numRejections).toEqual(illegalChars.length);
+                expect(numRejections).toEqual(badKeyNames.length);
             });
 
 
             it("will store a value and resolve the returned promise", async () => {
                 const cache = await PersistentCache.create<string>(generateUuid(), {dir: tmpDir.toString()});
-                await cache.put("key", "value");
+                await cache.set("key", "value");
 
-                const val = await cache.get("key");
-                expect(val).toEqual("value");
+                const opt = await cache.get("key");
+                expect(opt).toBeInstanceOf(SomeOption);
+                expect((opt as SomeOption<string>).value).toEqual("value");
             });
 
 
             it("overwrites an existing key", async () => {
                 const cache = await PersistentCache.create<string>(generateUuid(), {dir: tmpDir.toString()});
-                await cache.put("key", "valueA");
-                await cache.put("key", "valueB");
+                await cache.set("key", "valueA");
+                await cache.set("key", "valueB");
 
-                const val = await cache.get("key");
-                expect(val).toEqual("valueB");
+                const opt = await cache.get("key");
+                expect(opt).toBeInstanceOf(SomeOption);
+                expect((opt as SomeOption<string>).value).toEqual("valueB");
             });
 
 
@@ -162,11 +195,49 @@ describe("PersistentCache", () => {
                 const val = generateUuid();
 
                 const cacheA = await PersistentCache.create<string>(cacheName, {dir: tmpDir.toString()});
-                await cacheA.put(key, val);
+                await cacheA.set(key, val);
 
                 const cacheB = await PersistentCache.create<string>(cacheName, {dir: tmpDir.toString()});
-                const readVal = await cacheB.get(key);
-                expect(readVal).toEqual(val);
+                const opt = await cacheB.get(key);
+                expect(opt).toBeInstanceOf(SomeOption);
+                expect((opt as SomeOption<string>).value).toEqual(val);
+            });
+
+        });
+
+
+        describe("has()", () => {
+
+            it("returns false for a key that does not exist", async () => {
+                const cache = await PersistentCache.create<string>(generateUuid(), {dir: tmpDir.toString()});
+                expect(await cache.has(generateUuid())).toBeFalse();
+            });
+
+
+            it("returns true for a key that exists in memory", async () => {
+                const cache = await PersistentCache.create<string>(generateUuid(), {dir: tmpDir.toString()});
+                await cache.set("key", "value");
+                expect(await cache.has("key")).toBeTrue();
+            });
+
+
+            it("returns true for a key that was persisted by another instance", async () => {
+                const cacheName = generateUuid();
+                const key = generateUuid();
+
+                const cacheA = await PersistentCache.create<string>(cacheName, {dir: tmpDir.toString()});
+                await cacheA.set(key, "value");
+
+                const cacheB = await PersistentCache.create<string>(cacheName, {dir: tmpDir.toString()});
+                expect(await cacheB.has(key)).toBeTrue();
+            });
+
+
+            it("returns false after a key is deleted", async () => {
+                const cache = await PersistentCache.create<string>(generateUuid(), {dir: tmpDir.toString()});
+                await cache.set("key", "value");
+                await cache.delete("key");
+                expect(await cache.has("key")).toBeFalse();
             });
 
         });
@@ -174,9 +245,90 @@ describe("PersistentCache", () => {
 
         describe("get()", () => {
 
-            it("will reject when the requested key does not exist", async () => {
+            it("returns a NoneOption when the requested key does not exist", async () => {
                 const cache = await PersistentCache.create<string>(generateUuid(), {dir: tmpDir.toString()});
-                await expectRejectMessage(() => cache.get(generateUuid()), /No value/);
+                const opt = await cache.get(generateUuid());
+                expect(opt).toBeInstanceOf(NoneOption);
+            });
+
+
+            it("returns NoneOption and deletes the file when persisted JSON is malformed", async () => {
+                const cacheName = generateUuid();
+                const badKey = generateUuid();
+
+                const cache = await PersistentCache.create<string>(cacheName, {dir: tmpDir.toString()});
+                const cacheDir = new Directory(tmpDir, cacheName);
+                const keyFile = new File(cacheDir, badKey + ".json");
+
+                await keyFile.write("{ this is not valid JSON");
+
+                const opt = await cache.get(badKey);
+                expect(opt).toBeInstanceOf(NoneOption);
+                expect(await keyFile.exists()).toBeUndefined();
+            });
+
+
+            it("returns NoneOption and deletes the file when persisted shape is invalid", async () => {
+                const cacheName = generateUuid();
+                const badKey = generateUuid();
+
+                const cache = await PersistentCache.create<string>(cacheName, {dir: tmpDir.toString()});
+                const cacheDir = new Directory(tmpDir, cacheName);
+                const keyFile = new File(cacheDir, badKey + ".json");
+
+                await keyFile.writeJson({value: "not-payload"});
+
+                const opt = await cache.get(badKey);
+                expect(opt).toBeInstanceOf(NoneOption);
+                expect(await keyFile.exists()).toBeUndefined();
+            });
+
+        });
+
+
+        describe("getOrSet()", () => {
+
+            it("returns existing value and does not call fallback factory", async () => {
+                const cache = await PersistentCache.create<string>(generateUuid(), {dir: tmpDir.toString()});
+                await cache.set("key", "existing");
+
+                let numFactoryCalls = 0;
+                const val = await cache.getOrSet("key", () => {
+                    numFactoryCalls += 1;
+                    return "new";
+                });
+
+                expect(val).toEqual("existing");
+                expect(numFactoryCalls).toEqual(0);
+            });
+
+
+            it("stores and returns fallback factory value when key is missing", async () => {
+                const cache = await PersistentCache.create<string>(generateUuid(), {dir: tmpDir.toString()});
+
+                const val = await cache.getOrSet("key", () => "fallback");
+
+                expect(val).toEqual("fallback");
+                const opt = await cache.get("key");
+                expect(opt).toBeInstanceOf(SomeOption);
+                expect((opt as SomeOption<string>).value).toEqual("fallback");
+            });
+
+
+            it("stores and returns async fallback factory value when key is missing", async () => {
+                const cache = await PersistentCache.create<string>(generateUuid(), {dir: tmpDir.toString()});
+
+                let numFactoryCalls = 0;
+                const val = await cache.getOrSet("key", () => {
+                    numFactoryCalls += 1;
+                    return "fallback";
+                });
+
+                expect(val).toEqual("fallback");
+                expect(numFactoryCalls).toEqual(1);
+                const opt = await cache.get("key");
+                expect(opt).toBeInstanceOf(SomeOption);
+                expect((opt as SomeOption<string>).value).toEqual("fallback");
             });
 
         });
@@ -189,17 +341,89 @@ describe("PersistentCache", () => {
                 const key = generateUuid();
                 const val = generateUuid();
 
-                await cache.put(key, val);
-                expect(await cache.get(key)).toEqual(val);
+                await cache.set(key, val);
+                const optBefore = await cache.get(key);
+                expect(optBefore).toBeInstanceOf(SomeOption);
 
-                await cache.delete(key);
-                await expectRejectMessage(() => cache.get(key), /No value/);
+                const didDelete = await cache.delete(key);
+                expect(didDelete).toBeTrue();
+                const optAfter = await cache.get(key);
+                expect(optAfter).toBeInstanceOf(NoneOption);
             });
 
 
             it("does not throw when deleting a key that does not exist", async () => {
                 const cache = await PersistentCache.create<string>(generateUuid(), {dir: tmpDir.toString()});
-                await expectAsync(cache.delete(generateUuid())).toBeResolved();
+                expect(await cache.delete(generateUuid())).toBeFalse();
+            });
+
+
+            it("returns true when key only exists on disk", async () => {
+                const cacheName = generateUuid();
+                const key = generateUuid();
+
+                const cacheA = await PersistentCache.create<string>(cacheName, {dir: tmpDir.toString()});
+                await cacheA.set(key, "value");
+
+                const cacheB = await PersistentCache.create<string>(cacheName, {dir: tmpDir.toString()});
+                expect(await cacheB.delete(key)).toBeTrue();
+            });
+
+        });
+
+
+        describe("clear()", () => {
+
+            it("removes all keys from the current cache instance", async () => {
+                const cache = await PersistentCache.create<string>(generateUuid(), {dir: tmpDir.toString()});
+
+                await cache.set("keyA", "valueA");
+                await cache.set("keyB", "valueB");
+
+                await cache.clear();
+
+                const keys = await cache.keys();
+                expect(keys).toEqual([]);
+
+                const optA = await cache.get("keyA");
+                const optB = await cache.get("keyB");
+
+                expect(optA).toBeInstanceOf(NoneOption);
+                expect(optB).toBeInstanceOf(NoneOption);
+            });
+
+
+            it("removes persisted keys so another instance sees an empty cache", async () => {
+                const cacheName = generateUuid();
+
+                const cacheA = await PersistentCache.create<string>(cacheName, {dir: tmpDir.toString()});
+                await cacheA.set("keyA", "valueA");
+                await cacheA.set("keyB", "valueB");
+                await cacheA.clear();
+
+                const cacheB = await PersistentCache.create<string>(cacheName, {dir: tmpDir.toString()});
+                const keys = await cacheB.keys();
+                expect(keys).toEqual([]);
+            });
+
+
+            it("does not throw when called on an empty cache", async () => {
+                const cache = await PersistentCache.create<string>(generateUuid(), {dir: tmpDir.toString()});
+                await expectAsync(cache.clear()).toBeResolved();
+                expect(await cache.keys()).toEqual([]);
+            });
+
+
+            it("keeps cache usable after clear", async () => {
+                const cache = await PersistentCache.create<string>(generateUuid(), {dir: tmpDir.toString()});
+                await cache.set("key", "value");
+
+                await cache.clear();
+                await cache.set("key2", "value2");
+
+                const opt = await cache.get("key2");
+                expect(opt).toBeInstanceOf(SomeOption);
+                expect((opt as SomeOption<string>).value).toEqual("value2");
             });
 
         });
@@ -215,9 +439,9 @@ describe("PersistentCache", () => {
 
                 const cacheA = await PersistentCache.create(cacheName, {dir: tmpDir.toString()});
                 await Promise.all([
-                    cacheA.put(key1, generateUuid()),
-                    cacheA.put(key2, generateUuid()),
-                    cacheA.put(key3, generateUuid())
+                    cacheA.set(key1, generateUuid()),
+                    cacheA.set(key2, generateUuid()),
+                    cacheA.set(key3, generateUuid())
                 ]);
 
                 const cacheB = await PersistentCache.create(cacheName, {dir: tmpDir.toString()});
@@ -243,8 +467,8 @@ describe("PersistentCache", () => {
                 const keyA = generateUuid();
                 const keyB = generateUuid();
 
-                await cache.put(keyA, generateUuid());
-                await cache.put(keyB, generateUuid());
+                await cache.set(keyA, generateUuid());
+                await cache.set(keyB, generateUuid());
                 await cache.delete(keyA);
 
                 const keys = await cache.keys();

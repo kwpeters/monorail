@@ -1,5 +1,8 @@
+import { NoneOption, Option, SomeOption } from "@repo/depot/option";
+import type { MaybePromise } from "@repo/depot/typeUtils";
 import { Directory } from "./directory.mjs";
 import { File } from "./file.mjs";
+import { getOs, OperatingSystem } from "./os.mjs";
 
 
 export interface IPersistentCacheOptions {
@@ -27,7 +30,10 @@ export class PersistentCache<T> {
      * @return A promise that resolves with the new cache instance or rejects
      * if there were any errors.
      */
-    public static async create<T>(name: string, options?: Partial<IPersistentCacheOptions>): Promise<PersistentCache<T>> {
+    public static async create<T>(
+        name: string,
+        options?: Partial<IPersistentCacheOptions>
+    ): Promise<PersistentCache<T>> {
         if (!isValidFilesystemName(name)) {
             throw new Error("Illegal cache name");
         }
@@ -43,10 +49,16 @@ export class PersistentCache<T> {
         // Create the directory for the cache being created.
         const cacheDir = new Directory(rootDir, name);
         await cacheDir.ensureExists();
-        return new PersistentCache<T>(name, cacheDir);
+        return new PersistentCache<T>(cacheDir);
     }
 
 
+    /**
+     * Synchronously creates a new PersistentCache instance.
+     * @param name - The name of the cache
+     * @param options - Configuration options.  See IPersistentCacheOptions.
+     * @return The new cache instance
+     */
     public static createSync<T>(name: string, options?: Partial<IPersistentCacheOptions>): PersistentCache<T> {
         if (!isValidFilesystemName(name)) {
             throw new Error("Illegal cache name");
@@ -63,26 +75,23 @@ export class PersistentCache<T> {
         // Create the directory for the cache being created.
         const cacheDir = new Directory(rootDir, name);
         cacheDir.ensureExistsSync();
-        return new PersistentCache<T>(name, cacheDir);
+        return new PersistentCache<T>(cacheDir);
     }
 
 
     // region Instance Data Members
-    private readonly _name:     string;
     private readonly _cacheDir: Directory;
-    private readonly _memCache: Record<string, CacheEntry<T>> = {};
+    private readonly _memCache = new Map<string, CacheEntry<T>>();
     // endregion
 
 
     /**
      * Creates a new PersistentCache instance.  Private because instances should
      * be created with the static `create()` method.
-     * @param name - The name of this cache
-     * @param cacheDir - The name of this cache's directory.  This directory is
+     * @param cacheDir - The directory for this cache.  This directory is
      * created in create() because it is async.
      */
-    private constructor(name: string, cacheDir: Directory) {
-        this._name     = name;
+    private constructor(cacheDir: Directory) {
         this._cacheDir = cacheDir;
     }
 
@@ -94,14 +103,14 @@ export class PersistentCache<T> {
      * @return A promise that resolves when the value has been stored.  Rejects
      * if the specified key name is invalid.
      */
-    public async put(key: string, val: T): Promise<void> {
+    public async set(key: string, val: T): Promise<void> {
         if (!isValidFilesystemName(key)) {
             throw new Error(`Invalid character in key ${key}`);
         }
 
         // Add the entry to the memory cache.
         const entry = new CacheEntry(val);
-        this._memCache[key] = entry;
+        this._memCache.set(key, entry);
 
         // Add the entry to the persistent store.
         const keyFile = this.keyToKeyFile(key);
@@ -110,15 +119,32 @@ export class PersistentCache<T> {
 
 
     /**
+     * Checks whether a key exists in this cache without fetching its value.
+     * @param key - The key to check
+     * @return A promise that resolves with true if the key exists, false
+     * otherwise
+     */
+    public async has(key: string): Promise<boolean> {
+        if (this._memCache.has(key)) {
+            return true;
+        }
+        const keyFile = this.keyToKeyFile(key);
+        const stat = await keyFile.exists();
+        return stat !== undefined;
+    }
+
+
+    /**
      * Reads a value from this cache.
      * @param key - The key to read
-     * @return A promise that resolves with the value.  The promise rejects if
-     * `key` is not in this cache.
+     * @return A promise that resolves with a SomeOption containing the value
+     * if the key exists, or a NoneOption if the key is not present.
      */
-    public async get(key: string): Promise<T> {
+    public async get(key: string): Promise<Option<T>> {
         // If the requested key is in the memory cache, use it.
-        if (Object.prototype.hasOwnProperty.call(this._memCache, key)) {
-            return this._memCache[key]!.payload;
+        const memEntry = this._memCache.get(key);
+        if (memEntry !== undefined) {
+            return new SomeOption(memEntry.payload);
         }
 
         // See if the requested key is persisted.
@@ -127,29 +153,78 @@ export class PersistentCache<T> {
 
         // If the requested key is not persisted, we do not have it.
         if (!exists) {
-            throw new Error("No value");
+            return NoneOption.get();
         }
 
         // The requested key was persisted.  Load it, put it in the memory
         // cache and return the value to the caller.
-        const data = await keyFile.readJson<{payload: T}>();
-        const entry = CacheEntry.deserialize<T>(data);
-        this._memCache[key] = entry;
-        return entry.payload;
+        try {
+            const data = await keyFile.readJson<unknown>();
+            if (!isSerializedCacheEntry(data)) {
+                // Self-heal by removing corrupted entries.
+                await keyFile.delete();
+                return NoneOption.get();
+            }
+
+            const entry = CacheEntry.deserialize<T>({payload: data.payload as T});
+            this._memCache.set(key, entry);
+            return new SomeOption(entry.payload);
+        }
+        catch {
+            // Self-heal by removing corrupted entries.
+            await keyFile.delete();
+            return NoneOption.get();
+        }
+    }
+
+
+    /**
+     * Reads a value from this cache or computes and stores it when missing.
+     * @param key - The key to read or create
+     * @param fallbackFactory - Factory used when key is missing
+     * @return The extant or newly-computed value
+     */
+    public async getOrSet(key: string, fallbackFactory: () => MaybePromise<T>): Promise<T>;
+
+
+    public async getOrSet(
+        key: string,
+        fallbackFactory: () => MaybePromise<T>
+    ): Promise<T> {
+        const optExisting = await this.get(key);
+        if (optExisting.isSome) {
+            return optExisting.value;
+        }
+
+        const value = await fallbackFactory();
+        await this.set(key, value);
+        return value;
     }
 
 
     /**
      * Deletes the specified key from this cache
      * @param key - The key to delete
-     * @return A promise that resolves when the operation is complete
+     * @return A promise that resolves with true if the key existed
      */
-    public async delete(key: string): Promise<void> {
+    public async delete(key: string): Promise<boolean> {
         // Remove it from the memory cache.
-        delete this._memCache[key];
+        const removedFromMemory = this._memCache.delete(key);
         // Remove it from the persistent store.
         const keyFile = this.keyToKeyFile(key);
+        const removedFromDisk = await keyFile.exists();
         await keyFile.delete();
+        return removedFromMemory || (removedFromDisk !== undefined);
+    }
+
+
+    /**
+     * Deletes all keys from this cache.
+     * @return A promise that resolves when the cache has been cleared
+     */
+    public async clear(): Promise<void> {
+        this._memCache.clear();
+        await this._cacheDir.empty();
     }
 
 
@@ -223,6 +298,15 @@ export function getIllegalChars(): Array<string> {
  * @return true if `name` is valid.  false otherwise.
  */
 function isValidFilesystemName(name: string): boolean {
+    if (name.length === 0 || /^\s+$/u.test(name)) {
+        return false;
+    }
+
+    // Dot and dot-dot are special directory names.
+    if (name === "." || name === "..") {
+        return false;
+    }
+
     // FUTURE: Could use the info in the following article to do a better job
     //         validating names.
     //         https://kb.acronis.com/content/39790
@@ -234,8 +318,53 @@ function isValidFilesystemName(name: string): boolean {
         }
     }
 
+    if (getOs() === OperatingSystem.Windows) {
+        // Windows does not allow trailing spaces or periods in names.
+        if (name.endsWith(" ") || name.endsWith(".")) {
+            return false;
+        }
+
+        const nameStem = name.split(".")[0]!.toUpperCase();
+        if (windowsReservedDeviceNames.has(nameStem)) {
+            return false;
+        }
+    }
+
     return true;
 }
+
+
+function isSerializedCacheEntry(data: unknown): data is {payload: unknown} {
+    return typeof data === "object" &&
+        data !== null &&
+        Object.prototype.hasOwnProperty.call(data, "payload");
+}
+
+
+const windowsReservedDeviceNames = new Set([
+    "CON",
+    "PRN",
+    "AUX",
+    "NUL",
+    "COM1",
+    "COM2",
+    "COM3",
+    "COM4",
+    "COM5",
+    "COM6",
+    "COM7",
+    "COM8",
+    "COM9",
+    "LPT1",
+    "LPT2",
+    "LPT3",
+    "LPT4",
+    "LPT5",
+    "LPT6",
+    "LPT7",
+    "LPT8",
+    "LPT9"
+]);
 
 
 class CacheEntry<T> {
