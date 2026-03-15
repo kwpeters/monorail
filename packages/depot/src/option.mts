@@ -28,6 +28,7 @@ export class SomeOption<T> {
     }
 
     public augment<TAugment>(
+        this: SomeOption<T & object>,
         fn: (val: T) => Option<TAugment>
     ): Option<T & TAugment> {
         const fnOpt = fn(this._value);
@@ -41,6 +42,7 @@ export class SomeOption<T> {
 
 
     public async augmentAsync<TAugment>(
+        this: SomeOption<T & object>,
         fn: (val: T) => Promise<Option<TAugment>>
     ): Promise<Option<T & TAugment>> {
         const fnOpt = await fn(this._value);
@@ -496,10 +498,15 @@ export namespace Option {
      * Otherwise, a successful Option containing all properties of the original
      * input and the value returned by _fn_.
      */
-    export function augment<TInput, TAugment>(
+    export function augment<TInput extends object, TAugment>(
         fn: (input: TInput) => Option<TAugment>,
         input: Option<TInput>
     ): Option<TInput & TAugment> {
+        // Narrow input to SomeOption so TypeScript can verify the `this`
+        // constraint on augment(), which requires T to extend object.
+        if (input.isNone) {
+            return input;
+        }
         return input.augment(fn);
     }
 
@@ -513,10 +520,15 @@ export namespace Option {
      * @param input - The input Option
      * @return A Promise for the augmented Option
      */
-    export function augmentAsync<TInput, TAugment>(
+    export function augmentAsync<TInput extends object, TAugment>(
         fn: (input: TInput) => Promise<Option<TAugment>>,
         input: Option<TInput>
     ): Promise<Option<TInput & TAugment>> {
+        // Narrow input to SomeOption so TypeScript can verify the `this`
+        // constraint on augmentAsync(), which requires T to extend object.
+        if (input.isNone) {
+            return Promise.resolve(input);
+        }
         return input.augmentAsync(fn);
     }
 

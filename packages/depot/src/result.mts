@@ -40,6 +40,7 @@ export class SucceededResult<TSuccess> {
 
 
     public augment<TFnSuccess, TFnError>(
+        this: SucceededResult<TSuccess & object>,
         fn: (input: TSuccess) => Result<TFnSuccess, TFnError>
     ): Result<TSuccess & TFnSuccess, TFnError> {
         const res = fn(this._value);
@@ -54,6 +55,7 @@ export class SucceededResult<TSuccess> {
 
 
     public async augmentAsync<TFnSuccess, TFnError>(
+        this: SucceededResult<TSuccess & object>,
         fn: (input: TSuccess) => Promise<Result<TFnSuccess, TFnError>>
     ): Promise<Result<TSuccess & TFnSuccess, TFnError>> {
         const res = await fn(this._value);
@@ -954,10 +956,15 @@ export namespace Result {
      * Otherwise, a successful Result containing all properties of the original
      * input and the value returned by _fn_.
      */
-    export function augment<TInputSuccess, TInputError, TFnSuccess, TFnError>(
+    export function augment<TInputSuccess extends object, TInputError, TFnSuccess, TFnError>(
         fn: (input: TInputSuccess) => Result<TFnSuccess, TFnError>,
         input: Result<TInputSuccess, TInputError>
     ): Result<TInputSuccess & TFnSuccess, TInputError | TFnError> {
+        // Narrow input to SucceededResult so TypeScript can verify the `this`
+        // constraint on augment(), which requires TSuccess to extend object.
+        if (input.failed) {
+            return input;
+        }
         return input.augment(fn);
     }
 
@@ -971,10 +978,15 @@ export namespace Result {
      * @param input - The input Result
      * @return A Promise for the augmented Result
      */
-    export function augmentAsync<TInputSuccess, TInputError, TFnSuccess, TFnError>(
+    export function augmentAsync<TInputSuccess extends object, TInputError, TFnSuccess, TFnError>(
         fn: (input: TInputSuccess) => Promise<Result<TFnSuccess, TFnError>>,
         input: Result<TInputSuccess, TInputError>
     ): Promise<Result<TInputSuccess & TFnSuccess, TInputError | TFnError>> {
+        // Narrow input to SucceededResult so TypeScript can verify the `this`
+        // constraint on augmentAsync(), which requires TSuccess to extend object.
+        if (input.failed) {
+            return Promise.resolve(input);
+        }
         return input.augmentAsync(fn);
     }
 
