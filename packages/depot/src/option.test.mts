@@ -1,6 +1,7 @@
 import { assertNever } from "./never.mjs";
 import { Option, SomeOption, NoneOption } from "./option.mjs";
 import { pipe } from "./pipe2.mjs";
+import { pipeAsync } from "./pipeAsync2.mjs";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -284,6 +285,38 @@ describe("Option namespace", () => {
     });
 
 
+    describe("bindAsync()", () => {
+
+        it("with none input the option is passed along and the function is not invoked", async () => {
+            let numInvocations = 0;
+            const fn = async (x: number) => {
+                await Promise.resolve(0);
+                numInvocations++;
+                return new SomeOption(x + 1);
+            };
+
+            const opt = await Option.bindAsync(fn, NoneOption.get());
+            expect(opt.isNone).toBeTruthy();
+            expect(numInvocations).toEqual(0);
+        });
+
+
+        it("with some input the function is invoked and the returned option is returned", async () => {
+            let numInvocations = 0;
+            const fn = async (x: number) => {
+                await Promise.resolve(0);
+                numInvocations++;
+                return new SomeOption(x + 1);
+            };
+
+            const val = (await Option.bindAsync(fn, new SomeOption(3))).throwIfNone();
+            expect(val).toEqual(4);
+            expect(numInvocations).toEqual(1);
+        });
+
+    });
+
+
     describe("bindNone()", () => {
 
         it("with some input the Option is passed along and the function is not invoked", () => {
@@ -329,6 +362,52 @@ describe("Option namespace", () => {
     });
 
 
+    describe("bindNoneAsync()", () => {
+
+        it("with some input the Option is passed along and the function is not invoked", async () => {
+            let numInvocations = 0;
+
+            const val = await pipeAsync(
+                new SomeOption(1),
+                (opt) => Option.bindNoneAsync(
+                    async () => {
+                        await Promise.resolve(0);
+                        numInvocations++;
+                        return new SomeOption(2);
+                    },
+                    opt
+                ),
+                (opt) => opt.throwIfNone()
+            );
+
+            expect(val).toEqual(1);
+            expect(numInvocations).toEqual(0);
+        });
+
+
+        it("with none input the function is invoked and its Option is returned", async () => {
+            let numInvocations = 0;
+
+            const val = await pipeAsync(
+                NoneOption.get(),
+                (opt) => Option.bindNoneAsync(
+                    async () => {
+                        await Promise.resolve(0);
+                        numInvocations++;
+                        return new SomeOption(2);
+                    },
+                    opt
+                ),
+                (opt) => opt.throwIfNone()
+            );
+
+            expect(val).toEqual(2);
+            expect(numInvocations).toEqual(1);
+        });
+
+    });
+
+
     describe("choose()", () => {
 
 
@@ -338,6 +417,27 @@ describe("Option namespace", () => {
                 [1, 2, 3, 4, 5, 6],
                 (input) => Option.choose(
                     (n) => n % 2 === 0 ? new SomeOption(n + 1) : NoneOption.get(),
+                    input
+                )
+            );
+
+            expect(result).toEqual([3, 5, 7]);
+
+        });
+
+
+    });
+
+
+    describe("chooseAsync()", () => {
+
+
+        it("returns an array where only Some async mappings are included", async () => {
+
+            const result = await pipeAsync(
+                [1, 2, 3, 4, 5, 6],
+                (input) => Option.chooseAsync(
+                    (n) => Promise.resolve(n % 2 === 0 ? new SomeOption(n + 1) : NoneOption.get()),
                     input
                 )
             );
@@ -497,6 +597,63 @@ describe("Option namespace", () => {
     });
 
 
+    describe("mapSomeAsync()", () => {
+
+        it("with none input the option is passed along and the function is not invoked", async () => {
+            let numInvocations = 0;
+            const add1 = async (x: number) => {
+                await Promise.resolve(0);
+                numInvocations++;
+                return x + 1;
+            };
+
+            const opt = await Option.mapSomeAsync(add1, NoneOption.get());
+            expect(opt.isNone).toBeTruthy();
+            expect(numInvocations).toEqual(0);
+        });
+
+
+        it("with some input the function is invoked and its return value is wrapped in a some option", async () => {
+            let numInvocations = 0;
+            const add1 = async (x: number) => {
+                await Promise.resolve(0);
+                numInvocations++;
+                return x + 1;
+            };
+
+            const val = (await Option.mapSomeAsync(add1, new SomeOption(3))).throwIfNone();
+            expect(val).toEqual(4);
+            expect(numInvocations).toEqual(1);
+        });
+
+    });
+
+
+    describe("augmentAsync()", () => {
+
+        it("if the input is None, returns None without invoking the function", async () => {
+            let numInvocations = 0;
+            const fn = async (props: {b: number}) => {
+                await Promise.resolve(0);
+                numInvocations++;
+                return new SomeOption({c: props.b + 1});
+            };
+
+            const res = await Option.augmentAsync(fn, NoneOption.get() as Option<{b: number}>);
+            expect(res).toEqual(NoneOption.get());
+            expect(numInvocations).toEqual(0);
+        });
+
+
+        it("if the input and fn return Some, returns merged properties", async () => {
+            const fn = (props: {a: number}) => Promise.resolve(new SomeOption({b: props.a + 1}));
+            const res = await Option.augmentAsync(fn, new SomeOption({a: 1}));
+            expect(res).toEqual(new SomeOption({a: 1, b: 2}));
+        });
+
+    });
+
+
     describe("match()", () => {
 
         it("when given a Some invokes only the first function and returns the returned value", () => {
@@ -543,11 +700,109 @@ describe("Option namespace", () => {
     });
 
 
+    describe("defaultWithAsync()", () => {
+
+        it("when given a Some value returns the contained value without invoking the function", async () => {
+            let numInvocations = 0;
+            const getDefault = async () => { await Promise.resolve(0); numInvocations++; return 99; };
+
+            const result = await Option.defaultWithAsync(getDefault, new SomeOption(5) as Option<number>);
+            expect(result).toEqual(5);
+            expect(numInvocations).toEqual(0);
+        });
+
+
+        it("when given a None value invokes the function and returns the result", async () => {
+            let numInvocations = 0;
+            const getDefault = async () => { await Promise.resolve(0); numInvocations++; return 99; };
+
+            const result = await Option.defaultWithAsync(getDefault, NoneOption.get() as Option<number>);
+            expect(result).toEqual(99);
+            expect(numInvocations).toEqual(1);
+        });
+
+    });
+
+
+    describe("matchAsync()", () => {
+
+        it("when given a Some invokes only fnSome and returns the result", async () => {
+            let someFnInvocations = 0;
+            let noneFnInvocations = 0;
+
+            const someFn = async (x: number) => { await Promise.resolve(0); someFnInvocations++; return x + 1; };
+            const noneFn = async () => { await Promise.resolve(0); noneFnInvocations++; return "error message"; };
+
+            const opt = new SomeOption(5) as Option<number>;
+            const output = await Option.matchAsync(someFn, noneFn, opt);
+            expect(output).toEqual(6);
+            expect(someFnInvocations).toEqual(1);
+            expect(noneFnInvocations).toEqual(0);
+        });
+
+
+        it("when given a None invokes only fnNone and returns the result", async () => {
+            let someFnInvocations = 0;
+            let noneFnInvocations = 0;
+
+            const someFn = async (x: number) => { await Promise.resolve(0); someFnInvocations++; return x + 1; };
+            const noneFn = async () => { await Promise.resolve(0); noneFnInvocations++; return "error message"; };
+
+            const opt = NoneOption.get() as Option<number>;
+            const output = await Option.matchAsync(someFn, noneFn, opt);
+            expect(output).toEqual("error message");
+            expect(someFnInvocations).toEqual(0);
+            expect(noneFnInvocations).toEqual(1);
+        });
+
+    });
+
+
+    describe("matchWithAsync()", () => {
+
+        it("when given a Some invokes only the some handler and returns the result", async () => {
+            let someFnInvocations = 0;
+            let noneFnInvocations = 0;
+
+            const opt = new SomeOption(5) as Option<number>;
+            const output = await Option.matchWithAsync(
+                {
+                    some: async (x) => { await Promise.resolve(0); someFnInvocations++; return x + 1; },
+                    none: async () => { await Promise.resolve(0); noneFnInvocations++; return "error message"; }
+                },
+                opt
+            );
+            expect(output).toEqual(6);
+            expect(someFnInvocations).toEqual(1);
+            expect(noneFnInvocations).toEqual(0);
+        });
+
+
+        it("when given a None invokes only the none handler and returns the result", async () => {
+            let someFnInvocations = 0;
+            let noneFnInvocations = 0;
+
+            const opt = NoneOption.get() as Option<number>;
+            const output = await Option.matchWithAsync(
+                {
+                    some: async (x: number) => { await Promise.resolve(0); someFnInvocations++; return x + 1; },
+                    none: async () => { await Promise.resolve(0); noneFnInvocations++; return "error message"; }
+                },
+                opt
+            );
+            expect(output).toEqual("error message");
+            expect(someFnInvocations).toEqual(0);
+            expect(noneFnInvocations).toEqual(1);
+        });
+
+    });
+
+
     describe("throwIfNoneWith()", () => {
 
         it("unwraps the Option when it is a SomeOption", () => {
             const opt = new SomeOption(5);
-            const unwrapped = Option.throwIfNoneWith("error message", opt);
+            const unwrapped = Option.throwIfNoneWith(() => "error message", opt);
             expect(unwrapped).toEqual(5);
         });
 
@@ -555,8 +810,47 @@ describe("Option namespace", () => {
         it("throws when the Option is a NoneOption", () => {
             const opt = NoneOption.get();
             expect(() => {
-                const __unwrapped = Option.throwIfNoneWith("the error message", opt);
+                const __unwrapped = Option.throwIfNoneWith(() => "the error message", opt);
             }).toThrowError("the error message");
+        });
+
+    });
+
+
+    describe("throwIfNoneWithAsync()", () => {
+
+        it("unwraps the Option when it is a SomeOption", async () => {
+            const opt = new SomeOption(5);
+            const unwrapped = await Option.throwIfNoneWithAsync(() => Promise.resolve("error message"), opt);
+            expect(unwrapped).toEqual(5);
+        });
+
+
+        it("throws when the Option is a NoneOption", async () => {
+            const opt = NoneOption.get();
+            await expectAsync(
+                Option.throwIfNoneWithAsync(() => Promise.resolve("the error message"), opt)
+            ).toBeRejectedWithError("the error message");
+        });
+
+    });
+
+
+    describe("throwIfSomeWithAsync()", () => {
+
+        it("resolves when the Option is a NoneOption", async () => {
+            const opt = NoneOption.get() as Option<number>;
+            await expectAsync(
+                Option.throwIfSomeWithAsync((val) => Promise.resolve(`unexpected some value: ${val}`), opt)
+            ).toBeResolved();
+        });
+
+
+        it("rejects when the Option is a SomeOption", async () => {
+            const opt = new SomeOption(5);
+            await expectAsync(
+                Option.throwIfSomeWithAsync((val) => Promise.resolve(`some value: ${val}`), opt)
+            ).toBeRejectedWithError("some value: 5");
         });
 
     });

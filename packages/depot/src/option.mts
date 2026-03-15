@@ -39,6 +39,20 @@ export class SomeOption<T> {
         return new SomeOption(augmented);
     }
 
+
+    public async augmentAsync<TAugment>(
+        fn: (val: T) => Promise<Option<TAugment>>
+    ): Promise<Option<T & TAugment>> {
+        const fnOpt = await fn(this._value);
+        if (fnOpt.isNone) {
+            return fnOpt;
+        }
+
+        const augmented = { ...this._value, ...fnOpt._value};
+        return new SomeOption(augmented);
+    }
+
+
     public bind<TOut>(
         fn: (val: T) => Option<TOut>
     ): Option<TOut> {
@@ -46,11 +60,28 @@ export class SomeOption<T> {
         return opt;
     }
 
+
+    public bindAsync<TOut>(
+        fn: (val: T) => Promise<Option<TOut>>
+    ): Promise<Option<TOut>> {
+        const opt = fn(this._value);
+        return opt;
+    }
+
+
     public bindNone<TOut>(
         fn: () => Option<TOut>
     ): this {
         return this;
     }
+
+
+    public bindNoneAsync<TOut>(
+        fn: () => Promise<Option<TOut>>
+    ): Promise<this> {
+        return Promise.resolve(this);
+    }
+
 
     public defaultValue<TDefault>(
         defaultValue: TDefault
@@ -58,16 +89,33 @@ export class SomeOption<T> {
         return this._value;
     }
 
+
     public defaultWith<TDefault>(
         fn: () => TDefault
     ): T {
         return this._value;
     }
 
+
+    public defaultWithAsync<TDefault>(
+        fn: () => Promise<TDefault>
+    ): Promise<T> {
+        return Promise.resolve(this._value);
+    }
+
+
     public mapSome<TOut>(
         fn: (val: T) => TOut
     ): Option<TOut> {
         const newVal = fn(this._value);
+        return new SomeOption(newVal);
+    }
+
+
+    public async mapSomeAsync<TOut>(
+        fn: (val: T) => Promise<TOut>
+    ): Promise<Option<TOut>> {
+        const newVal = await fn(this._value);
         return new SomeOption(newVal);
     }
 
@@ -79,6 +127,15 @@ export class SomeOption<T> {
         return out;
     }
 
+
+    public matchAsync<TSomeOut, TNoneOut>(
+        fnSome: (val: T) => Promise<TSomeOut>,
+        fnNone: () => Promise<TNoneOut>
+    ): Promise<TSomeOut> {
+        return fnSome(this._value);
+    }
+
+
     public matchWith<TSomeOut, TNoneOut>(
         matcherFns: {some: (val: T) => TSomeOut, none: () => TNoneOut}
     ): TSomeOut {
@@ -86,25 +143,51 @@ export class SomeOption<T> {
         return out;
     }
 
+
+    public matchWithAsync<TSomeOut, TNoneOut>(
+        matcherFns: {some: (val: T) => Promise<TSomeOut>, none: () => Promise<TNoneOut>}
+    ): Promise<TSomeOut> {
+        return matcherFns.some(this._value);
+    }
+
+
     public throwIfNone(): T {
         return this._value;
     }
 
+
     public throwIfNoneWith(
-        errorMsg: string
+        fn: () => string
     ): T {
         return this._value;
     }
+
+
+    public throwIfNoneWithAsync(
+        fn: () => Promise<string>
+    ): Promise<T> {
+        return Promise.resolve(this._value);
+    }
+
 
     public throwIfSome(): void {
         const errMsg = `Expected no value but got "${inspect(this._value)}"`;
         throw new Error(errMsg);
     }
 
+
     public throwIfSomeWith(
         fn: (val: T) => string
     ): void {
         const errorMsg = fn(this._value);
+        throw new Error(errorMsg);
+    }
+
+
+    public async throwIfSomeWithAsync(
+        fn: (val: T) => Promise<string>
+    ): Promise<void> {
+        const errorMsg = await fn(this._value);
         throw new Error(errorMsg);
     }
 
@@ -162,15 +245,37 @@ export class NoneOption {
         return this;
     }
 
+
+    public augmentAsync<TAugment>(
+        fn: (val: never) => Promise<Option<TAugment>>
+    ): Promise<this> {
+        return Promise.resolve(this);
+    }
+
     public bind<TOut>(
         fn: (val: never) => Option<TOut>
     ): this {
         return this;
     }
 
+
+    public bindAsync<TOut>(
+        fn: (val: never) => Promise<Option<TOut>>
+    ): Promise<this> {
+        return Promise.resolve(this);
+    }
+
     public bindNone<TOut>(
         fn: () => Option<TOut>
     ): Option<TOut> {
+        const bound = fn();
+        return bound;
+    }
+
+
+    public bindNoneAsync<TOut>(
+        fn: () => Promise<Option<TOut>>
+    ): Promise<Option<TOut>> {
         const bound = fn();
         return bound;
     }
@@ -188,10 +293,25 @@ export class NoneOption {
         return val;
     }
 
+
+    public async defaultWithAsync<TDefault>(
+        fn: () => Promise<TDefault>
+    ): Promise<TDefault> {
+        const val = await fn();
+        return val;
+    }
+
     public mapSome<TOut>(
         fn: (val: never) => TOut
     ): this {
         return this;
+    }
+
+
+    public mapSomeAsync<TOut>(
+        fn: (val: never) => Promise<TOut>
+    ): Promise<this> {
+        return Promise.resolve(this);
     }
 
     public match<TSomeOut, TNoneOut>(
@@ -202,6 +322,14 @@ export class NoneOption {
         return out;
     }
 
+
+    public matchAsync<TSomeOut, TNoneOut>(
+        fnSome: (val: never) => Promise<TSomeOut>,
+        fnNone: () => Promise<TNoneOut>
+    ): Promise<TNoneOut> {
+        return fnNone();
+    }
+
     public matchWith<TSomeOut, TNoneOut>(
         matcherFns: {some: (val: never) => TSomeOut, none: () => TNoneOut}
     ): TNoneOut {
@@ -209,16 +337,34 @@ export class NoneOption {
         return out;
     }
 
+
+    public matchWithAsync<TSomeOut, TNoneOut>(
+        matcherFns: {some: (val: never) => Promise<TSomeOut>, none: () => Promise<TNoneOut>}
+    ): Promise<TNoneOut> {
+        return matcherFns.none();
+    }
+
     public throwIfNone(): never {
         const errMsg = "throwIfNone() called on a NoneOption.";
         throw new Error(errMsg);
     }
 
+
     public throwIfNoneWith(
-        errorMsg: string
+        fn: () => string
     ): never {
+        const errorMsg = fn();
         throw new Error(errorMsg);
     }
+
+
+    public async throwIfNoneWithAsync(
+        fn: () => Promise<string>
+    ): Promise<never> {
+        const errorMsg = await fn();
+        throw new Error(errorMsg);
+    }
+
 
     public throwIfSome(): void {
         // Intentionally empty.
@@ -228,6 +374,13 @@ export class NoneOption {
         fn: (val: never) => string
     ): void {
         // Intentionally empty.
+    }
+
+
+    public throwIfSomeWithAsync(
+        fn: (val: never) => Promise<string>
+    ): Promise<void> {
+        return Promise.resolve();
     }
 
 
@@ -352,6 +505,23 @@ export namespace Option {
 
 
     /**
+     * If the input Option is Some, invokes _fn_ with the value. If a Some
+     * Option is returned, the original input value is augmented with the value.
+     * If _input_ or the Option returned by _fn_ is None, None is returned.
+     *
+     * @param fn - Async augment function invoked for Some input
+     * @param input - The input Option
+     * @return A Promise for the augmented Option
+     */
+    export function augmentAsync<TInput, TAugment>(
+        fn: (input: TInput) => Promise<Option<TAugment>>,
+        input: Option<TInput>
+    ): Promise<Option<TInput & TAugment>> {
+        return input.augmentAsync(fn);
+    }
+
+
+    /**
      * If _input_ is "some", unwraps the value and passes it into _fn_,
      * returning its returned Option.  If _input_ is not "some" returns it.
      *
@@ -366,6 +536,22 @@ export namespace Option {
         input: Option<TIn>
     ): Option<TOut> {
         return input.bind(fn);
+    }
+
+
+    /**
+     * If _input_ is "some", unwraps the value and passes it into _fn_,
+     * returning its returned Option. If _input_ is not "some", returns it.
+     *
+     * @param fn - Async bind function invoked for Some input
+     * @param input - The input Option
+     * @return A Promise for the bound Option
+     */
+    export function bindAsync<TIn, TOut>(
+        fn: (x: TIn) => Promise<Option<TOut>>,
+        input: Option<TIn>
+    ): Promise<Option<TOut>> {
+        return input.bindAsync(fn);
     }
 
 
@@ -386,6 +572,22 @@ export namespace Option {
         input: Option<TIn>
     ): Option<TIn | TOut> {
         return input.bindNone(fn);
+    }
+
+
+    /**
+     * If _input_ is "none", calls _fn_, returning its returned Option. If
+     * _input_ is "some", returns it.
+     *
+     * @param fn - Async fallback function invoked for None input
+     * @param input - The input Option
+     * @return A Promise for the resulting Option
+     */
+    export function bindNoneAsync<TIn, TOut>(
+        fn: () => Promise<Option<TOut>>,
+        input: Option<TIn>
+    ): Promise<Option<TIn | TOut>> {
+        return input.bindNoneAsync(fn);
     }
 
 
@@ -416,6 +618,33 @@ export namespace Option {
                 },
                 []
             );
+        return output;
+    }
+
+
+    /**
+     * Maps each input value through the specified async mapping function. If
+     * the mapping function resolves to a Some result, its value is added to
+     * the output array; otherwise nothing is added to the output array.
+     *
+     * @param fn - The async function that maps each input value to either a
+     * Some whose value will be included in the output array or a None that
+     * will not be included in the output array.
+     * @param input - The input sequence
+     * @returns A Promise for the output array
+     */
+    export async function chooseAsync<TIn, TOut>(
+        fn: (v: TIn) => Promise<Option<TOut>>,
+        input: Iterable<TIn>
+    ): Promise<Array<TOut>> {
+        const output: Array<TOut> = [];
+        for (const cur of input) {
+            const res = await fn(cur);
+            if (res.isSome) {
+                output.push(res.value);
+            }
+        }
+
         return output;
     }
 
@@ -453,6 +682,25 @@ export namespace Option {
         input: Option<T>
     ): T | TDefault {
         return input.defaultWith(fn);
+    }
+
+
+    /**
+     * If the input is a Some value, returns the contained value, else returns
+     * _fn()_ (which may be of a different type).  This function is useful when
+     * getting the default value is expensive.
+     *
+     * @param fn - Async function that can be invoked to get the default value.
+     * Not executed unless input is None.
+     * @param input - The input Option
+     * @return A Promise for the contained value if input is Some, else the
+     * value returned by _fn_
+     */
+    export function defaultWithAsync<T, TDefault>(
+        fn: () => Promise<TDefault>,
+        input: Option<T>
+    ): Promise<T | TDefault> {
+        return input.defaultWithAsync(fn);
     }
 
 
@@ -533,6 +781,21 @@ export namespace Option {
 
 
     /**
+     * When _input_ is "some", maps the wrapped value using _fn_.
+     *
+     * @param fn - Async mapping function invoked for Some input
+     * @param input - The input Option
+     * @return A Promise for the mapped Option
+     */
+    export function mapSomeAsync<TIn, TOut>(
+        fn: (x: TIn) => Promise<TOut>,
+        input: Option<TIn>
+    ): Promise<Option<TOut>> {
+        return input.mapSomeAsync(fn);
+    }
+
+
+    /**
      * When _input_ is "some" invokes _fnSome_ and returns the result.
      * When _input_ is "none" invokes _fnNone_ and returns the result.
      *
@@ -547,6 +810,24 @@ export namespace Option {
         input: Option<TIn>
     ): TSomeOut | TNoneOut {
         return input.match(fnSome, fnNone);
+    }
+
+
+    /**
+     * When _input_ is "some" invokes _fnSome_ and returns the result.
+     * When _input_ is "none" invokes _fnNone_ and returns the result.
+     *
+     * @param fnSome - Async function invoked when _input_ is a SomeOption
+     * @param fnNone - Async function invoked when _input_ is a NoneOption
+     * @param input - The input Option
+     * @return A Promise for the value returned by either _fnSome_ or _fnNone_
+     */
+    export function matchAsync<TIn, TSomeOut, TNoneOut>(
+        fnSome: (val: TIn) => Promise<TSomeOut>,
+        fnNone: () => Promise<TNoneOut>,
+        input: Option<TIn>
+    ): Promise<TSomeOut | TNoneOut> {
+        return input.matchAsync(fnSome, fnNone);
     }
 
 
@@ -572,6 +853,24 @@ export namespace Option {
 
 
     /**
+     * When _input_ is "some" invokes the specified some function and returns
+     * the result. When _input_ is "none" invokes the specified none function
+     * and returns the result.
+     *
+     * @param matcherFns - An object that contains the async some and none
+     * handler functions
+     * @param input - The input Option
+     * @return A Promise for the value returned by the invoked handler function
+     */
+    export function matchWithAsync<TIn, TSomeOut, TNoneOut>(
+        matcherFns: {some: (val: TIn) => Promise<TSomeOut>, none: () => Promise<TNoneOut>},
+        input: Option<TIn>
+    ): Promise<TSomeOut | TNoneOut> {
+        return input.matchWithAsync(matcherFns);
+    }
+
+
+    /**
      * Unwraps a SomeOption, throwing if it is a NoneOption.  Uses a generic
      * generated error message.
      *
@@ -587,18 +886,35 @@ export namespace Option {
 
     /**
      * Unwraps a SomeOption.  If the Option is a NoneOption an Error is thrown
-     * containing the specified error message.
+     * containing the error message returned by the specified function.
      *
-     * @param errorMsg - The error message to use when throwing in the event the
-     * Option is a NoneOption
+     * @param fn - Function that will be invoked to get the error message when
+     * the Option is a NoneOption
      * @param opt - The input Option
      * @returns The unwrapped SomeOption value
      */
     export function throwIfNoneWith<T>(
-        errorMsg: string,
+        fn: () => string,
         opt: Option<T>
     ): T {
-        return opt.throwIfNoneWith(errorMsg);
+        return opt.throwIfNoneWith(fn);
+    }
+
+
+    /**
+     * Unwraps a SomeOption.  If the Option is a NoneOption an Error is thrown
+     * containing the error message returned by the specified async function.
+     *
+     * @param fn - Async function that will be invoked to get the error message
+     * when the Option is a NoneOption
+     * @param opt - The input Option
+     * @return A Promise for the unwrapped SomeOption value
+     */
+    export function throwIfNoneWithAsync<T>(
+        fn: () => Promise<string>,
+        opt: Option<T>
+    ): Promise<T> {
+        return opt.throwIfNoneWithAsync(fn);
     }
 
 
@@ -628,6 +944,22 @@ export namespace Option {
         opt: Option<T>
     ): void {
         opt.throwIfSomeWith(fn);
+    }
+
+
+    /**
+     * Throws an Error if the specified Option is a SomeOption.  Uses the
+     * specified async function to generate the error message.
+     *
+     * @param fn - Async function that generates the error message
+     * @param opt - The input Option
+     * @return A Promise that resolves when no error is thrown
+     */
+    export function throwIfSomeWithAsync<T>(
+        fn: (val: T) => Promise<string>,
+        opt: Option<T>
+    ): Promise<void> {
+        return opt.throwIfSomeWithAsync(fn);
     }
 
 

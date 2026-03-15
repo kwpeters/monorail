@@ -53,6 +53,20 @@ export class SucceededResult<TSuccess> {
     }
 
 
+    public async augmentAsync<TFnSuccess, TFnError>(
+        fn: (input: TSuccess) => Promise<Result<TFnSuccess, TFnError>>
+    ): Promise<Result<TSuccess & TFnSuccess, TFnError>> {
+        const res = await fn(this._value);
+        if (res.succeeded) {
+            const resRet = {...this._value, ...res.value};
+            return new SucceededResult(resRet);
+        }
+        else {
+            return res;
+        }
+    }
+
+
     public bind<TFnSuccess, TFnError>(
         fn: (input: TSuccess) => Result<TFnSuccess, TFnError>
     ): Result<TFnSuccess, TFnError> {
@@ -61,10 +75,25 @@ export class SucceededResult<TSuccess> {
     }
 
 
+    public bindAsync<TFnSuccess, TFnError>(
+        fn: (input: TSuccess) => Promise<Result<TFnSuccess, TFnError>>
+    ): Promise<Result<TFnSuccess, TFnError>> {
+        const resPromise = fn(this._value);
+        return resPromise;
+    }
+
+
     public bindError<TFnSuccess, TFnError>(
         fn: (err: never) => Result<TFnSuccess, TFnError>
     ): this {
         return this;
+    }
+
+
+    public bindErrorAsync<TFnSuccess, TFnError>(
+        fn: (err: never) => Promise<Result<TFnSuccess, TFnError>>
+    ): Promise<this> {
+        return Promise.resolve(this);
     }
 
 
@@ -82,10 +111,25 @@ export class SucceededResult<TSuccess> {
     }
 
 
+    public defaultWithAsync<TDefault>(
+        fn: (err: never) => Promise<TDefault>
+    ): Promise<TSuccess> {
+        return Promise.resolve(this._value);
+    }
+
+
     public gate<TFnSuccess, TFnError>(
         fn: (successVal: TSuccess) => Result<TFnSuccess, TFnError>
     ): Result<TSuccess, TFnError> {
         const res = fn(this._value);
+        return res.succeeded ? this : res;
+    }
+
+
+    public async gateAsync<TFnSuccess, TFnError>(
+        fn: (successVal: TSuccess) => Promise<Result<TFnSuccess, TFnError>>
+    ): Promise<Result<TSuccess, TFnError>> {
+        const res = await fn(this._value);
         return res.succeeded ? this : res;
     }
 
@@ -97,10 +141,25 @@ export class SucceededResult<TSuccess> {
     }
 
 
+    public mapErrorAsync<TMappedError>(
+        fn: (err: never) => Promise<TMappedError>
+    ): Promise<this> {
+        return Promise.resolve(this);
+    }
+
+
     public mapSuccess<TMappedSuccess>(
         fn: (successVal: TSuccess) => TMappedSuccess
     ): SucceededResult<TMappedSuccess> {
         const mappedVal = fn(this._value);
+        return new SucceededResult(mappedVal);
+    }
+
+
+    public async mapSuccessAsync<TMappedSuccess>(
+        fn: (successVal: TSuccess) => Promise<TMappedSuccess>
+    ): Promise<SucceededResult<TMappedSuccess>> {
+        const mappedVal = await fn(this._value);
         return new SucceededResult(mappedVal);
     }
 
@@ -123,10 +182,25 @@ export class SucceededResult<TSuccess> {
     }
 
 
+    public matchWithAsync<TSuccessOut, TErrorOut = never>(
+        matcherFns: {success: (val: TSuccess) => Promise<TSuccessOut>, error: (err: never) => Promise<TErrorOut>}
+    ): Promise<TSuccessOut> {
+        return matcherFns.success(this._value);
+    }
+
+
     public tap(
         fn: (res: SucceededResult<TSuccess>) => unknown
     ): this {
         fn(this);
+        return this;
+    }
+
+
+    public async tapAsync(
+        fn: (res: SucceededResult<TSuccess>) => Promise<unknown>
+    ): Promise<this> {
+        await fn(this);
         return this;
     }
 
@@ -138,10 +212,25 @@ export class SucceededResult<TSuccess> {
     }
 
 
+    public tapErrorAsync(
+        fn: (err: never) => Promise<unknown>
+    ): Promise<this> {
+        return Promise.resolve(this);
+    }
+
+
     public tapSuccess(
         fn: (val: TSuccess) => unknown
     ): this {
         fn(this._value);
+        return this;
+    }
+
+
+    public async tapSuccessAsync(
+        fn: (val: TSuccess) => Promise<unknown>
+    ): Promise<this> {
+        await fn(this._value);
         return this;
     }
 
@@ -223,10 +312,24 @@ export class FailedResult<TError> {
     }
 
 
+    public augmentAsync<TFnSuccess, TFnError>(
+        fn: (input: never) => Promise<Result<TFnSuccess, TFnError>>
+    ): Promise<this> {
+        return Promise.resolve(this);
+    }
+
+
     public bind<TFnSuccess, TFnError>(
         fn: (input: never) => Result<TFnSuccess, TFnError>
     ): this {
         return this;
+    }
+
+
+    public bindAsync<TFnSuccess, TFnError>(
+        fn: (input: never) => Promise<Result<TFnSuccess, TFnError>>
+    ): Promise<this> {
+        return Promise.resolve(this);
     }
 
 
@@ -235,6 +338,13 @@ export class FailedResult<TError> {
     ): Result<TFnSuccess, TFnError> {
         const res = fn(this._error);
         return res;
+    }
+
+
+    public bindErrorAsync<TFnSuccess, TFnError>(
+        fn: (err: TError) => Promise<Result<TFnSuccess, TFnError>>
+    ): Promise<Result<TFnSuccess, TFnError>> {
+        return fn(this._error);
     }
 
 
@@ -253,10 +363,24 @@ export class FailedResult<TError> {
     }
 
 
+    public defaultWithAsync<TDefault>(
+        fn: (err: TError) => Promise<TDefault>
+    ): Promise<TDefault> {
+        return fn(this._error);
+    }
+
+
     public gate<TFnSuccess, TFnError>(
         fn: (successVal: never) => Result<TFnSuccess, TFnError>
     ): this {
         return this;
+    }
+
+
+    public gateAsync<TFnSuccess, TFnError>(
+        fn: (successVal: never) => Promise<Result<TFnSuccess, TFnError>>
+    ): Promise<this> {
+        return Promise.resolve(this);
     }
 
 
@@ -268,10 +392,25 @@ export class FailedResult<TError> {
     }
 
 
+    public async mapErrorAsync<TMappedError>(
+        fn: (err: TError) => Promise<TMappedError>
+    ): Promise<FailedResult<TMappedError>> {
+        const mappedErr = await fn(this._error);
+        return new FailedResult(mappedErr);
+    }
+
+
     public mapSuccess<TMappedSuccess>(
         fn: (successVal: never) => TMappedSuccess
     ): this {
         return this;
+    }
+
+
+    public mapSuccessAsync<TMappedSuccess>(
+        fn: (successVal: never) => Promise<TMappedSuccess>
+    ): Promise<this> {
+        return Promise.resolve(this);
     }
 
 
@@ -292,10 +431,25 @@ export class FailedResult<TError> {
     }
 
 
+    public matchWithAsync<TSuccessOut, TErrorOut>(
+        matcherFns: {success: (val: never) => Promise<TSuccessOut>, error: (err: TError) => Promise<TErrorOut>}
+    ): Promise<TErrorOut> {
+        return matcherFns.error(this._error);
+    }
+
+
     public tap(
         fn: (res: FailedResult<TError>) => unknown
     ): this {
         fn(this);
+        return this;
+    }
+
+
+    public async tapAsync(
+        fn: (res: FailedResult<TError>) => Promise<unknown>
+    ): Promise<this> {
+        await fn(this);
         return this;
     }
 
@@ -308,10 +462,25 @@ export class FailedResult<TError> {
     }
 
 
+    public async tapErrorAsync(
+        fn: (err: TError) => Promise<unknown>
+    ): Promise<this> {
+        await fn(this._error);
+        return this;
+    }
+
+
     public tapSuccess(
         fn: (val: never) => unknown
     ): this {
         return this;
+    }
+
+
+    public tapSuccessAsync(
+        fn: (val: never) => Promise<unknown>
+    ): Promise<this> {
+        return Promise.resolve(this);
     }
 
 
@@ -794,6 +963,23 @@ export namespace Result {
 
 
     /**
+     * If the input Result is successful, invokes _fn_ with the value. If a
+     * successful Result is returned, the original input value is augmented
+     * with the value.
+     *
+     * @param fn - Async augment function invoked for successful input
+     * @param input - The input Result
+     * @return A Promise for the augmented Result
+     */
+    export function augmentAsync<TInputSuccess, TInputError, TFnSuccess, TFnError>(
+        fn: (input: TInputSuccess) => Promise<Result<TFnSuccess, TFnError>>,
+        input: Result<TInputSuccess, TInputError>
+    ): Promise<Result<TInputSuccess & TFnSuccess, TInputError | TFnError>> {
+        return input.augmentAsync(fn);
+    }
+
+
+    /**
      * If _input_ is successful, unwraps the value and passes it into _fn_,
      * returning its returned Result.  If _input_ is not successful, returns it.
      *
@@ -808,6 +994,22 @@ export namespace Result {
         input: Result<TInputSuccess, TInputError>
     ): Result<TOutputSuccess, TInputError | TOutputError> {
         return input.bind(fn);
+    }
+
+
+    /**
+     * If _input_ is successful, unwraps the value and passes it into _fn_,
+     * returning its returned Result. If _input_ is not successful, returns it.
+     *
+     * @param fn - Async bind function invoked for successful input
+     * @param input - The input Result
+     * @return A Promise for the bound Result
+     */
+    export function bindAsync<TInputSuccess, TInputError, TOutputSuccess, TOutputError>(
+        fn: (x: TInputSuccess) => Promise<Result<TOutputSuccess, TOutputError>>,
+        input: Result<TInputSuccess, TInputError>
+    ): Promise<Result<TOutputSuccess, TInputError | TOutputError>> {
+        return input.bindAsync(fn);
     }
 
 
@@ -829,6 +1031,22 @@ export namespace Result {
         input: Result<TInputSuccess, TInputError>
     ): Result<TInputSuccess | TOutputSuccess, TOutputError> {
         return input.bindError(fn);
+    }
+
+
+    /**
+     * If _input_ is an error, unwraps the error and passes it into _fn_,
+     * returning its returned Result. If _input_ is successful, returns it.
+     *
+     * @param fn - Async function invoked for failed input
+     * @param input - The input Result
+     * @return A Promise for the bound Result
+     */
+    export function bindErrorAsync<TInputSuccess, TInputError, TOutputSuccess, TOutputError>(
+        fn: (err: TInputError) => Promise<Result<TOutputSuccess, TOutputError>>,
+        input: Result<TInputSuccess, TInputError>
+    ): Promise<Result<TInputSuccess | TOutputSuccess, TOutputError>> {
+        return input.bindErrorAsync(fn);
     }
 
 
@@ -865,6 +1083,22 @@ export namespace Result {
         input: Result<TSuccess, TError>
     ): TSuccess | TDefault {
         return input.defaultWith(fn);
+    }
+
+
+    /**
+     * If the input is a successful value, returns the wrapped value, else
+     * returns _fn()_.
+     *
+     * @param fn - Async fallback function invoked for failed input
+     * @param input - The input Result
+     * @return A Promise for either the success value or fallback value
+     */
+    export function defaultWithAsync<TSuccess, TError, TDefault>(
+        fn: (err: TError) => Promise<TDefault>,
+        input: Result<TSuccess, TError>
+    ): Promise<TSuccess | TDefault> {
+        return input.defaultWithAsync(fn);
     }
 
 
@@ -1179,6 +1413,24 @@ export namespace Result {
 
 
     /**
+     * If _input_ is successful, invokes _fn_ with the value. If a successful
+     * Result is returned, _input_ is returned.  If a failed Result is returned,
+     * that failed Result is returned.  If _input_ is a failed Result, it is
+     * returned.
+     *
+     * @param fn - Async gate function invoked for successful input
+     * @param input - The input Result
+     * @return A Promise for either original success or gate failure
+     */
+    export function gateAsync<TInSuccess, TInError, TOutSuccess, TOutError>(
+        fn: (successVal: TInSuccess) => Promise<Result<TOutSuccess, TOutError>>,
+        input: Result<TInSuccess, TInError>
+    ): Promise<Result<TInSuccess, TInError | TOutError>> {
+        return input.gateAsync(fn);
+    }
+
+
+    /**
      * When _input_ is a failure, maps the wrapped error using _fn_.
      *
      * @param fn - Function that maps the wrapped error value to another value.
@@ -1195,6 +1447,21 @@ export namespace Result {
 
 
     /**
+     * When _input_ is a failure, maps the wrapped error using _fn_.
+     *
+     * @param fn - Async error mapping function
+     * @param input - The input Result
+     * @return A Promise for the mapped Result
+     */
+    export function mapErrorAsync<TSuccess, TInputError, TOutputError>(
+        fn: (input: TInputError) => Promise<TOutputError>,
+        input: Result<TSuccess, TInputError>
+    ): Promise<Result<TSuccess, TOutputError>> {
+        return input.mapErrorAsync(fn);
+    }
+
+
+    /**
      * When _input_ is successful, maps the wrapped value using _fn_.
      *
      * @param fn - Function that maps the wrapped success value to another value.
@@ -1207,6 +1474,21 @@ export namespace Result {
         input: Result<TInputSuccess, TError>
     ): Result<TOutputSuccess, TError> {
         return input.mapSuccess(fn);
+    }
+
+
+    /**
+     * When _input_ is successful, maps the wrapped value using _fn_.
+     *
+     * @param fn - Async success mapping function
+     * @param input - The input Result
+     * @return A Promise for the mapped Result
+     */
+    export function mapSuccessAsync<TInputSuccess, TOutputSuccess, TError>(
+        fn: (input: TInputSuccess) => Promise<TOutputSuccess>,
+        input: Result<TInputSuccess, TError>
+    ): Promise<Result<TOutputSuccess, TError>> {
+        return input.mapSuccessAsync(fn);
     }
 
 
@@ -1290,6 +1572,23 @@ export namespace Result {
     ): TOutSuccess | TOutError {
         const out = input.match(matcherFns.success, matcherFns.error);
         return out;
+    }
+
+
+    /**
+     * When _input_ is successful, invokes the specified success function and
+     * returns the result. When _input_ is an error, invokes the specified
+     * error function and returns the result.
+     *
+     * @param matcherFns - Async success and error handlers
+     * @param input - The input Result
+     * @return A Promise for the matched output
+     */
+    export function matchWithAsync<TInSuccess, TInError, TOutSuccess, TOutError>(
+        matcherFns: {success: (val: TInSuccess) => Promise<TOutSuccess>, error: (err: TInError) => Promise<TOutError>},
+        input: Result<TInSuccess, TInError>
+    ): Promise<TOutSuccess | TOutError> {
+        return input.matchWithAsync(matcherFns);
     }
 
 
@@ -1419,6 +1718,21 @@ export namespace Result {
 
 
     /**
+     * Performs side-effects for the given Result.
+     *
+     * @param fn - Async side-effect callback receiving the input Result
+     * @param input - The input Result
+     * @returns The original input Result
+     */
+    export function tapAsync<TSuccess, TError>(
+        fn: (res: Result<TSuccess, TError>) => Promise<unknown>,
+        input: Result<TSuccess, TError>
+    ): Promise<Result<TSuccess, TError>> {
+        return input.tapAsync(fn);
+    }
+
+
+    /**
      * Performs side-effects when the specified Result is a failure
      *
      * @param fn - The function to invoke, passing the failed Result's error
@@ -1434,6 +1748,21 @@ export namespace Result {
 
 
     /**
+     * Performs side-effects when the specified Result is a failure.
+     *
+     * @param fn - Async side-effect callback receiving the error value
+     * @param input - The input Result
+     * @returns The original input Result
+     */
+    export function tapErrorAsync<TSuccess, TError>(
+        fn: (val: TError) => Promise<unknown>,
+        input: Result<TSuccess, TError>
+    ): Promise<Result<TSuccess, TError>> {
+        return input.tapErrorAsync(fn);
+    }
+
+
+    /**
      * Performs side-effects when the specified Result is successful
      *
      * @param fn - The function to invoke, passing the successful Result's value
@@ -1445,6 +1774,21 @@ export namespace Result {
         input: Result<TSuccess, TError>
     ): Result<TSuccess, TError> {
         return input.tapSuccess(fn);
+    }
+
+
+    /**
+     * Performs side-effects when the specified Result is successful.
+     *
+     * @param fn - Async side-effect callback receiving the success value
+     * @param input - The input Result
+     * @returns The original input Result
+     */
+    export function tapSuccessAsync<TSuccess, TError>(
+        fn: (val: TSuccess) => Promise<unknown>,
+        input: Result<TSuccess, TError>
+    ): Promise<Result<TSuccess, TError>> {
+        return input.tapSuccessAsync(fn);
     }
 
 

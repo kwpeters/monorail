@@ -580,6 +580,38 @@ describe("Result namespace", () => {
     });
 
 
+    describe("defaultWithAsync()", () => {
+
+
+        it("when given a success value returns the contained value", async () => {
+            let numInvocations = 0;
+            async function getDefault() {
+                await Promise.resolve(0);
+                numInvocations++;
+                return 5;
+            }
+
+            expect(await Result.defaultWithAsync(getDefault, new SucceededResult(3))).toEqual(3);
+            expect(numInvocations).toEqual(0);
+        });
+
+
+        it("when given an error value invokes the function and returns the result", async () => {
+            let numInvocations = 0;
+            async function getDefault() {
+                await Promise.resolve(0);
+                numInvocations++;
+                return 5;
+            }
+
+            expect(await Result.defaultWithAsync(getDefault, new FailedResult("Error msg"))).toEqual(5);
+            expect(numInvocations).toEqual(1);
+        });
+
+
+    });
+
+
     describe("executeWhileSuccessful()", () => {
 
         it("returns a successful result with typed array elements when all functions succeed", () => {
@@ -950,6 +982,62 @@ describe("Result namespace", () => {
     });
 
 
+    describe("matchWithAsync()", () => {
+
+        it("when given a successful Result invokes only the success function", async () => {
+            let successFnInvocations = 0;
+            let errorFnInvocations = 0;
+
+            const output = await Result.matchWithAsync(
+                {
+                    success: async (x: number) => {
+                        await Promise.resolve(0);
+                        successFnInvocations++;
+                        return x + 1;
+                    },
+                    error: async (err: string) => {
+                        await Promise.resolve(0);
+                        errorFnInvocations++;
+                        return err.toLowerCase();
+                    }
+                },
+                new SucceededResult(5) as Result<number, string>
+            );
+
+            expect(output).toEqual(6);
+            expect(successFnInvocations).toEqual(1);
+            expect(errorFnInvocations).toEqual(0);
+        });
+
+
+        it("when given a failed Result invokes only the error function", async () => {
+            let successFnInvocations = 0;
+            let errorFnInvocations = 0;
+
+            const output = await Result.matchWithAsync(
+                {
+                    success: async (x: number) => {
+                        await Promise.resolve(0);
+                        successFnInvocations++;
+                        return x + 1;
+                    },
+                    error: async (err: string) => {
+                        await Promise.resolve(0);
+                        errorFnInvocations++;
+                        return err.toLowerCase();
+                    }
+                },
+                new FailedResult("ERROR MESSAGE") as Result<number, string>
+            );
+
+            expect(output).toEqual("error message");
+            expect(successFnInvocations).toEqual(0);
+            expect(errorFnInvocations).toEqual(1);
+        });
+
+    });
+
+
     describe("partition()", () => {
 
         it("when the input array is empty, returns two empty arrays", () => {
@@ -1158,6 +1246,60 @@ describe("Result namespace", () => {
     });
 
 
+    describe("tapAsync()", () => {
+
+        it("calls the function when the input Result is a failure", async () => {
+            let numInvocations = 0;
+            async function tapFn(res: Result<number, string>) {
+                await Promise.resolve(0);
+                numInvocations++;
+                return new SucceededResult(12);
+            }
+
+            await Result.tapAsync(
+                tapFn,
+                new FailedResult("error message") as Result<number, string>
+            );
+
+            expect(numInvocations).toEqual(1);
+        });
+
+
+        it("calls the function when the input Result is successful", async () => {
+            let numInvocations = 0;
+            async function tapFn(res: Result<number, string>) {
+                await Promise.resolve(0);
+                numInvocations++;
+                return new SucceededResult(12);
+            }
+
+            await Result.tapAsync(
+                tapFn,
+                new SucceededResult(1) as Result<number, string>
+            );
+
+            expect(numInvocations).toEqual(1);
+        });
+
+
+        it("returns the original Result", async () => {
+            let numInvocations = 0;
+            async function tapFn(res: Result<number, string>) {
+                await Promise.resolve(0);
+                numInvocations++;
+                return new SucceededResult(12);
+            }
+
+            const input = new SucceededResult(1) as Result<number, string>;
+            const actual = await Result.tapAsync(tapFn, input);
+
+            expect(numInvocations).toEqual(1);
+            expect(actual).toEqual(input);
+        });
+
+    });
+
+
     describe("tapError()", () => {
 
         it("calls the function when the input Result is a failure", () => {
@@ -1257,6 +1399,239 @@ describe("Result namespace", () => {
 
             expect(numInvocations).toEqual(1);
             expect(actual).toEqual(new SucceededResult(3));
+        });
+
+    });
+
+
+    describe("augmentAsync()", () => {
+
+        it("if the input is a failure, returns it without invoking the function", async () => {
+            let numInvocations = 0;
+            const fn = async (input: {a: number}) => {
+                await Promise.resolve(0);
+                numInvocations++;
+                return new SucceededResult({b: input.a + 1});
+            };
+
+            const result = await Result.augmentAsync(fn, new FailedResult("error") as Result<{a: number}, string>);
+            expect(result).toEqual(new FailedResult("error"));
+            expect(numInvocations).toEqual(0);
+        });
+
+
+        it("if the input and function succeed, returns merged object properties", async () => {
+            const fn = async (input: {a: number}) => {
+                await Promise.resolve(0);
+                return new SucceededResult({b: input.a + 1});
+            };
+
+            const result = await Result.augmentAsync(fn, new SucceededResult({a: 1}));
+            expect(result).toEqual(new SucceededResult({a: 1, b: 2}));
+        });
+
+    });
+
+
+    describe("bindAsync()", () => {
+
+        it("with a successful input invokes fn and returns fn output", async () => {
+            let numInvocations = 0;
+            const fn = async (x: number) => {
+                await Promise.resolve(0);
+                numInvocations++;
+                return new SucceededResult(x + 1);
+            };
+
+            const result = await Result.bindAsync(fn, new SucceededResult(1));
+            expect(result).toEqual(new SucceededResult(2));
+            expect(numInvocations).toEqual(1);
+        });
+
+
+        it("with a failed input passes it through without invoking fn", async () => {
+            let numInvocations = 0;
+            const fn = async (x: number) => {
+                await Promise.resolve(0);
+                numInvocations++;
+                return new SucceededResult(x + 1);
+            };
+
+            const result = await Result.bindAsync(fn, new FailedResult("error") as Result<number, string>);
+            expect(result).toEqual(new FailedResult("error"));
+            expect(numInvocations).toEqual(0);
+        });
+
+    });
+
+
+    describe("bindErrorAsync()", () => {
+
+        it("with a successful input passes it through without invoking fn", async () => {
+            let numInvocations = 0;
+            const fn = async (err: string) => {
+                await Promise.resolve(0);
+                numInvocations++;
+                return new SucceededResult(err.length);
+            };
+
+            const result = await Result.bindErrorAsync(fn, new SucceededResult(5) as Result<number, string>);
+            expect(result).toEqual(new SucceededResult(5));
+            expect(numInvocations).toEqual(0);
+        });
+
+
+        it("with a failed input invokes fn and returns fn output", async () => {
+            let numInvocations = 0;
+            const fn = async (err: string) => {
+                await Promise.resolve(0);
+                numInvocations++;
+                return new SucceededResult(err.length);
+            };
+
+            const result = await Result.bindErrorAsync(fn, new FailedResult("error") as Result<number, string>);
+            expect(result).toEqual(new SucceededResult(5));
+            expect(numInvocations).toEqual(1);
+        });
+
+    });
+
+
+    describe("gateAsync()", () => {
+
+        it("with a failed input returns it without invoking fn", async () => {
+            let numInvocations = 0;
+            const fn = async (x: number) => {
+                await Promise.resolve(0);
+                numInvocations++;
+                return new SucceededResult(x + 1);
+            };
+
+            const result = await Result.gateAsync(fn, new FailedResult("error") as Result<number, string>);
+            expect(result).toEqual(new FailedResult("error"));
+            expect(numInvocations).toEqual(0);
+        });
+
+
+        it("with a successful input returns original input on gate success", async () => {
+            const fn = (x: number) => Promise.resolve(new SucceededResult(x + 1));
+            const input = new SucceededResult(2) as Result<number, string>;
+            const result = await Result.gateAsync(fn, input);
+            expect(result).toEqual(input);
+        });
+
+    });
+
+
+    describe("mapErrorAsync()", () => {
+
+        it("with successful input passes through and does not invoke fn", async () => {
+            let numInvocations = 0;
+            const fn = async (err: string) => {
+                await Promise.resolve(0);
+                numInvocations++;
+                return `Error: ${err}`;
+            };
+
+            const result = await Result.mapErrorAsync(fn, new SucceededResult(1) as Result<number, string>);
+            expect(result).toEqual(new SucceededResult(1));
+            expect(numInvocations).toEqual(0);
+        });
+
+
+        it("with failed input maps the error", async () => {
+            const fn = (err: string) => Promise.resolve(`Error: ${err}`);
+            const result = await Result.mapErrorAsync(fn, new FailedResult("boom"));
+            expect(result).toEqual(new FailedResult("Error: boom"));
+        });
+
+    });
+
+
+    describe("mapSuccessAsync()", () => {
+
+        it("with failed input passes through and does not invoke fn", async () => {
+            let numInvocations = 0;
+            const fn = async (x: number) => {
+                await Promise.resolve(0);
+                numInvocations++;
+                return x + 1;
+            };
+
+            const result = await Result.mapSuccessAsync(fn, new FailedResult("error") as Result<number, string>);
+            expect(result).toEqual(new FailedResult("error"));
+            expect(numInvocations).toEqual(0);
+        });
+
+
+        it("with successful input maps the value", async () => {
+            const fn = (x: number) => Promise.resolve(x + 1);
+            const result = await Result.mapSuccessAsync(fn, new SucceededResult(3));
+            expect(result).toEqual(new SucceededResult(4));
+        });
+
+    });
+
+
+    describe("tapErrorAsync()", () => {
+
+        it("with failed input invokes fn and returns original result", async () => {
+            let numInvocations = 0;
+            const fn = async (err: string) => {
+                await Promise.resolve(0);
+                numInvocations++;
+                return err.length;
+            };
+            const input = new FailedResult("error") as Result<number, string>;
+            const result = await Result.tapErrorAsync(fn, input);
+
+            expect(numInvocations).toEqual(1);
+            expect(result).toEqual(input);
+        });
+
+
+        it("with successful input does not invoke fn", async () => {
+            let numInvocations = 0;
+            const fn = async (err: string) => {
+                await Promise.resolve(0);
+                numInvocations++;
+                return err.length;
+            };
+
+            await Result.tapErrorAsync(fn, new SucceededResult(1) as Result<number, string>);
+            expect(numInvocations).toEqual(0);
+        });
+
+    });
+
+
+    describe("tapSuccessAsync()", () => {
+
+        it("with successful input invokes fn and returns original result", async () => {
+            let numInvocations = 0;
+            const fn = async (x: number) => {
+                await Promise.resolve(0);
+                numInvocations++;
+                return x + 1;
+            };
+            const input = new SucceededResult(10) as Result<number, string>;
+            const result = await Result.tapSuccessAsync(fn, input);
+
+            expect(numInvocations).toEqual(1);
+            expect(result).toEqual(input);
+        });
+
+
+        it("with failed input does not invoke fn", async () => {
+            let numInvocations = 0;
+            const fn = async (x: number) => {
+                await Promise.resolve(0);
+                numInvocations++;
+                return x + 1;
+            };
+
+            await Result.tapSuccessAsync(fn, new FailedResult("error") as Result<number, string>);
+            expect(numInvocations).toEqual(0);
         });
 
     });

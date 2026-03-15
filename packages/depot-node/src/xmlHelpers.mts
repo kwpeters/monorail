@@ -143,7 +143,7 @@ export function trySelectText(query: string, contextNode: Node): Option<string> 
 export function selectText(query: string, contextNode: Node): string {
     return pipe(
         trySelectText(query, contextNode),
-        (textOpt) => Option.throwIfNoneWith(`Failed to get text for xpath query "${query}".`, textOpt)
+        (textOpt) => Option.throwIfNoneWith(() => `Failed to get text for xpath query "${query}".`, textOpt)
     );
 }
 
