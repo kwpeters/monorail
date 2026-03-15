@@ -3,7 +3,6 @@ import * as fsp from "node:fs/promises";
 import * as _ from "lodash-es";
 import { Result, FailedResult, SucceededResult } from "@repo/depot/result";
 import { NoneOption, Option, SomeOption } from "@repo/depot/option";
-import { PromiseResult } from "@repo/depot/promiseResult";
 import { assertNever } from "@repo/depot/never";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { errorToString } from "@repo/depot/errorHelpers";
@@ -60,7 +59,7 @@ export async function deleteFsItem(fsItem: FsItem): Promise<Result<FsItem, strin
     else if (fsItem instanceof Symlink) {
         return pipeAsync(
             fsItem.delete(),
-            (res) => PromiseResult.mapSuccess(() => fsItem, res)
+            (res) => res.mapSuccess(() => fsItem)
         );
     }
     else {

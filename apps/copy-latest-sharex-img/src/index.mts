@@ -96,15 +96,15 @@ async function getMostRecentSharexScreenCapture(): Promise<Result<File, string>>
         // Documents folder.
         pipeAsync(
             getUserProfileDir(),
-            (resUserProfileDir) => Result.mapSuccess((dir) => new FsPath(dir, "Documents", "ShareX", "Screenshots"), resUserProfileDir),
-            (resScreenshotsPath) => PromiseResult.bind((path) => Directory.createIfExtant(path), resScreenshotsPath)
+            (resUserProfileDir) => resUserProfileDir.mapSuccess((dir) => new FsPath(dir, "Documents", "ShareX", "Screenshots")),
+            (resScreenshotsPath) => resScreenshotsPath.bindAsync(Directory.createIfExtant)
         ),
         // Attempt to locate the ShareX screenshots directory in the users
         // OneDrive folder.
         pipeAsync(
             getOneDriveDir(),
-            (resOneDriveDir) => Result.mapSuccess((dir) => new FsPath(dir, "Documents", "ShareX", "Screenshots"), resOneDriveDir),
-            (resOneDrivePath) => PromiseResult.bind((path) => Directory.createIfExtant(path), resOneDrivePath)
+            (resOneDriveDir) => resOneDriveDir.mapSuccess((dir) => new FsPath(dir, "Documents", "ShareX", "Screenshots")),
+            (resOneDrivePath) => resOneDrivePath.bindAsync((path) => Directory.createIfExtant(path))
         )
     ]);
 

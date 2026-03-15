@@ -3,7 +3,6 @@ import * as childProcess from "node:child_process";
 import { type ArgumentsCamelCase, type Argv } from "yargs";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
-import { PromiseResult } from "@repo/depot/promiseResult";
 import { File } from "@repo/depot-node/file";
 import { getNodeExePath } from "@repo/depot-node/nodeUtil";
 
@@ -81,11 +80,11 @@ async function handler(argv: ArgumentsCamelCase<IArgsCommand>): Promise<Result<n
 
     const res = await pipeAsync(
         createBundle(config.inputCjsFile, bundleFile),
-        (res) => PromiseResult.tapSuccess(console.log, res),
-        (res) => PromiseResult.bind(() => createSeaConfigFile(bundleFile, exeFile, seaConfigFile), res),
-        (res) => PromiseResult.tapSuccess(console.log, res),
-        (res) => PromiseResult.bind(() => createSeaExe(seaConfigFile), res),
-        (res) => PromiseResult.tapSuccess(console.log, res),
+        (res) => res.tapSuccess(console.log),
+        (res) => res.bindAsync(() => createSeaConfigFile(bundleFile, exeFile, seaConfigFile)),
+        (res) => res.tapSuccess(console.log),
+        (res) => res.bindAsync(() => createSeaExe(seaConfigFile)),
+        (res) => res.tapSuccess(console.log),
     );
 
     if (res.failed) {

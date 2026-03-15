@@ -4,7 +4,6 @@ import * as path from "node:path";
 import * as _ from "lodash-es";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { Result, SucceededResult, FailedResult } from "@repo/depot/result";
-import { PromiseResult } from "@repo/depot/promiseResult";
 import { sequence, mapAsync } from "@repo/depot/promiseHelpers";
 import { StorageSize } from "@repo/depot/storageSize";
 import { matchesAny } from "@repo/depot/regexpHelpers";
@@ -72,14 +71,13 @@ export class Directory {
         const resExtantDir = await pipeAsync(
             new Directory(fsPath.toString()),
             (dir) => new SucceededResult(dir) as Result<Directory, string>,
-            (resDir) => PromiseResult.gate(
+            (resDir) => resDir.gateAsync(
                 async (dir) => {
                     // See if the directory exists.  Note: exists() returns
                     // undefined when the item is not a directory.
                     const stats = await dir.exists();
                     return Result.fromNullable(stats, `Directory "${dir.toString()}" does not exist.`);
-                },
-                resDir
+                }
             )
         );
         return resExtantDir;
@@ -110,7 +108,7 @@ export class Directory {
                 resEnvVarStr
             ),
             (resEnvVarStr) => Result.mapSuccess((str) => new FsPath(str), resEnvVarStr),
-            (resPath) => PromiseResult.bind((path) => Directory.createIfExtant(path), resPath)
+            (resPath) => resPath.bindAsync((path) => Directory.createIfExtant(path))
         );
         return resDir;
     }

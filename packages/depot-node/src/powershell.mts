@@ -1,7 +1,6 @@
 import { glob } from "glob";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { FailedResult, Result } from "@repo/depot/result";
-import { PromiseResult } from "@repo/depot/promiseResult";
 import { insertIf } from "@repo/depot/arrayHelpers";
 import { File } from "./file.mjs";
 import { spawn, spawnErrorToString } from "./spawn2.mjs";
@@ -68,7 +67,7 @@ export async function getModernPowerShellExecutable(): Promise<Result<File, stri
 export async function getPowerShellExecutable(): Promise<Result<File, string>> {
     return pipeAsync(
         getModernPowerShellExecutable(),
-        (resExecutable) => PromiseResult.bindError(() => getLegacyPowerShellExecutable(), resExecutable)
+        (resExecutable) => resExecutable.bindErrorAsync(() => getLegacyPowerShellExecutable())
     );
 }
 
