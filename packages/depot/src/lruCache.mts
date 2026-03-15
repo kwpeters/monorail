@@ -100,14 +100,7 @@ export class LruCache<TKey, TValue> {
      * @returns true if the key existed and was removed; otherwise false
      */
     public delete(key: TKey): boolean {
-        const it = this._lookupMap.get(key);
-        if (it === undefined) {
-            return false;
-        }
-
-        this._frequencyList.splice(it, 1);
-        this._lookupMap.delete(key);
-        return true;
+        return this.removeByKey(key);
     }
 
 
@@ -115,8 +108,7 @@ export class LruCache<TKey, TValue> {
      * Removes all items from this cache.
      */
     public clear(): void {
-        this._lookupMap.clear();
-        this._frequencyList.splice(this._frequencyList.begin(), this._frequencyList.length);
+        this.clearAllItems();
     }
 
 
@@ -138,11 +130,7 @@ export class LruCache<TKey, TValue> {
         this._capacity = newCapacity;
 
         while (this._lookupMap.size > this._capacity) {
-            // Evict tail item (least recently used) until within capacity.
-            const it = this._frequencyList.end();
-            it.prev();
-            this._lookupMap.delete(it.value.key);
-            this._frequencyList.splice(it, 1);
+            this.evictLeastRecentlyUsed();
         }
     }
 
@@ -218,11 +206,7 @@ export class LruCache<TKey, TValue> {
             return NoneOption.get();
         }
 
-        // Move the accessed item to the head of the list to mark it as most recently used.
-        const listItem = it.value;
-        this._frequencyList.splice(it, 1);
-        this._frequencyList.splice(this._frequencyList.begin(), 0, listItem);
-        this._lookupMap.set(key, this._frequencyList.begin());
+        const listItem = this.moveToMostRecentlyUsed(it);
         return new SomeOption(listItem.value);
     }
 
@@ -269,26 +253,90 @@ export class LruCache<TKey, TValue> {
         // If this collection will be growing and the new size will exceed the
         // capacity, evict the least recently used item.
         if (collectionWillGrow && this._lookupMap.size + 1 > this._capacity) {
-            // Get an iterator pointing at the last item in the list (the least recently used).
-            const it = this._frequencyList.end();
-            it.prev();
-
-            // Evict it.
-            this._lookupMap.delete(it.value.key);
-            this._frequencyList.splice(it, 1);
+            this.evictLeastRecentlyUsed();
         }
 
         if (itOldItem !== undefined) {
-            // There is already an item in this collection with the same key.
-            // Remove it from this frequency list.
-            this._frequencyList.splice(itOldItem, 1);
+            this.removeByIterator(itOldItem);
         }
 
-        // Insert the new item at the head of the list.
-        this._frequencyList.splice(this._frequencyList.begin(), 0, newItem);
+        this.insertAsMostRecentlyUsed(newItem);
+    }
 
-        // Update the map to point to the new item.
-        this._lookupMap.set(key, this._frequencyList.begin());
+
+    /**
+     * Inserts an item at the head of the frequency list and updates the lookup
+     * map so both structures stay in sync.
+     *
+     * @param item - The item to insert
+     */
+    private insertAsMostRecentlyUsed(item: ILruListItem<TKey, TValue>): void {
+        this._frequencyList.splice(this._frequencyList.begin(), 0, item);
+        this._lookupMap.set(item.key, this._frequencyList.begin());
+    }
+
+
+    /**
+     * Removes an item using its list iterator and updates both backing
+     * structures together.
+     *
+     * @param it - Iterator pointing at the item to remove
+     * @returns The removed item
+     */
+    private removeByIterator(it: Iterator<ILruListItem<TKey, TValue>>): ILruListItem<TKey, TValue> {
+        const item = it.value;
+        this._frequencyList.splice(it, 1);
+        this._lookupMap.delete(item.key);
+        return item;
+    }
+
+
+    /**
+     * Removes an item by key while keeping both backing structures in sync.
+     *
+     * @param key - The key to remove
+     * @returns true if the key existed and was removed; otherwise false
+     */
+    private removeByKey(key: TKey): boolean {
+        const it = this._lookupMap.get(key);
+        if (it === undefined) {
+            return false;
+        }
+
+        this.removeByIterator(it);
+        return true;
+    }
+
+
+    /**
+     * Moves an existing item to the head of the frequency list.
+     *
+     * @param it - Iterator pointing at the item to move
+     * @returns The moved item
+     */
+    private moveToMostRecentlyUsed(it: Iterator<ILruListItem<TKey, TValue>>): ILruListItem<TKey, TValue> {
+        const item = this.removeByIterator(it);
+        this.insertAsMostRecentlyUsed(item);
+        return item;
+    }
+
+
+    /**
+     * Evicts the least recently used item from this cache.
+     */
+    private evictLeastRecentlyUsed(): void {
+        const it = this._frequencyList.end();
+        it.prev();
+        this.removeByIterator(it);
+    }
+
+
+    /**
+     * Removes all items from this cache.
+     */
+    private clearAllItems(): void {
+        this._lookupMap.clear();
+        this._frequencyList.splice(this._frequencyList.begin(), this._frequencyList.length);
     }
 
 }
