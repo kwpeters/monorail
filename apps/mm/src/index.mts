@@ -2,9 +2,11 @@ import * as url from "node:url";
 import { Result, SucceededResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
 import { assertNever } from "@repo/depot/never";
+import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { promptForChoiceFuzzy, registerFuzzyPrompt } from "@repo/depot-node/promptAutocomplete";
 import { clipboardCommandDefinitions, executableCommandDefinitions, fsItemCommandDefinitions, urlCommandDefinitions } from "./subjects.mjs";
-import { getConfiguration } from "./configuration.mjs";
+import { getSubjectConfiguration } from "./subjectConfiguration.mjs";
+import { getCliConfiguration } from "./cliConfig.mjs";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -45,7 +47,10 @@ function runningThisScript(): boolean {
 
 async function main(): Promise<Result<number, string>> {
 
-    const configRes = await getConfiguration();
+    const configRes = await pipeAsync(
+        getCliConfiguration(),
+        (res) => res.bindAsync((cliConfig) => getSubjectConfiguration(cliConfig.subjectsConfigFile))
+    );
     if (configRes.failed) {
         return configRes;
     }
