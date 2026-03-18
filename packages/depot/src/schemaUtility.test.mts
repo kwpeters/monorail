@@ -3,7 +3,12 @@
 //
 import { z } from "zod";
 import { NoneOption, SomeOption } from "./option.mjs";
-import { optionSchema, regexpSchema } from "./schemaUtility.mjs";
+import {
+    fileSystemPathSchema,
+    normalizePathSeparators,
+    optionSchema,
+    regexpSchema
+} from "./schemaUtility.mjs";
 
 
 describe("optionSchema()", () => {
@@ -108,4 +113,49 @@ describe("regexpSchema()", () => {
         }
     });
 
+});
+
+
+describe("fileSystemPathSchema()", () => {
+
+    it("normalizes path separators to backslashes", () => {
+        const schema = fileSystemPathSchema(() => "\\");
+        const result = schema.safeParse("C:/temp\\my/file.txt");
+        expect(result.success).toBe(true);
+        if (result.success) {
+            expect(result.data).toBe("C:\\temp\\my\\file.txt");
+        }
+    });
+
+
+    it("normalizes path separators to forward slashes", () => {
+        const schema = fileSystemPathSchema(() => "/");
+        const result = schema.safeParse("/tmp\\my/path\\file.txt");
+        expect(result.success).toBe(true);
+        if (result.success) {
+            expect(result.data).toBe("/tmp/my/path/file.txt");
+        }
+    });
+
+
+    it("fails to parse non-string input", () => {
+        const schema = fileSystemPathSchema(() => "/");
+        const result = schema.safeParse(42);
+        expect(result.success).toBe(false);
+    });
+});
+
+
+describe("normalizePathSeparators()", () => {
+
+    it("normalizes mixed separators to backslashes", () => {
+        const result = normalizePathSeparators("a\\b/c\\d/e", "\\");
+        expect(result).toBe("a\\b\\c\\d\\e");
+    });
+
+
+    it("normalizes mixed separators to forward slashes", () => {
+        const result = normalizePathSeparators("a\\b/c\\d/e", "/");
+        expect(result).toBe("a/b/c/d/e");
+    });
 });

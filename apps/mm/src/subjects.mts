@@ -1,6 +1,8 @@
+import * as path from "node:path";
 import { z } from "zod";
 import clipboard from "clipboardy";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
+import { fileSystemPathSchema } from "@repo/depot/schemaUtility";
 import { ternary } from "@repo/depot/algorithm";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { File } from "@repo/depot-node/file";
@@ -9,6 +11,10 @@ import { launch } from "@repo/depot-node/launch";
 import { Directory } from "@repo/depot-node/directory";
 
 
+export const subjectPathSchema = fileSystemPathSchema(
+    () => path.sep
+);
+
 
 //
 // ExecutableSubject
@@ -16,9 +22,9 @@ import { Directory } from "@repo/depot-node/directory";
 export const executableSubjectSchema = z.strictObject({
     type:       z.literal("ISubjectExecutable"),
     name:       z.string(),
-    executable: z.string(),
+    executable: subjectPathSchema,
     args:       z.array(z.string()),
-    cwd:        z.string().optional()
+    cwd:        subjectPathSchema.optional()
 });
 export type ExecutableSubject = z.infer<typeof executableSubjectSchema>;
 
@@ -29,7 +35,7 @@ export type ExecutableSubject = z.infer<typeof executableSubjectSchema>;
 export const fsItemSubjectSchema = z.strictObject({
     type: z.literal("ISubjectFsItem"),
     name: z.string(),
-    path: z.string()
+    path: subjectPathSchema
 });
 export type FsItemSubject = z.infer<typeof fsItemSubjectSchema>;
 
@@ -117,7 +123,7 @@ export const executableCommandDefinitions = [
         name: "show executable in Explorer",
         fn:   (subject) => showInExplorer(subject.executable)
     }
-] as Array<ICommandDefinition<ExecutableSubject>>;
+] satisfies Array<ICommandDefinition<ExecutableSubject>>;
 
 
 export const fsItemCommandDefinitions = [
@@ -142,7 +148,7 @@ export const fsItemCommandDefinitions = [
         name: "open in vscode",
         fn:   (subject) => openInVisualStudioCode(subject.path)
     }
-] as Array<ICommandDefinition<FsItemSubject>>;
+] satisfies Array<ICommandDefinition<FsItemSubject>>;
 
 
 export const urlCommandDefinitions = [
@@ -157,7 +163,7 @@ export const urlCommandDefinitions = [
             return new SucceededResult(subject.url);
         }
     }
-] as Array<ICommandDefinition<UrlSubject>>;
+] satisfies Array<ICommandDefinition<UrlSubject>>;
 
 
 export const clipboardCommandDefinitions = [
@@ -168,7 +174,7 @@ export const clipboardCommandDefinitions = [
             return new SucceededResult(subject.text);
         }
     }
-] as Array<ICommandDefinition<ClipboardSubject>>;
+] satisfies Array<ICommandDefinition<ClipboardSubject>>;
 
 
 function showInExplorer(path: string): Result<string, string> {

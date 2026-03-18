@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
         {
 			"name": "airliner extension",
 			"type": "extensionHost",
@@ -145,6 +146,26 @@
                 "${workspaceRoot}/apps/findgrep/src/index.cts",
                 "ChildModuleImport_CIP-1-12-332.xml",
                 "Port"
+            ],
+            "cwd": "${workspaceRoot}",
+            "runtimeArgs": [
+                "--nolazy"
+            ],
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+        },
+        {
+            "name": "mm",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/node_modules/tsx/dist/cli.mjs",
+            "stopOnEntry": false,
+            "args": [
+                "${workspaceRoot}/apps/mm/src/index.mts",
+                "--subjectsConfigFile",
+                "C:\\Users\\kwpet\\SynologyDrive\\Drive\\home\\mm - new.json"
             ],
             "cwd": "${workspaceRoot}",
             "runtimeArgs": [

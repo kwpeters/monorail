@@ -111,3 +111,33 @@ export function regexpSchema(): z.ZodType<RegExp> {
         }
     });
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Filesystem path schema
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Creates a Zod schema that accepts a filesystem path string and normalizes
+ * all slash separators to the value returned by _separatorFn_.
+ *
+ * @param separatorFn - Function that returns the path separator to use
+ * @return A Zod schema that normalizes slash separators in path strings
+ */
+export function fileSystemPathSchema(
+    separatorFn: () => "/" | "\\"
+): z.ZodType<string> {
+    return z.string().transform((path) => normalizePathSeparators(path, separatorFn()));
+}
+
+
+/**
+ * Replaces all slash separators in a path string with a specific separator.
+ *
+ * @param path - The path string to normalize
+ * @param separator - The separator character to apply
+ * @return A normalized path string
+ */
+export function normalizePathSeparators(path: string, separator: "/" | "\\"): string {
+    return path.replace(/[\\/]/g, separator);
+}
