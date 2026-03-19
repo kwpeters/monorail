@@ -29,7 +29,7 @@ Build a new copywrite command named difftui that keeps behavioral parity with di
 - packages/depot/src/schemaUtility.mts — reusable schema helpers and strict-object style examples.
 
 **Verification**
-1. Targeted command build/test during development: npm run build --workspace @repo/copywrite, npm run test --workspace @repo/copywrite, npm run lint --workspace @repo/copywrite.
+1. Targeted command build/test during development: npm run build --workspace apps/copywrite, npm run test --workspace apps/copywrite, npm run lint --workspace apps/copywrite.
 2. Manual smoke checks for difftui:
 3. Launch difftui with valid leftDir/rightDir and verify startup defaults.
 4. Verify keyboard controls (Up/Down, Enter, d, s, r, q, Ctrl+E).
