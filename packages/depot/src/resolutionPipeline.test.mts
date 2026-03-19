@@ -1,14 +1,14 @@
 import { NoneOption, SomeOption } from "./option.mjs";
 import { FailedResult, Result, SucceededResult } from "./result.mjs";
-import { type ResolutionPipelineStep, runResolutionPipeline } from "./resolutionPipeline.mjs";
+import { type ResolutionPipelineStep, resolutionPipeline } from "./resolutionPipeline.mjs";
 
 
-describe("runResolutionPipeline()", () => {
+describe("resolutionPipeline()", () => {
 
     it("returns the first resolved value", async () => {
         let lastStepInvocations = 0;
 
-        const res = await runResolutionPipeline<number, string>(
+        const res = await resolutionPipeline<number, string>(
             [
                 () => new SucceededResult(NoneOption.get()),
                 () => new SucceededResult(new SomeOption(37)),
@@ -30,7 +30,7 @@ describe("runResolutionPipeline()", () => {
     it("returns a failed result immediately when a step hard-fails", async () => {
         let lastStepInvocations = 0;
 
-        const res = await runResolutionPipeline<number, string>(
+        const res = await resolutionPipeline<number, string>(
             [
                 () => new SucceededResult(NoneOption.get()),
                 () => new FailedResult("hard failure"),
@@ -52,7 +52,7 @@ describe("runResolutionPipeline()", () => {
     it("returns onExhausted error when all steps return NoneOption", async () => {
         let exhaustionInvocations = 0;
 
-        const res = await runResolutionPipeline<number, string>(
+        const res = await resolutionPipeline<number, string>(
             [
                 () => new SucceededResult(NoneOption.get()),
                 () => new SucceededResult(NoneOption.get())
@@ -76,7 +76,7 @@ describe("runResolutionPipeline()", () => {
             () => Promise.resolve(new SucceededResult(new SomeOption(12)))
         ];
 
-        const res = await runResolutionPipeline(
+        const res = await resolutionPipeline(
             steps,
             {
                 onExhausted: () => "exhausted"
@@ -93,7 +93,7 @@ describe("runResolutionPipeline()", () => {
             yield () => new SucceededResult(new SomeOption(5));
         }
 
-        const res = await runResolutionPipeline(
+        const res = await resolutionPipeline(
             getSteps(),
             {
                 onExhausted: () => "exhausted"

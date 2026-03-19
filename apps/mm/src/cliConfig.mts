@@ -3,7 +3,7 @@ import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
 import { Result, SucceededResult, FailedResult } from "@repo/depot/result";
 import { Option, NoneOption, SomeOption } from "@repo/depot/option";
-import { runResolutionPipeline } from "@repo/depot/resolutionPipeline";
+import { resolutionPipeline } from "@repo/depot/resolutionPipeline";
 import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 import { File } from "@repo/depot-node/file";
 import { Directory } from "@repo/depot-node/directory";
@@ -47,7 +47,7 @@ export async function getCliConfiguration(): Promise<Result<ICliConfig, string>>
         .argv;
 
 
-    const resSubjectsConfigFile = await runResolutionPipeline<File, string>(
+    const resSubjectsConfigFile = await resolutionPipeline<File, string>(
         [
             // Strategy 1: path explicitly provided on the command line.
             async () => {
