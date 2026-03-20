@@ -1,10 +1,11 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { Box, Text, useApp, useInput, Newline } from "ink";
+import { Box, Text, useApp, useInput, Newline, useStdout } from "ink";
 import TextInput from "ink-text-input";
 import {
     ActionPriority,
     type DiffDirFileItem,
     type FileCompareAction,
+    FileCompareActionType,
     diffDirectories
 } from "@repo/depot-node/diffDirectories";
 import { showVsCodeDiff } from "@repo/depot-node/fileDiff";
@@ -118,6 +119,18 @@ const ACTION_PRIORITY_VALUES = [
 
 const SETTINGS_FIELD_COUNT = 6;
 
+/**
+ * Total lines consumed by fixed chrome: header (3) + details pane (8) +
+ * footer (2).  The list gets the rest.
+ */
+const FIXED_OVERHEAD = 13;
+
+/** Minimum rows to show in the scrollable file list. */
+const MIN_LIST_ROWS = 3;
+
+/** Fallback terminal height when stdout.rows is unavailable. */
+const DEFAULT_TERMINAL_ROWS = 24;
+
 
 // ---------------------------------------------------------------------------
 // Main App component
@@ -129,6 +142,7 @@ const SETTINGS_FIELD_COUNT = 6;
  */
 export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppProps): React.ReactElement {
     const { exit } = useApp();
+    const { stdout } = useStdout();
 
     // Applied settings (used for the current diff list computation).
     const [appliedSettings, setAppliedSettings] = useState<IDiffTuiSettings>(initialSettings);
@@ -148,10 +162,13 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
     // Currently selected index in the file list.
     const [selectedIndex, setSelectedIndex] = useState(0);
 
+    // First visible row index for the scrollable file list.
+    const [scrollOffset, setScrollOffset] = useState(0);
+
     // Interaction mode.
     const [mode, setMode] = useState<AppMode>("list");
 
-    // Available actions for the selected item.
+    // Available actions for the selected item (Skip is excluded).
     const [availableActions, setAvailableActions] = useState<Array<FileCompareAction>>([]);
 
     // Which action is highlighted in the action pane.
@@ -164,6 +181,11 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
     const [settingsDraft, setSettingsDraft] = useState<ISettingsDraft>(
         () => settingsToEditorDraft(initialSettings)
     );
+
+    // Number of visible rows the file list may occupy.
+    function getListRows(): number {
+        return Math.max(MIN_LIST_ROWS, (stdout.rows ?? DEFAULT_TERMINAL_ROWS) - FIXED_OVERHEAD);
+    }
 
     // ---------------------------------------------------------------------------
     // Helpers
@@ -210,7 +232,7 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
     }, []);
 
 
-    // Load available actions whenever selection changes or mode returns to list.
+    // Load available actions (Skip excluded) whenever selection changes or mode returns.
     useEffect(() => {
         if (mode !== "list" && mode !== "action") { return; }
         const entry = items[selectedIndex];
@@ -220,10 +242,30 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
         }
         void entry.item.actions(appliedSettings.actionPriority)
         .then((acts) => {
-            setAvailableActions(acts);
+            setAvailableActions(acts.filter((a) => a.type !== FileCompareActionType.Skip));
             setActionIndex(0);
         });
     }, [selectedIndex, items, appliedSettings.actionPriority, mode]);
+
+
+    // Scroll the file list to keep the selected item visible.
+    useEffect(() => {
+        const visCount = getListRows();
+        setScrollOffset((prev) => {
+            if (selectedIndex < prev) { return selectedIndex; }
+            if (selectedIndex >= prev + visCount) { return selectedIndex - visCount + 1; }
+            return prev;
+        });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedIndex, stdout.rows]);
+
+
+    // After a refresh the list may shrink; clamp scroll offset to the new bounds.
+    useEffect(() => {
+        const visCount = getListRows();
+        setScrollOffset((prev) => Math.min(prev, Math.max(0, items.length - visCount)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [items, stdout.rows]);
 
 
     // ---------------------------------------------------------------------------
@@ -432,14 +474,6 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
             return;
         }
 
-        if (input === "d") {
-            const entry = items[selectedIndex];
-            if (entry !== undefined) {
-                void showVsCodeDiff(entry.item.leftFile, entry.item.rightFile, false, true);
-            }
-            return;
-        }
-
         if (key.return && items.length > 0) {
             setMode("action");
             return;
@@ -484,9 +518,20 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
             );
         }
 
+        const visCount = getListRows();
+        const hasAbove = scrollOffset > 0;
+        const hasBelow = scrollOffset + visCount < items.length;
+        const visibleItems = items.slice(scrollOffset, scrollOffset + visCount);
+
         return (
             <Box flexDirection="column">
-                {items.map((entry, idx) => {
+                {hasAbove && (
+                    <Box paddingX={1}>
+                        <Text dimColor>⬆ {scrollOffset} more above</Text>
+                    </Box>
+                )}
+                {visibleItems.map((entry, relIdx) => {
+                    const idx = scrollOffset + relIdx;
                     const isSelected = idx === selectedIndex;
                     const badge = statusBadge(entry.status);
                     const color = statusColor(entry.status);
@@ -503,6 +548,11 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
                         </Box>
                     );
                 })}
+                {hasBelow && (
+                    <Box paddingX={1}>
+                        <Text dimColor>⬇ {items.length - scrollOffset - visCount} more below</Text>
+                    </Box>
+                )}
             </Box>
         );
     }
@@ -660,7 +710,7 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
                     <Text color="yellow">{statusMsg}</Text>
                 )}
                 <Text dimColor>
-                    [↑↓] Select  [Enter] Actions  [d] VSCode  [s] Settings  [r] Refresh  [q] Quit  [Ctrl+E] Export
+                    [↑↓] Select  [Enter] Actions  [s] Settings  [r] Refresh  [q] Quit  [Ctrl+E] Export
                 </Text>
             </Box>
         );
