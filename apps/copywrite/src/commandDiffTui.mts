@@ -59,9 +59,20 @@ export async function handler(args: Arguments): Promise<void> {
 
     const initialSettings = mergeWithDefaults(configResult.value, defaultDiffTuiSettings);
 
-    const { waitUntilExit } = render(
-        createElement(DiffTuiApp, { leftDir, rightDir, initialSettings })
-    );
+    // Enter the alternate screen buffer so the TUI occupies a clean full-screen
+    // surface starting at row 0.  This keeps the header pinned to the top and
+    // restores the previous terminal content when the user quits.
+    process.stdout.write("\x1b[?1049h\x1b[H");
 
-    await waitUntilExit();
+    try {
+        const { waitUntilExit } = render(
+            createElement(DiffTuiApp, { leftDir, rightDir, initialSettings })
+        );
+
+        await waitUntilExit();
+    }
+    finally {
+        // Exit the alternate screen buffer, restoring the original terminal.
+        process.stdout.write("\x1b[?1049l");
+    }
 }

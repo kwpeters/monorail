@@ -120,10 +120,15 @@ const ACTION_PRIORITY_VALUES = [
 const SETTINGS_FIELD_COUNT = 6;
 
 /**
- * Total lines consumed by fixed chrome: header (3) + details pane (8) +
- * footer (2).  The list gets the rest.
+ * Total lines consumed by fixed chrome:
+ *   header (border + 1 content + border)          = 3
+ *   details pane (border + paddingY + 6 content + paddingY + border) = 10
+ *   footer (hint + optional status msg)           = 2
+ *   scroll indicators in list (⬆ + ⬇, worst case)= 2
+ *                                               ────
+ *                                               17 lines
  */
-const FIXED_OVERHEAD = 13;
+const FIXED_OVERHEAD = 17;
 
 /** Minimum rows to show in the scrollable file list. */
 const MIN_LIST_ROWS = 3;
