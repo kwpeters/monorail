@@ -615,7 +615,7 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
                         <Box key={choice.label}>
                             <Text {...(isHighlighted ? { color: "blue" as const } : {})}
                                   bold={isHighlighted}>
-                                {isHighlighted ? "▶" : "  "}
+                                {isHighlighted ? "▶ " : "  "}
                                 {choice.label}
                             </Text>
                         </Box>
@@ -677,7 +677,7 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
                     return (
                         <Box key={field.label} marginBottom={0}>
                             <Text bold={isFocused} {...(isFocused ? { color: "cyan" as const } : {})}>
-                                {isFocused ? "▶" : "  "}
+                                {isFocused ? "▶ " : "  "}
                                 {field.label}:{" "}
                             </Text>
                             {isEditing && (idx === 4 || idx === 5) ? (
@@ -715,7 +715,7 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
                     <Text color="yellow">{statusMsg}</Text>
                 )}
                 <Text dimColor>
-                    [↑↓] Select  [Enter] Actions  [s] Settings  [r] Refresh  [q] Quit  [Ctrl+E] Export
+                    [↑↓] Select  [Enter] Actions  [s] Settings  [r] Refresh  [q] Quit
                 </Text>
             </Box>
         );
