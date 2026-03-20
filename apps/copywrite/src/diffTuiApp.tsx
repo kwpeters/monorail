@@ -543,7 +543,7 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
                     return (
                         <Box key={entry.item.relativeFilePath} paddingX={1}>
                             <Text {...(isSelected ? { color: "blue" as const } : {})} bold={isSelected}>
-                                {isSelected ? "▶ " : "  "}
+                                {isSelected ? "▶" : "  "}
                             </Text>
                             <Text color={color}>[{badge}] </Text>
                             <Text color={isSelected ? "white" as const : "gray" as const}
@@ -615,7 +615,7 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
                         <Box key={choice.label}>
                             <Text {...(isHighlighted ? { color: "blue" as const } : {})}
                                   bold={isHighlighted}>
-                                {isHighlighted ? "▶ " : "  "}
+                                {isHighlighted ? "▶" : "  "}
                                 {choice.label}
                             </Text>
                         </Box>
@@ -677,7 +677,7 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
                     return (
                         <Box key={field.label} marginBottom={0}>
                             <Text bold={isFocused} {...(isFocused ? { color: "cyan" as const } : {})}>
-                                {isFocused ? "▶ " : "  "}
+                                {isFocused ? "▶" : "  "}
                                 {field.label}:{" "}
                             </Text>
                             {isEditing && (idx === 4 || idx === 5) ? (
