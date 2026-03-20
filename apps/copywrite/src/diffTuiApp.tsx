@@ -574,7 +574,7 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
 
         return (
             <Box flexDirection="column" paddingX={2} paddingY={1} borderStyle="single">
-                <Text bold>Selected: </Text>
+                <Text bold>Selected ({selectedIndex + 1} of {items.length}): </Text>
                 <Text>{entry.item.relativeFilePath}</Text>
                 <Text color={color}>Status: [{badge}] {entry.status}</Text>
                 <Newline />
