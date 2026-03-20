@@ -601,7 +601,7 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
         }
 
         const actionChoices = availableActions.map((act, i) => ({
-            label: `execute: ${act.type}`,
+            label: act.type as string,
             index: i
         }));
         actionChoices.push({ label: "diff (VS Code)", index: availableActions.length });
