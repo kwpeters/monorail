@@ -187,7 +187,7 @@ describe("settingsToConfig() / configToSettings() round-trip", () => {
         expect(config.includeLeftOnly).toBe(true);
         expect(config.includeRightOnly).toBe(true);
         expect(config.includePatterns).toEqual(["**/*"]);
-        expect(config.excludePatterns).toEqual([]);
+        expect(config.excludePatterns).toEqual(["**/.turbo/**/*", "**/dist/**/*", "**/out/**/*", "**/node_modules/**/*"]);
     });
 
 
