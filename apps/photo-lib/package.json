@@ -6,7 +6,7 @@
         "dev": "echo 'Add dev script here'",
         "build": "npm run build:ts && npm run build:sea",
         "build:ts": "tsc --build tsconfig.src.json",
-        "build:sea": "tsx ../build-app-assist/src/index.mts cjsToSeaApp2 --inputCjsFile ./dist/index.cjs --exeBaseName photo-lib",
+        "build:sea": "tsx ../build-app-assist/src/index.mts cjsToSeaApp --inputCjsFile ./dist/index.cjs --exeBaseName photo-lib",
         "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
         "lint": "eslint .",
         "type-check": "tsc --project tsconfig.json --noEmit",
@@ -25,7 +25,7 @@
     },
     "devDependencies": {
         "@repo/build-app-assist": "*",
-        "@repo/eslint-config-2": "*",
+        "@repo/eslint-config": "*",
         "@repo/typescript-config": "*",
         "@types/jasmine": "^6.0.0",
         "@types/lodash-es": "^4.17.7",

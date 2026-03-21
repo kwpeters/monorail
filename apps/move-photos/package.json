@@ -19,7 +19,7 @@
         "lodash-es": "^4.17.21"
     },
     "devDependencies": {
-        "@repo/eslint-config-2": "*",
+        "@repo/eslint-config": "*",
         "@repo/typescript-config": "*",
         "@types/jasmine": "^6.0.0",
         "@types/lodash-es": "^4.17.7",

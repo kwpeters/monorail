@@ -1,0 +1,15 @@
+{
+    "extends": "@repo/typescript-config/tsconfig.sea-app.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "jsx": "react-jsx"
+    },
+    "include": [
+        "src"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "**/*.test.mts"
+    ]
+}

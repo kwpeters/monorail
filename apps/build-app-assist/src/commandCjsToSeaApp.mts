@@ -85,6 +85,7 @@ async function handler(argv: ArgumentsCamelCase<IArgsCommand>): Promise<Result<n
         (res) => res.tapSuccess(console.log),
         (res) => res.bindAsync(() => createSeaExe(seaConfigFile)),
         (res) => res.tapSuccess(console.log),
+        (res) => res.tapSuccess(() => console.log(`✅ Successfully created ${exeFile.toString()}.`)),
     );
 
     if (res.failed) {
@@ -196,7 +197,7 @@ async function argsToConfig(
  * Definition of this subcommand.
  */
 export const def = {
-    command:     "cjsToSeaApp2",
+    command:     "cjsToSeaApp",
     description: commandDescription,
     builder:     builder,
     handler:     handler

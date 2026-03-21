@@ -38,7 +38,7 @@
         }
     },
     "devDependencies": {
-        "@repo/eslint-config-2": "*",
+        "@repo/eslint-config": "*",
         "@repo/typescript-config": "*",
         "@types/jasmine": "^6.0.0",
         "eslint": "^10.0.1",

@@ -27,7 +27,7 @@
         "winston": "^3.19.0"
     },
     "devDependencies": {
-        "@repo/eslint-config-2": "*",
+        "@repo/eslint-config": "*",
         "@repo/typescript-config": "*",
         "@types/cookie-parser": "^1.4.10",
         "@types/cors": "^2.8.19",

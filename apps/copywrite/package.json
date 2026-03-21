@@ -20,7 +20,7 @@
         "yargs": "^17.7.2"
     },
     "devDependencies": {
-        "@repo/eslint-config-2": "*",
+        "@repo/eslint-config": "*",
         "@repo/typescript-config": "*",
         "@types/jasmine": "^6.0.0",
         "@types/text-table": "^0.2.2",
