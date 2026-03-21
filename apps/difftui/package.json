@@ -2,11 +2,12 @@
     "name": "@repo/difftui",
     "version": "0.0.0",
     "private": true,
+    "type": "module",
     "scripts": {
         "dev": "echo 'Add dev script here'",
         "build": "npm run build:ts && npm run build:sea",
         "build:ts": "tsc --build tsconfig.src.json",
-        "build:sea": "tsx ../build-app-assist/src/index.mts cjsToSeaApp2 --inputCjsFile ./dist/index.cjs --exeBaseName difftui",
+        "build:sea": "tsx ../build-app-assist/src/index.mts esmToSeaApp --inputEsmFile ./dist/main.mjs --exeBaseName difftui",
         "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
         "lint": "eslint .",
         "type-check": "tsc --project tsconfig.json --noEmit",
@@ -16,6 +17,13 @@
         "difftui": "./dist/index.cjs"
     },
     "dependencies": {
+        "@repo/depot": "*",
+        "@repo/depot-node": "*",
+        "ink": "^5.2.1",
+        "ink-text-input": "^6.0.0",
+        "react": "^18.3.1",
+        "yargs": "^17.7.2",
+        "zod": "^4.3.6"
     },
     "devDependencies": {
         "@repo/build-app-assist": "*",
@@ -23,6 +31,8 @@
         "@repo/typescript-config": "*",
         "@types/jasmine": "^6.0.0",
         "@types/node": "^25.4.0",
+        "@types/react": "^18.3.1",
+        "@types/yargs": "^17.0.24",
         "eslint": "^10.0.1",
         "jasmine": "^6.1.0"
     }

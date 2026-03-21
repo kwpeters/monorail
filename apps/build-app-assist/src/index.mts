@@ -9,6 +9,7 @@ import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 
 // Command modules
 import { def as cmdDefCjsToSeaApp2 } from "./commandCjsToSeaApp2.mjs";
+import { def as cmdDefEsmToSeaApp } from "./commandEsmToSeaApp.mjs";
 import { def as cmdDefCreateRepoBin} from "./commandCreateRepoBin.mjs";
 
 
@@ -55,6 +56,14 @@ async function main(): Promise<Result<number, string>> {
         cmdDefCjsToSeaApp2.builder,
         async (argv) => {
             retVal = await cmdDefCjsToSeaApp2.handler(argv);
+        }
+    )
+    .command(
+        cmdDefEsmToSeaApp.command,
+        cmdDefEsmToSeaApp.description,
+        cmdDefEsmToSeaApp.builder,
+        async (argv) => {
+            retVal = await cmdDefEsmToSeaApp.handler(argv);
         }
     )
     .command(

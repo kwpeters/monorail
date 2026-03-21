@@ -2,6 +2,7 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import { getJsConfig, getJsonConfig, getJsoncConfig, getJson5Config,
          getMarkdownConfig, getCssConfig,
          getTsConfig,
+         getReactConfig,
          getIgnorePatterns,
          getTurboConfig} from "@repo/eslint-config-2/eslintHelpers";
 
@@ -13,6 +14,8 @@ export default defineConfig([
     getJsConfig(false, true),
     // TS type checking configuration and @typescript-eslint rule configurations
     ...getTsConfig(import.meta.dirname),
+    // React hooks rule configuration for .tsx/.jsx files
+    ...getReactConfig(),
     // Turbo recommended rule configuration
     ...getTurboConfig(),
     // JSON linting configuration

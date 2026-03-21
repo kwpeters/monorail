@@ -2,7 +2,6 @@
     "name": "@repo/copywrite",
     "version": "0.0.0",
     "private": true,
-    "type": "module",
     "scripts": {
         "dev": "echo 'Add dev script here'",
         "build": "tsc --build tsconfig.src.json",
@@ -17,18 +16,13 @@
     "dependencies": {
         "@repo/depot": "*",
         "@repo/depot-node": "*",
-        "ink": "^5.2.1",
-        "ink-text-input": "^6.0.0",
-        "react": "^18.3.1",
         "text-table": "^0.2.0",
-        "yargs": "^17.7.2",
-        "zod": "^4.3.6"
+        "yargs": "^17.7.2"
     },
     "devDependencies": {
         "@repo/eslint-config-2": "*",
         "@repo/typescript-config": "*",
         "@types/jasmine": "^6.0.0",
-        "@types/react": "^18.3.1",
         "@types/text-table": "^0.2.2",
         "@types/yargs": "^17.0.24",
         "eslint": "^10.0.1",
