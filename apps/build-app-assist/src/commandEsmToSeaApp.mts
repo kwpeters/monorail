@@ -1,3 +1,4 @@
+/* eslint-disable prefer-named-capture-group */
 import { promisify } from "node:util";
 import * as childProcess from "node:child_process";
 import { type ArgumentsCamelCase, type Argv } from "yargs";
