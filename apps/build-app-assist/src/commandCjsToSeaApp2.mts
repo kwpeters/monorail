@@ -85,6 +85,7 @@ async function handler(argv: ArgumentsCamelCase<IArgsCommand>): Promise<Result<n
         (res) => res.tapSuccess(console.log),
         (res) => res.bindAsync(() => createSeaExe(seaConfigFile)),
         (res) => res.tapSuccess(console.log),
+        (res) => res.tapSuccess(() => console.log(`✅ Successfully created ${exeFile.toString()}.`)),
     );
 
     if (res.failed) {
