@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
 import type { ConfigWithExtends, ConfigWithExtendsArray } from "@eslint/config-helpers";
+import { createRequire } from "node:module";
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import stylistic from "@stylistic/eslint-plugin";
@@ -44,7 +45,7 @@ export function getJsConfig(browserGlobals: boolean, nodeGlobals: boolean): Conf
 
     return [
         {
-            files: ["**/*.{js,mjs,cjs,ts,mts,cts}"],
+            files: ["**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}"],
             plugins: {
                 js,
                 "@stylistic": stylistic
@@ -398,7 +399,7 @@ export function getTsConfig(projDir: string): ConfigWithExtendsArray {
         // prevents TS rules (both type-aware and non-type-aware) from running
         // on .md, .css, .json, etc.
         {
-            files: ["**/*.{ts,mts,cts}"],
+            files: ["**/*.{ts,mts,cts,tsx}"],
             extends: [
                 ...tseslint.configs.strictTypeChecked,
                 ...tseslint.configs.stylisticTypeChecked,
@@ -675,10 +676,139 @@ export function getTsConfig(projDir: string): ConfigWithExtendsArray {
                 "@typescript-eslint/unified-signatures": ["off"],
             }
         },
+        // TSX/JSX-specific overrides: allow PascalCase for React component names
+        // and library import bindings (e.g. `import React from "react"`).
+        {
+            files: ["**/*.{tsx,jsx}"],
+            rules: {
+                "@typescript-eslint/naming-convention": [
+                    "error",
+                    // Allow PascalCase for import default bindings (e.g. React, TextInput).
+                    {
+                        "selector": "import",
+                        "format": ["camelCase", "PascalCase"]
+                    },
+                    // Allow PascalCase for function declarations (React component convention).
+                    {
+                        "selector": "function",
+                        "leadingUnderscore": "allow",
+                        "trailingUnderscore": "allow",
+                        "format": ["camelCase", "PascalCase"]
+                    },
+                    // --- The selectors below mirror the base TS naming-convention config. ---
+                    {
+                        "selector": "default",
+                        "leadingUnderscore": "allow",
+                        "trailingUnderscore": "allow",
+                        "format": [
+                            "camelCase"
+                        ]
+                    },
+                    {
+                        "selector": "variable",
+                        "modifiers": [
+                            "const",
+                            "global"
+                        ],
+                        "leadingUnderscore": "allowSingleOrDouble",
+                        "trailingUnderscore": "allow",
+                        "format": [
+                            "camelCase",
+                            "UPPER_CASE"
+                        ]
+                    },
+                    {
+                        "selector": "variable",
+                        "leadingUnderscore": "allowSingleOrDouble",
+                        "trailingUnderscore": "allow",
+                        "format": [
+                            "camelCase"
+                        ]
+                    },
+                    {
+                        "selector": "typeLike",
+                        "format": [
+                            "PascalCase"
+                        ]
+                    },
+                    {
+                        "selector": "enumMember",
+                        // Allow leading underscores for situations where the member
+                        // would otherwise start with a numeric digit.
+                        "leadingUnderscore": "allow",
+                        "format": [
+                            "PascalCase",
+                            "UPPER_CASE"
+                        ]
+                    },
+                    {
+                        "selector": "objectLiteralProperty",
+                        "leadingUnderscore": "allow",
+                        "trailingUnderscore": "allow",
+                        "format": [
+                            "camelCase",
+                            "UPPER_CASE"
+                        ]
+                    },
+                    {
+                        // Angular module variables (ending in "Module") should be PascalCase
+                        "selector": [
+                            "variable"
+                        ],
+                        "filter": {
+                            "regex": "^.*Module$",
+                            "match": true
+                        },
+                        "format": [
+                            "PascalCase"
+                        ]
+                    },
+                    {
+                        "selector": "interface",
+                        "format": [
+                            "PascalCase"
+                        ]
+                    },
+                    {
+                        "selector": "typeParameter",
+                        "prefix": [
+                            "T"
+                        ],
+                        "format": [
+                            "PascalCase"
+                        ]
+                    },
+                    {
+                        "selector": [
+                            "classProperty"
+                        ],
+                        "modifiers": [
+                            "static",
+                            "readonly"
+                        ],
+                        "format": [
+                            "UPPER_CASE"
+                        ]
+                    },
+                    {
+                        "selector": [
+                            "classProperty"
+                        ],
+                        "modifiers": [
+                            "private"
+                        ],
+                        "leadingUnderscore": "require",
+                        "format": [
+                            "camelCase"
+                        ]
+                    }
+                ]
+            }
+        },
         // Test file overrides
         {
             files: [
-                "**/*.{test,spec}.{ts,mts,cts}",
+                "**/*.{test,spec}.{ts,mts,cts,tsx}",
                 "**/*.{test,spec}.{js,mjs,cjs}"
             ],
             rules: {
@@ -696,6 +826,34 @@ export function getTsConfig(projDir: string): ConfigWithExtendsArray {
                 "@typescript-eslint/no-floating-promises": "off",
                 "@typescript-eslint/no-unused-vars": "off",
             }
+        },
+    ];
+}
+
+
+/**
+ * Gets React-specific linting configuration for `.tsx` and `.jsx` files.
+ * Configures `eslint-plugin-react-hooks` with the two standard rules:
+ * `rules-of-hooks` (error) and `exhaustive-deps` (warn).
+ *
+ * @return The React-specific configurations
+ */
+export function getReactConfig(): ConfigWithExtendsArray {
+    // Load the plugin at runtime to avoid TypeScript ESM/CJS interop issues.
+    const reactHooksPlugin: unknown = createRequire(import.meta.url)("eslint-plugin-react-hooks");
+    return [
+        {
+            files: ["**/*.{tsx,jsx}"],
+            plugins: {
+                // eslint-disable-next-line @typescript-eslint/no-deprecated
+                "react-hooks": reactHooksPlugin as Plugin,
+            },
+            rules: {
+                // Enforce the Rules of Hooks.
+                "react-hooks/rules-of-hooks": "error",
+                // Warn about missing or extraneous hook dependencies.
+                "react-hooks/exhaustive-deps": "warn",
+            },
         },
     ];
 }

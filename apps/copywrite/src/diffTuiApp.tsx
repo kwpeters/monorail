@@ -2,7 +2,6 @@ import React, { useState, useCallback, useEffect } from "react";
 import { Box, Text, useApp, useInput, Newline, useStdout } from "ink";
 import TextInput from "ink-text-input";
 import {
-    ActionPriority,
     type DiffDirFileItem,
     type FileCompareAction,
     FileCompareActionType,
@@ -72,16 +71,16 @@ function statusColor(status: string): string {
 // ---------------------------------------------------------------------------
 
 interface ISettingsDraft {
-    actionPriority:       string;
-    includeIdentical:     boolean;
-    includeLeftOnly:      boolean;
-    includeRightOnly:     boolean;
-    includePatternText:   string;
-    excludePatternText:   string;
+    actionPriority:     string;
+    includeIdentical:   boolean;
+    includeLeftOnly:    boolean;
+    includeRightOnly:   boolean;
+    includePatternText: string;
+    excludePatternText: string;
     /** Index of the currently focused field (0–5). */
-    focusedField:         number;
+    focusedField:       number;
     /** True when a text field is being edited. */
-    editing:              boolean;
+    editing:            boolean;
 }
 
 
@@ -133,7 +132,7 @@ const FIXED_OVERHEAD = 17;
 /** Minimum rows to show in the scrollable file list. */
 const MIN_LIST_ROWS = 3;
 
-/** Fallback terminal height when stdout.rows is unavailable. */
+/** Fallback terminal height when stdout.rows is unavailable or zero. */
 const DEFAULT_TERMINAL_ROWS = 24;
 
 
@@ -189,14 +188,16 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
 
     // Number of visible rows the file list may occupy.
     function getListRows(): number {
-        return Math.max(MIN_LIST_ROWS, (stdout.rows ?? DEFAULT_TERMINAL_ROWS) - FIXED_OVERHEAD);
+        return Math.max(MIN_LIST_ROWS, (stdout.rows || DEFAULT_TERMINAL_ROWS) - FIXED_OVERHEAD);
     }
 
     // ---------------------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------------------
 
-    const computeDiff = useCallback(async (settings: IDiffTuiSettings, prevPath: string | undefined, prevIdx: number) => {
+    const computeDiff = useCallback(async (
+        settings: IDiffTuiSettings, prevPath: string | undefined, prevIdx: number
+    ) => {
         setLoading(true);
         setStatusMsg("");
         try {
@@ -546,8 +547,9 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
                                 {isSelected ? "▶" : "  "}
                             </Text>
                             <Text color={color}>[{badge}] </Text>
-                            <Text color={isSelected ? "white" as const : "gray" as const}
-                                  bold={isSelected}>
+                            <Text
+                                color={isSelected ? "white" as const : "gray" as const}
+                                bold={isSelected}>
                                 {entry.item.relativeFilePath}
                             </Text>
                         </Box>
@@ -614,7 +616,7 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
                     return (
                         <Box key={choice.label}>
                             <Text {...(isHighlighted ? { color: "blue" as const } : {})}
-                                  bold={isHighlighted}>
+                                bold={isHighlighted}>
                                 {isHighlighted ? "▶ " : "  "}
                                 {choice.label}
                             </Text>
