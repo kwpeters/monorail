@@ -809,7 +809,7 @@ export function getTsConfig(projDir: string): ConfigWithExtendsArray {
         {
             files: [
                 "**/*.{test,spec}.{ts,mts,cts,tsx}",
-                "**/*.{test,spec}.{js,mjs,cjs}"
+                "**/*.{test,spec}.{js,mjs,cjs,jsx}"
             ],
             rules: {
                 // Disable core rule before configuring @typescript-eslint extension rule (Appendix B requirement)
