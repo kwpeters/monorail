@@ -14,7 +14,7 @@
         "depcheck": "depcheck"
     },
     "bin": {
-        "difftui": "./dist/index.cjs"
+        "difftui": "./dist/main.mjs"
     },
     "dependencies": {
         "@repo/depot": "*",
