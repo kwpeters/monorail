@@ -4,7 +4,7 @@
     "description": "Monorepo for packages and apps",
     "private": true,
     "engines": {
-        "node": ">=25"
+        "node": ">=25.8.1"
     },
     "packageManager": "npm@10.5.0",
     "author": "Kevin Peters <kwpeters@gmail.com>",
