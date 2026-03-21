@@ -14,7 +14,7 @@ const exec = promisify(childProcess.exec);
 const commandDescription = [
     "Bundles the specified ESM app into a Node Single Executable Application (SEA) ",
     "using the Node.js 21.7.0+ ESM SEA support. ",
-    "Use this command instead of cjsToSeaApp2 when the app (or its dependencies) ",
+    "Use this command instead of cjsToSeaApp when the app (or its dependencies) ",
     "uses top-level await or other ESM-only features that cannot be bundled as CJS. ",
     "See: https://nodejs.org/docs/latest/api/single-executable-applications.html"
 ].join("");

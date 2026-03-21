@@ -197,7 +197,7 @@ async function argsToConfig(
  * Definition of this subcommand.
  */
 export const def = {
-    command:     "cjsToSeaApp2",
+    command:     "cjsToSeaApp",
     description: commandDescription,
     builder:     builder,
     handler:     handler
