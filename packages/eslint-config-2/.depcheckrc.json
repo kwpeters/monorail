@@ -4,6 +4,7 @@
     "skip-missing": true,
     "ignores": [
         "@types/jasmine",
-        "jasmine"
+        "jasmine",
+        "eslint-plugin-react-hooks"
     ]
 }
