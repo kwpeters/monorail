@@ -143,14 +143,15 @@ async function createBundle(
 
 /**
  * Converts an esbuild ESM bundle (produced with --platform=node) to a CJS
- * bundle compatible with Node.js v25 SEA.
+ * bundle compatible with Node.js SEA.
  *
  * esbuild's --format=esm --platform=node output keeps node built-ins as static
  * ES import declarations, but also uses require() internally (via __require)
- * for all bundled CJS dependencies.  Node.js v25 SEA fails to load .mjs blobs
- * with static import declarations as ESM.  Replacing those imports with
- * require() calls and saving as .cjs lets the SEA run in CJS mode where
- * require() is available.
+ * for all bundled CJS dependencies.  When the injected main script is treated
+ * as ESM, dynamic require() calls in the bundled code fail because they cannot
+ * be resolved in ESM context.  Converting to CJS and wrapping in an async IIFE
+ * allows require() to work while preserving top-level await support from
+ * dependencies like Ink and yoga-layout.
  *
  * @param esmBundle - The ESM bundle produced by createBundle()
  * @param cjsBundle - Output path for the CJS bundle
