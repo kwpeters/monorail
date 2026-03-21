@@ -70,7 +70,7 @@
         "esbuild-prod": "node esbuild.js --production"
     },
     "devDependencies": {
-        "@repo/eslint-config-2": "*",
+        "@repo/eslint-config": "*",
         "@types/jasmine": "^6.0.0",
         "@types/lodash-es": "^4.17.7",
         "@types/vscode": "^1.100.0",

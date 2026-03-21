@@ -4,7 +4,7 @@ import { getJsConfig, getJsonConfig, getJsoncConfig, getJson5Config,
          getTsConfig,
          getReactConfig,
          getIgnorePatterns,
-         getTurboConfig} from "@repo/eslint-config-2/eslintHelpers";
+         getTurboConfig} from "@repo/eslint-config/eslintHelpers";
 
 
 export default defineConfig([

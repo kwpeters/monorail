@@ -251,7 +251,7 @@
         "zod": "^4.3.6"
     },
     "devDependencies": {
-        "@repo/eslint-config-2": "*",
+        "@repo/eslint-config": "*",
         "@repo/typescript-config": "*",
         "@types/express": "^5.0.6",
         "@types/inquirer": "^9.0.4",

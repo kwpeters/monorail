@@ -23,7 +23,7 @@
     },
     "devDependencies": {
         "@repo/build-app-assist": "*",
-        "@repo/eslint-config-2": "*",
+        "@repo/eslint-config": "*",
         "@repo/typescript-config": "*",
         "@types/jasmine": "^6.0.0",
         "@types/node": "^25.4.0",

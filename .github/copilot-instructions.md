@@ -29,7 +29,7 @@ npm run all && npm run type-check
 
 ## Coding Style
 
-- Follow `.editorconfig` and `packages\eslint-config-2\src\eslintHelpers.mts`.
+- Follow `.editorconfig` and `packages\eslint-config\src\eslintHelpers.mts`.
 - For TypeScript:
   - Leave two blank lines after imports.
   - Leave two blank lines between class members.
