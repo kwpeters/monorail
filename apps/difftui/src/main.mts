@@ -8,6 +8,26 @@ import { DiffTuiApp } from "./diffTuiApp.js";
 import { loadConfig, mergeWithDefaults } from "./diffTuiConfig.mjs";
 import { defaultDiffTuiSettings } from "./diffTuiSettings.mjs";
 
+////////////////////////////////////////////////////////////////////////////////
+// Bootstrap
+////////////////////////////////////////////////////////////////////////////////
+
+main()
+.then(
+    (exitCode) => {
+        if (exitCode !== 0) {
+            process.exit(exitCode);
+        }
+    }
+)
+.catch((err: unknown) => {
+    console.error(JSON.stringify(err));
+    process.exit(-1);
+});
+
+////////////////////////////////////////////////////////////////////////////////
+// main
+////////////////////////////////////////////////////////////////////////////////
 
 export async function main(): Promise<number> {
     // Parse the two positional directory arguments.
@@ -83,4 +103,3 @@ export async function main(): Promise<number> {
 
     return 0;
 }
-
