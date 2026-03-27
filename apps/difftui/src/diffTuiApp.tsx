@@ -293,7 +293,7 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
                 return;
             }
 
-            if (key.escape || input === "s") {
+            if (key.escape || input === "c") {
                 setMode("list");
                 return;
             }
@@ -341,8 +341,8 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
                 return;
             }
 
-            // Apply / refresh.
-            if (input === "r") {
+            // OK – apply settings and close.
+            if (input === "o") {
                 const newSettings = draftToSettings(settingsDraft);
                 setPendingSettings(newSettings);
                 setAppliedSettings(newSettings);
@@ -352,8 +352,8 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
                 return;
             }
 
-            // Export config (Ctrl+E).
-            if (key.ctrl && input === "e") {
+            // Export config.
+            if (input === "e") {
                 const newSettings = draftToSettings(settingsDraft);
                 const result = saveConfig(newSettings);
                 if (result.failed) {
@@ -666,8 +666,7 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
 
         return (
             <Box flexDirection="column" paddingX={2} paddingY={1} borderStyle="single">
-                <Text bold color="cyan">Settings  </Text>
-                <Text dimColor>(s/Esc close · r apply · Ctrl+E export)</Text>
+                <Text bold color="cyan">Settings</Text>
                 <Newline />
                 {fields.map((field, idx) => {
                     const isFocused = idx === settingsDraft.focusedField;
@@ -704,7 +703,8 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
                     );
                 })}
                 <Newline />
-                <Text dimColor>[↑↓/Tab] Navigate  [Enter] Toggle/Edit  [r] Apply  [Ctrl+E] Export</Text>
+                <Text dimColor>[↑↓] Navigate  [Enter] Toggle/Edit</Text>
+                <Text dimColor>[Esc/c] Cancel  [o] OK  [e] Export</Text>
             </Box>
         );
     }
