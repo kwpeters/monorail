@@ -19,7 +19,8 @@
     "homepage": "https://github.com/kwpeters/monorail#readme",
     "workspaces": [
         "apps/*",
-        "packages/*"
+        "packages/*",
+        "composite-apps/*/*"
     ],
     "scripts": {
         "build": "turbo build",

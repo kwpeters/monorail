@@ -66,7 +66,7 @@ composite-apps/
 
 ## Implementation Plan
 
-### Phase 1 — Monorepo scaffolding [ ]
+### Phase 1 — Monorepo scaffolding [x]
 
 1. Create the `composite-apps/` directory at the repo root.
 2. Create the `composite-apps/sample-composite-app-xyzzy/` directory.
