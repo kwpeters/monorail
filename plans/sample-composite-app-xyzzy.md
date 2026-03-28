@@ -72,23 +72,27 @@ composite-apps/
 2. Create the `composite-apps/sample-composite-app-xyzzy/` directory.
 3. Add `"composite-apps/*/*"` to the `workspaces` array in the root `package.json`.
 
-### Phase 2 — trpc package [ ]
+### Phase 2 — trpc package [x]
 
-Create `composite-apps/sample-composite-app-xyzzy/trpc/` as a minimal TypeScript
-library package.
+Create `composite-apps/sample-composite-app-xyzzy/trpc/` as a minimal, browser-safe
+TypeScript library package containing only Zod schemas. It has no handler code and
+no Node.js-specific imports, so the frontend can safely depend on it at runtime.
+The primary purpose of this package is to share input/output schema definitions
+between the backend and frontend, and to break the circular build dependency that
+would result if the frontend depended directly on the backend.
 
 Files to create:
 
 * `package.json` — name `@repo/sample-composite-app-xyzzy-trpc`; scripts: `build`
-  (tsc), `lint`, `test`, `type-check`, `depcheck`; no runtime dependencies beyond
-  `@trpc/server`.
+  (tsc), `lint`, `test`, `type-check`, `depcheck`; runtime dependency on `zod` only
+  (no `@trpc/server`).
 * `tsconfig.src.json` — extends `@repo/typescript-config/tsconfig.app.json`, outputs
   to `dist/`, excludes test files.
 * `tsconfig.json` — same but includes test files (for `type-check`).
 * `eslint.config.ts` — copy from `apps/sample-express-xyzzy/eslint.config.ts`.
 * `jasmine.json` — copy from `apps/sample-express-xyzzy/jasmine.json`.
-* `src/router.mts` — defines a single tRPC router with one example procedure (e.g.
-  a `greeting` query that accepts a `name` string and returns a greeting message).
+* `src/schemas.mts` — exports `greetingInput` (Zod schema) and `GreetingOutput`
+  (TypeScript type). No router, no procedure definitions, no handler code.
 * `src/sample.test.mts` — minimal passing test.
 
 ### Phase 3 — backend package [ ]
@@ -100,9 +104,14 @@ Key differences from `sample-express-xyzzy`:
 
 * `package.json` — name `@repo/sample-composite-app-xyzzy-backend`; add
   `@trpc/server`, `@trpc/express` as runtime dependencies; add
-  `@repo/sample-composite-app-xyzzy-trpc` as a workspace dependency; add a
-  `build-assets` script that copies
-  `../../frontend/dist/**` to `./dist/public` after the frontend is built.
+  `@repo/sample-composite-app-xyzzy-trpc` as a workspace dependency; add
+  `@repo/sample-composite-app-xyzzy-frontend` as a `devDependency` so that Turbo
+  builds the frontend before the backend (enabling the asset assembly step); add a
+  `build-assets` script that copies `../../frontend/dist/**` to `./dist/public`.
+* `src/router.mts` — creates `initTRPC.create()`, defines the `greeting` procedure
+  using `greetingInput` from `@repo/sample-composite-app-xyzzy-trpc/schemas`, and
+  exports `AppRouter = typeof router`. Handler code may freely use Node.js built-in
+  packages.
 * `src/app.mts` — mount the tRPC Express adapter at `/trpc`; update the static
   files path; update CORS origin to allow `http://localhost:5173` (Vite dev server).
 * `src/www.mts`, `src/logger.mts`, `src/morganMiddleware.mts` — copy verbatim from
@@ -112,12 +121,11 @@ Key differences from `sample-express-xyzzy`:
   from `apps/sample-express-xyzzy`.
 * `src/sample.test.mts` — minimal Jasmine test (same pattern as
   `apps/sample-express-xyzzy`). The `test` script runs Jasmine via
-  `tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json`.
+  `tsx ../../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json`.
 
-Build script order: `build-tsc` and `build-assets` run in parallel via
-`npm-run-all --parallel` (same pattern as `sample-express-xyzzy`). The Turbo
-pipeline's `^build` dependency ensures the frontend is built before the backend
-assembly step runs.
+Build script order: `build-tsc` runs first, then `build-assets` copies the compiled
+frontend output. These run sequentially (not in parallel) because the asset copy
+depends on frontend having already finished building.
 
 ### Phase 4 — frontend package [ ]
 
@@ -132,7 +140,9 @@ Files to create:
   `@vitejs/plugin-react`, `vitest`, `@vitest/coverage-v8`, `jsdom`,
   `@testing-library/react`, `@testing-library/user-event`,
   `@testing-library/jest-dom`, TypeScript types; scripts: `build` (`vite build`),
-  `dev` (`vite`), `test` (`vitest run`), `lint`, `type-check`, `depcheck`.
+  `dev` (`vite`), `test` (`vitest run`), `lint`, `type-check`, `depcheck`. Note: the
+  backend package is NOT listed as a dependency — the `AppRouter` type is resolved
+  via a relative TypeScript import that is erased at compile time.
 * `vite.config.ts` — standard React plugin config; configure `build.outDir` to
   `dist`; add a `test` block setting `environment: "jsdom"` and
   `setupFiles: ["./src/setupTests.ts"]` so Vitest picks up `@testing-library/jest-dom`
@@ -148,19 +158,32 @@ Files to create:
 * `src/App.tsx` — calls the `greeting` tRPC query and renders the result.
 * `src/App.test.tsx` — Vitest + React Testing Library test that renders `<App />`,
   mocks the tRPC client, and asserts the greeting message is displayed.
-* `src/trpc.ts` — creates the tRPC client pointed at `/trpc`.
+* `src/trpc.ts` — creates the tRPC client pointed at `/trpc`; uses
+  `import type { AppRouter } from "../../backend/src/router.mjs"` to obtain the
+  router type. This is a type-only import and is fully erased before Vite processes
+  the file, so no backend code enters the browser bundle.
 * `index.html` — Vite entry HTML file.
 
 ### Phase 5 — Turbo pipeline wiring [ ]
 
-No changes to the root `turbo.json` are needed. The existing `^build` `dependsOn`
-rule already ensures:
+No changes to the root `turbo.json` are needed. The build ordering is enforced
+entirely through `package.json` dependencies:
 
-1. `trpc` builds first (both `backend` and `frontend` declare it as a dependency).
-2. `backend` and `frontend` build after `trpc`.
-3. The backend assembly step (`build-assets`) copies the frontend output, but because
-   it runs inside the backend's own `build` script, Turbo's dependency order
-   guarantees the frontend `dist/` exists before that copy runs.
+1. `trpc` has no workspace dependencies — it builds first.
+2. `frontend` depends on `trpc` — it builds after `trpc`.
+3. `backend` depends on `trpc` and has `frontend` as a `devDependency` — it builds
+   last, after both `trpc` and `frontend` are complete.
+
+This order guarantees that when the backend's `build-assets` step copies
+`frontend/dist/` into `backend/dist/public/`, the frontend output already exists.
+
+The dependency graph (no cycles):
+
+```text
+trpc  <--  backend
+trpc  <--  frontend
+frontend  <--  backend (devDependency, for build ordering only)
+```
 
 ### Phase 6 — Verification [ ]
 
