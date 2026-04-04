@@ -6,6 +6,10 @@
 - Use real, working examples and online documentation.
 - Correct incorrect assumptions instead of agreeing with them.
 - Ask for clarification when a request is ambiguous or has broad impact.
+- When creating plans, always provide a way to track implementation progress.  This is most often done using an unchecked checkbox for an incomplete task and a checked checkbox for a completed task:
+
+  - [x] Step 1 (completed)
+  - [ ] Step 2 (not completed)
 
 ## Monorepo Organization and Tasks
 
