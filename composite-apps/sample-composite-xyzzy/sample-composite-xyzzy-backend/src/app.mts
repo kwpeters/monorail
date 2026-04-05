@@ -5,7 +5,8 @@ import cookieParser from "cookie-parser";
 import cors, {type CorsOptions} from "cors";
 import { pipe } from "@repo/depot/pipe2";
 import { router as indexRouter } from "./routes/index.mjs";
-import { router as usersRouter } from "./routes/users.mjs";
+import { router as apiHealthRouter } from "./routes/apiHealth.mjs";
+import { router as apiItemsRouter } from "./routes/apiItems.mjs";
 import { morganMiddleware } from "./morganMiddleware.mjs";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter } from "./trpc/router.mjs";
@@ -52,9 +53,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
-
 app.use("/", indexRouter);
-app.use("/users", usersRouter);
+
+export const apiRouter = express.Router();
+app.use("/api", apiRouter);
+
+apiRouter.use("/health", apiHealthRouter);
+apiRouter.use("/items", apiItemsRouter);
 
 app.use(
     "/trpc",
