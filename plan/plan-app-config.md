@@ -53,21 +53,26 @@ Build a new CLI application in this monorepo that interactively reviews reposito
 48. Implementation must be test-driven, writing failing tests first for each behavior before production code changes.
 49. If needed helper behavior is missing from `packages/depot` or `packages/depot-node`, add or improve those utilities rather than duplicating logic in the app.
 50. Any utility additions or modifications in shared packages must include focused tests in the same package.
+51. The app must integrate cleanly with the monorepo ecosystem and tooling conventions (workspace scripts, `turbo` pipelines, linting, testing, and type checking).
+52. The app must be implemented as a Node.js SEA (single executable application).
+53. SEA packaging/build setup should follow the established pattern used by `apps/sample-app-sea-xyzzy`.
+54. App-level scripts and configuration should match monorepo conventions so the app participates in shared root commands (`build`, `lint`, `test`, `type-check`, `all`) without special handling.
 
 **Example config (JSONC)**
+
 ```jsonc
 {
-	// app-config review app-config.review.json
-	"mappings": [
-		{
-			"repoRelativePath": "configs/git/.gitconfig",
-			"deployedAbsolutePath": "${USERPROFILE}/.gitconfig"
-		},
-		{
-			"repoRelativePath": "configs/vscode/settings.json",
-			"deployedAbsolutePath": "${APPDATA}/Code/User/settings.json"
-		}
-	]
+    // app-config review app-config.review.json
+    "mappings": [
+        {
+            "repoRelativePath": "configs/git/.gitconfig",
+            "deployedAbsolutePath": "${USERPROFILE}/.gitconfig"
+        },
+        {
+            "repoRelativePath": "configs/vscode/settings.json",
+            "deployedAbsolutePath": "${APPDATA}/Code/User/settings.json"
+        }
+    ]
 }
 ```
 
@@ -90,12 +95,16 @@ Build a new CLI application in this monorepo that interactively reviews reposito
 - [ ] Add default per-item progress output with no final status summary.
 - [ ] When app logic needs missing shared primitives, add or improve utilities in `packages/depot` or `packages/depot-node`.
 - [ ] Add/extend tests in shared utility packages for every utility addition or change.
+- [ ] Scaffold the new app by adapting `apps/sample-app-sea-xyzzy` structure and SEA build pattern.
+- [ ] Configure app package scripts and project wiring so it participates in monorepo `turbo` build/lint/test/type-check workflows.
+- [ ] Implement and verify Node.js SEA packaging/build for the new app.
 - [ ] Update repository docs for config format, help output, and interactive review workflow.
 
 **Relevant files**
 - `apps/mm/src/cliConfig.mts` — reference for command-line configuration resolution.
 - `apps/mm/src/subjectConfiguration.mts` — reference for Zod-based JSON/JSONC config parsing.
 - `apps/copywrite/src/index.mts` — reference for `yargs` command registration and `--help` behavior.
+- `apps/sample-app-sea-xyzzy/*` — template for Node.js SEA app structure, scripts, and packaging flow.
 - `packages/depot/src/zodHelpers.mts` — shared safe-parse helpers for Zod validation.
 - `packages/depot/src/schemaUtility.mts` — path-related normalization helpers.
 - `packages/depot/src/result.mts` — shared Result utilities and types.
@@ -138,6 +147,8 @@ Build a new CLI application in this monorepo that interactively reviews reposito
 24. Confirm `--help` output documents usage, required positional argument, and available options/flags.
 25. Confirm tests are written first (failing before implementation) for each major behavior area.
 26. Confirm any shared utility changes in `packages/depot` or `packages/depot-node` include corresponding tests in those packages.
+27. Confirm the app is fully wired into monorepo tooling and runs correctly under root `turbo` build/lint/test/type-check workflows.
+28. Confirm SEA packaging/build follows the `apps/sample-app-sea-xyzzy` pattern and successfully produces the executable artifact.
 
 **Decisions**
 - The app scope has been simplified from restore/setup into interactive file review.
@@ -164,6 +175,8 @@ Build a new CLI application in this monorepo that interactively reviews reposito
 - The command must provide explicit `--help` usage details.
 - Development should follow a TDD-first workflow for app behaviors.
 - Shared utility improvements are preferred over app-local duplication and must include utility-level tests.
+- The new app should fit monorepo tooling conventions so it works with shared root scripts and `turbo` pipelines without custom exceptions.
+- Node.js SEA support is a first-class requirement and should follow the existing `apps/sample-app-sea-xyzzy` template pattern.
 
 **Future considerations**
 1. Consider a future write-capable workflow only if review-only proves insufficient.
