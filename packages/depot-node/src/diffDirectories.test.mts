@@ -3,11 +3,59 @@ import * as fs from "node:fs/promises";
 import { mapAsync } from "@repo/depot/promiseHelpers";
 import { File } from "./file.mjs";
 import { Directory } from "./directory.mjs";
-import { diffDirectories, ActionPriority, FileCompareActionType } from "./diffDirectories.mjs";
+import { Symlink } from "./symlink.mjs";
+import { diffDirectories, ActionPriority, FileCompareActionType, FileComparer } from "./diffDirectories.mjs";
 import { tmpDir } from "./specHelpers.test.mjs";
 
 
 describe("diffDirectories()", () => {
+
+    describe("FileComparer symlink support", () => {
+        let leftDir: Directory;
+        let rightDir: Directory;
+
+        beforeEach(async () => {
+            tmpDir.emptySync();
+
+            leftDir = new Directory(tmpDir, "left");
+            rightDir = new Directory(tmpDir, "right");
+
+            await leftDir.ensureExists();
+            await rightDir.ensureExists();
+        });
+
+
+        it("treats file and symlink-to-file as identical when followSymlinks is true", async () => {
+            const target = new File(leftDir, "target.txt");
+            target.writeSync("same content");
+
+            const symlinkPath = new Symlink(rightDir, "target-link.txt");
+            const createRes = await symlinkPath.create(target, "absolute");
+            expect(createRes.succeeded).toBeTrue();
+
+            const rightAsFile = new File(symlinkPath.toString());
+            const comparer = FileComparer.create(target, rightAsFile);
+
+            expect(await comparer.bothExistAndIdentical()).toEqual(false);
+            expect(await comparer.bothExistAndIdentical(true)).toEqual(true);
+        });
+
+
+        it("returns false when followSymlinks is true and a symlink points to a directory", async () => {
+            const leftFile = new File(leftDir, "left.txt");
+            leftFile.writeSync("left content");
+
+            const symlinkPath = new Symlink(rightDir, "dir-link");
+            const createRes = await symlinkPath.create(leftDir, "absolute");
+            expect(createRes.succeeded).toBeTrue();
+
+            const rightAsFile = new File(symlinkPath.toString());
+            const comparer = FileComparer.create(leftFile, rightAsFile);
+
+            expect(await comparer.bothExistAndIdentical(true)).toEqual(false);
+        });
+
+    });
 
     describe("when both directories contain common and unique files", () => {
         let leftDir: Directory;

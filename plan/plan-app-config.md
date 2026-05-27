@@ -77,28 +77,28 @@ Build a new CLI application in this monorepo that interactively reviews reposito
 ```
 
 **Steps**
-- [ ] Implement CLI entrypoint with `yargs` command registration matching `apps/copywrite` sub-command structure.
-- [ ] Implement `review` command as `app-config review <config-file.json>` with required positional argument handling.
-- [ ] Implement explicit `--help` content and verify it includes usage, required positional arguments, and option/flag descriptions.
-- [ ] Write failing tests first for command parsing and help output behavior.
-- [ ] Reuse strict Zod config-loading pattern from `apps/mm` and define a strict mappings schema with only `repoRelativePath` and `deployedAbsolutePath`.
-- [ ] Write failing tests first for JSONC parsing, strict key rejection, and schema validation errors.
-- [ ] Implement preflight validation for `${VAR}` expansion on deployed paths, forward-slash acceptance with OS-specific normalization, missing environment variables, and missing repository files.
-- [ ] Write failing tests first for environment-variable expansion rules, case sensitivity, slash normalization, and preflight fatal errors.
-- [ ] Implement ordered iteration over mappings.
-- [ ] Implement same/different comparison by reusing the same comparison implementation path as `difftui`.
-- [ ] Write failing tests first for identical auto-skip and different-file prompt behavior.
-- [ ] Implement prompt flow for different files: show VS Code diff or continue to next mapping.
-- [ ] Implement diff launch through the same helper path used by `difftui` (currently `@repo/depot-node/fileDiff`).
-- [ ] Ensure missing deployed files are treated as different and still support launching diff.
-- [ ] Keep CLI behavior read-only with no file writes, copies, links, merges, or backups.
-- [ ] Add default per-item progress output with no final status summary.
+- [x] Implement CLI entrypoint with `yargs` command registration matching `apps/copywrite` sub-command structure.
+- [x] Implement `review` command as `app-config review <config-file.json>` with required positional argument handling.
+- [x] Implement explicit `--help` content and verify it includes usage, required positional arguments, and option/flag descriptions.
+- [x] Write failing tests first for command parsing and help output behavior.
+- [x] Reuse strict Zod config-loading pattern from `apps/mm` and define a strict mappings schema with only `repoRelativePath` and `deployedAbsolutePath`.
+- [x] Write failing tests first for JSONC parsing, strict key rejection, and schema validation errors.
+- [x] Implement preflight validation for `${VAR}` expansion on deployed paths, forward-slash acceptance with OS-specific normalization, missing environment variables, and missing repository files.
+- [x] Write failing tests first for environment-variable expansion rules, case sensitivity, slash normalization, and preflight fatal errors.
+- [x] Implement ordered iteration over mappings.
+- [x] Implement same/different comparison by reusing the same comparison implementation path as `difftui`.
+- [x] Write failing tests first for identical auto-skip and different-file prompt behavior.
+- [x] Implement prompt flow for different files: show VS Code diff or continue to next mapping.
+- [x] Implement diff launch through the same helper path used by `difftui` (currently `@repo/depot-node/fileDiff`).
+- [x] Ensure missing deployed files are treated as different and still support launching diff.
+- [x] Keep CLI behavior read-only with no file writes, copies, links, merges, or backups.
+- [x] Add default per-item progress output with no final status summary.
 - [ ] When app logic needs missing shared primitives, add or improve utilities in `packages/depot` or `packages/depot-node`.
 - [ ] Add/extend tests in shared utility packages for every utility addition or change.
-- [ ] Scaffold the new app by adapting `apps/sample-app-sea-xyzzy` structure and SEA build pattern.
-- [ ] Configure app package scripts and project wiring so it participates in monorepo `turbo` build/lint/test/type-check workflows.
-- [ ] Implement and verify Node.js SEA packaging/build for the new app.
-- [ ] Update repository docs for config format, help output, and interactive review workflow.
+- [x] Scaffold the new app by adapting `apps/sample-app-sea-xyzzy` structure and SEA build pattern.
+- [x] Configure app package scripts and project wiring so it participates in monorepo `turbo` build/lint/test/type-check workflows.
+- [x] Implement and verify Node.js SEA packaging/build for the new app.
+- [x] Update repository docs for config format, help output, and interactive review workflow.
 
 **Relevant files**
 - `apps/mm/src/cliConfig.mts` — reference for command-line configuration resolution.
@@ -118,7 +118,7 @@ Build a new CLI application in this monorepo that interactively reviews reposito
 - `packages/depot-node/src/os.mts` — operating-system helper APIs and enums.
 - `packages/depot-node/src/fileDiff.mts` — helper that launches a VS Code diff and is already used by `difftui`.
 - `apps/difftui/src/diffTuiApp.tsx` — reference for current VS Code diff launching behavior via `showVsCodeDiff(...)`.
-- `apps/<new-app>/src/*` — new CLI entry points, config schema, comparison flow, and tests.
+- `apps/app-config/src/*` — CLI entry points, config schema, comparison flow, and tests.
 
 **Verification**
 1. Confirm JSONC parsing accepts comments and trailing commas.

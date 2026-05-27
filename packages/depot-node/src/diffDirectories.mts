@@ -6,6 +6,7 @@ import * as z from "zod";
 import { assertNever } from "@repo/depot/never";
 import { Directory } from "./directory.mjs";
 import {File} from "./file.mjs";
+import { Symlink } from "./symlink.mjs";
 
 
 export enum ActionPriority {
@@ -157,8 +158,8 @@ export class FileComparer implements IFilesToCompare {
     }
 
 
-    public async bothExistAndIdentical(): Promise<boolean> {
-        return filesAreIdentical(this._leftFile, undefined, this._rightFile, undefined);
+    public async bothExistAndIdentical(followSymlinks = false): Promise<boolean> {
+        return filesAreIdentical(this._leftFile, undefined, this._rightFile, undefined, followSymlinks);
     }
 
 
@@ -266,8 +267,23 @@ async function filesAreIdentical(
     leftFile: File,
     leftStats: Stats | undefined,
     rightFile: File,
-    rightStats: Stats | undefined
+    rightStats: Stats | undefined,
+    followSymlinks = false
 ): Promise<boolean> {
+
+    if (followSymlinks) {
+        const leftResolvedFile = await resolveSymlinkFileTarget(leftFile);
+        const rightResolvedFile = await resolveSymlinkFileTarget(rightFile);
+
+        if (leftResolvedFile === undefined || rightResolvedFile === undefined) {
+            return false;
+        }
+
+        leftFile = leftResolvedFile;
+        rightFile = rightResolvedFile;
+        leftStats = undefined;
+        rightStats = undefined;
+    }
 
     if (leftStats === undefined || rightStats === undefined) {
         [leftStats, rightStats] = await Promise.all([leftFile.exists(), rightFile.exists()]);
@@ -292,6 +308,23 @@ async function filesAreIdentical(
 
     // If we made it this far, they must be equal.
     return true;
+}
+
+
+async function resolveSymlinkFileTarget(file: File): Promise<File | undefined> {
+    const symlink = new Symlink(file.toString());
+    const symlinkStats = await symlink.exists();
+    if (symlinkStats === undefined) {
+        // Not a symlink.  Use the original file path.
+        return file;
+    }
+
+    const targetRes = await symlink.followAll();
+    if (targetRes.failed) {
+        return undefined;
+    }
+
+    return targetRes.value instanceof File ? targetRes.value : undefined;
 }
 
 
@@ -454,24 +487,14 @@ export class DiffDirFileItem {
     }
 
 
-    public async bothExistAndIdentical(): Promise<boolean> {
-        const [leftExists, rightExists] = await Promise.all([
-            this._files.leftFile.exists(),
-            this._files.rightFile.exists()
-        ]);
-
-        if (!leftExists || !rightExists) {
-            // One or both of the files do not exist.
-            return false;
-        }
-
-        // Both files exist.  Return a value indicating whether they are
-        // identical.
-        const [leftHash, rightHash] = await Promise.all([
-            this._files.leftFile.getHash(),
-            this._files.rightFile.getHash()
-        ]);
-        return leftHash === rightHash;
+    public async bothExistAndIdentical(followSymlinks = false): Promise<boolean> {
+        return filesAreIdentical(
+            this._files.leftFile,
+            undefined,
+            this._files.rightFile,
+            undefined,
+            followSymlinks
+        );
     }
 
 
