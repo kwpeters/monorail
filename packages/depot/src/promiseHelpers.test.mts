@@ -680,7 +680,7 @@ describe("augmentAsync()", () => {
             return isEven ?
                 // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
                 Promise.reject("error message") :
-                Promise.resolve({isEven: isEven as boolean});
+                Promise.resolve({isEven: isEven});
         };
 
         try {

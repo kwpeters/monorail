@@ -40,6 +40,12 @@ interface IItemWithStatus {
 }
 
 
+interface IActionChoice {
+    label: string;
+    index: number;
+}
+
+
 // ---------------------------------------------------------------------------
 // Status badge helper
 // ---------------------------------------------------------------------------
@@ -602,8 +608,8 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
             return renderDetailsPane();
         }
 
-        const actionChoices = availableActions.map((act, i) => ({
-            label: act.type as string,
+        const actionChoices: Array<IActionChoice> = availableActions.map((act, i) => ({
+            label: act.type,
             index: i
         }));
         actionChoices.push({ label: "diff (VS Code)", index: availableActions.length });

@@ -639,7 +639,7 @@ describe("Option namespace", () => {
                 return new SomeOption({c: props.b + 1});
             };
 
-            const res = await Option.augmentAsync(fn, NoneOption.get() as Option<{b: number}>);
+            const res = await Option.augmentAsync(fn, NoneOption.get());
             expect(res).toEqual(NoneOption.get());
             expect(numInvocations).toEqual(0);
         });
@@ -706,7 +706,7 @@ describe("Option namespace", () => {
             let numInvocations = 0;
             const getDefault = async () => { await Promise.resolve(0); numInvocations++; return 99; };
 
-            const result = await Option.defaultWithAsync(getDefault, new SomeOption(5) as Option<number>);
+            const result = await Option.defaultWithAsync(getDefault, new SomeOption(5));
             expect(result).toEqual(5);
             expect(numInvocations).toEqual(0);
         });
@@ -716,7 +716,7 @@ describe("Option namespace", () => {
             let numInvocations = 0;
             const getDefault = async () => { await Promise.resolve(0); numInvocations++; return 99; };
 
-            const result = await Option.defaultWithAsync(getDefault, NoneOption.get() as Option<number>);
+            const result = await Option.defaultWithAsync(getDefault, NoneOption.get());
             expect(result).toEqual(99);
             expect(numInvocations).toEqual(1);
         });

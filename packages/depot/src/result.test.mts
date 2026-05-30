@@ -747,7 +747,7 @@ describe("Result namespace", () => {
 
 
         it("returns successful Result when input is neither undefine or null", () => {
-            const res = Result.fromNullable(5 as undefined | number, "error message");
+            const res = Result.fromNullable(5, "error message");
             expect(res.succeeded).toBeTrue();
             expect(res.value).toEqual(5);
         });
@@ -1001,7 +1001,7 @@ describe("Result namespace", () => {
                         return err.toLowerCase();
                     }
                 },
-                new SucceededResult(5) as Result<number, string>
+                new SucceededResult(5)
             );
 
             expect(output).toEqual(6);
@@ -1027,7 +1027,7 @@ describe("Result namespace", () => {
                         return err.toLowerCase();
                     }
                 },
-                new FailedResult("ERROR MESSAGE") as Result<number, string>
+                new FailedResult("ERROR MESSAGE")
             );
 
             expect(output).toEqual("error message");
@@ -1258,7 +1258,7 @@ describe("Result namespace", () => {
 
             await Result.tapAsync(
                 tapFn,
-                new FailedResult("error message") as Result<number, string>
+                new FailedResult("error message")
             );
 
             expect(numInvocations).toEqual(1);
@@ -1275,7 +1275,7 @@ describe("Result namespace", () => {
 
             await Result.tapAsync(
                 tapFn,
-                new SucceededResult(1) as Result<number, string>
+                new SucceededResult(1)
             );
 
             expect(numInvocations).toEqual(1);
@@ -1414,7 +1414,7 @@ describe("Result namespace", () => {
                 return new SucceededResult({b: input.a + 1});
             };
 
-            const result = await Result.augmentAsync(fn, new FailedResult("error") as Result<{a: number}, string>);
+            const result = await Result.augmentAsync(fn, new FailedResult("error"));
             expect(result).toEqual(new FailedResult("error"));
             expect(numInvocations).toEqual(0);
         });
@@ -1457,7 +1457,7 @@ describe("Result namespace", () => {
                 return new SucceededResult(x + 1);
             };
 
-            const result = await Result.bindAsync(fn, new FailedResult("error") as Result<number, string>);
+            const result = await Result.bindAsync(fn, new FailedResult("error"));
             expect(result).toEqual(new FailedResult("error"));
             expect(numInvocations).toEqual(0);
         });
@@ -1475,7 +1475,7 @@ describe("Result namespace", () => {
                 return new SucceededResult(err.length);
             };
 
-            const result = await Result.bindErrorAsync(fn, new SucceededResult(5) as Result<number, string>);
+            const result = await Result.bindErrorAsync(fn, new SucceededResult(5));
             expect(result).toEqual(new SucceededResult(5));
             expect(numInvocations).toEqual(0);
         });
@@ -1489,7 +1489,7 @@ describe("Result namespace", () => {
                 return new SucceededResult(err.length);
             };
 
-            const result = await Result.bindErrorAsync(fn, new FailedResult("error") as Result<number, string>);
+            const result = await Result.bindErrorAsync(fn, new FailedResult("error"));
             expect(result).toEqual(new SucceededResult(5));
             expect(numInvocations).toEqual(1);
         });
@@ -1507,7 +1507,7 @@ describe("Result namespace", () => {
                 return new SucceededResult(x + 1);
             };
 
-            const result = await Result.gateAsync(fn, new FailedResult("error") as Result<number, string>);
+            const result = await Result.gateAsync(fn, new FailedResult("error"));
             expect(result).toEqual(new FailedResult("error"));
             expect(numInvocations).toEqual(0);
         });
@@ -1533,7 +1533,7 @@ describe("Result namespace", () => {
                 return `Error: ${err}`;
             };
 
-            const result = await Result.mapErrorAsync(fn, new SucceededResult(1) as Result<number, string>);
+            const result = await Result.mapErrorAsync(fn, new SucceededResult(1));
             expect(result).toEqual(new SucceededResult(1));
             expect(numInvocations).toEqual(0);
         });
@@ -1558,7 +1558,7 @@ describe("Result namespace", () => {
                 return x + 1;
             };
 
-            const result = await Result.mapSuccessAsync(fn, new FailedResult("error") as Result<number, string>);
+            const result = await Result.mapSuccessAsync(fn, new FailedResult("error"));
             expect(result).toEqual(new FailedResult("error"));
             expect(numInvocations).toEqual(0);
         });
@@ -1598,7 +1598,7 @@ describe("Result namespace", () => {
                 return err.length;
             };
 
-            await Result.tapErrorAsync(fn, new SucceededResult(1) as Result<number, string>);
+            await Result.tapErrorAsync(fn, new SucceededResult(1));
             expect(numInvocations).toEqual(0);
         });
 
@@ -1630,7 +1630,7 @@ describe("Result namespace", () => {
                 return x + 1;
             };
 
-            await Result.tapSuccessAsync(fn, new FailedResult("error") as Result<number, string>);
+            await Result.tapSuccessAsync(fn, new FailedResult("error"));
             expect(numInvocations).toEqual(0);
         });
 

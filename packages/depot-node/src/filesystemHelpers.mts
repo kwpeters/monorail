@@ -189,7 +189,7 @@ export async function getMostRecentlyModified<TFsItem extends IStatable>(
                     {
                         fsItem:  fsItem,
                         mtimeMs: stats.mtimeMs
-                    } as IFsItemWithModifiedMs<TFsItem> :
+                    } :
                     undefined;
             });
         });

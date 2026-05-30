@@ -60,6 +60,13 @@ export interface IChoiceString {
 }
 
 
+interface IChoiceFileOption {
+    name:  string;
+    value: Option<File>;
+    short: string;
+}
+
+
 /**
  * Prompts the user to choose one of the specified choices.
  * @param message - The prompt to display
@@ -155,19 +162,16 @@ export async function promptForFileWithChoices(
     fileChoices: Array<File>,
     fileMustExist = true
 ): Promise<File> {
-    const inquirerChoices =
-        _.chain(fileChoices)
-        .map((curFile) => (
-            {
-                name:  curFile.toString(),
-                value: new SomeOption(curFile) as Option<File>,
-                short: curFile.toString()
-            }
-        ))
+    const inquirerChoices: Array<IChoiceFileOption> = [
+        ...fileChoices.map((curFile): IChoiceFileOption => ({
+            name:  curFile.toString(),
+            value: new SomeOption(curFile),
+            short: curFile.toString()
+        })),
         // The "other" option that will result in answers.inputValue ===
         // NoneOption.get().
-        .concat({ name: "other", value: NoneOption.get(), short: "other" })
-        .value();
+        { name: "other", value: NoneOption.get(), short: "other" }
+    ];
 
     const question = {
         type:    "list",

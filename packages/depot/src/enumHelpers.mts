@@ -7,7 +7,7 @@ import * as _ from "lodash-es";
  * @return A key from the specified enumeration
  */
 export function numericEnumRandomKey<T extends Record<string, unknown>>(enumObject: T): keyof T {
-    const allKeys: Array<keyof T> = Object.keys(enumObject) as Array<keyof T>;
+    const allKeys: Array<keyof T> = Object.keys(enumObject);
 
     // Numeric enumerations contain "reverse mappings" where the key is the
     // string version of the number and the value is the string version of the
@@ -35,7 +35,7 @@ export function numericEnumRandomValue<T extends Record<string, unknown>>(enumOb
  * @return A key from the specified enumeration
  */
 export function stringEnumRandomKey<T extends Record<string, unknown>>(enumObject: T): keyof T {
-    const allKeys: Array<keyof T> = Object.keys(enumObject) as Array<keyof T>;
+    const allKeys: Array<keyof T> = Object.keys(enumObject);
     return allKeys[_.random(allKeys.length - 1)]!;
 }
 
