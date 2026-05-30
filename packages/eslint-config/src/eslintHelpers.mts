@@ -23,6 +23,7 @@ export function getIgnorePatterns(): string[] {
         "**/build/**",
         "**/dist/**",
         "**/.turbo/*",
+        "**/tmp/**/*",
         // Don't lint eslint config files because they are not included in in the TS project.
         "**/eslint.config.ts"
     ];
