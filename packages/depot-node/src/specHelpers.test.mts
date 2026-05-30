@@ -53,7 +53,9 @@ export async function cloneWithRetry(
             lastError = err;
             if (attempt < maxAttempts) {
                 // Wait before retrying to allow file handles to be released.
-                await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+                await new Promise<void>((resolve) => {
+                    setTimeout(resolve, 1000 * attempt);
+                });
             }
         }
     }
