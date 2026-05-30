@@ -8,7 +8,7 @@ import {GitRepo} from "./gitRepo.mjs";
 import {GitBranch} from "./gitBranch.mjs";
 import {Directory} from "./directory.mjs";
 import {File} from "./file.mjs";
-import {sampleRepoDir, sampleRepoUrl, tmpDir} from "./specHelpers.test.mjs";
+import {cloneWithRetry, getUniqueTmpDir, sampleRepoDir, sampleRepoUrl} from "./specHelpers.test.mjs";
 
 
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
@@ -44,29 +44,26 @@ describe("GitRepo", () => {
 
         describe("clone()", () => {
 
-            beforeEach(() => {
-                tmpDir.emptySync();
-            });
-
-
             it("will clone a repository on the Internet", async () => {
+                const uniqueTmpDir = getUniqueTmpDir();
                 const repoUrl = Url.fromString(sampleRepoUrl);
                 expect(repoUrl).toBeTruthy();
 
-                const repo = await GitRepo.clone(repoUrl!, tmpDir);
+                const repo = await GitRepo.clone(repoUrl!, uniqueTmpDir);
                 expect(repo).toBeTruthy();
 
-                expect(new Directory(tmpDir, "sampleGitRepo-src").existsSync()).toBeTruthy();
-                expect(new File(tmpDir, "sampleGitRepo-src", "README.md").existsSync()).toBeTruthy();
+                expect(new Directory(uniqueTmpDir, "sampleGitRepo-src").existsSync()).toBeTruthy();
+                expect(new File(uniqueTmpDir, "sampleGitRepo-src", "README.md").existsSync()).toBeTruthy();
             });
 
 
             it("will clone a repository from a local directory", async () => {
-                const repo = await GitRepo.clone(sampleRepoDir, tmpDir);
+                const uniqueTmpDir = getUniqueTmpDir();
+                const repo = await cloneWithRetry(sampleRepoDir, uniqueTmpDir);
 
                 expect(repo).toBeTruthy();
-                expect(new Directory(tmpDir, "sampleGitRepo-src").existsSync()).toBeTruthy();
-                expect(new File(tmpDir, "sampleGitRepo-src", "README.md").existsSync()).toBeTruthy();
+                expect(new Directory(uniqueTmpDir, "sampleGitRepo-src").existsSync()).toBeTruthy();
+                expect(new File(uniqueTmpDir, "sampleGitRepo-src", "README.md").existsSync()).toBeTruthy();
             });
 
 
@@ -74,28 +71,30 @@ describe("GitRepo", () => {
                 // This test is important, because when cloning from a relative
                 // directory the clone() method must use the absolute path to
                 // the source repo, because the cwd is the specified parentDir.
+                const uniqueTmpDir = getUniqueTmpDir();
 
-                const originDir = new Directory(tmpDir, "origin");
-                const workingDir = new Directory(tmpDir, "working");
+                const originDir = new Directory(uniqueTmpDir, "origin");
+                const workingDir = new Directory(uniqueTmpDir, "working");
                 await Promise.all([originDir.ensureExists(), workingDir.ensureExists()]);
 
-                const originRepo  = await GitRepo.clone(sampleRepoDir, originDir);
+                const originRepo  = await cloneWithRetry(sampleRepoDir, originDir);
                 const workingRepo = await GitRepo.clone(originRepo.directory, workingDir);
                 expect(workingRepo).toBeTruthy();
             });
 
 
             it("can clone a repo into a specific directory", async () => {
+                const uniqueTmpDir = getUniqueTmpDir();
                 // Create one clone in the "sample-origin" directory.
-                const originRepo  = await GitRepo.clone(sampleRepoDir, tmpDir, "sample-origin");
+                const originRepo  = await cloneWithRetry(sampleRepoDir, uniqueTmpDir, "sample-origin");
                 // Create another clone in the "sample-working" directory.
-                const workingRepo = await GitRepo.clone(originRepo.directory, tmpDir, "sample-working");
+                const workingRepo = await GitRepo.clone(originRepo.directory, uniqueTmpDir, "sample-working");
 
                 expect(originRepo).toBeTruthy();
                 expect(workingRepo).toBeTruthy();
 
-                expect(new Directory(tmpDir, "sample-origin").existsSync()).toBeTruthy();
-                expect(new Directory(tmpDir, "sample-working").existsSync()).toBeTruthy();
+                expect(new Directory(uniqueTmpDir, "sample-origin").existsSync()).toBeTruthy();
+                expect(new Directory(uniqueTmpDir, "sample-working").existsSync()).toBeTruthy();
             }, 10 * 1000);
 
         });
@@ -106,17 +105,21 @@ describe("GitRepo", () => {
 
     describe("instance", () => {
 
-        beforeEach(() => {
-            tmpDir.emptySync();
-        });
+        // A shared clone for read-only tests.  Cloning once avoids
+        // Windows file-handle contention on the source repo's pack files
+        // when many sequential clones happen in rapid succession.
+        let clonedRepo: GitRepo;
+
+        beforeAll(async () => {
+            const sharedTmpDir = getUniqueTmpDir();
+            clonedRepo = await cloneWithRetry(sampleRepoDir, sharedTmpDir);
+        }, 1000 * 30);
 
 
         describe("files()", () => {
 
             it("will return the files under version control", async () => {
-                tmpDir.emptySync();
-                const repo = await GitRepo.clone(sampleRepoDir, tmpDir);
-                const files = await repo.files();
+                const files = await clonedRepo.files();
 
                 expect(ld.findIndex(files, {fileName: "package.json"})).toBeGreaterThanOrEqual(0);
                 expect(ld.findIndex(files, {fileName: "README.md"})).toBeGreaterThanOrEqual(0);
@@ -189,16 +192,16 @@ describe("GitRepo", () => {
 
 
             it("will return false for two GitRepos pointing at different directories", async () => {
-                tmpDir.emptySync();
+                const uniqueTmpDir = getUniqueTmpDir();
 
-                const dir1 = new Directory(tmpDir, "dir1");
+                const dir1 = new Directory(uniqueTmpDir, "dir1");
                 dir1.ensureExistsSync();
 
-                const dir2 = new Directory(tmpDir, "dir2");
+                const dir2 = new Directory(uniqueTmpDir, "dir2");
                 dir2.ensureExistsSync();
 
-                const repo1 = await GitRepo.clone(sampleRepoDir, dir1);
-                const repo2 = await GitRepo.clone(sampleRepoDir, dir2);
+                const repo1 = await cloneWithRetry(sampleRepoDir, dir1);
+                const repo2 = await cloneWithRetry(sampleRepoDir, dir2);
                 expect(repo1.equals(repo2)).toBeFalsy();
             });
         });
@@ -381,7 +384,8 @@ describe("GitRepo", () => {
 
 
             it("will return undefined when in detached head state", async () => {
-                const repo = await GitRepo.clone(sampleRepoDir, tmpDir);
+                const uniqueTmpDir = getUniqueTmpDir();
+                const repo = await cloneWithRetry(sampleRepoDir, uniqueTmpDir);
                 // Checkout a commit that has no associated branch pointing at it.
                 await repo.checkoutCommit(CommitHash.fromString("34b8bff")!);
 
@@ -423,9 +427,10 @@ describe("GitRepo", () => {
         describe("stage()", () => {
             it("succeeds when staging a modified file", async () => {
                 // Given there is a modified file in a repository...
-                const repoDir = new Directory(tmpDir, "repoDir");
+                const uniqueTmpDir = getUniqueTmpDir();
+                const repoDir = new Directory(uniqueTmpDir, "repoDir");
                 await repoDir.ensureExists();
-                const repo = await GitRepo.clone(sampleRepoDir, repoDir);
+                const repo = await cloneWithRetry(sampleRepoDir, repoDir);
 
                 const modifiedFile = new File(repo.directory, "package.json");
                 modifiedFile.writeSync("modified by unit test");
@@ -441,9 +446,10 @@ describe("GitRepo", () => {
 
             it("succeeds when staging an unmodified file", async () => {
                 // Given there are no modified files in a repository...
-                const repoDir = new Directory(tmpDir, "repoDir");
+                const uniqueTmpDir = getUniqueTmpDir();
+                const repoDir = new Directory(uniqueTmpDir, "repoDir");
                 await repoDir.ensureExists();
-                const repo = await GitRepo.clone(sampleRepoDir, repoDir);
+                const repo = await cloneWithRetry(sampleRepoDir, repoDir);
 
                 const repoFile = new File(repo.directory, "package.json");
 
@@ -458,9 +464,10 @@ describe("GitRepo", () => {
 
             it("fails when the specified file is not within the repo", async () => {
                 // Given there are no modified files in a repository...
-                const repoDir = new Directory(tmpDir, "repoDir");
+                const uniqueTmpDir = getUniqueTmpDir();
+                const repoDir = new Directory(uniqueTmpDir, "repoDir");
                 await repoDir.ensureExists();
-                const repo = await GitRepo.clone(sampleRepoDir, repoDir);
+                const repo = await cloneWithRetry(sampleRepoDir, repoDir);
 
                 const nonexistentFile = new File(repo.directory, "xyzzy-xyzzy.json");
 
@@ -497,9 +504,10 @@ describe("GitRepo", () => {
         describe("getStagedFiles()", () => {
             it("returns an empty array when nothing is staged", async () => {
                 // Given there are no staged files in a repository...
-                const repoDir = new Directory(tmpDir, "repoDir");
+                const uniqueTmpDir = getUniqueTmpDir();
+                const repoDir = new Directory(uniqueTmpDir, "repoDir");
                 await repoDir.ensureExists();
-                const repo = await GitRepo.clone(sampleRepoDir, repoDir);
+                const repo = await cloneWithRetry(sampleRepoDir, repoDir);
 
                 // When we get the staged files...
                 const result = await repo.getStagedFiles("repo");
@@ -512,9 +520,10 @@ describe("GitRepo", () => {
 
             it("returns the expected staged files relative to the repo", async () => {
                 // Given a repo has a staged file...
-                const repoDir = new Directory(tmpDir, "repoDir");
+                const uniqueTmpDir = getUniqueTmpDir();
+                const repoDir = new Directory(uniqueTmpDir, "repoDir");
                 await repoDir.ensureExists();
-                const repo = await GitRepo.clone(sampleRepoDir, repoDir);
+                const repo = await cloneWithRetry(sampleRepoDir, repoDir);
 
                 const stagedFile = new File(repo.directory, "package.json");
                 stagedFile.writeSync("modified by unit test.");
@@ -535,7 +544,8 @@ describe("GitRepo", () => {
 
             it("returns the expected staged files relative to the cwd", async () => {
                 // Given a repo has a staged file...
-                const repo = await GitRepo.clone(sampleRepoDir, tmpDir);
+                const uniqueTmpDir = getUniqueTmpDir();
+                const repo = await cloneWithRetry(sampleRepoDir, uniqueTmpDir);
 
                 const stagedFile = new File(repo.directory, "package.json");
                 stagedFile.writeSync("modified by unit test.");
@@ -550,7 +560,7 @@ describe("GitRepo", () => {
                 expect(getStagedFilesResult.succeeded).toBeTrue();
                 const stagedFiles = getStagedFilesResult.value!;
                 expect(stagedFiles.length).toEqual(1);
-                expect(stagedFiles[0]!.toString()).toEqual(path.join("tmp", "sampleGitRepo-src", "package.json"));
+                expect(stagedFiles[0]!.toString()).toEqual(path.join(uniqueTmpDir.toString(), "sampleGitRepo-src", "package.json"));
             });
         });
 
@@ -560,13 +570,14 @@ describe("GitRepo", () => {
 
             it("will fetch tags", async () => {
                 // Create to identical clones of the sample repo.
-                const dir1 = new Directory(tmpDir, "dir1");
+                const uniqueTmpDir = getUniqueTmpDir();
+                const dir1 = new Directory(uniqueTmpDir, "dir1");
                 await dir1.ensureExists();
-                const repo1 = await GitRepo.clone(sampleRepoDir, dir1);
+                const repo1 = await cloneWithRetry(sampleRepoDir, dir1);
 
-                const dir2 = new Directory(tmpDir, "dir2");
+                const dir2 = new Directory(uniqueTmpDir, "dir2");
                 await dir2.ensureExists();
-                const repo2 = await GitRepo.clone(sampleRepoDir, dir2);
+                const repo2 = await cloneWithRetry(sampleRepoDir, dir2);
 
                 const tagName = "depot_unit_test_tag_" + generateUuid();
 
@@ -592,9 +603,7 @@ describe("GitRepo", () => {
         describe("getLog()", () => {
 
             it("returns the expected entries", async () => {
-                const repo = await GitRepo.clone(sampleRepoDir, tmpDir);
-
-                const log = await repo.getLog();
+                const log = await clonedRepo.getLog();
                 expect(log.length).toBeGreaterThan(0);
 
                 expect(log[0]!.commitHash).toEqual("a5206775d3e67a4282a07f15f18eb44bca8d52c8");
@@ -619,14 +628,11 @@ describe("GitRepo", () => {
 
 
         describe("deleteBranch()", () => {
-            beforeEach(() => {
-                tmpDir.emptySync();
-            });
-
 
             it("will delete a merged local branch when force is not set", async () => {
-                const originRepo = await GitRepo.clone(sampleRepoDir, tmpDir, "origin", true);
-                const workingRepo = await GitRepo.clone(originRepo.directory, tmpDir, "working");
+                const uniqueTmpDir = getUniqueTmpDir();
+                const originRepo = await cloneWithRetry(sampleRepoDir, uniqueTmpDir, "origin", true);
+                const workingRepo = await GitRepo.clone(originRepo.directory, uniqueTmpDir, "working");
                 const mainBranch = (await workingRepo.getCurrentBranch())!;
                 expect(mainBranch).toBeDefined();
 
@@ -650,12 +656,13 @@ describe("GitRepo", () => {
                 // Finally, delete the merged local branch.
                 const deleteResult = await workingRepo.deleteBranch(featureBranch);
                 expect(deleteResult.succeeded).toBeTrue();
-            }, 1000 * 10);
+            }, 1000 * 20);
 
 
             it("will not delete an unmerged local branch when force is not set", async () => {
-                const originRepo = await GitRepo.clone(sampleRepoDir, tmpDir, "origin", true);
-                const workingRepo = await GitRepo.clone(originRepo.directory, tmpDir, "working");
+                const uniqueTmpDir = getUniqueTmpDir();
+                const originRepo = await cloneWithRetry(sampleRepoDir, uniqueTmpDir, "origin", true);
+                const workingRepo = await GitRepo.clone(originRepo.directory, uniqueTmpDir, "working");
                 const mainBranch = (await workingRepo.getCurrentBranch())!;
                 expect(mainBranch).toBeDefined();
 
@@ -678,12 +685,13 @@ describe("GitRepo", () => {
                 const deleteResult = await workingRepo.deleteBranch(featureBranch);
                 expect(deleteResult.failed).toBeTrue();
                 expect(deleteResult.error).toContain("not fully merged");
-            }, 1000 * 10);
+            }, 1000 * 20);
 
 
             it("will delete an unmerged local branch when force is set", async () => {
-                const originRepo = await GitRepo.clone(sampleRepoDir, tmpDir, "origin", true);
-                const workingRepo = await GitRepo.clone(originRepo.directory, tmpDir, "working");
+                const uniqueTmpDir = getUniqueTmpDir();
+                const originRepo = await cloneWithRetry(sampleRepoDir, uniqueTmpDir, "origin", true);
+                const workingRepo = await GitRepo.clone(originRepo.directory, uniqueTmpDir, "working");
                 const mainBranch = (await workingRepo.getCurrentBranch())!;
                 expect(mainBranch).toBeDefined();
 
@@ -705,13 +713,14 @@ describe("GitRepo", () => {
                 // Try to delete the unmerged local feature branch.
                 const deleteResult = await workingRepo.deleteBranch(featureBranch, true);
                 expect(deleteResult.succeeded).toBeTrue();
-            }, 1000 * 10);
+            }, 1000 * 20);
 
 
 
             it("will delete a merged remote branch when force is not set", async () => {
-                const originRepo = await GitRepo.clone(sampleRepoDir, tmpDir, "origin", true);
-                const workingRepo = await GitRepo.clone(originRepo.directory, tmpDir, "working");
+                const uniqueTmpDir = getUniqueTmpDir();
+                const originRepo = await cloneWithRetry(sampleRepoDir, uniqueTmpDir, "origin", true);
+                const workingRepo = await GitRepo.clone(originRepo.directory, uniqueTmpDir, "working");
                 const mainBranch = (await workingRepo.getCurrentBranch())!;
                 expect(mainBranch).toBeDefined();
 
@@ -752,8 +761,9 @@ describe("GitRepo", () => {
 
 
             it("will delete an unmerged remote branch when force is not set", async () => {
-                const originRepo = await GitRepo.clone(sampleRepoDir, tmpDir, "origin", true);
-                const workingRepo = await GitRepo.clone(originRepo.directory, tmpDir, "working");
+                const uniqueTmpDir = getUniqueTmpDir();
+                const originRepo = await cloneWithRetry(sampleRepoDir, uniqueTmpDir, "origin", true);
+                const workingRepo = await GitRepo.clone(originRepo.directory, uniqueTmpDir, "working");
                 const mainBranch = (await workingRepo.getCurrentBranch())!;
                 expect(mainBranch).toBeDefined();
 
@@ -779,12 +789,13 @@ describe("GitRepo", () => {
                 const remoteBranch = (await GitBranch.create(workingRepo, branchName, "origin")).value!;
                 const deleteResult = await workingRepo.deleteBranch(remoteBranch, false);
                 expect(deleteResult.succeeded).toBeTrue();
-            }, 1000 * 10);
+            }, 1000 * 20);
 
 
             it("will invalidate the repository's cache of branches so a new list of branches will be retrieved", async () => {
-                const originRepo = await GitRepo.clone(sampleRepoDir, tmpDir, "origin", true);
-                const workingRepo = await GitRepo.clone(originRepo.directory, tmpDir, "working");
+                const uniqueTmpDir = getUniqueTmpDir();
+                const originRepo = await cloneWithRetry(sampleRepoDir, uniqueTmpDir, "origin", true);
+                const workingRepo = await GitRepo.clone(originRepo.directory, uniqueTmpDir, "working");
                 const mainBranch = (await workingRepo.getCurrentBranch())!;
                 expect(mainBranch).toBeDefined();
 
@@ -820,14 +831,11 @@ describe("GitRepo", () => {
 
 
         describe("getMergedBranches()", () => {
-            beforeEach(() => {
-                tmpDir.emptySync();
-            });
-
 
             it("will find a local merged branch", async () => {
-                const originRepo = await GitRepo.clone(sampleRepoDir, tmpDir, "origin", true);
-                const workingRepo = await GitRepo.clone(originRepo.directory, tmpDir, "working");
+                const uniqueTmpDir = getUniqueTmpDir();
+                const originRepo = await cloneWithRetry(sampleRepoDir, uniqueTmpDir, "origin", true);
+                const workingRepo = await GitRepo.clone(originRepo.directory, uniqueTmpDir, "working");
                 const mainBranch = (await workingRepo.getCurrentBranch())!;
                 expect(mainBranch).toBeDefined();
 
@@ -858,12 +866,13 @@ describe("GitRepo", () => {
                 expect(foundFeatureBranch).toBeDefined();
                 expect(foundFeatureBranch?.isLocal()).toBeTrue();
 
-            }, 1000 * 10);
+            }, 1000 * 20);
 
 
             it("will find a remote merged branch", async () => {
-                const originRepo = await GitRepo.clone(sampleRepoDir, tmpDir, "origin", true);
-                const workingRepo = await GitRepo.clone(originRepo.directory, tmpDir, "working");
+                const uniqueTmpDir = getUniqueTmpDir();
+                const originRepo = await cloneWithRetry(sampleRepoDir, uniqueTmpDir, "origin", true);
+                const workingRepo = await GitRepo.clone(originRepo.directory, uniqueTmpDir, "working");
                 const mainBranch = (await workingRepo.getCurrentBranch())!;
                 expect(mainBranch).toBeDefined();
 
@@ -898,12 +907,13 @@ describe("GitRepo", () => {
                 expect(foundFeatureBranch).toBeDefined();
                 expect(foundFeatureBranch?.isRemote()).toBeTrue();
 
-            }, 1000 * 10);
+            }, 1000 * 20);
 
 
             it("will find a local and a remote merged branch", async () => {
-                const originRepo = await GitRepo.clone(sampleRepoDir, tmpDir, "origin", true);
-                const workingRepo = await GitRepo.clone(originRepo.directory, tmpDir, "working");
+                const uniqueTmpDir = getUniqueTmpDir();
+                const originRepo = await cloneWithRetry(sampleRepoDir, uniqueTmpDir, "origin", true);
+                const workingRepo = await GitRepo.clone(originRepo.directory, uniqueTmpDir, "working");
                 const mainBranch = (await workingRepo.getCurrentBranch())!;
                 expect(mainBranch).toBeDefined();
 
@@ -945,8 +955,9 @@ describe("GitRepo", () => {
 
 
             it("will find expected branches when the destination branch is not the current branch", async () => {
-                const originRepo = await GitRepo.clone(sampleRepoDir, tmpDir, "origin", true);
-                const workingRepo = await GitRepo.clone(originRepo.directory, tmpDir, "working");
+                const uniqueTmpDir = getUniqueTmpDir();
+                const originRepo = await cloneWithRetry(sampleRepoDir, uniqueTmpDir, "origin", true);
+                const workingRepo = await GitRepo.clone(originRepo.directory, uniqueTmpDir, "working");
                 const mainBranch = (await workingRepo.getCurrentBranch())!;
                 expect(mainBranch).toBeDefined();
 

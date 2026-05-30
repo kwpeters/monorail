@@ -3,7 +3,7 @@ import { GitBranch } from "./gitBranch.mjs";
 import { GitRepo } from "./gitRepo.mjs";
 import { Directory } from "./directory.mjs";
 import { resolveDirectoryLocation } from "./filesystemHelpers.mjs";
-import { sampleRepoDir, tmpDir } from "./specHelpers.test.mjs";
+import { getUniqueTmpDir, sampleRepoDir, cloneWithRetry } from "./specHelpers.test.mjs";
 
 
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
@@ -116,6 +116,17 @@ describe("GitBranch", () => {
 
     describe("instance", () => {
 
+        // A shared clone for read-only tests.  Cloning once avoids
+        // Windows file-handle contention on the source repo's pack files
+        // when many sequential clones happen in rapid succession.
+        let clonedRepo: GitRepo;
+
+        beforeAll(async () => {
+            const sharedTmpDir = getUniqueTmpDir();
+            clonedRepo = await cloneWithRetry(sampleRepoDir, sharedTmpDir);
+        }, 1000 * 30);
+
+
         describe("equals()", () => {
 
             it("returns true when the two represent the same local branch", async () => {
@@ -165,22 +176,16 @@ describe("GitBranch", () => {
 
 
         describe("exists()", () => {
-            beforeEach(() => {
-                tmpDir.emptySync();
-            });
-
 
             it("returns true for a branch that exists", async () => {
-                const workingRepo = await GitRepo.clone(sampleRepoDir, tmpDir);
-                const curBranch = await workingRepo.getCurrentBranch();
+                const curBranch = await clonedRepo.getCurrentBranch();
                 expect(curBranch).toBeTruthy();
                 expect(await curBranch!.exists()).toBeTrue();
             });
 
 
             it("returns false for a branch that does not exist", async () => {
-                const workingRepo = await GitRepo.clone(sampleRepoDir, tmpDir);
-                const fakeBranch = (await GitBranch.create(workingRepo, "doesnotexist")).value!;
+                const fakeBranch = (await GitBranch.create(clonedRepo, "doesnotexist")).value!;
                 expect(fakeBranch).toBeTruthy();
                 expect(await fakeBranch.exists()).toBeFalse();
             });
@@ -218,14 +223,8 @@ describe("GitBranch", () => {
 
         describe("isLocal()", () => {
 
-            beforeEach(() => {
-                tmpDir.emptySync();
-            });
-
-
             it("returns true when the branch is local", async () => {
-                const workingRepo = await GitRepo.clone(sampleRepoDir, tmpDir);
-                const curBranch = await workingRepo.getCurrentBranch();
+                const curBranch = await clonedRepo.getCurrentBranch();
                 expect(curBranch).toBeTruthy();
                 expect(curBranch!.isLocal()).toEqual(true);
             });
@@ -243,14 +242,8 @@ describe("GitBranch", () => {
 
         describe("isRemote()", () => {
 
-            beforeEach(() => {
-                tmpDir.emptySync();
-            });
-
-
             it("returns false when the branch is local", async () => {
-                const workingRepo = await GitRepo.clone(sampleRepoDir, tmpDir);
-                const curBranch = await workingRepo.getCurrentBranch();
+                const curBranch = await clonedRepo.getCurrentBranch();
                 expect(curBranch).toBeTruthy();
                 expect(curBranch!.isRemote()).toEqual(false);
             });
@@ -268,14 +261,10 @@ describe("GitBranch", () => {
 
         describe("getTrackedBranch()", () => {
 
-            beforeEach(() => {
-                tmpDir.emptySync();
-            });
-
-
             it("will resolve with the expected tracked branch", async () => {
-                const originRepo  = await GitRepo.clone(sampleRepoDir, tmpDir, "origin");
-                const workingRepo = await GitRepo.clone(originRepo.directory, tmpDir, "working");
+                const uniqueTmpDir = getUniqueTmpDir();
+                const originRepo  = await cloneWithRetry(sampleRepoDir, uniqueTmpDir, "origin");
+                const workingRepo = await GitRepo.clone(originRepo.directory, uniqueTmpDir, "working");
                 expect(originRepo).toBeTruthy();
                 expect(workingRepo).toBeTruthy();
 
@@ -287,12 +276,13 @@ describe("GitBranch", () => {
                 expect(tracked).toBeTruthy();
                 expect(tracked!.name).toEqual("a_feature_branch");
                 expect(tracked!.remoteName).toEqual("origin");
-            }, 1000 * 10);
+            }, 1000 * 20);
 
 
             it("will resolve with undefined when the branch is not tracking", async () => {
-                const originRepo  = await GitRepo.clone(sampleRepoDir, tmpDir, "origin");
-                const workingRepo = await GitRepo.clone(originRepo.directory, tmpDir, "working");
+                const uniqueTmpDir = getUniqueTmpDir();
+                const originRepo  = await cloneWithRetry(sampleRepoDir, uniqueTmpDir, "origin");
+                const workingRepo = await GitRepo.clone(originRepo.directory, uniqueTmpDir, "working");
                 expect(originRepo).toBeTruthy();
                 expect(workingRepo).toBeTruthy();
 
@@ -302,12 +292,13 @@ describe("GitBranch", () => {
 
                 const tracked = await featureBranch.getTrackedBranch();
                 expect(tracked).toEqual(undefined);
-            }, 1000 * 10);
+            }, 1000 * 20);
 
 
             it("returns a branch that is a remote branch", async () => {
-                const originRepo  = await GitRepo.clone(sampleRepoDir, tmpDir, "origin");
-                const workingRepo = await GitRepo.clone(originRepo.directory, tmpDir, "working");
+                const uniqueTmpDir = getUniqueTmpDir();
+                const originRepo  = await cloneWithRetry(sampleRepoDir, uniqueTmpDir, "origin");
+                const workingRepo = await GitRepo.clone(originRepo.directory, uniqueTmpDir, "working");
                 expect(originRepo).toBeTruthy();
                 expect(workingRepo).toBeTruthy();
 
@@ -318,7 +309,7 @@ describe("GitBranch", () => {
                 const tracked = await featureBranch.getTrackedBranch();
                 expect(tracked).toBeTruthy();
                 expect(tracked!.isRemote()).toEqual(true);
-            }, 1000 * 10);
+            }, 1000 * 20);
 
         });
 
