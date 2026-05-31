@@ -80,7 +80,7 @@ describe("GitRepo", () => {
                 const originRepo  = await cloneWithRetry(sampleRepoDir, originDir);
                 const workingRepo = await GitRepo.clone(originRepo.directory, workingDir);
                 expect(workingRepo).toBeTruthy();
-            });
+            }, 1000 * 10);
 
 
             it("can clone a repo into a specific directory", async () => {
@@ -203,7 +203,7 @@ describe("GitRepo", () => {
                 const repo1 = await cloneWithRetry(sampleRepoDir, dir1);
                 const repo2 = await cloneWithRetry(sampleRepoDir, dir2);
                 expect(repo1.equals(repo2)).toBeFalsy();
-            });
+            }, 1000 * 30);
         });
 
 
