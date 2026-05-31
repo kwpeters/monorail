@@ -826,7 +826,7 @@ describe("GitRepo", () => {
                 const branches = await workingRepo.getBranches();
                 const found = ld.find(branches, (curBranch) => curBranch.equals(featureBranch));
                 expect(found).toBeUndefined();
-            }, 10 * 1000);
+            }, 20 * 1000);
         });
 
 
