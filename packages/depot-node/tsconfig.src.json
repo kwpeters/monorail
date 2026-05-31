@@ -1,6 +1,7 @@
 {
     "extends": "@repo/typescript-config/tsconfig.package.json",
     "compilerOptions": {
+        "rootDir": "src",
         "outDir": "dist"
     },
     "include": [
@@ -12,3 +13,4 @@
         "src/**/*.test.mts"
     ]
 }
+

@@ -6,6 +6,11 @@
     "extends": "./tsconfig.compileroptions.json",
     "compilerOptions": {
         "module": "Node16",
+		"types": [
+			"jasmine",
+			"node",
+			"vscode"
+		],
 		//"target": "ES2022",    // Already in base configuration
 		"outDir": "out",
 		//"lib": [

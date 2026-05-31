@@ -1,6 +1,7 @@
 {
     "extends": "@repo/typescript-config/tsconfig.sea-app.json",
     "compilerOptions": {
+        "rootDir": "src",
         "outDir": "dist"
     },
     "include": [
@@ -12,3 +13,4 @@
         "**/*.test.mts"
     ]
 }
+

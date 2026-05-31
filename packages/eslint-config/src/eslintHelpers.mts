@@ -864,7 +864,6 @@ export function getReactConfig(): ConfigWithExtendsArray {
  * Gets Turbo linting configuration and customizations.
  */
 export function getTurboConfig(): ConfigWithExtendsArray {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return turboConfig;
 }
 
