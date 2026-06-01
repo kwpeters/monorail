@@ -5,7 +5,7 @@ import * as _ from "lodash-es";
 import { File } from "./file.mjs";
 import { Directory, type IDirectoryContents, type IFilterResult } from "./directory.mjs";
 import { getOs, OperatingSystem } from "./os.mjs";
-import { tmpDir } from "./specHelpers.test.mjs";
+import { tmpDir, exitEarlyIfFloydUnavailable } from "./specHelpers.test.mjs";
 import { FsPath } from "./fsPath.mjs";
 
 const __filename = url.fileURLToPath(import.meta.url);
@@ -438,6 +438,10 @@ describe("Directory", () => {
 
 
             it("works with a UNC directory", async () => {
+                if (exitEarlyIfFloydUnavailable()) {
+                    return;
+                }
+
                 const dir1 = new Directory("\\\\floyd\\home\\tmp\\monorail_ut");
                 const dir2 = await dir1.ensureExists();
                 expect(dir2.toString()).toEqual("\\\\floyd\\home\\tmp\\monorail_ut");
@@ -473,6 +477,10 @@ describe("Directory", () => {
 
 
             it("works with a UNC directory", () => {
+                if (exitEarlyIfFloydUnavailable()) {
+                    return;
+                }
+
                 const dir1 = new Directory("\\\\floyd\\home\\tmp\\monorail_ut");
                 const dir2 = dir1.ensureExistsSync();
                 expect(dir2.toString()).toEqual("\\\\floyd\\home\\tmp\\monorail_ut");

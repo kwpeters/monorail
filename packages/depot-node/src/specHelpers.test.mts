@@ -11,6 +11,7 @@ const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 export const sampleRepoUrl = "https://github.com/kwpeters/sampleGitRepo-src.git";
 export const sampleRepoDir = new Directory(__dirname, "..", "..", "..", "..", "..", "sampleGitRepo-src");
 export const tmpDir = new Directory("tmp");
+export const floydHomeDir = new Directory("\\\\floyd\\home");
 
 
 /**
@@ -24,6 +25,30 @@ export function getUniqueTmpDir(): Directory {
     const uniqueDir = new Directory(tmpDir, generateUuid(UuidFormat.N));
     uniqueDir.ensureExistsSync();
     return uniqueDir;
+}
+
+
+/**
+ * Determines whether the shared `floyd` UNC path is currently available.
+ * @return true when the share is reachable; false otherwise.
+ */
+export function isFloydAvailable(): boolean {
+    return floydHomeDir.existsSync() !== undefined;
+}
+
+
+/**
+ * Marks the current spec pending when the shared `floyd` UNC path is not
+ * reachable.
+ * @return true when the caller should exit early; false otherwise.
+ */
+export function exitEarlyIfFloydUnavailable(): boolean {
+    if (isFloydAvailable()) {
+        return false;
+    }
+
+    pending(`Skipping test because "${floydHomeDir.toString()}" is unavailable.`);
+    return true;
 }
 
 

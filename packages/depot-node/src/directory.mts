@@ -246,13 +246,8 @@ export class Directory {
             const stats = fs.lstatSync(this._dirPath);
             return stats.isDirectory() ? stats : undefined;
         }
-        catch (err) {
-            if ((err as NodeJS.ErrnoException).code === "ENOENT") {
-                return undefined;
-            }
-            else {
-                throw err;
-            }
+        catch {
+            return undefined;
         }
     }
 
