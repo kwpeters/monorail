@@ -27,6 +27,7 @@ export const defaultDiffTuiSettings: IDiffTuiSettings = {
     includePatterns:  ["**/*"],
     excludePatterns:  [
         "**/.turbo/**/*",
+        "**/.git/**/*",
         "**/dist/**/*",
         "**/out/**/*",
         "**/node_modules/**/*"
