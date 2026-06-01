@@ -14,7 +14,7 @@ result.
 - Validation pipeline with structured errors.
 - Scheduler that either:
   - returns a valid schedule with objective metrics, or
-  - returns unsat with one most likely top blocking cause.
+  - returns no valid schedule with one most likely top blocking cause.
 - D3 renderer producing a swim-lane timeline:
   - appointments,
   - car trajectories,
@@ -27,6 +27,7 @@ result.
 - All times and travel durations are 5-minute increments.
 - Car capacity is unbounded.
 - Cars include required `startLocation`.
+- Each driver lists the cars they can drive.
 - Every person must be at `endLocation` by midnight.
 - Driver required only while a car is in use (moving or carrying riders).
 - Travel matrix is symmetric, but the user provides each pair once
@@ -36,9 +37,10 @@ result.
 
 ## 3) Input
 
-- People collection:
+- Person collection:
   - `name` (unique)
-  - `canDrive` (boolean)
+  - `drivableCars` (list of car names; a person can drive when this list is
+    non-empty)
   - `startLocation`
   - `endLocation`
 - Cars collection:
@@ -74,7 +76,7 @@ Create files:
 - `apps/schedule-generator/src/normalizeInput.mts`
 - `apps/schedule-generator/src/schedulerTypes.mts`
 - `apps/schedule-generator/src/scheduler.mts`
-- `apps/schedule-generator/src/unsatAnalysis.mts`
+- `apps/schedule-generator/src/infeasibilityAnalysis.mts`
 - `apps/schedule-generator/src/diagramModel.mts`
 - `apps/schedule-generator/src/renderHtml.mts`
 - `apps/schedule-generator/src/main.test.mts`
@@ -104,14 +106,15 @@ Exit codes:
 
 - `0`: success.
 - `2`: validation failure.
-- `3`: unsat (no valid schedule).
+- `3`: no valid schedule.
 - `1`: unexpected runtime failure.
 
 Stdout/stderr behavior:
 
 - Success: write short summary to stdout (appointments, trips, total adjustment,
   total travel).
-- Validation errors and unsat cause: write structured human-readable message to
+- Validation errors and no valid schedule cause: write structured human-readable
+  message to
   stderr.
 
 ## 6) JSON data contract (v1)
@@ -120,10 +123,10 @@ Top-level shape:
 
 ```json
 {
-  "people": [
+  "persons": [
     {
       "name": "Alex",
-      "canDrive": true,
+      "drivableCars": ["Car-1"],
       "startLocation": "Home",
       "endLocation": "Home"
     }
@@ -170,7 +173,8 @@ Rules:
 Validation phases:
 
 1. Shape/schema validation (Zod).
-2. Cross-reference validation (names, attendees, location existence).
+2. Cross-reference validation (names, attendees, location existence, driver-car
+  eligibility).
 3. Temporal validation (format, increments, bounds, start < end).
 4. Matrix completeness validation.
 5. Pre-solver conflict validation.
@@ -184,11 +188,19 @@ Suggested validation error codes:
 - `VAL_TIME_ORDER`
 - `VAL_TIME_OUT_OF_RANGE`
 - `VAL_UNKNOWN_ATTENDEE`
+- `VAL_UNKNOWN_DRIVABLE_CAR`
 - `VAL_UNKNOWN_LOCATION`
 - `VAL_BAD_TRAVEL_INCREMENT`
 - `VAL_DUP_TRAVEL_PAIR`
 - `VAL_MISSING_TRAVEL_PAIR`
 - `VAL_STRICT_OVERLAP_UNRESOLVABLE`
+
+Driver eligibility validation:
+
+- A person can drive when `drivableCars` is non-empty.
+- Each `drivableCars` entry must match an existing car name.
+- Solver routing must only assign a driver to a car that appears in that
+  person's `drivableCars` list.
 
 Return type for validation:
 
@@ -236,17 +248,13 @@ Define interface:
 
 ```ts
 interface SolverRequest {
-  people: ReadonlyArray<PersonState0>;
+  persons: ReadonlyArray<PersonState0>;
   cars: ReadonlyArray<CarState0>;
   appointments: ReadonlyArray<NormalizedAppointment>;
   travel: TravelLookup;
 }
 
-interface SolverResult {
-  ok: boolean;
-  schedule?: FinalSchedule;
-  unsat?: UnsatSummary;
-}
+type SolverResult = Result<FinalSchedule, InfeasibleSummary>;
 ```
 
 Algorithm approach for v1:
@@ -263,13 +271,14 @@ Algorithm approach for v1:
 - Route assignment at each decision:
   - enumerate feasible car movement options,
   - ensure at least one driver while car in use,
+  - ensure assigned driver is eligible for the car,
   - enforce person/car non-overlap in time.
 - Branch objective (lexicographic):
   - `obj1 = totalAppointmentAdjustmentMinutes`,
   - `obj2 = totalTravelMinutes`.
 - Prune any partial branch whose lower bound dominates current incumbent.
 
-Unsat analysis:
+Infeasibility analysis:
 
 - Track most recent failing constraint families during search.
 - Return one top likely cause using a ranking:
@@ -332,8 +341,8 @@ Unit test targets:
   - happy path with one car and two appointments,
   - requires flexible start shift,
   - requires flexible end shift,
-  - unsat due to no driver,
-  - unsat due to impossible day-end return.
+  - no valid schedule due to no driver,
+  - no valid schedule due to impossible day-end return.
 - Renderer/model:
   - lane ordering correctness,
   - overlap column assignment,
@@ -343,7 +352,7 @@ Integration tests:
 
 - CLI success writes HTML and exits `0`.
 - CLI validation failure exits `2`.
-- CLI unsat case exits `3` with top-cause text.
+- CLI no-valid-schedule case exits `3` with top-cause text.
 
 ## 13) Implementation phases
 
@@ -360,7 +369,7 @@ Phase 2: contracts + validation + normalization
 Phase 3: solver core
 
 - Implement branch-and-bound scheduler and objective tracking.
-- Implement unsat top-cause summarization.
+- Implement no-valid-schedule top-cause summarization.
 
 Phase 4: diagram model + D3 HTML
 
