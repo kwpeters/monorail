@@ -26,6 +26,8 @@ const schemaActionPriorityString = z.enum([
  * rejected via .strict() so that typos are caught at load time.
  */
 export const schemaDiffTuiConfig = z.object({
+    leftDir:          z.string(),
+    rightDir:         z.string(),
     actionPriority:   schemaActionPriorityString,
     includeIdentical: z.boolean(),
     includeLeftOnly:  z.boolean(),
@@ -39,13 +41,22 @@ export type DiffTuiConfig = z.infer<typeof schemaDiffTuiConfig>;
 
 
 /**
- * Converts IDiffTuiSettings to the JSON-serializable DiffTuiConfig shape.
+ * Converts IDiffTuiSettings and the two directories to the JSON-serializable
+ * DiffTuiConfig shape.
  *
- * @param settings - The current settings object
+ * @param settings  - The current settings object
+ * @param leftDir   - Absolute or relative path to the left directory
+ * @param rightDir  - Absolute or relative path to the right directory
  * @return A plain object ready for JSON serialization
  */
-export function settingsToConfig(settings: IDiffTuiSettings): DiffTuiConfig {
+export function settingsToConfig(
+    settings: IDiffTuiSettings,
+    leftDir:  string,
+    rightDir: string
+): DiffTuiConfig {
     return {
+        leftDir,
+        rightDir,
         actionPriority:   actionPriorityToString(settings.actionPriority),
         includeIdentical: settings.includeIdentical,
         includeLeftOnly:  settings.includeLeftOnly,
@@ -75,27 +86,19 @@ export function configToSettings(config: DiffTuiConfig): IDiffTuiSettings {
 
 
 /**
- * Attempts to load difftui.json from the given directory.
+ * Attempts to load a difftui config from an explicit file path.
  *
- * - If the file does not exist, returns a succeeded result with `undefined`.
- * - If the file exists but is invalid (parse error or schema violation),
- *   returns a failed result with an error message.
- * - If the file exists and is valid, returns a succeeded result with the
- *   parsed settings.
+ * - If the file does not exist or cannot be read, returns a failed result.
+ * - If the file is invalid (parse error or schema violation), returns a failed
+ *   result with an error message.
+ * - If the file is valid, returns a succeeded result with the full config.
  *
- * @param dir - The directory to look in (defaults to process.cwd())
- * @return A Result containing the parsed settings or undefined, or an error
- *     message
+ * @param filePath - Absolute path to the config file
+ * @return A Result containing the full config or an error message
  */
-export function loadConfig(
-    dir: string = process.cwd()
-): Result<IDiffTuiSettings | undefined, string> {
-    const filePath = path.join(dir, CONFIG_FILE_NAME);
-
-    if (!fs.existsSync(filePath)) {
-        return new SucceededResult(undefined);
-    }
-
+export function loadConfigFromFile(
+    filePath: string
+): Result<DiffTuiConfig, string> {
     let raw: unknown;
     try {
         const text = fs.readFileSync(filePath, "utf-8");
@@ -103,33 +106,62 @@ export function loadConfig(
     }
     catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        return new FailedResult(`Failed to parse ${CONFIG_FILE_NAME}: ${msg}`);
+        return new FailedResult(`Failed to read ${filePath}: ${msg}`);
     }
 
     const result = safeParse(schemaDiffTuiConfig, raw);
     if (result.failed) {
-        return new FailedResult(
-            `Invalid ${CONFIG_FILE_NAME}: ${result.error}`
-        );
+        return new FailedResult(`Invalid config file ${filePath}: ${result.error}`);
     }
 
-    return new SucceededResult(configToSettings(result.value));
+    return new SucceededResult(result.value);
 }
 
 
 /**
- * Writes the current settings to difftui.json in the given directory.
+ * Attempts to load difftui.json from the given directory.
  *
- * @param settings - The settings to persist
- * @param dir - The directory to write to (defaults to process.cwd())
+ * - If the file does not exist, returns a succeeded result with `undefined`.
+ * - If the file exists but is invalid (parse error or schema violation),
+ *   returns a failed result with an error message.
+ * - If the file exists and is valid, returns a succeeded result with the full
+ *   config.
+ *
+ * @param dir - The directory to look in (defaults to process.cwd())
+ * @return A Result containing the parsed config or undefined, or an error message
+ */
+export function loadConfig(
+    dir: string = process.cwd()
+): Result<DiffTuiConfig | undefined, string> {
+    const filePath = path.join(dir, CONFIG_FILE_NAME);
+
+    if (!fs.existsSync(filePath)) {
+        return new SucceededResult(undefined);
+    }
+
+    return loadConfigFromFile(filePath);
+}
+
+
+/**
+ * Writes the current settings and directories to difftui.json in the given
+ * directory.
+ *
+ * @param settings  - The settings to persist
+ * @param leftDir   - The left directory path to include in the config
+ * @param rightDir  - The right directory path to include in the config
+ * @param dir       - The directory to write the file to (defaults to
+ *     process.cwd())
  * @return A Result indicating success or an error message
  */
 export function saveConfig(
     settings: IDiffTuiSettings,
+    leftDir:  string,
+    rightDir: string,
     dir: string = process.cwd()
 ): Result<void, string> {
     const filePath = path.join(dir, CONFIG_FILE_NAME);
-    const config = settingsToConfig(settings);
+    const config = settingsToConfig(settings, leftDir, rightDir);
 
     try {
         fs.writeFileSync(filePath, JSON.stringify(config, null, 4) + "\n", "utf-8");
@@ -143,16 +175,16 @@ export function saveConfig(
 
 
 /**
- * Merges loaded config settings over defaults, returning a complete
+ * Merges a loaded full config's settings over defaults, returning a complete
  * IDiffTuiSettings.  When loaded is undefined the defaults are returned.
  *
- * @param loaded - Settings from config file, or undefined
+ * @param loaded   - Parsed config from file, or undefined
  * @param defaults - The baseline defaults
  * @return The merged settings
  */
 export function mergeWithDefaults(
-    loaded:   IDiffTuiSettings | undefined,
+    loaded:   DiffTuiConfig | undefined,
     defaults: IDiffTuiSettings
 ): IDiffTuiSettings {
-    return loaded ?? defaults;
+    return loaded !== undefined ? configToSettings(loaded) : defaults;
 }

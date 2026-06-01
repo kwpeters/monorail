@@ -358,19 +358,6 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
                 return;
             }
 
-            // Export config.
-            if (input === "e") {
-                const newSettings = draftToSettings(settingsDraft);
-                const result = saveConfig(newSettings);
-                if (result.failed) {
-                    setStatusMsg(`Export failed: ${result.error}`);
-                }
-                else {
-                    setStatusMsg("Settings exported to difftui.json");
-                }
-                return;
-            }
-
             return;
         }
 
@@ -466,12 +453,12 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
         }
 
         if (key.ctrl && input === "e") {
-            const result = saveConfig(appliedSettings);
+            const result = saveConfig(appliedSettings, leftDir.toString(), rightDir.toString());
             if (result.failed) {
                 setStatusMsg(`Export failed: ${result.error}`);
             }
             else {
-                setStatusMsg("Settings exported to difftui.json");
+                setStatusMsg("Config exported to difftui.json");
             }
             return;
         }
@@ -710,7 +697,7 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
                 })}
                 <Newline />
                 <Text dimColor>[↑↓] Navigate  [Enter] Toggle/Edit</Text>
-                <Text dimColor>[Esc/c] Cancel  [o] OK  [e] Export</Text>
+                <Text dimColor>[Esc/c] Cancel  [o] OK</Text>
             </Box>
         );
     }
@@ -723,7 +710,7 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
                     <Text color="yellow">{statusMsg}</Text>
                 )}
                 <Text dimColor>
-                    [↑↓] Select  [Enter] Actions  [s] Settings  [r] Refresh  [q] Quit
+                    [↑↓] Select  [Enter] Actions  [s] Settings  [r] Refresh  [Ctrl+E] Export  [q] Quit
                 </Text>
             </Box>
         );

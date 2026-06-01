@@ -1,12 +1,12 @@
 import { createElement } from "react";
 import { render } from "ink";
+import * as path from "node:path";
 import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
 import { Directory } from "@repo/depot-node/directory";
-import { type PathPart } from "@repo/depot-node/pathHelpers";
 import { DiffTuiApp } from "./diffTuiApp.js";
-import { loadConfig, mergeWithDefaults } from "./diffTuiConfig.mjs";
-import { defaultDiffTuiSettings } from "./diffTuiSettings.mjs";
+import { loadConfig, loadConfigFromFile, configToSettings, mergeWithDefaults } from "./diffTuiConfig.mjs";
+import { type IDiffTuiSettings, defaultDiffTuiSettings } from "./diffTuiSettings.mjs";
 
 ////////////////////////////////////////////////////////////////////////////////
 // Bootstrap
@@ -30,11 +30,10 @@ main()
 ////////////////////////////////////////////////////////////////////////////////
 
 export async function main(): Promise<number> {
-    // Parse the two positional directory arguments.
     const argv = await yargs(hideBin(process.argv))
-    .usage("Usage: difftui <leftDir> <rightDir>")
+    .usage("Usage: difftui [--config <file>] [<leftDir> <rightDir>]")
     .command(
-        "$0 <leftDir> <rightDir>",
+        "$0 [leftDir] [rightDir]",
         "Interactively diff the files in leftDir and rightDir using a TUI",
         (yarg) => {
             return yarg
@@ -45,20 +44,34 @@ export async function main(): Promise<number> {
             .positional("rightDir", {
                 describe: "The right directory",
                 type:     "string"
+            })
+            .option("config", {
+                alias:    "c",
+                describe: "Path to a difftui config file",
+                type:     "string"
             });
         }
     )
     .check(
         (args) => {
-            const leftDir  = new Directory(args.leftDir as PathPart);
-            const rightDir = new Directory(args.rightDir as PathPart);
+            // When a config file is provided the positional dirs are optional;
+            // they come from the file.  When no config file is given the two
+            // positional dirs are required and must exist on disk.
+            if (args.config === undefined) {
+                if (args.leftDir === undefined || args.rightDir === undefined) {
+                    throw new Error("Two directory arguments are required when --config is not specified.");
+                }
 
-            if (!leftDir.existsSync()) {
-                throw new Error(`The left directory "${leftDir.toString()}" does not exist.`);
-            }
+                const leftDir  = new Directory(args.leftDir as string);
+                const rightDir = new Directory(args.rightDir as string);
 
-            if (!rightDir.existsSync()) {
-                throw new Error(`The right directory "${rightDir.toString()}" does not exist.`);
+                if (!leftDir.existsSync()) {
+                    throw new Error(`The left directory "${leftDir.toString()}" does not exist.`);
+                }
+
+                if (!rightDir.existsSync()) {
+                    throw new Error(`The right directory "${rightDir.toString()}" does not exist.`);
+                }
             }
 
             return true;
@@ -69,20 +82,60 @@ export async function main(): Promise<number> {
         "$0 /path/to/left /path/to/right",
         "Interactively compare two directories using a TUI."
     )
+    .example(
+        "$0 --config difftui.json",
+        "Load directories and settings from a config file."
+    )
     .help()
     .argv;
 
-    const leftDir  = new Directory(argv.leftDir as PathPart);
-    const rightDir = new Directory(argv.rightDir as PathPart);
+    // -------------------------------------------------------------------------
+    // Resolve directories and settings
+    // -------------------------------------------------------------------------
 
-    // Load settings from difftui.json in the working directory.
-    const configResult = loadConfig();
-    if (configResult.failed) {
-        console.error(configResult.error);
+    let leftDirStr:  string;
+    let rightDirStr: string;
+    let initialSettings: IDiffTuiSettings;
+
+    const configFile = argv.config as string | undefined;
+    if (configFile !== undefined) {
+        // Explicit config file path.
+        const configPath = path.resolve(configFile);
+        const configResult = loadConfigFromFile(configPath);
+        if (configResult.failed) {
+            console.error(configResult.error);
+            return 1;
+        }
+        leftDirStr      = configResult.value.leftDir;
+        rightDirStr     = configResult.value.rightDir;
+        initialSettings = configToSettings(configResult.value);
+    }
+    else {
+        // Positional args are required (validated above).
+        leftDirStr  = argv.leftDir as string;
+        rightDirStr = argv.rightDir as string;
+
+        // Also try to load settings from difftui.json in the working directory.
+        const configResult = loadConfig();
+        if (configResult.failed) {
+            console.error(configResult.error);
+            return 1;
+        }
+        initialSettings = mergeWithDefaults(configResult.value, defaultDiffTuiSettings);
+    }
+
+    const leftDir  = new Directory(leftDirStr);
+    const rightDir = new Directory(rightDirStr);
+
+    if (!leftDir.existsSync()) {
+        console.error(`The left directory "${leftDir.toString()}" does not exist.`);
         return 1;
     }
 
-    const initialSettings = mergeWithDefaults(configResult.value, defaultDiffTuiSettings);
+    if (!rightDir.existsSync()) {
+        console.error(`The right directory "${rightDir.toString()}" does not exist.`);
+        return 1;
+    }
 
     // Enter the alternate screen buffer so the TUI occupies a clean full-screen
     // surface starting at row 0.  This keeps the header pinned to the top and

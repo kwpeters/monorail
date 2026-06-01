@@ -180,21 +180,23 @@ describe("retainSelection()", () => {
 
 describe("settingsToConfig() / configToSettings() round-trip", () => {
 
-    it("produces a config with string actionPriority", () => {
-        const config = settingsToConfig(defaultDiffTuiSettings);
+    it("produces a config with string actionPriority and required dirs", () => {
+        const config = settingsToConfig(defaultDiffTuiSettings, "/left", "/right");
+        expect(config.leftDir).toBe("/left");
+        expect(config.rightDir).toBe("/right");
         expect(config.actionPriority).toBe("preserve");
         expect(config.includeIdentical).toBe(false);
         expect(config.includeLeftOnly).toBe(true);
         expect(config.includeRightOnly).toBe(true);
         expect(config.includePatterns).toEqual(["**/*"]);
-        expect(config.excludePatterns).toEqual(["**/.turbo/**/*", "**/dist/**/*", "**/out/**/*", "**/node_modules/**/*"]);
+        expect(config.excludePatterns).toEqual(["**/.turbo/**/*", "**/.git/**/*", "**/dist/**/*", "**/out/**/*", "**/node_modules/**/*"]);
     });
 
 
     it("round-trips all ActionPriority values", () => {
         for (const priority of Object.values(ActionPriority)) {
             const settings = { ...defaultDiffTuiSettings, actionPriority: priority };
-            const config   = settingsToConfig(settings);
+            const config   = settingsToConfig(settings, "/left", "/right");
             const restored = configToSettings(config);
             expect(restored.actionPriority).toBe(priority);
         }
@@ -208,7 +210,7 @@ describe("settingsToConfig() / configToSettings() round-trip", () => {
             includeLeftOnly:  false,
             includeRightOnly: false
         };
-        const config   = settingsToConfig(settings);
+        const config   = settingsToConfig(settings, "/left", "/right");
         const restored = configToSettings(config);
         expect(restored.includeIdentical).toBe(true);
         expect(restored.includeLeftOnly).toBe(false);
@@ -222,10 +224,17 @@ describe("settingsToConfig() / configToSettings() round-trip", () => {
             includePatterns: ["src/**", "lib/**"],
             excludePatterns: ["**/node_modules/**"]
         };
-        const config   = settingsToConfig(settings);
+        const config   = settingsToConfig(settings, "/left", "/right");
         const restored = configToSettings(config);
         expect(restored.includePatterns).toEqual(["src/**", "lib/**"]);
         expect(restored.excludePatterns).toEqual(["**/node_modules/**"]);
+    });
+
+
+    it("round-trips the directory paths", () => {
+        const config = settingsToConfig(defaultDiffTuiSettings, "/my/left", "/my/right");
+        expect(config.leftDir).toBe("/my/left");
+        expect(config.rightDir).toBe("/my/right");
     });
 
 });
@@ -244,9 +253,10 @@ describe("mergeWithDefaults()", () => {
 
 
     it("returns the loaded settings when defined", () => {
-        const loaded = { ...defaultDiffTuiSettings, includeIdentical: true };
-        const merged = mergeWithDefaults(loaded, defaultDiffTuiSettings);
-        expect(merged).toBe(loaded);
+        const loadedSettings = { ...defaultDiffTuiSettings, includeIdentical: true };
+        const config = settingsToConfig(loadedSettings, "/left", "/right");
+        const merged = mergeWithDefaults(config, defaultDiffTuiSettings);
+        expect(merged).toEqual(loadedSettings);
     });
 
 });
