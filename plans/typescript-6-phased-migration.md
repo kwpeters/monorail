@@ -101,8 +101,9 @@ Use this plan when the repository has:
 
 ### Actions
 1. Remove generated transient artifacts from verification (for example `*.tsbuildinfo`) if not tracked.
-2. Confirm working tree includes only intentional migration changes.
-3. Summarize migration deltas for reuse in sibling repos:
+2. Add `*.tsbuildinfo` to `.gitignore` so incremental compiler caches do not pollute the working tree.
+3. Confirm working tree includes only intentional migration changes.
+4. Summarize migration deltas for reuse in sibling repos:
    - TS version bump
    - shared `types` strategy
    - per-emitter `rootDir` setting
