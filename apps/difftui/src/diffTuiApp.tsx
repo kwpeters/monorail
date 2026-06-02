@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { Box, Text, useApp, useInput, Newline, useStdout } from "ink";
 import TextInput from "ink-text-input";
+import * as path from "node:path";
 import {
     type DiffDirFileItem,
     type FileCompareAction,
@@ -17,7 +18,7 @@ import {
     parsePatternsText,
     retainSelection
 } from "./diffTuiSettings.mjs";
-import { saveConfig } from "./diffTuiConfig.mjs";
+import { configToSettings, loadConfigFromFile, saveConfig } from "./diffTuiConfig.mjs";
 
 
 // ---------------------------------------------------------------------------
@@ -30,6 +31,7 @@ type AppMode = "list" | "action" | "confirm" | "settings";
 interface IDiffTuiAppProps {
     leftDir:         Directory;
     rightDir:        Directory;
+    configFilePath:  string | undefined;
     initialSettings: IDiffTuiSettings;
 }
 
@@ -150,9 +152,17 @@ const DEFAULT_TERMINAL_ROWS = 24;
  * Root Ink component for the difftui command.  Manages all application state
  * and renders the appropriate pane based on the current mode.
  */
-export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppProps): React.ReactElement {
+export function DiffTuiApp({
+    leftDir,
+    rightDir,
+    configFilePath,
+    initialSettings
+}: IDiffTuiAppProps): React.ReactElement {
     const { exit } = useApp();
     const { stdout } = useStdout();
+
+    const [currentLeftDir, setCurrentLeftDir] = useState(leftDir);
+    const [currentRightDir, setCurrentRightDir] = useState(rightDir);
 
     // Applied settings (used for the current diff list computation).
     const [appliedSettings, setAppliedSettings] = useState<IDiffTuiSettings>(initialSettings);
@@ -202,12 +212,16 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
     // ---------------------------------------------------------------------------
 
     const computeDiff = useCallback(async (
-        settings: IDiffTuiSettings, prevPath: string | undefined, prevIdx: number
+        settings: IDiffTuiSettings,
+        diffLeftDir: Directory,
+        diffRightDir: Directory,
+        prevPath: string | undefined,
+        prevIdx: number
     ) => {
         setLoading(true);
         setStatusMsg("");
         try {
-            const diffItems = await diffDirectories(leftDir, rightDir, {
+            const diffItems = await diffDirectories(diffLeftDir, diffRightDir, {
                 includeLeftOnly:  settings.includeLeftOnly,
                 includeRightOnly: settings.includeRightOnly,
                 includeIdentical: settings.includeIdentical,
@@ -234,12 +248,60 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
         finally {
             setLoading(false);
         }
-    }, [leftDir, rightDir]);
+    }, []);
+
+
+    async function refreshFromCurrentState(settings: IDiffTuiSettings): Promise<void> {
+        const prevPath = items[selectedIndex]?.item.relativeFilePath;
+        await computeDiff(settings, currentLeftDir, currentRightDir, prevPath, selectedIndex);
+    }
+
+
+    async function refreshFromConfigFile(): Promise<void> {
+        if (configFilePath === undefined) {
+            await refreshFromCurrentState(draftToSettings(settingsDraft));
+            return;
+        }
+
+        const configResult = loadConfigFromFile(configFilePath);
+        if (configResult.failed) {
+            setStatusMsg(configResult.error);
+            return;
+        }
+
+        const refreshedLeftDir  = new Directory(path.resolve(configResult.value.leftDir));
+        const refreshedRightDir = new Directory(path.resolve(configResult.value.rightDir));
+        if (!refreshedLeftDir.existsSync()) {
+            setStatusMsg(`The left directory "${refreshedLeftDir.toString()}" does not exist.`);
+            return;
+        }
+
+        if (!refreshedRightDir.existsSync()) {
+            setStatusMsg(`The right directory "${refreshedRightDir.toString()}" does not exist.`);
+            return;
+        }
+
+        const refreshedSettings = configToSettings(configResult.value);
+        setCurrentLeftDir(refreshedLeftDir);
+        setCurrentRightDir(refreshedRightDir);
+        setAppliedSettings(refreshedSettings);
+        setPendingSettings(refreshedSettings);
+        setSettingsDraft(settingsToEditorDraft(refreshedSettings));
+
+        const prevPath = items[selectedIndex]?.item.relativeFilePath;
+        await computeDiff(
+            refreshedSettings,
+            refreshedLeftDir,
+            refreshedRightDir,
+            prevPath,
+            selectedIndex
+        );
+    }
 
 
     // Initial load.
     useEffect(() => {
-        void computeDiff(appliedSettings, undefined, 0);
+        void computeDiff(appliedSettings, currentLeftDir, currentRightDir, undefined, 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -353,8 +415,7 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
                 setPendingSettings(newSettings);
                 setAppliedSettings(newSettings);
                 setMode("list");
-                const prevPath = items[selectedIndex]?.item.relativeFilePath;
-                void computeDiff(newSettings, prevPath, selectedIndex);
+                void refreshFromCurrentState(newSettings);
                 return;
             }
 
@@ -372,7 +433,13 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
                     setConfirmAction(undefined);
                     void act.execute().then(async () => {
                         const prevPath = items[selectedIndex]?.item.relativeFilePath;
-                        await computeDiff(appliedSettings, prevPath, selectedIndex);
+                        await computeDiff(
+                            appliedSettings,
+                            currentLeftDir,
+                            currentRightDir,
+                            prevPath,
+                            selectedIndex
+                        );
                     });
                 }
             }
@@ -444,16 +511,24 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
         }
 
         if (input === "r") {
+            if (configFilePath !== undefined) {
+                void refreshFromConfigFile();
+                return;
+            }
+
             const newSettings = draftToSettings(settingsDraft);
             setAppliedSettings(newSettings);
             setPendingSettings(newSettings);
-            const prevPath = items[selectedIndex]?.item.relativeFilePath;
-            void computeDiff(newSettings, prevPath, selectedIndex);
+            void refreshFromCurrentState(newSettings);
             return;
         }
 
         if (key.ctrl && input === "e") {
-            const result = saveConfig(appliedSettings, leftDir.toString(), rightDir.toString());
+            const result = saveConfig(
+                appliedSettings,
+                currentLeftDir.toString(),
+                currentRightDir.toString()
+            );
             if (result.failed) {
                 setStatusMsg(`Export failed: ${result.error}`);
             }
@@ -488,9 +563,9 @@ export function DiffTuiApp({ leftDir, rightDir, initialSettings }: IDiffTuiAppPr
         return (
             <Box borderStyle="single" paddingX={1}>
                 <Text bold color="blue">difftui  </Text>
-                <Text dimColor>{leftDir.toString()}</Text>
+                <Text dimColor>{currentLeftDir.toString()}</Text>
                 <Text bold color="blue"> ↔ </Text>
-                <Text dimColor>{rightDir.toString()}</Text>
+                <Text dimColor>{currentRightDir.toString()}</Text>
             </Box>
         );
     }

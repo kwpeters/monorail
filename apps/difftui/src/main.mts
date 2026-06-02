@@ -144,7 +144,12 @@ export async function main(): Promise<number> {
 
     try {
         const { waitUntilExit } = render(
-            createElement(DiffTuiApp, { leftDir, rightDir, initialSettings })
+            createElement(DiffTuiApp, {
+                leftDir,
+                rightDir,
+                configFilePath: configFile !== undefined ? path.resolve(configFile) : undefined,
+                initialSettings
+            })
         );
 
         await waitUntilExit();
