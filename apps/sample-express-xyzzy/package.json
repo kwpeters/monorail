@@ -14,7 +14,7 @@
         "depcheck": "depcheck"
     },
     "bin": {
-        "sample-express-xyzzy": "./dist/index.mjs"
+        "sample-express-xyzzy": "./dist/www.mjs"
     },
     "dependencies": {
         "@repo/depot": "*",
