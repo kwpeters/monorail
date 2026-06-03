@@ -45,6 +45,7 @@ async function main(): Promise<Result<number, string>> {
     let retVal: Result<number, string> = new SucceededResult(0);
 
     const __argv = await yargs(hideBin(process.argv))
+    .scriptName("build-app-assist")
     .usage(
         [
             "Provides commands that help build apps within this repo."

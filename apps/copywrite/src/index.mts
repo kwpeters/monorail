@@ -33,6 +33,7 @@ function runningThisScript(): boolean {
 
 async function main(): Promise<Result<number, string>> {
     await yargs(hideBin(process.argv))
+    .scriptName("copywrite")
     .command(commandUpdate)
     .command(commandFull)
     .command(commandDiff)
