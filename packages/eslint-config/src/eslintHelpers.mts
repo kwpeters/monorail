@@ -599,7 +599,8 @@ export function getTsConfig(projDir: string): ConfigWithExtendsArray {
                             "readonly"
                         ],
                         "format": [
-                            "UPPER_CASE"
+                            "UPPER_CASE",
+                            "camelCase"
                         ]
                     },
                     {
