@@ -316,6 +316,10 @@
             "types": "./src/treeTable.mts",
             "default": "./dist/treeTable.mjs"
         },
+        "./typeAssertions": {
+            "types": "./src/typeAssertions.mts",
+            "default": "./dist/typeAssertions.mjs"
+        },
         "./typeUtils": {
             "types": "./src/typeUtils.mts",
             "default": "./dist/typeUtils.mjs"
