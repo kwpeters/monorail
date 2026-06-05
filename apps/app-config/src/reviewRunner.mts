@@ -1,7 +1,7 @@
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { type IChoiceString, promptForChoice } from "@repo/depot-node/prompts";
 import { promptForChoiceFuzzy, registerFuzzyPrompt } from "@repo/depot-node/promptAutocomplete";
-import { showVsCodeDiff } from "@repo/depot-node/fileDiff";
+import { showVsCodeDiff } from "@repo/depot-node/vsCode";
 import { FileComparer } from "@repo/depot-node/diffDirectories";
 import { File } from "@repo/depot-node/file";
 import { type IReviewConfig } from "./reviewTypes.mjs";

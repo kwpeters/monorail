@@ -64,10 +64,6 @@
             "types": "./src/file.mts",
             "default": "./dist/file.mjs"
         },
-        "./fileDiff": {
-            "types": "./src/fileDiff.mts",
-            "default": "./dist/fileDiff.mjs"
-        },
         "./filesystemHelpers": {
             "types": "./src/filesystemHelpers.mts",
             "default": "./dist/filesystemHelpers.mjs"
@@ -219,6 +215,10 @@
         "./uniqueProcessStr": {
             "types": "./src/uniqueProcessStr.mts",
             "default": "./dist/uniqueProcessStr.mjs"
+        },
+        "./vsCode": {
+            "types": "./src/vsCode.mts",
+            "default": "./dist/vsCode.mjs"
         },
         "./windowsHelpers": {
             "types": "./src/windowsHelpers.mts",

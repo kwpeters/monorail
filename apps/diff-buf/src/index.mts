@@ -5,9 +5,8 @@ import { hideBin } from "yargs/helpers";
 import { Result, SucceededResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
 import { pipe } from "@repo/depot/pipe2";
-import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { File } from "@repo/depot-node/file";
-import { openVscodeDiff } from "@repo/depot-node/editor";
+import { showVsCodeDiff } from "@repo/depot-node/vsCode";
 import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 
 
@@ -46,34 +45,30 @@ async function main(): Promise<Result<number, string>> {
         return resConfig;
     }
 
-    const res = pipeAsync(
-        getConfiguration(),
-        (res) => Result.gate((config) => checkEnvironment(), res),
-        (res) => Result.mapSuccess((config) => {
-            // eslint-disable-next-line turbo/no-undeclared-env-vars
-            const left = new File(process.env.CLOUDHOME!, `diff-buff-left.${config.ext}`);
-            // eslint-disable-next-line turbo/no-undeclared-env-vars
-            const right = new File(process.env.CLOUDHOME!, `diff-buf-right.${config.ext}`);
+    const resEnv = checkEnvironment();
+    if (resEnv.failed) {
+        return resEnv;
+    }
 
-            if (config.reset || !left.existsSync()) {
-                left.writeSync("");
-            }
-            if (config.reset || !right.existsSync()) {
-                right.writeSync("");
-            }
+    const config = resConfig.value;
+    // eslint-disable-next-line turbo/no-undeclared-env-vars
+    const left = new File(process.env.CLOUDHOME!, `diff-buff-left.${config.ext}`);
+    // eslint-disable-next-line turbo/no-undeclared-env-vars
+    const right = new File(process.env.CLOUDHOME!, `diff-buf-right.${config.ext}`);
 
-            return {left, right};
-        }, res),
-        (res) => Result.bind((files) => {
-            console.log("Starting diff on the following files:");
-            console.log(`    ${files.left.toString()}`);
-            console.log(`    ${files.right.toString()}`);
-            return openVscodeDiff(files.left, files.right, true);
-        }, res),
-        (res) => Result.mapSuccess(() => 0, res)
-    );
+    if (config.reset || !left.existsSync()) {
+        left.writeSync("");
+    }
+    if (config.reset || !right.existsSync()) {
+        right.writeSync("");
+    }
 
-    return res;
+    console.log("Starting diff on the following files:");
+    console.log(`    ${left.toString()}`);
+    console.log(`    ${right.toString()}`);
+    await showVsCodeDiff(left, right, false, false);
+
+    return new SucceededResult(0);
 }
 
 

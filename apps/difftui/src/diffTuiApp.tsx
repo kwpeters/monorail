@@ -8,7 +8,7 @@ import {
     FileCompareActionType,
     diffDirectories
 } from "@repo/depot-node/diffDirectories";
-import { showVsCodeDiff } from "@repo/depot-node/fileDiff";
+import { showVsCodeDiff, openInVsCode } from "@repo/depot-node/vsCode";
 import { Directory } from "@repo/depot-node/directory";
 import {
     type IDiffTuiSettings,
@@ -45,6 +45,29 @@ interface IItemWithStatus {
 interface IActionChoice {
     label: string;
     index: number;
+}
+
+
+// ---------------------------------------------------------------------------
+// VS Code extra action helpers
+// ---------------------------------------------------------------------------
+
+type ExtraVsCodeAction = "edit-left-vscode" | "edit-right-vscode" | "diff-vscode";
+
+function getExtraActions(status: string): Array<ExtraVsCodeAction> {
+    switch (status) {
+        case "leftOnly":  return ["edit-left-vscode", "diff-vscode"];
+        case "rightOnly": return ["edit-right-vscode", "diff-vscode"];
+        default:          return ["diff-vscode"];
+    }
+}
+
+function extraActionLabel(action: ExtraVsCodeAction): string {
+    switch (action) {
+        case "edit-left-vscode":  return "edit left (VS Code)";
+        case "edit-right-vscode": return "edit right (VS Code)";
+        case "diff-vscode":       return "diff (VS Code)";
+    }
 }
 
 
@@ -460,7 +483,12 @@ export function DiffTuiApp({
                 return;
             }
 
-            const totalChoices = availableActions.length + 1; // +1 for diff
+            const entry        = items[selectedIndex];
+            const extraActions = entry !== undefined ?
+                getExtraActions(entry.status) :
+                ["diff-vscode" as ExtraVsCodeAction];
+            const totalChoices = availableActions.length + extraActions.length;
+
             if (key.upArrow) {
                 setActionIndex((i) => (i - 1 + totalChoices) % totalChoices);
                 return;
@@ -481,10 +509,50 @@ export function DiffTuiApp({
                     }
                 }
                 else {
-                    // VS Code diff.
-                    const entry = items[selectedIndex];
-                    if (entry !== undefined) {
-                        void showVsCodeDiff(entry.item.leftFile, entry.item.rightFile, false, true);
+                    // VS Code action.
+                    const extraAction = extraActions[actionIndex - availableActions.length];
+                    if (entry !== undefined && extraAction !== undefined) {
+                        switch (extraAction) {
+                            case "edit-left-vscode":
+                                void openInVsCode(entry.item.leftFile, false, true);
+                                break;
+
+                            case "edit-right-vscode":
+                                void openInVsCode(entry.item.rightFile, false, true);
+                                break;
+
+                            case "diff-vscode":
+                                if (entry.status === "leftOnly") {
+                                    void (async () => {
+                                        await entry.item.rightFile.write("");
+                                        await showVsCodeDiff(entry.item.leftFile, entry.item.rightFile, false, true);
+                                        const stats = entry.item.rightFile.existsSync();
+                                        if (stats?.size === 0) {
+                                            await entry.item.rightFile.delete();
+                                        }
+                                        const prevPath = items[selectedIndex]?.item.relativeFilePath;
+                                        await computeDiff(appliedSettings, currentLeftDir, currentRightDir,
+                                                          prevPath, selectedIndex);
+                                    })();
+                                }
+                                else if (entry.status === "rightOnly") {
+                                    void (async () => {
+                                        await entry.item.leftFile.write("");
+                                        await showVsCodeDiff(entry.item.leftFile, entry.item.rightFile, false, true);
+                                        const stats = entry.item.leftFile.existsSync();
+                                        if (stats?.size === 0) {
+                                            await entry.item.leftFile.delete();
+                                        }
+                                        const prevPath = items[selectedIndex]?.item.relativeFilePath;
+                                        await computeDiff(appliedSettings, currentLeftDir, currentRightDir,
+                                                          prevPath, selectedIndex);
+                                    })();
+                                }
+                                else {
+                                    void showVsCodeDiff(entry.item.leftFile, entry.item.rightFile, false, true);
+                                }
+                                break;
+                        }
                     }
                     setMode("list");
                 }
@@ -674,7 +742,13 @@ export function DiffTuiApp({
             label: act.type,
             index: i
         }));
-        actionChoices.push({ label: "diff (VS Code)", index: availableActions.length });
+        const entry        = items[selectedIndex];
+        const extraActions = entry !== undefined ?
+            getExtraActions(entry.status) :
+            ["diff-vscode" as ExtraVsCodeAction];
+        extraActions.forEach((action, i) => {
+            actionChoices.push({ label: extraActionLabel(action), index: availableActions.length + i });
+        });
 
         return (
             <Box flexDirection="column" paddingX={2} paddingY={1} borderStyle="single">

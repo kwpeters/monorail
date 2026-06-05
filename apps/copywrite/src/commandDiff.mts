@@ -12,7 +12,7 @@ import {
 import { type PathPart } from "@repo/depot-node/pathHelpers";
 import { Directory } from "@repo/depot-node/directory";
 import { promptForChoice, promptToContinue, type IChoiceString } from "@repo/depot-node/prompts";
-import { showVsCodeDiff } from "@repo/depot-node/fileDiff";
+import { showVsCodeDiff } from "@repo/depot-node/vsCode";
 
 
 export const command = "diff <leftDir> <rightDir>";
