@@ -46,9 +46,9 @@ export function setBitInBigInt(inputInt: bigint, bitIndex: number, value: boolea
  * Validates that the bit index is an integer in the inclusive range [0,
  * maxBitIndex].
  *
- * @param bitIndex The candidate bit index.
- * @param param The maximum allowed bit index.
- * @param param The data type display name used in error messaging.
+ * @param bitIndex - The candidate bit index.
+ * @param maxBitIndex - The maximum allowed bit index.
+ * @param typeName - The data type display name used in error messaging.
  * @return A successful Result if bitIndex is valid; otherwise a failed Result
  * with the validation error message.
  */
