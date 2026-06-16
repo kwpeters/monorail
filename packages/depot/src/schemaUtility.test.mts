@@ -4,17 +4,18 @@
 import { z } from "zod";
 import { NoneOption, SomeOption } from "./option.mjs";
 import {
+    discriminatedOptionSchema,
     fileSystemPathSchema,
     normalizePathSeparators,
-    optionSchema,
+    optionalValueToOptionSchema,
     regexpSchema
 } from "./schemaUtility.mjs";
 
 
-describe("optionSchema()", () => {
+describe("discriminatedOptionSchema()", () => {
 
     it("can validate and transform a some option", () => {
-        const schema = optionSchema(z.string());
+        const schema = discriminatedOptionSchema(z.string());
         const result = schema.safeParse({ isSome: true, value: "test" });
         expect(result.success).toBe(true);
         expect(result.data).toEqual(new SomeOption("test"));
@@ -22,7 +23,7 @@ describe("optionSchema()", () => {
 
 
     it("can validate and transform a none option", () => {
-        const schema = optionSchema(z.string());
+        const schema = discriminatedOptionSchema(z.string());
         const result = schema.safeParse({ isSome: false });
         expect(result.success).toBe(true);
         expect(result.data).toEqual(NoneOption.get());
@@ -30,17 +31,70 @@ describe("optionSchema()", () => {
 
 
     it("will fail to parse a some option that has no value", () => {
-        const schema = optionSchema(z.string());
+        const schema = discriminatedOptionSchema(z.string());
         const result = schema.safeParse({ isSome: true });
         expect(result.success).toBe(false);
     });
 
 
     it("will fail to parse a none option that has a value", () => {
-        const schema = optionSchema(z.string());
+        const schema = discriminatedOptionSchema(z.string());
         const result = schema.safeParse({ isSome: false, value: "test" });
         expect(result.success).toBe(false);
     });
+});
+
+
+describe("optionalValueToOptionSchema()", () => {
+
+    it("transforms undefined into NoneOption", () => {
+        const schema = optionalValueToOptionSchema(z.string());
+        const result = schema.safeParse(undefined);
+        expect(result.success).toBe(true);
+        expect(result.data).toEqual(NoneOption.get());
+    });
+
+
+    it("transforms a defined value into SomeOption", () => {
+        const schema = optionalValueToOptionSchema(z.string());
+        const result = schema.safeParse("test");
+        expect(result.success).toBe(true);
+        expect(result.data).toEqual(new SomeOption("test"));
+    });
+
+
+    it("maps an omitted object property to NoneOption", () => {
+        const schema = z.object({
+            required:      z.string(),
+            optionalValue: optionalValueToOptionSchema(z.number())
+        });
+        const result = schema.safeParse({ required: "test" });
+        expect(result.success).toBe(true);
+        if (result.success) {
+            expect(result.data.optionalValue).toEqual(NoneOption.get());
+        }
+    });
+
+
+    it("maps a present object property to SomeOption", () => {
+        const schema = z.object({
+            required:      z.string(),
+            optionalValue: optionalValueToOptionSchema(z.number())
+        });
+        const result = schema.safeParse({ required: "test", optionalValue: 42 });
+        expect(result.success).toBe(true);
+        if (result.success) {
+            expect(result.data.optionalValue).toEqual(new SomeOption(42));
+        }
+    });
+
+
+    it("fails when a present value does not match the wrapped schema", () => {
+        const schema = optionalValueToOptionSchema(z.number());
+        const result = schema.safeParse("not a number");
+        expect(result.success).toBe(false);
+    });
+
 });
 
 

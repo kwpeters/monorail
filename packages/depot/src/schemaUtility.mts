@@ -45,13 +45,13 @@ export const uint32Schema =
 // Signed 64-bit integer
 export const int64Schema =
     z.bigint()
-    .min(BigInt(-2) ** BigInt(63))              // -9_223_372_036_854_775_808
-    .max(BigInt(2) ** BigInt(63) - BigInt(1));  //  9_223_372_036_854_775_807
+    .min(-(2n ** 63n))       // -9_223_372_036_854_775_808
+    .max((2n ** 63n) - 1n);  //  9_223_372_036_854_775_807
 
 export const uint64Schema =
     z.bigint()
-    .min(BigInt(0))
-    .max(BigInt(2) ** BigInt(64) - BigInt(1));  // 18_446_744_073_709_551_615
+    .min(0n)
+    .max((2n ** 64n) - 1n);  // 18_446_744_073_709_551_615
 
 export const float32Schema =
     z.number().min(-3.4028235e+38).max(3.4028235e+38);
@@ -72,7 +72,7 @@ export const float64Schema =
  * @return A Zod schema that will validate the input and (upon success)
  * transform the output to an Option.
  */
-export function optionSchema<TValue>(
+export function discriminatedOptionSchema<TValue>(
     valueSchema: z.ZodType<TValue>
 ): z.ZodType<Option<TValue>> {
     return z.discriminatedUnion("isSome", [
@@ -81,6 +81,24 @@ export function optionSchema<TValue>(
     ]).transform((val, ctx) => {
         return val.isSome ?
             new SomeOption(val.value) : NoneOption.get();
+    });
+}
+
+
+/**
+ * Creates a Zod schema that accepts an optional value and transforms it to an
+ * Option. Missing/undefined values become NoneOption, while defined values
+ * become SomeOption.
+ *
+ * @param valueSchema - The schema of the value that may be omitted
+ * @return A Zod schema that converts optional input into an Option
+ */
+export function optionalValueToOptionSchema<TValue>(
+    valueSchema: z.ZodType<TValue>
+): z.ZodType<Option<TValue>> {
+    return z.optional(valueSchema)
+    .transform((val) => {
+        return val === undefined ? NoneOption.get() : new SomeOption(val);
     });
 }
 

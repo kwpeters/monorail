@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { optionSchema } from "@repo/depot/schemaUtility";
+import { discriminatedOptionSchema } from "@repo/depot/schemaUtility";
 import { calamityHazardCardSchema, distanceCardSchema } from "./card.mjs";
 
 
@@ -55,10 +55,10 @@ export type ActiveSafetyCard = z.infer<typeof activeSafetyCardSchema>;
 
 ////////////////////////////////////////////////////////////////////////////////
 export const activeSafetyCardsSchema = z.strictObject({
-    drivingAce:    optionSchema(activeSafetyCardSchema),
-    extraTank:     optionSchema(activeSafetyCardSchema),
-    punctureProof: optionSchema(activeSafetyCardSchema),
-    rightOfWay:    optionSchema(activeSafetyCardSchema),
+    drivingAce:    discriminatedOptionSchema(activeSafetyCardSchema),
+    extraTank:     discriminatedOptionSchema(activeSafetyCardSchema),
+    punctureProof: discriminatedOptionSchema(activeSafetyCardSchema),
+    rightOfWay:    discriminatedOptionSchema(activeSafetyCardSchema),
 });
 export type ActiveSafetyCards = z.infer<typeof activeSafetyCardsSchema>;
 
@@ -67,7 +67,7 @@ export type ActiveSafetyCards = z.infer<typeof activeSafetyCardsSchema>;
 export const drivingZoneSchema = z.strictObject({
     rollState:         rollStateSchema,
     speedLimitActive:  z.boolean(),
-    calamityActive:    optionSchema(calamityHazardCardSchema),
+    calamityActive:    discriminatedOptionSchema(calamityHazardCardSchema),
     activeSafetyCards: activeSafetyCardsSchema,
     distanceCards:     z.array(distanceCardSchema)
 });

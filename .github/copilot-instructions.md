@@ -36,7 +36,8 @@ npm run all && npm run type-check
   - Wrap comments to 80 columns.
   - Align successive type annotations and `extends` clauses when practical.
   - Break long signatures and chained expressions over 100 columns onto multiple lines.
-  - Start wrapped chains with `.` and do not indent that operator.
+  - When method calls are chained, Start new lines with `.` and do not indent that operator.
+  - Ternary formatting: For non-nested ternaries, place `?` and `:` at the end of the line; for nested ternaries, keep the condition, `?` and true expression on a single line.
 - Prefer Zod-based enums, for example `HttpSuccess` in `packages\depot\src\httpStatusCodes.mts`.  Zod enums provide validation, enumeration and convenient type mapping.
 - Prefer functional patterns and the `depot` helpers `Result`, `Option`, `pipe`, `pipeAsync`, and `resolutionPipeline`.
 - Naming:
@@ -62,3 +63,8 @@ For consistency, when multiple projects use an npm package, they should use the 
 - Leave two blank lines between adjacent `it()` or `test()` blocks.
 - Leave one blank line before the first `it()` or `test()` in a `describe()` block.
 - Leave one blank line after the last `it()` or `test()` in a `describe()` block.
+- Unit test organization:
+  - Name test files `<base_name>.test.mts`.
+  - All unit tests for a class should be in a single `describe()` block named for the class.
+  - Within the class's `describe()` there should be a `describe("static")` block for static members and a `describe("instance")` block for instance members.
+  - Each property and method should have its own `describe()` block nested within the appropriate static or instance `describe()`. Within that `describe()` should be the individual unit test cases with clear names describing the expected behavior.

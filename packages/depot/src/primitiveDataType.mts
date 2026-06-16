@@ -891,14 +891,14 @@ export class Int64 {
      * Gets the minimum value for this data type
      * @return The minimum value that can be stored
      */
-    public static readonly DATA_TYPE_MIN: bigint = BigInt(-2) ** BigInt(63); // -9_223_372_036_854_775_808n
+    public static readonly DATA_TYPE_MIN: bigint = -(2n ** 63n); // -9_223_372_036_854_775_808n
 
 
     /**
      * Gets the maximum value for this data type
      * @return The maximum value that can be stored
      */
-    public static readonly DATA_TYPE_MAX: bigint = BigInt(2) ** BigInt(63) - BigInt(1); // 9_223_372_036_854_775_807n
+    public static readonly DATA_TYPE_MAX: bigint = (2n ** 63n) - 1n; // 9_223_372_036_854_775_807n
 
 
     /**
@@ -997,7 +997,7 @@ export class Int64 {
             return new FailedResult(`"${bitIndex}" is not a valid Int64 bit index.  Must be an integer.`);
         }
 
-        const mask = BigInt(1) << BigInt(bitIndex);
+        const mask = 1n << BigInt(bitIndex);
         return new SucceededResult((this._val & mask) === mask);
     }
 
@@ -1033,14 +1033,14 @@ export class UInt64 {
      * Gets the minimum value for this data type
      * @return The minimum value that can be stored
      */
-    public static readonly DATA_TYPE_MIN: bigint = BigInt(0); // 0n
+    public static readonly DATA_TYPE_MIN: bigint = 0n; // 0n
 
 
     /**
      * Gets the maximum value for this data type
      * @return The maximum value that can be stored
      */
-    public static readonly DATA_TYPE_MAX: bigint = BigInt(2) ** BigInt(64) - BigInt(1); // 18_446_744_073_709_551_615n
+    public static readonly DATA_TYPE_MAX: bigint = (2n ** 64n) - 1n; // 18_446_744_073_709_551_615n
 
 
     /**
@@ -1140,7 +1140,7 @@ export class UInt64 {
             return new FailedResult(`"${bitIndex}" is not a valid UInt64 bit index.  Must be an integer.`);
         }
 
-        const mask = BigInt(1) << BigInt(bitIndex);
+        const mask = 1n << BigInt(bitIndex);
         return new SucceededResult((this._val & mask) === mask);
     }
 

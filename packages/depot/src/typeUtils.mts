@@ -101,6 +101,15 @@ export function createStub<T>(partial: RecursivePartial<T>): T {
 export type Constructor = new (...args: unknown[]) => object;
 
 
+/**
+ * The following type describes a constructor function.  It is more forgiving
+ * than the `Constructor` type defined above, because `Constructor` requires the
+ * constructor of the class to be public whereas `ClassValue` does not.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+export type ClassValue = Function & { prototype: unknown };
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // Immutable
 // https://stackoverflow.com/questions/41879327/deepreadonly-object-typescript
@@ -125,6 +134,31 @@ export type Immutable<T> =
  * Represents the type of elements in an array T.
  */
 export type ElementType<T> = T extends unknown[] ? T[number] : never;
+
+
+/**
+ * Provides a compile time check that the passed class has the expected static
+ * shape.  This is useful for ensuring that a class has the intended static
+ * interface.  If multiple interfaces are required `TExpected` can be an
+ * intersection type.
+ *
+ * Canonical usage pattern:
+ *
+ * @example
+ * class MyClass {...}
+ *
+ * assertStaticShape<
+ *     IStatic1 &
+ *     IStatic2
+ * >(MyClass);
+ *
+ * @param _class - The class to be checked for the expected static shape.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
+export function assertStaticShape<TExpected>(_class: ClassValue & TExpected): void {
+// function assertStaticShape<TExpected>(_class: Constructor & TExpected): void {
+    // Intentionally empty.
+}
 
 
 /**

@@ -939,7 +939,7 @@ describe("Int64", () => {
         describe("dataTypeMin", () => {
 
             it("returns the expected minimum value", () => {
-                expect(Int64.DATA_TYPE_MIN).toEqual(BigInt("-9223372036854775808"));
+                expect(Int64.DATA_TYPE_MIN).toEqual(-9223372036854775808n);
             });
 
         });
@@ -948,7 +948,7 @@ describe("Int64", () => {
         describe("dataTypeMax", () => {
 
             it("returns the expected maximum value", () => {
-                expect(Int64.DATA_TYPE_MAX).toEqual(BigInt("9223372036854775807"));
+                expect(Int64.DATA_TYPE_MAX).toEqual(9223372036854775807n);
             });
 
         });
@@ -973,7 +973,7 @@ describe("Int64", () => {
             it("succeeds when given an integer string", () => {
                 const res = Int64.fromString("5");
                 expect(res.succeeded).toBeTrue();
-                expect(res.value!.value).toEqual(BigInt(5));
+                expect(res.value!.value).toEqual(5n);
             });
 
         });
@@ -983,16 +983,16 @@ describe("Int64", () => {
 
             it("fails when input is out of range", () => {
                 // Under range
-                expect(Int64.create(BigInt("-9223372036854775809")).failed).toBeTrue();
+                expect(Int64.create(-9223372036854775809n).failed).toBeTrue();
                 // Over range
-                expect(Int64.create(BigInt("9223372036854775808")).failed).toBeTrue();
+                expect(Int64.create(9223372036854775808n).failed).toBeTrue();
             });
 
 
             it("succeeds when input is an integer that is in range", () => {
-                const res = Int64.create(BigInt(5));
+                const res = Int64.create(5n);
                 expect(res.succeeded).toBeTrue();
-                expect(res.value!.value).toEqual(BigInt(5));
+                expect(res.value!.value).toEqual(5n);
             });
 
         });
@@ -1023,8 +1023,8 @@ describe("Int64", () => {
         describe("value", () => {
 
             it("returns the expected value", () => {
-                const inst = Int64.create(BigInt(0)).throwIfFailed();
-                expect(inst.value).toEqual(BigInt(0));
+                const inst = Int64.create(0n).throwIfFailed();
+                expect(inst.value).toEqual(0n);
             });
 
         });
@@ -1033,7 +1033,7 @@ describe("Int64", () => {
         describe("getBit", () => {
 
             it("returns the correct bit value", () => {
-                const inst = Int64.create(BigInt(5)).throwIfFailed(); // 5 is 0000000000000000000000000000000000000000000000000000000000000101 in binary
+                const inst = Int64.create(5n).throwIfFailed(); // 5 is 0000000000000000000000000000000000000000000000000000000000000101 in binary
                 expect(inst.getBit(0).value).toBeTrue();
                 expect(inst.getBit(1).value).toBeFalse();
                 expect(inst.getBit(2).value).toBeTrue();
@@ -1045,9 +1045,9 @@ describe("Int64", () => {
         describe("setBit", () => {
 
             it("sets the correct bit value", () => {
-                const inst = Int64.create(BigInt(5)).throwIfFailed(); // 5 is 0000000000000000000000000000000000000000000000000000000000000101 in binary
+                const inst = Int64.create(5n).throwIfFailed(); // 5 is 0000000000000000000000000000000000000000000000000000000000000101 in binary
                 const res = inst.setBit(1, true).throwIfFailed(); // should set the second bit to 1, resulting in 7 (0000000000000000000000000000000000000000000000000000000000000111)
-                expect(res.value).toEqual(BigInt(7));
+                expect(res.value).toEqual(7n);
             });
 
         });
@@ -1064,7 +1064,7 @@ describe("UInt64", () => {
         describe("dataTypeMin", () => {
 
             it("returns the expected minimum value", () => {
-                expect(UInt64.DATA_TYPE_MIN).toEqual(BigInt(0));
+                expect(UInt64.DATA_TYPE_MIN).toEqual(0n);
             });
 
         });
@@ -1073,7 +1073,7 @@ describe("UInt64", () => {
         describe("dataTypeMax", () => {
 
             it("returns the expected maximum value", () => {
-                expect(UInt64.DATA_TYPE_MAX).toEqual(BigInt("18446744073709551615"));
+                expect(UInt64.DATA_TYPE_MAX).toEqual(18446744073709551615n);
             });
 
         });
@@ -1098,7 +1098,7 @@ describe("UInt64", () => {
             it("succeeds when given an integer string", () => {
                 const res = UInt64.fromString("5");
                 expect(res.succeeded).toBeTrue();
-                expect(res.value!.value).toEqual(BigInt(5));
+                expect(res.value!.value).toEqual(5n);
             });
 
         });
@@ -1108,16 +1108,16 @@ describe("UInt64", () => {
 
             it("fails when input is out of range", () => {
                 // Under range
-                expect(UInt64.create(BigInt(-1)).failed).toBeTrue();
+                expect(UInt64.create(-1n).failed).toBeTrue();
                 // Over range
-                expect(UInt64.create(BigInt("18446744073709551616")).failed).toBeTrue();
+                expect(UInt64.create(18446744073709551616n).failed).toBeTrue();
             });
 
 
             it("succeeds when input is an integer that is in range", () => {
-                const res = UInt64.create(BigInt(5));
+                const res = UInt64.create(5n);
                 expect(res.succeeded).toBeTrue();
-                expect(res.value!.value).toEqual(BigInt(5));
+                expect(res.value!.value).toEqual(5n);
             });
 
         });
@@ -1148,8 +1148,8 @@ describe("UInt64", () => {
         describe("value", () => {
 
             it("returns the expected value", () => {
-                const inst = UInt64.create(BigInt(0)).throwIfFailed();
-                expect(inst.value).toEqual(BigInt(0));
+                const inst = UInt64.create(0n).throwIfFailed();
+                expect(inst.value).toEqual(0n);
             });
 
         });
@@ -1158,7 +1158,7 @@ describe("UInt64", () => {
         describe("getBit", () => {
 
             it("returns the correct bit value", () => {
-                const inst = UInt64.create(BigInt(5)).throwIfFailed(); // 5 is 0000000000000000000000000000000000000000000000000000000000000101 in binary
+                const inst = UInt64.create(5n).throwIfFailed(); // 5 is 0000000000000000000000000000000000000000000000000000000000000101 in binary
                 expect(inst.getBit(0).value).toBeTrue();
                 expect(inst.getBit(1).value).toBeFalse();
                 expect(inst.getBit(2).value).toBeTrue();
@@ -1177,9 +1177,9 @@ describe("UInt64", () => {
         describe("setBit", () => {
 
             it("sets the correct bit value", () => {
-                const inst = UInt64.create(BigInt(5)).throwIfFailed(); // 5 is 0000000000000000000000000000000000000000000000000000000000000101 in binary
+                const inst = UInt64.create(5n).throwIfFailed(); // 5 is 0000000000000000000000000000000000000000000000000000000000000101 in binary
                 const res = inst.setBit(1, true).throwIfFailed(); // should set the second bit to 1, resulting in 7 (0000000000000000000000000000000000000000000000000000000000000111)
-                expect(res.value).toEqual(BigInt(7));
+                expect(res.value).toEqual(7n);
             });
 
         });

@@ -32,6 +32,14 @@
             "types": "./src/bitstring.mts",
             "default": "./dist/bitstring.mjs"
         },
+        "./bitstringHelpers": {
+            "types": "./src/bitstringHelpers.mts",
+            "default": "./dist/bitstringHelpers.mjs"
+        },
+        "./bufReader": {
+            "types": "./src/bufReader.mts",
+            "default": "./dist/bufReader.mjs"
+        },
         "./brand": {
             "types": "./src/brand.mts",
             "default": "./dist/brand.mjs"
@@ -47,6 +55,10 @@
         "./cli-table3": {
             "types": "./src/cli-table3.mts",
             "default": "./dist/cli-table3.mjs"
+        },
+        "./codecInterfaces": {
+            "types": "./src/codecInterfaces.mts",
+            "default": "./dist/codecInterfaces.mjs"
         },
         "./collection": {
             "types": "./src/collection.mts",
@@ -304,6 +316,10 @@
             "types": "./src/timestampId.mts",
             "default": "./dist/timestampId.mjs"
         },
+        "./timeUtilities": {
+            "types": "./src/timeUtilities.mts",
+            "default": "./dist/timeUtilities.mjs"
+        },
         "./tree": {
             "types": "./src/tree.mts",
             "default": "./dist/tree.mjs"
@@ -347,6 +363,13 @@
         "./voSet": {
             "types": "./src/voSet.mts",
             "default": "./dist/voSet.mjs"
+        },
+        "./zodObjectEnum": {
+            "types": "./src/zodObjectEnum.mts",
+            "default": "./dist/zodObjectEnum.mjs"
+        },"./zodStringEnum": {
+            "types": "./src/zodStringEnum.mts",
+            "default": "./dist/zodStringEnum.mjs"
         },
         "./zodHelpers": {
             "types": "./src/zodHelpers.mts",
