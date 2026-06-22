@@ -40,6 +40,10 @@
             "types": "./src/bufReader.mts",
             "default": "./dist/bufReader.mjs"
         },
+        "./bufBuilder": {
+            "types": "./src/bufBuilder.mts",
+            "default": "./dist/bufBuilder.mjs"
+        },
         "./brand": {
             "types": "./src/brand.mts",
             "default": "./dist/brand.mjs"
@@ -280,6 +284,10 @@
             "types": "./src/schemaUtility.mts",
             "default": "./dist/schemaUtility.mjs"
         },
+        "./serializeInterfaces": {
+            "types": "./src/serializeInterfaces.mts",
+            "default": "./dist/serializeInterfaces.mjs"
+        },
         "./setHelpers": {
             "types": "./src/setHelpers.mts",
             "default": "./dist/setHelpers.mjs"
@@ -367,7 +375,8 @@
         "./zodObjectEnum": {
             "types": "./src/zodObjectEnum.mts",
             "default": "./dist/zodObjectEnum.mjs"
-        },"./zodStringEnum": {
+        },
+        "./zodStringEnum": {
             "types": "./src/zodStringEnum.mts",
             "default": "./dist/zodStringEnum.mjs"
         },

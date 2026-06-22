@@ -143,7 +143,7 @@ export function trySelectText(query: string, contextNode: Node): Option<string> 
 export function selectText(query: string, contextNode: Node): string {
     return pipe(
         trySelectText(query, contextNode),
-        (textOpt) => Option.throwIfNoneWith(() => `Failed to get text for xpath query "${query}".`, textOpt)
+        Option.throwIfNoneWith(() => `Failed to get text for xpath query "${query}".`)
     );
 }
 
@@ -151,8 +151,8 @@ export function selectText(query: string, contextNode: Node): string {
 export function trySelectInteger(query: string, contextNode: Node): Result<number, string> {
     return pipe(
         trySelectText(query, contextNode),
-        (strOpt) => Result.fromOption(strOpt, `Failed to read text for query "${query}".`),
-        (strRes) => Result.bind(tryParseInt, strRes)
+        Result.fromOption(`Failed to read text for query "${query}".`),
+        Result.bind(tryParseInt)
     );
 }
 
@@ -433,7 +433,7 @@ export function getAttr(elem: Element, attrName: string): Result<string, string>
 
     return pipe(
         elem.getAttribute(attrName),
-        (strOrNull) => Result.fromNullable(strOrNull, `Element "${elem.tagName}" does not have an attribute named "${attrName}".`)
+        Result.fromNullable(`Element "${elem.tagName}" does not have an attribute named "${attrName}".`)
     );
 }
 
@@ -452,7 +452,7 @@ export function getBoolAttr(elem: Element, attrName: string): boolean {
     const boolVal = pipe(
         getAttr(elem, attrName),
         Result.toOption,
-        (optStr) => Option.mapSome(boolStrToBool, optStr),
+        Option.mapSome(boolStrToBool),
         (optBool) => optBool.isNone ? false : optBool.value
     );
     return boolVal;

@@ -175,7 +175,7 @@ function getTokenizers(): Array<ITokenizer> {
                 const frac = pipe(
                     match[0],
                     Fraction.from,
-                    (res) => Result.throwIfFailedWith(id, res)
+                    Result.throwIfFailedWith(id)
                 );
 
                 return {

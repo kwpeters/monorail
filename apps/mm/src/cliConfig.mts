@@ -1,9 +1,8 @@
 import * as os from "node:os";
 import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
-import { Result, SucceededResult, FailedResult } from "@repo/depot/result";
-import { Option, NoneOption, SomeOption } from "@repo/depot/option";
-import { resolutionPipeline } from "@repo/depot/resolutionPipeline";
+import { Result, SucceededResult } from "@repo/depot/result";
+import { resolutionPipelineAsync, pipelineStep, type PipelineStepError } from "@repo/depot/resolutionPipeline";
 import { getStdoutColumns } from "@repo/depot-node/ttyHelpers";
 import { File } from "@repo/depot-node/file";
 import { Directory } from "@repo/depot-node/directory";
@@ -47,19 +46,19 @@ export async function getCliConfiguration(): Promise<Result<ICliConfig, string>>
         .argv;
 
 
-    const resSubjectsConfigFile = await resolutionPipeline<File, string>(
+    const resSubjectsConfigFile = await resolutionPipelineAsync<File, string>(
         [
             // Strategy 1: path explicitly provided on the command line.
             async () => {
                 if (!argv.subjectsConfigFile) {
-                    return new SucceededResult(NoneOption.get());
+                    return pipelineStep("No file specified on command line.");
                 }
 
                 const subjectsConfigFile = new File(argv.subjectsConfigFile);
                 const exists = await subjectsConfigFile.exists();
                 return exists ?
-                    new SucceededResult(new SomeOption(subjectsConfigFile)) :
-                    new FailedResult(`The file "${argv.subjectsConfigFile}" does not exist.`);
+                    new SucceededResult(subjectsConfigFile) :
+                    pipelineStep(`The file "${argv.subjectsConfigFile}" does not exist.`);
             },
 
             // Strategy 2: mm.json in the CLOUDHOME directory.
@@ -89,15 +88,15 @@ export async function getCliConfiguration(): Promise<Result<ICliConfig, string>>
 
 async function getSubjectsConfigFileFromEnvVar(
     envVarName: string
-): Promise<Result<Option<File>, string>> {
+): Promise<Result<File, PipelineStepError<string>>> {
     const dirRes = await Directory.fromEnvVar(envVarName);
     if (dirRes.failed) {
-        return new SucceededResult(NoneOption.get());
+        return pipelineStep(`Environment variable ${envVarName} not set.`);
     }
 
     const subjectsFile = new File(dirRes.value, "mm.json");
     const exists = await subjectsFile.exists();
     return exists ?
-        new SucceededResult(new SomeOption(subjectsFile)) :
-        new SucceededResult(NoneOption.get());
+        new SucceededResult(subjectsFile) :
+        pipelineStep(`mm.json not found in ${envVarName}.`);
 }

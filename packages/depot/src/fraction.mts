@@ -252,7 +252,7 @@ export class Fraction {
 
         let lastUsedValue = pipe(
             Fraction.from(this),
-            (res) => Result.throwIfFailedWith(id, res)
+            Result.throwIfFailedWith(id)
         );
 
         // First, get the standard (possibly improper) form of this fraction.
@@ -388,7 +388,7 @@ export class Fraction {
     public add(other: Fraction | number): Fraction {
         const otherFrac = pipe(
             Fraction.from(other),
-            (res) => Result.throwIfFailedWith(id, res)
+            Result.throwIfFailedWith(id)
         );
 
         const lcm = leastCommonMultiple(this._den, otherFrac._den);
@@ -408,7 +408,7 @@ export class Fraction {
     public subtract(other: Fraction | number): Fraction {
         const otherFrac = pipe(
             Fraction.from(other),
-            (res) => Result.throwIfFailedWith(id, res)
+            Result.throwIfFailedWith(id)
         );
         const lcm = leastCommonMultiple(this._den, otherFrac._den);
 
@@ -427,7 +427,7 @@ export class Fraction {
     public multiply(other: Fraction | number): Fraction {
         const otherFrac = pipe(
             Fraction.from(other),
-            (res) => Result.throwIfFailedWith(id, res)
+            Result.throwIfFailedWith(id)
         );
         const num = this._num * otherFrac._num;
         const den = this._den * otherFrac._den;
@@ -442,7 +442,7 @@ export class Fraction {
     public divide(other: number | Fraction): Fraction {
         const fracOther = pipe(
             Fraction.from(other),
-            (res) => Result.throwIfFailedWith(id, res)
+            Result.throwIfFailedWith(id)
         );
         const result = this.multiply(fracOther.reciprocal());
         return result;
@@ -502,7 +502,7 @@ export class Fraction {
         const num = Math.abs(this._num);
         const absoluteVal = pipe(
             Fraction.fromParts(num, this._den),
-            (res) => Result.throwIfFailedWith(id, res)
+            Result.throwIfFailedWith(id)
         );
         return absoluteVal;
     }
@@ -519,7 +519,7 @@ export class Fraction {
     ): {floor: Fraction, ceil: Fraction, nearest: Fraction} {
         const incr = pipe(
             Fraction.from(increment),
-            (res) => Result.throwIfFailedWith(id, res)
+            Result.throwIfFailedWith(id)
         );
 
         // The increment must be a positive value.
@@ -535,11 +535,11 @@ export class Fraction {
 
         const rangeFloor = pipe(
             Fraction.from(this.floor()),
-            (res) => Result.throwIfFailedWith(id, res)
+            Result.throwIfFailedWith(id)
         );
         const rangeCeil = pipe(
             Fraction.from(this.ceil()),
-            (res) => Result.throwIfFailedWith(id, res)
+            Result.throwIfFailedWith(id)
         );
 
         let floorVal: Fraction;

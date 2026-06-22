@@ -79,6 +79,21 @@ export class BufReader {
 
 
     /**
+     * Advances the cursor to the next 16-bit boundary.
+     *
+     * If the cursor is already aligned, no bytes are consumed. Otherwise, one
+     * pad byte is consumed.
+     */
+    public readTo16BitBoundary(): Result<void, string> {
+        if (this._currentOffset % 2 === 0) {
+            return new SucceededResult(undefined);
+        }
+
+        return this.skip(1);
+    }
+
+
+    /**
      * Reads a signed 8-bit integer.
      */
     public readInt8(): Result<number, string> {
@@ -155,6 +170,61 @@ export class BufReader {
      */
     public readFloat64(endianness: Endianness = "little-endian"): Result<number, string> {
         return this._readWith(8, (offset) => this._dataView.getFloat64(offset, isLittleEndian(endianness)));
+    }
+
+
+    /**
+     * Attempts a transactional read.  The callback receives a temporary
+     * sub-reader starting at the current cursor position.  If the callback
+     * returns a SucceededResult, this reader's cursor advances by however many
+     * bytes the sub-reader consumed.  If the callback returns a FailedResult,
+     * this reader's cursor is left unchanged.
+     *
+     * @param fn - A function that performs one or more reads on the sub-reader
+     *   and returns a Result.
+     */
+    public attempt<T>(fn: (reader: BufReader) => Result<T, string>): Result<T, string> {
+        const sub = new BufReader(new DataView(
+            this._dataView.buffer,
+            this._dataView.byteOffset + this._currentOffset,
+            this.remainingBytes
+        ));
+        const result = fn(sub);
+        if (result.succeeded) {
+            this._currentOffset += sub.currentOffset;
+        }
+        return result;
+    }
+
+
+    /**
+     * Returns a new BufReader over the next `numBytes` bytes starting at the
+     * current cursor position, without advancing this reader's cursor.
+     *
+     * @param numBytes - The number of bytes to include in the peeked view.
+     */
+    public peek(numBytes: number): Result<BufReader, string> {
+        if (!Number.isInteger(numBytes)) {
+            return new FailedResult("Number of bytes to peek must be an integer.");
+        }
+
+        if (numBytes < 0) {
+            return new FailedResult("Number of bytes to peek must be non-negative.");
+        }
+
+        if (numBytes > this.remainingBytes) {
+            return new FailedResult(
+                `Cannot peek ${numBytes} byte(s). ` +
+                `${this.remainingBytes} byte(s) remain.`
+            );
+        }
+
+        const slice = new DataView(
+            this._dataView.buffer,
+            this._dataView.byteOffset + this._currentOffset,
+            numBytes
+        );
+        return new SucceededResult(new BufReader(slice));
     }
 
 

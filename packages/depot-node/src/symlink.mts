@@ -197,7 +197,7 @@ export class Symlink {
 
         const pr = pipeAsync(
             PromiseResult.fromPromise(fsp.symlink(pathToTargetRes.value, dest._symlinkPath, symlinkType)),
-            (res) => Result.mapSuccess(() => dest, res)
+            Result.mapSuccess(() => dest)
         );
 
         return pr;

@@ -76,7 +76,7 @@ export class Directory {
                     // See if the directory exists.  Note: exists() returns
                     // undefined when the item is not a directory.
                     const stats = await dir.exists();
-                    return Result.fromNullable(stats, `Directory "${dir.toString()}" does not exist.`);
+                    return Result.fromNullable(`Directory "${dir.toString()}" does not exist.`, stats);
                 }
             )
         );
@@ -96,18 +96,17 @@ export class Directory {
     public static async fromEnvVar(envVarName: string): Promise<Result<Directory, string>> {
         const resDir = await pipeAsync(
             process.env[envVarName],
-            (envVarValue) => Result.fromNullable(envVarValue, `The "${envVarName}" environment variable is not defined.`),
+            Result.fromNullable(`The "${envVarName}" environment variable is not defined.`),
             // Make sure the length of the environment variable's value is greater
             // than zero.
-            (resEnvVarStr) => Result.gate(
+            Result.gate(
                 (str) => {
                     return str.length > 0 ?
                         new SucceededResult(0) :
                         new FailedResult(`The environment variable "envVarName" is set to an empty string.`);
-                },
-                resEnvVarStr
+                }
             ),
-            (resEnvVarStr) => Result.mapSuccess((str) => new FsPath(str), resEnvVarStr),
+            Result.mapSuccess((str) => new FsPath(str)),
             (resPath) => resPath.bindAsync((path) => Directory.createIfExtant(path))
         );
         return resDir;

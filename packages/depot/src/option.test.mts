@@ -146,7 +146,7 @@ describe("Option namespace", () => {
 
             const res = pipe(
                 step1(),
-                (res) => Option.augment(step2, res)
+                Option.augment(step2)
             );
 
             expect(res).toEqual(NoneOption.get());
@@ -167,7 +167,7 @@ describe("Option namespace", () => {
 
             const __res = pipe(
                 step1(),
-                (res) => Option.augment(step2, res)
+                Option.augment(step2)
             );
 
             expect(numStep2Invocations).toEqual(1);
@@ -187,7 +187,7 @@ describe("Option namespace", () => {
 
             const res = pipe(
                 step1(),
-                (res) => Option.augment(step2, res)
+                Option.augment(step2)
             );
 
             expect(numStep2Invocations).toEqual(1);
@@ -208,7 +208,7 @@ describe("Option namespace", () => {
 
             const res = pipe(
                 step1(),
-                (res) => Option.augment(step2, res)
+                Option.augment(step2)
             );
 
             expect(numStep2Invocations).toEqual(1);
@@ -229,7 +229,7 @@ describe("Option namespace", () => {
 
             const res = pipe(
                 step1(),
-                (res) => Option.augment(step2, res)
+                Option.augment(step2)
             );
 
             expect(numStep2Invocations).toEqual(1);
@@ -267,15 +267,15 @@ describe("Option namespace", () => {
             const opt1 = pipe(
                 2,
                 subtract1,
-                (o) => Option.bind(subtract1, o),
-                (o) => Option.bind(subtract1, o)
+                Option.bind(subtract1),
+                Option.bind(subtract1)
             );
             expect(opt1.isNone).toBeTruthy();
 
             const val = pipe(
                 2,
                 subtract1,
-                (o) => Option.bind(subtract1, o),
+                Option.bind(subtract1),
                 Option.throwIfNone
             );
 
@@ -325,12 +325,11 @@ describe("Option namespace", () => {
 
             const val = pipe(
                 new SomeOption(1),
-                (opt) => Option.bindNone(
+                Option.bindNone(
                     () => {
                         numInvocations++;
                         return new SomeOption(2);
-                    },
-                    opt
+                    }
                 ),
                 Option.throwIfNone
             );
@@ -345,12 +344,11 @@ describe("Option namespace", () => {
 
             const val = pipe(
                 NoneOption.get(),
-                (opt) => Option.bindNone(
+                Option.bindNone(
                     () => {
                         numInvocations++;
                         return new SomeOption(2);
-                    },
-                    opt
+                    }
                 ),
                 Option.throwIfNone
             );
@@ -369,13 +367,12 @@ describe("Option namespace", () => {
 
             const val = await pipeAsync(
                 new SomeOption(1),
-                (opt) => Option.bindNoneAsync(
+                Option.bindNoneAsync(
                     async () => {
                         await Promise.resolve(0);
                         numInvocations++;
                         return new SomeOption(2);
-                    },
-                    opt
+                    }
                 ),
                 (opt) => opt.throwIfNone()
             );
@@ -390,13 +387,12 @@ describe("Option namespace", () => {
 
             const val = await pipeAsync(
                 NoneOption.get(),
-                (opt) => Option.bindNoneAsync(
+                Option.bindNoneAsync(
                     async () => {
                         await Promise.resolve(0);
                         numInvocations++;
                         return new SomeOption(2);
-                    },
-                    opt
+                    }
                 ),
                 (opt) => opt.throwIfNone()
             );
@@ -415,9 +411,8 @@ describe("Option namespace", () => {
 
             const result = pipe(
                 [1, 2, 3, 4, 5, 6],
-                (input) => Option.choose(
-                    (n) => n % 2 === 0 ? new SomeOption(n + 1) : NoneOption.get(),
-                    input
+                Option.choose(
+                    (n) => n % 2 === 0 ? new SomeOption(n + 1) : NoneOption.get()
                 )
             );
 
@@ -586,9 +581,9 @@ describe("Option namespace", () => {
 
             const val = pipe(
                 new SomeOption(3),
-                (o) => Option.mapSome(add1, o),
-                (o) => Option.mapSome(add1, o),
-                (o) => Option.mapSome(add1, o),
+                Option.mapSome(add1),
+                Option.mapSome(add1),
+                Option.mapSome(add1),
                 Option.throwIfNone
             );
 

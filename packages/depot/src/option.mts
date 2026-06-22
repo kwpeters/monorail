@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
 
 
+import { dispatchLast } from "./curry.mjs";
 import { inspect } from "./inspect.mjs";
 
 
@@ -498,16 +499,30 @@ export namespace Option {
      * Otherwise, a successful Option containing all properties of the original
      * input and the value returned by _fn_.
      */
+    // Eager form.
     export function augment<TInput extends object, TAugment>(
         fn: (input: TInput) => Option<TAugment>,
         input: Option<TInput>
-    ): Option<TInput & TAugment> {
-        // Narrow input to SomeOption so TypeScript can verify the `this`
-        // constraint on augment(), which requires T to extend object.
-        if (input.isNone) {
-            return input;
-        }
-        return input.augment(fn);
+    ): Option<TInput & TAugment>;
+
+    // Curried (point-free) form.
+    export function augment<TInput extends object, TAugment>(
+        fn: (input: TInput) => Option<TAugment>
+    ): (input: Option<TInput>) => Option<TInput & TAugment>;
+
+    export function augment(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (input: object) => Option<unknown>, input: Option<object>) => {
+                // Narrow input to SomeOption so TypeScript can verify the `this`
+                // constraint on augment(), which requires T to extend object.
+                if (input.isNone) {
+                    return input;
+                }
+                return input.augment(fn);
+            }
+        );
     }
 
 
@@ -520,16 +535,30 @@ export namespace Option {
      * @param input - The input Option
      * @return A Promise for the augmented Option
      */
+    // Eager form.
     export function augmentAsync<TInput extends object, TAugment>(
         fn: (input: TInput) => Promise<Option<TAugment>>,
         input: Option<TInput>
-    ): Promise<Option<TInput & TAugment>> {
-        // Narrow input to SomeOption so TypeScript can verify the `this`
-        // constraint on augmentAsync(), which requires T to extend object.
-        if (input.isNone) {
-            return Promise.resolve(input);
-        }
-        return input.augmentAsync(fn);
+    ): Promise<Option<TInput & TAugment>>;
+
+    // Curried (point-free) form.
+    export function augmentAsync<TInput extends object, TAugment>(
+        fn: (input: TInput) => Promise<Option<TAugment>>
+    ): (input: Option<TInput>) => Promise<Option<TInput & TAugment>>;
+
+    export function augmentAsync(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (input: object) => Promise<Option<unknown>>, input: Option<object>) => {
+                // Narrow input to SomeOption so TypeScript can verify the `this`
+                // constraint on augmentAsync(), which requires T to extend object.
+                if (input.isNone) {
+                    return Promise.resolve(input);
+                }
+                return input.augmentAsync(fn);
+            }
+        );
     }
 
 
@@ -543,11 +572,23 @@ export namespace Option {
      * @returns Either the passed-through NoneOption or the Option returned from
      * _fn_.
      */
+    // Eager form.
     export function bind<TIn, TOut>(
         fn: (x: TIn) => Option<TOut>,
         input: Option<TIn>
-    ): Option<TOut> {
-        return input.bind(fn);
+    ): Option<TOut>;
+
+    // Curried (point-free) form.
+    export function bind<TIn, TOut>(
+        fn: (x: TIn) => Option<TOut>
+    ): (input: Option<TIn>) => Option<TOut>;
+
+    export function bind(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (x: unknown) => Option<unknown>, input: Option<unknown>) => input.bind(fn)
+        );
     }
 
 
@@ -559,11 +600,23 @@ export namespace Option {
      * @param input - The input Option
      * @return A Promise for the bound Option
      */
+    // Eager form.
     export function bindAsync<TIn, TOut>(
         fn: (x: TIn) => Promise<Option<TOut>>,
         input: Option<TIn>
-    ): Promise<Option<TOut>> {
-        return input.bindAsync(fn);
+    ): Promise<Option<TOut>>;
+
+    // Curried (point-free) form.
+    export function bindAsync<TIn, TOut>(
+        fn: (x: TIn) => Promise<Option<TOut>>
+    ): (input: Option<TIn>) => Promise<Option<TOut>>;
+
+    export function bindAsync(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (x: unknown) => Promise<Option<unknown>>, input: Option<unknown>) => input.bindAsync(fn)
+        );
     }
 
 
@@ -579,11 +632,23 @@ export namespace Option {
      * @return Either the passed-through "some" Option or the Option returned
      * from _fn_.
      */
+    // Eager form.
     export function bindNone<TIn, TOut>(
         fn: () => Option<TOut>,
         input: Option<TIn>
-    ): Option<TIn | TOut> {
-        return input.bindNone(fn);
+    ): Option<TIn | TOut>;
+
+    // Curried (point-free) form.
+    export function bindNone<TIn, TOut>(
+        fn: () => Option<TOut>
+    ): (input: Option<TIn>) => Option<TIn | TOut>;
+
+    export function bindNone(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: () => Option<unknown>, input: Option<unknown>) => input.bindNone(fn)
+        );
     }
 
 
@@ -595,11 +660,23 @@ export namespace Option {
      * @param input - The input Option
      * @return A Promise for the resulting Option
      */
+    // Eager form.
     export function bindNoneAsync<TIn, TOut>(
         fn: () => Promise<Option<TOut>>,
         input: Option<TIn>
-    ): Promise<Option<TIn | TOut>> {
-        return input.bindNoneAsync(fn);
+    ): Promise<Option<TIn | TOut>>;
+
+    // Curried (point-free) form.
+    export function bindNoneAsync<TIn, TOut>(
+        fn: () => Promise<Option<TOut>>
+    ): (input: Option<TIn>) => Promise<Option<TIn | TOut>>;
+
+    export function bindNoneAsync(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: () => Promise<Option<unknown>>, input: Option<unknown>) => input.bindNoneAsync(fn)
+        );
     }
 
 
@@ -614,23 +691,37 @@ export namespace Option {
      * @param input - The input sequence
      * @returns  The output array
      */
+    // Eager form.
     export function choose<TIn, TOut>(
         fn: (v: TIn) => Option<TOut>,
         input: Iterable<TIn>
-    ): Array<TOut> {
-        const inputArr = Array.from(input);
-        const output =
-            inputArr.reduce<Array<TOut>>(
-                (acc, cur) => {
-                    const res = fn(cur);
-                    if (res.isSome) {
-                        acc.push(res.value);
-                    }
-                    return acc;
-                },
-                []
-            );
-        return output;
+    ): Array<TOut>;
+
+    // Curried (point-free) form.
+    export function choose<TIn, TOut>(
+        fn: (v: TIn) => Option<TOut>
+    ): (input: Iterable<TIn>) => Array<TOut>;
+
+    export function choose(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (v: unknown) => Option<unknown>, input: Iterable<unknown>) => {
+                const inputArr = Array.from(input);
+                const output =
+                    inputArr.reduce<Array<unknown>>(
+                        (acc, cur) => {
+                            const res = fn(cur);
+                            if (res.isSome) {
+                                acc.push(res.value);
+                            }
+                            return acc;
+                        },
+                        []
+                    );
+                return output;
+            }
+        );
     }
 
 
@@ -670,11 +761,23 @@ export namespace Option {
      * @param input - The input Option
      * @returns The contained value if input is Some, else the default value.
      */
+    // Eager form.
     export function defaultValue<T, TDefault>(
         defaultValue: TDefault,
         input: Option<T>
-    ): T | TDefault {
-        return input.defaultValue(defaultValue);
+    ): T | TDefault;
+
+    // Curried (point-free) form.
+    export function defaultValue<T, TDefault>(
+        defaultValue: TDefault
+    ): (input: Option<T>) => T | TDefault;
+
+    export function defaultValue(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (defaultValue: unknown, input: Option<unknown>) => input.defaultValue(defaultValue)
+        );
     }
 
 
@@ -689,11 +792,23 @@ export namespace Option {
      * @returns The contained value if input is Some, else the value returned by
      * _fn_.
      */
+    // Eager form.
     export function defaultWith<T, TDefault>(
         fn: () => TDefault,
         input: Option<T>
-    ): T | TDefault {
-        return input.defaultWith(fn);
+    ): T | TDefault;
+
+    // Curried (point-free) form.
+    export function defaultWith<T, TDefault>(
+        fn: () => TDefault
+    ): (input: Option<T>) => T | TDefault;
+
+    export function defaultWith(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: () => unknown, input: Option<unknown>) => input.defaultWith(fn)
+        );
     }
 
 
@@ -708,11 +823,23 @@ export namespace Option {
      * @return A Promise for the contained value if input is Some, else the
      * value returned by _fn_
      */
+    // Eager form.
     export function defaultWithAsync<T, TDefault>(
         fn: () => Promise<TDefault>,
         input: Option<T>
-    ): Promise<T | TDefault> {
-        return input.defaultWithAsync(fn);
+    ): Promise<T | TDefault>;
+
+    // Curried (point-free) form.
+    export function defaultWithAsync<T, TDefault>(
+        fn: () => Promise<TDefault>
+    ): (input: Option<T>) => Promise<T | TDefault>;
+
+    export function defaultWithAsync(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: () => Promise<unknown>, input: Option<unknown>) => input.defaultWithAsync(fn)
+        );
     }
 
 
@@ -784,11 +911,23 @@ export namespace Option {
      * @returns Either the mapped "some" option or the passed-through "none"
      * Option.
      */
+    // Eager form.
     export function mapSome<TIn, TOut>(
         fn: (x: TIn) => TOut,
         input: Option<TIn>
-    ): Option<TOut> {
-        return input.mapSome(fn);
+    ): Option<TOut>;
+
+    // Curried (point-free) form.
+    export function mapSome<TIn, TOut>(
+        fn: (x: TIn) => TOut
+    ): (input: Option<TIn>) => Option<TOut>;
+
+    export function mapSome(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (x: unknown) => unknown, input: Option<unknown>) => input.mapSome(fn)
+        );
     }
 
 
@@ -799,11 +938,23 @@ export namespace Option {
      * @param input - The input Option
      * @return A Promise for the mapped Option
      */
+    // Eager form.
     export function mapSomeAsync<TIn, TOut>(
         fn: (x: TIn) => Promise<TOut>,
         input: Option<TIn>
-    ): Promise<Option<TOut>> {
-        return input.mapSomeAsync(fn);
+    ): Promise<Option<TOut>>;
+
+    // Curried (point-free) form.
+    export function mapSomeAsync<TIn, TOut>(
+        fn: (x: TIn) => Promise<TOut>
+    ): (input: Option<TIn>) => Promise<Option<TOut>>;
+
+    export function mapSomeAsync(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (x: unknown) => Promise<unknown>, input: Option<unknown>) => input.mapSomeAsync(fn)
+        );
     }
 
 
@@ -816,12 +967,29 @@ export namespace Option {
      * @param input - The input Option
      * @return The value returned by either _fnSome_ or _fnNone_
      */
+    // Eager form.
     export function match<TIn, TSomeOut, TNoneOut>(
         fnSome: (val: TIn) => TSomeOut,
         fnNone: () => TNoneOut,
         input: Option<TIn>
-    ): TSomeOut | TNoneOut {
-        return input.match(fnSome, fnNone);
+    ): TSomeOut | TNoneOut;
+
+    // Curried (point-free) form.
+    export function match<TIn, TSomeOut, TNoneOut>(
+        fnSome: (val: TIn) => TSomeOut,
+        fnNone: () => TNoneOut
+    ): (input: Option<TIn>) => TSomeOut | TNoneOut;
+
+    export function match(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            3,
+            args,
+            (
+                fnSome: (val: unknown) => unknown,
+                fnNone: () => unknown,
+                input: Option<unknown>
+            ) => input.match(fnSome, fnNone)
+        );
     }
 
 
@@ -834,12 +1002,29 @@ export namespace Option {
      * @param input - The input Option
      * @return A Promise for the value returned by either _fnSome_ or _fnNone_
      */
+    // Eager form.
     export function matchAsync<TIn, TSomeOut, TNoneOut>(
         fnSome: (val: TIn) => Promise<TSomeOut>,
         fnNone: () => Promise<TNoneOut>,
         input: Option<TIn>
-    ): Promise<TSomeOut | TNoneOut> {
-        return input.matchAsync(fnSome, fnNone);
+    ): Promise<TSomeOut | TNoneOut>;
+
+    // Curried (point-free) form.
+    export function matchAsync<TIn, TSomeOut, TNoneOut>(
+        fnSome: (val: TIn) => Promise<TSomeOut>,
+        fnNone: () => Promise<TNoneOut>
+    ): (input: Option<TIn>) => Promise<TSomeOut | TNoneOut>;
+
+    export function matchAsync(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            3,
+            args,
+            (
+                fnSome: (val: unknown) => Promise<unknown>,
+                fnNone: () => Promise<unknown>,
+                input: Option<unknown>
+            ) => input.matchAsync(fnSome, fnNone)
+        );
     }
 
 
@@ -855,12 +1040,29 @@ export namespace Option {
      * @param input - The input Option
      * @return The value returned by the invoked handler function
      */
+    // Eager form.
     export function matchWith<TIn, TSomeOut, TNoneOut>(
         matcherFns: {some: (val: TIn) => TSomeOut, none: () => TNoneOut},
         input: Option<TIn>
-    ): TSomeOut | TNoneOut {
-        const out = input.match(matcherFns.some, matcherFns.none);
-        return out;
+    ): TSomeOut | TNoneOut;
+
+    // Curried (point-free) form.
+    export function matchWith<TIn, TSomeOut, TNoneOut>(
+        matcherFns: {some: (val: TIn) => TSomeOut, none: () => TNoneOut}
+    ): (input: Option<TIn>) => TSomeOut | TNoneOut;
+
+    export function matchWith(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (
+                matcherFns: {some: (val: unknown) => unknown, none: () => unknown},
+                input: Option<unknown>
+            ) => {
+                const out = input.match(matcherFns.some, matcherFns.none);
+                return out;
+            }
+        );
     }
 
 
@@ -874,11 +1076,26 @@ export namespace Option {
      * @param input - The input Option
      * @return A Promise for the value returned by the invoked handler function
      */
+    // Eager form.
     export function matchWithAsync<TIn, TSomeOut, TNoneOut>(
         matcherFns: {some: (val: TIn) => Promise<TSomeOut>, none: () => Promise<TNoneOut>},
         input: Option<TIn>
-    ): Promise<TSomeOut | TNoneOut> {
-        return input.matchWithAsync(matcherFns);
+    ): Promise<TSomeOut | TNoneOut>;
+
+    // Curried (point-free) form.
+    export function matchWithAsync<TIn, TSomeOut, TNoneOut>(
+        matcherFns: {some: (val: TIn) => Promise<TSomeOut>, none: () => Promise<TNoneOut>}
+    ): (input: Option<TIn>) => Promise<TSomeOut | TNoneOut>;
+
+    export function matchWithAsync(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (
+                matcherFns: {some: (val: unknown) => Promise<unknown>, none: () => Promise<unknown>},
+                input: Option<unknown>
+            ) => input.matchWithAsync(matcherFns)
+        );
     }
 
 
@@ -905,11 +1122,23 @@ export namespace Option {
      * @param opt - The input Option
      * @returns The unwrapped SomeOption value
      */
+    // Eager form.
     export function throwIfNoneWith<T>(
         fn: () => string,
         opt: Option<T>
-    ): T {
-        return opt.throwIfNoneWith(fn);
+    ): T;
+
+    // Curried (point-free) form.
+    export function throwIfNoneWith<T>(
+        fn: () => string
+    ): (opt: Option<T>) => T;
+
+    export function throwIfNoneWith(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: () => string, opt: Option<unknown>) => opt.throwIfNoneWith(fn)
+        );
     }
 
 
@@ -922,11 +1151,23 @@ export namespace Option {
      * @param opt - The input Option
      * @return A Promise for the unwrapped SomeOption value
      */
+    // Eager form.
     export function throwIfNoneWithAsync<T>(
         fn: () => Promise<string>,
         opt: Option<T>
-    ): Promise<T> {
-        return opt.throwIfNoneWithAsync(fn);
+    ): Promise<T>;
+
+    // Curried (point-free) form.
+    export function throwIfNoneWithAsync<T>(
+        fn: () => Promise<string>
+    ): (opt: Option<T>) => Promise<T>;
+
+    export function throwIfNoneWithAsync(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: () => Promise<string>, opt: Option<unknown>) => opt.throwIfNoneWithAsync(fn)
+        );
     }
 
 
@@ -951,11 +1192,23 @@ export namespace Option {
      * @param param - Description
      * @return Description
      */
+    // Eager form.
     export function throwIfSomeWith<T>(
         fn: (val: T) => string,
         opt: Option<T>
-    ): void {
-        opt.throwIfSomeWith(fn);
+    ): void;
+
+    // Curried (point-free) form.
+    export function throwIfSomeWith<T>(
+        fn: (val: T) => string
+    ): (opt: Option<T>) => void;
+
+    export function throwIfSomeWith(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (val: unknown) => string, opt: Option<unknown>) => opt.throwIfSomeWith(fn)
+        );
     }
 
 
@@ -967,11 +1220,23 @@ export namespace Option {
      * @param opt - The input Option
      * @return A Promise that resolves when no error is thrown
      */
+    // Eager form.
     export function throwIfSomeWithAsync<T>(
         fn: (val: T) => Promise<string>,
         opt: Option<T>
-    ): Promise<void> {
-        return opt.throwIfSomeWithAsync(fn);
+    ): Promise<void>;
+
+    // Curried (point-free) form.
+    export function throwIfSomeWithAsync<T>(
+        fn: (val: T) => Promise<string>
+    ): (opt: Option<T>) => Promise<void>;
+
+    export function throwIfSomeWithAsync(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (val: unknown) => Promise<string>, opt: Option<unknown>) => opt.throwIfSomeWithAsync(fn)
+        );
     }
 
 
@@ -984,11 +1249,23 @@ export namespace Option {
      * @param opt - The input Option
      * @return The resulting nullable value
      */
+    // Eager form.
     export function toNullable<TOption, TNullish extends undefined | null>(
         nullishValue: TNullish,
         opt: Option<TOption>
-    ): TOption | TNullish {
-        return opt.toNullable(nullishValue);
+    ): TOption | TNullish;
+
+    // Curried (point-free) form.
+    export function toNullable<TOption, TNullish extends undefined | null>(
+        nullishValue: TNullish
+    ): (opt: Option<TOption>) => TOption | TNullish;
+
+    export function toNullable(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (nullishValue: undefined | null, opt: Option<unknown>) => opt.toNullable(nullishValue)
+        );
     }
 
 }

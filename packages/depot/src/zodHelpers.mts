@@ -65,3 +65,22 @@ export async function safeParseAsync<TSchema extends z.ZodType>(
     const zodResult = await schema.safeParseAsync(input);
     return zodResultToResult(zodResult);
 }
+
+
+/**
+ * Helper function to convert a Result into a value or z.NEVER for use in Zod transformations.
+ *
+ * @param resInput - The Result to convert
+ * @param ctx - The Zod refinement context
+ * @return The value if the Result is successful, otherwise z.NEVER
+ */
+export function unwrapOrAddIssue<TSuccess>(
+    resInput: Result<TSuccess, string>,
+    ctx: z.RefinementCtx
+): typeof z.NEVER | TSuccess {
+    if (resInput.failed) {
+        ctx.addIssue({ code: "custom", message: resInput.error });
+        return z.NEVER;
+    }
+    return resInput.value;
+}

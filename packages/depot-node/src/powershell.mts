@@ -24,11 +24,11 @@ export async function getLegacyPowerShellExecutable(): Promise<Result<File, stri
     return pipeAsync(
         glob(legacyPowershellPattern),
         // Convert the array to a Result.
-        (matchingPaths) => Result.requireNonEmptyArray(matchingPaths, "Legacy PowerShell (powershell.exe) could not be found."),
+        Result.requireNonEmptyArray("Legacy PowerShell (powershell.exe) could not be found."),
         // Take the first path.
-        (resPaths) => Result.mapSuccess((paths) => paths[0]!, resPaths),
+        Result.mapSuccess((paths) => paths[0]!),
         // Convert the path to a File instance.
-        (resPath) => Result.mapSuccess((path) => new File(path), resPath)
+        Result.mapSuccess((path) => new File(path))
     );
 }
 
@@ -48,11 +48,11 @@ export async function getModernPowerShellExecutable(): Promise<Result<File, stri
         // Sort so the highest version number pwsh.exe will be last in the array.
         (matchingPaths) => matchingPaths.sort(),
         // Convert the array to a Result.
-        (matchingPaths) => Result.requireNonEmptyArray(matchingPaths, "No modern PowerShell (pwsh.exe) could not be found."),
+        Result.requireNonEmptyArray("No modern PowerShell (pwsh.exe) could not be found."),
         // Take the last path.  It should be the one with the greatest version number.
-        (resPaths) => Result.mapSuccess((paths) => paths[paths.length - 1]!, resPaths),
+        Result.mapSuccess((paths) => paths[paths.length - 1]!),
         // Convert the path to a File instance.
-        (resPath) => Result.mapSuccess((path) => new File(path), resPath)
+        Result.mapSuccess((path) => new File(path))
     );
 }
 

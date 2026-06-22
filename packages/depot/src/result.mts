@@ -2,6 +2,7 @@
 /* eslint-disable max-len */
 
 import * as _ from "lodash-es";
+import { dispatchLast } from "./curry.mjs";
 import { isIToString } from "./primitives.mjs";
 import { NoneOption, Option, SomeOption } from "./option.mjs";
 import { inspect } from "./inspect.mjs";
@@ -956,16 +957,30 @@ export namespace Result {
      * Otherwise, a successful Result containing all properties of the original
      * input and the value returned by _fn_.
      */
-    export function augment<TInputSuccess extends object, TInputError, TFnSuccess, TFnError>(
-        fn: (input: TInputSuccess) => Result<TFnSuccess, TFnError>,
-        input: Result<TInputSuccess, TInputError>
-    ): Result<TInputSuccess & TFnSuccess, TInputError | TFnError> {
-        // Narrow input to SucceededResult so TypeScript can verify the `this`
-        // constraint on augment(), which requires TSuccess to extend object.
-        if (input.failed) {
-            return input;
-        }
-        return input.augment(fn);
+    // Eager form.
+    export function augment<TInS extends object, TInE, TOutS, TOutE>(
+        fn: (input: TInS) => Result<TOutS, TOutE>,
+        input: Result<TInS, TInE>
+    ): Result<TInS & TOutS, TInE | TOutE>;
+
+    // Curried (point-free) form.
+    export function augment<TInS extends object, TInE, TOutS, TOutE>(
+        fn: (input: TInS) => Result<TOutS, TOutE>
+    ): (input: Result<TInS, TInE>) => Result<TInS & TOutS, TInE | TOutE>;
+
+    export function augment(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (input: object) => Result<unknown, unknown>, input: Result<object, unknown>) => {
+                // Narrow input to SucceededResult so TypeScript can verify the `this`
+                // constraint on augment(), which requires TSuccess to extend object.
+                if (input.failed) {
+                    return input;
+                }
+                return input.augment(fn);
+            }
+        );
     }
 
 
@@ -978,16 +993,30 @@ export namespace Result {
      * @param input - The input Result
      * @return A Promise for the augmented Result
      */
-    export function augmentAsync<TInputSuccess extends object, TInputError, TFnSuccess, TFnError>(
-        fn: (input: TInputSuccess) => Promise<Result<TFnSuccess, TFnError>>,
-        input: Result<TInputSuccess, TInputError>
-    ): Promise<Result<TInputSuccess & TFnSuccess, TInputError | TFnError>> {
-        // Narrow input to SucceededResult so TypeScript can verify the `this`
-        // constraint on augmentAsync(), which requires TSuccess to extend object.
-        if (input.failed) {
-            return Promise.resolve(input);
-        }
-        return input.augmentAsync(fn);
+    // Eager form.
+    export function augmentAsync<TInS extends object, TInE, TOutS, TOutE>(
+        fn: (input: TInS) => Promise<Result<TOutS, TOutE>>,
+        input: Result<TInS, TInE>
+    ): Promise<Result<TInS & TOutS, TInE | TOutE>>;
+
+    // Curried (point-free) form.
+    export function augmentAsync<TInS extends object, TInE, TOutS, TOutE>(
+        fn: (input: TInS) => Promise<Result<TOutS, TOutE>>
+    ): (input: Result<TInS, TInE>) => Promise<Result<TInS & TOutS, TInE | TOutE>>;
+
+    export function augmentAsync(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (input: object) => Promise<Result<unknown, unknown>>, input: Result<object, unknown>) => {
+                // Narrow input to SucceededResult so TypeScript can verify the `this`
+                // constraint on augmentAsync(), which requires TSuccess to extend object.
+                if (input.failed) {
+                    return Promise.resolve(input);
+                }
+                return input.augmentAsync(fn);
+            }
+        );
     }
 
 
@@ -1001,11 +1030,23 @@ export namespace Result {
      * @return Either the passed-through failure Result or the Result returned from
      * _fn_.
      */
-    export function bind<TInputSuccess, TInputError, TOutputSuccess, TOutputError>(
-        fn: (x: TInputSuccess) => Result<TOutputSuccess, TOutputError>,
-        input: Result<TInputSuccess, TInputError>
-    ): Result<TOutputSuccess, TInputError | TOutputError> {
-        return input.bind(fn);
+    // Eager form.
+    export function bind<TInS, TInE, TOutS, TOutE>(
+        fn: (x: TInS) => Result<TOutS, TOutE>,
+        input: Result<TInS, TInE>
+    ): Result<TOutS, TInE | TOutE>;
+
+    // Curried (point-free) form.
+    export function bind<TInS, TInE, TOutS, TOutE>(
+        fn: (x: TInS) => Result<TOutS, TOutE>
+    ): (input: Result<TInS, TInE>) => Result<TOutS, TInE | TOutE>;
+
+    export function bind(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (x: unknown) => Result<unknown, unknown>, input: Result<unknown, unknown>) => input.bind(fn)
+        );
     }
 
 
@@ -1017,11 +1058,23 @@ export namespace Result {
      * @param input - The input Result
      * @return A Promise for the bound Result
      */
-    export function bindAsync<TInputSuccess, TInputError, TOutputSuccess, TOutputError>(
-        fn: (x: TInputSuccess) => Promise<Result<TOutputSuccess, TOutputError>>,
-        input: Result<TInputSuccess, TInputError>
-    ): Promise<Result<TOutputSuccess, TInputError | TOutputError>> {
-        return input.bindAsync(fn);
+    // Eager form.
+    export function bindAsync<TInS, TInE, TOutS, TOutE>(
+        fn: (x: TInS) => Promise<Result<TOutS, TOutE>>,
+        input: Result<TInS, TInE>
+    ): Promise<Result<TOutS, TInE | TOutE>>;
+
+    // Curried (point-free) form.
+    export function bindAsync<TInS, TInE, TOutS, TOutE>(
+        fn: (x: TInS) => Promise<Result<TOutS, TOutE>>
+    ): (input: Result<TInS, TInE>) => Promise<Result<TOutS, TInE | TOutE>>;
+
+    export function bindAsync(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (x: unknown) => Promise<Result<unknown, unknown>>, input: Result<unknown, unknown>) => input.bindAsync(fn)
+        );
     }
 
 
@@ -1038,11 +1091,23 @@ export namespace Result {
      * @return Either the passed-through successful Result or the Result
      * returned from _fn_.
      */
-    export function bindError<TInputSuccess, TInputError, TOutputSuccess, TOutputError>(
-        fn: (err: TInputError) => Result<TOutputSuccess, TOutputError>,
-        input: Result<TInputSuccess, TInputError>
-    ): Result<TInputSuccess | TOutputSuccess, TOutputError> {
-        return input.bindError(fn);
+    // Eager form.
+    export function bindError<TInS, TInE, TOutS, TOutE>(
+        fn: (err: TInE) => Result<TOutS, TOutE>,
+        input: Result<TInS, TInE>
+    ): Result<TInS | TOutS, TOutE>;
+
+    // Curried (point-free) form.
+    export function bindError<TInS, TInE, TOutS, TOutE>(
+        fn: (err: TInE) => Result<TOutS, TOutE>
+    ): (input: Result<TInS, TInE>) => Result<TInS | TOutS, TOutE>;
+
+    export function bindError(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (err: unknown) => Result<unknown, unknown>, input: Result<unknown, unknown>) => input.bindError(fn)
+        );
     }
 
 
@@ -1054,11 +1119,23 @@ export namespace Result {
      * @param input - The input Result
      * @return A Promise for the bound Result
      */
-    export function bindErrorAsync<TInputSuccess, TInputError, TOutputSuccess, TOutputError>(
-        fn: (err: TInputError) => Promise<Result<TOutputSuccess, TOutputError>>,
-        input: Result<TInputSuccess, TInputError>
-    ): Promise<Result<TInputSuccess | TOutputSuccess, TOutputError>> {
-        return input.bindErrorAsync(fn);
+    // Eager form.
+    export function bindErrorAsync<TInS, TInE, TOutS, TOutE>(
+        fn: (err: TInE) => Promise<Result<TOutS, TOutE>>,
+        input: Result<TInS, TInE>
+    ): Promise<Result<TInS | TOutS, TOutE>>;
+
+    // Curried (point-free) form.
+    export function bindErrorAsync<TInS, TInE, TOutS, TOutE>(
+        fn: (err: TInE) => Promise<Result<TOutS, TOutE>>
+    ): (input: Result<TInS, TInE>) => Promise<Result<TInS | TOutS, TOutE>>;
+
+    export function bindErrorAsync(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (err: unknown) => Promise<Result<unknown, unknown>>, input: Result<unknown, unknown>) => input.bindErrorAsync(fn)
+        );
     }
 
 
@@ -1072,11 +1149,23 @@ export namespace Result {
      * @returns The contained value if input is successful, else the default
      * value.
      */
-    export function defaultValue<TSuccess, TError, TDefault>(
+    // Eager form.
+    export function defaultValue<TInS, TE, TDefault>(
         defaultValue: TDefault,
-        input: Result<TSuccess, TError>
-    ): TSuccess | TDefault {
-        return input.defaultValue(defaultValue);
+        input: Result<TInS, TE>
+    ): TInS | TDefault;
+
+    // Curried (point-free) form.
+    export function defaultValue<TInS, TE, TDefault>(
+        defaultValue: TDefault
+    ): (input: Result<TInS, TE>) => TInS | TDefault;
+
+    export function defaultValue(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (defaultValue: unknown, input: Result<unknown, unknown>) => input.defaultValue(defaultValue)
+        );
     }
 
     /**
@@ -1090,11 +1179,23 @@ export namespace Result {
      * @returns The contained value if input is successful, else the value
      * returned by _fn_.
      */
-    export function defaultWith<TSuccess, TError, TDefault>(
-        fn: (err: TError) => TDefault,
-        input: Result<TSuccess, TError>
-    ): TSuccess | TDefault {
-        return input.defaultWith(fn);
+    // Eager form.
+    export function defaultWith<TInS, TE, TDefault>(
+        fn: (err: TE) => TDefault,
+        input: Result<TInS, TE>
+    ): TInS | TDefault;
+
+    // Curried (point-free) form.
+    export function defaultWith<TInS, TE, TDefault>(
+        fn: (err: TE) => TDefault
+    ): (input: Result<TInS, TE>) => TInS | TDefault;
+
+    export function defaultWith(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (err: unknown) => unknown, input: Result<unknown, unknown>) => input.defaultWith(fn)
+        );
     }
 
 
@@ -1106,11 +1207,23 @@ export namespace Result {
      * @param input - The input Result
      * @return A Promise for either the success value or fallback value
      */
-    export function defaultWithAsync<TSuccess, TError, TDefault>(
-        fn: (err: TError) => Promise<TDefault>,
-        input: Result<TSuccess, TError>
-    ): Promise<TSuccess | TDefault> {
-        return input.defaultWithAsync(fn);
+    // Eager form.
+    export function defaultWithAsync<TInS, TE, TDefault>(
+        fn: (err: TE) => Promise<TDefault>,
+        input: Result<TInS, TE>
+    ): Promise<TInS | TDefault>;
+
+    // Curried (point-free) form.
+    export function defaultWithAsync<TInS, TE, TDefault>(
+        fn: (err: TE) => Promise<TDefault>
+    ): (input: Result<TInS, TE>) => Promise<TInS | TDefault>;
+
+    export function defaultWithAsync(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (err: unknown) => Promise<unknown>, input: Result<unknown, unknown>) => input.defaultWithAsync(fn)
+        );
     }
 
 
@@ -1347,60 +1460,102 @@ export namespace Result {
      * Converts a value that may be undefined or null into a Result for that
      * value.
      *
-     * @param nullable - A value that may be undefined or null
      * @param err - Error value to be used if _nullable_ is undefined or null
+     * @param nullable - A value that may be undefined or null
      * @return A successful Result containing _nullable_ if it was neither
      * undefined or null.  Otherwise, a failure Result containing _err_.
      */
-    export function fromNullable<T, TError>(
-        nullable: T | undefined | null,
-        err: TError
-    ): Result<T, TError> {
-        return (nullable === undefined) || (nullable === null) ?
-            new FailedResult(err) :
-            new SucceededResult(nullable);
+    // Eager form.
+    export function fromNullable<T, TE>(
+        err: TE,
+        nullable: T | undefined | null
+    ): Result<T, TE>;
+
+    // Curried (point-free) form.
+    export function fromNullable<T, TE>(
+        err: TE
+    ): (nullable: T | undefined | null) => Result<T, TE>;
+
+    export function fromNullable(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (err: unknown, nullable: unknown) => {
+                return (nullable === undefined) || (nullable === null) ?
+                    new FailedResult(err) :
+                    new SucceededResult(nullable);
+            }
+        );
     }
 
 
     /**
      * Converts an Option to a Result.
      *
-     * @param opt - The Option to be converted
      * @param err - The error value to use when _opt_ is None
+     * @param opt - The Option to be converted
      * @return The converted Result
      */
-    export function fromOption<TSuccess, TError>(
-        opt: Option<TSuccess>,
-        err: TError
-    ): Result<TSuccess, TError> {
-        if (opt.isSome) {
-            return new SucceededResult(opt.value);
-        }
+    // Eager form.
+    export function fromOption<TInS, TE>(
+        err: TE,
+        opt: Option<TInS>
+    ): Result<TInS, TE>;
 
-        // The input is a None.  We must return a failed Result.
-        return new FailedResult(err);
+    // Curried (point-free) form.
+    export function fromOption<TInS, TE>(
+        err: TE
+    ): (opt: Option<TInS>) => Result<TInS, TE>;
+
+    export function fromOption(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (err: unknown, opt: Option<unknown>) => {
+                if (opt.isSome) {
+                    return new SucceededResult(opt.value);
+                }
+
+                // The input is a None.  We must return a failed Result.
+                return new FailedResult(err);
+            }
+        );
     }
 
 
     /**
      * Converts an Option to a Result.
      *
-     * @param opt - The Option to be converted
      * @param errFn - A function that will be invoked if _opt_ is None.  This
      * function must return the failed error value.
+     * @param opt - The Option to be converted
      * @return The converted Result
      */
-    export function fromOptionWith<TSuccess, TError>(
-        opt: Option<TSuccess>,
-        errFn: () => TError
-    ): Result<TSuccess, TError> {
-        if (opt.isSome) {
-            return new SucceededResult(opt.value);
-        }
+    // Eager form.
+    export function fromOptionWith<TInS, TE>(
+        errFn: () => TE,
+        opt: Option<TInS>
+    ): Result<TInS, TE>;
 
-        // The input is a None.  We must return a failed Result.
-        const err = errFn();
-        return new FailedResult(err);
+    // Curried (point-free) form.
+    export function fromOptionWith<TInS, TE>(
+        errFn: () => TE
+    ): (opt: Option<TInS>) => Result<TInS, TE>;
+
+    export function fromOptionWith(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (errFn: () => unknown, opt: Option<unknown>) => {
+                if (opt.isSome) {
+                    return new SucceededResult(opt.value);
+                }
+
+                // The input is a None.  We must return a failed Result.
+                const err = errFn();
+                return new FailedResult(err);
+            }
+        );
     }
 
 
@@ -1416,11 +1571,23 @@ export namespace Result {
      * is successful, _input_ is returned.  If _fn_ is a failure, that failed
      * result is returned.
      */
-    export function gate<TInSuccess, TInError, TOutSuccess, TOutError>(
-        fn: (successVal: TInSuccess) => Result<TOutSuccess, TOutError>,
-        input: Result<TInSuccess, TInError>
-    ): Result<TInSuccess, TInError | TOutError> {
-        return input.gate(fn);
+    // Eager form.
+    export function gate<TInS, TInE, TOutS, TOutE>(
+        fn: (successVal: TInS) => Result<TOutS, TOutE>,
+        input: Result<TInS, TInE>
+    ): Result<TInS, TInE | TOutE>;
+
+    // Curried (point-free) form.
+    export function gate<TInS, TInE, TOutS, TOutE>(
+        fn: (successVal: TInS) => Result<TOutS, TOutE>
+    ): (input: Result<TInS, TInE>) => Result<TInS, TInE | TOutE>;
+
+    export function gate(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (successVal: unknown) => Result<unknown, unknown>, input: Result<unknown, unknown>) => input.gate(fn)
+        );
     }
 
 
@@ -1434,11 +1601,23 @@ export namespace Result {
      * @param input - The input Result
      * @return A Promise for either original success or gate failure
      */
-    export function gateAsync<TInSuccess, TInError, TOutSuccess, TOutError>(
-        fn: (successVal: TInSuccess) => Promise<Result<TOutSuccess, TOutError>>,
-        input: Result<TInSuccess, TInError>
-    ): Promise<Result<TInSuccess, TInError | TOutError>> {
-        return input.gateAsync(fn);
+    // Eager form.
+    export function gateAsync<TInS, TInE, TOutS, TOutE>(
+        fn: (successVal: TInS) => Promise<Result<TOutS, TOutE>>,
+        input: Result<TInS, TInE>
+    ): Promise<Result<TInS, TInE | TOutE>>;
+
+    // Curried (point-free) form.
+    export function gateAsync<TInS, TInE, TOutS, TOutE>(
+        fn: (successVal: TInS) => Promise<Result<TOutS, TOutE>>
+    ): (input: Result<TInS, TInE>) => Promise<Result<TInS, TInE | TOutE>>;
+
+    export function gateAsync(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (successVal: unknown) => Promise<Result<unknown, unknown>>, input: Result<unknown, unknown>) => input.gateAsync(fn)
+        );
     }
 
 
@@ -1450,11 +1629,23 @@ export namespace Result {
      * @return Either the passed-through successful Result or the mapped error
      * Result.
      */
-    export function mapError<TSuccess, TInputError, TOutputError>(
-        fn: (input: TInputError) => TOutputError,
-        input: Result<TSuccess, TInputError>
-    ): Result<TSuccess, TOutputError> {
-        return input.mapError(fn);
+    // Eager form.
+    export function mapError<TInS, TInE, TOutE>(
+        fn: (input: TInE) => TOutE,
+        input: Result<TInS, TInE>
+    ): Result<TInS, TOutE>;
+
+    // Curried (point-free) form.
+    export function mapError<TInS, TInE, TOutE>(
+        fn: (input: TInE) => TOutE
+    ): (input: Result<TInS, TInE>) => Result<TInS, TOutE>;
+
+    export function mapError(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (input: unknown) => unknown, input: Result<unknown, unknown>) => input.mapError(fn)
+        );
     }
 
 
@@ -1465,11 +1656,23 @@ export namespace Result {
      * @param input - The input Result
      * @return A Promise for the mapped Result
      */
-    export function mapErrorAsync<TSuccess, TInputError, TOutputError>(
-        fn: (input: TInputError) => Promise<TOutputError>,
-        input: Result<TSuccess, TInputError>
-    ): Promise<Result<TSuccess, TOutputError>> {
-        return input.mapErrorAsync(fn);
+    // Eager form.
+    export function mapErrorAsync<TInS, TInE, TOutE>(
+        fn: (input: TInE) => Promise<TOutE>,
+        input: Result<TInS, TInE>
+    ): Promise<Result<TInS, TOutE>>;
+
+    // Curried (point-free) form.
+    export function mapErrorAsync<TInS, TInE, TOutE>(
+        fn: (input: TInE) => Promise<TOutE>
+    ): (input: Result<TInS, TInE>) => Promise<Result<TInS, TOutE>>;
+
+    export function mapErrorAsync(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (input: unknown) => Promise<unknown>, input: Result<unknown, unknown>) => input.mapErrorAsync(fn)
+        );
     }
 
 
@@ -1481,11 +1684,23 @@ export namespace Result {
      * @return Either the mapped successful Result or the passed-through failure
      * Result.
      */
-    export function mapSuccess<TInputSuccess, TOutputSuccess, TError>(
-        fn: (input: TInputSuccess) => TOutputSuccess,
-        input: Result<TInputSuccess, TError>
-    ): Result<TOutputSuccess, TError> {
-        return input.mapSuccess(fn);
+    // Eager form.
+    export function mapSuccess<TInS, TOutS, TE>(
+        fn: (input: TInS) => TOutS,
+        input: Result<TInS, TE>
+    ): Result<TOutS, TE>;
+
+    // Curried (point-free) form.
+    export function mapSuccess<TInS, TOutS, TE>(
+        fn: (input: TInS) => TOutS
+    ): (input: Result<TInS, TE>) => Result<TOutS, TE>;
+
+    export function mapSuccess(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (input: unknown) => unknown, input: Result<unknown, unknown>) => input.mapSuccess(fn)
+        );
     }
 
 
@@ -1496,11 +1711,23 @@ export namespace Result {
      * @param input - The input Result
      * @return A Promise for the mapped Result
      */
-    export function mapSuccessAsync<TInputSuccess, TOutputSuccess, TError>(
-        fn: (input: TInputSuccess) => Promise<TOutputSuccess>,
-        input: Result<TInputSuccess, TError>
-    ): Promise<Result<TOutputSuccess, TError>> {
-        return input.mapSuccessAsync(fn);
+    // Eager form.
+    export function mapSuccessAsync<TInS, TOutS, TE>(
+        fn: (input: TInS) => Promise<TOutS>,
+        input: Result<TInS, TE>
+    ): Promise<Result<TOutS, TE>>;
+
+    // Curried (point-free) form.
+    export function mapSuccessAsync<TInS, TOutS, TE>(
+        fn: (input: TInS) => Promise<TOutS>
+    ): (input: Result<TInS, TE>) => Promise<Result<TOutS, TE>>;
+
+    export function mapSuccessAsync(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (input: unknown) => Promise<unknown>, input: Result<unknown, unknown>) => input.mapSuccessAsync(fn)
+        );
     }
 
 
@@ -1508,37 +1735,51 @@ export namespace Result {
      * Maps values from a source collection until a failed mapping occurs.  If a
      * failure occurs, the mapping stops immediately.
      *
-     * @param collection - The source collection
      * @param mappingFunc - The mapping function. Each element from _srcCollection_
      * is run through this function and it must return a successful result wrapping
      * the mapped value or a failure result wrapping the error.
+     * @param collection - The source collection
      * @return A successful result wrapping an array of the mapped values or a
      * failure result wrapping the first failure encountered.
      */
-    export function mapWhileSuccessful<TInput, TOutput, TError>(
-        collection: Array<TInput>,
-        mappingFunc: (curItem: TInput) => Result<TOutput, TError>
-    ): Result<Array<TOutput>, TError> {
-        return collection.reduce<Result<Array<TOutput>, TError>>(
-            (acc, curItem) => {
-                // If we have already failed, just return the error.
-                if (acc.failed) {
-                    return acc;
-                }
+    // Eager form.
+    export function mapWhileSuccessful<TIn, TOut, TE>(
+        mappingFunc: (curItem: TIn) => Result<TOut, TE>,
+        collection: Array<TIn>
+    ): Result<Array<TOut>, TE>;
 
-                // We have not yet failed, so process the current item.
-                const res = mappingFunc(curItem);
-                if (res.succeeded) {
-                    // Note:  Do not use array.concat() here, because if the current
-                    // result's value is an array, it will be flattened.
-                    acc.value.push(res.value);
-                    return acc;
-                }
-                else {
-                    return res;
-                }
-            },
-            new SucceededResult([])
+    // Curried (point-free) form.
+    export function mapWhileSuccessful<TIn, TOut, TE>(
+        mappingFunc: (curItem: TIn) => Result<TOut, TE>
+    ): (collection: Array<TIn>) => Result<Array<TOut>, TE>;
+
+    export function mapWhileSuccessful(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (mappingFunc: (curItem: unknown) => Result<unknown, unknown>, collection: Array<unknown>) => {
+                return collection.reduce<Result<Array<unknown>, unknown>>(
+                    (acc, curItem) => {
+                        // If we have already failed, just return the error.
+                        if (acc.failed) {
+                            return acc;
+                        }
+
+                        // We have not yet failed, so process the current item.
+                        const res = mappingFunc(curItem);
+                        if (res.succeeded) {
+                            // Note:  Do not use array.concat() here, because if the current
+                            // result's value is an array, it will be flattened.
+                            acc.value.push(res.value);
+                            return acc;
+                        }
+                        else {
+                            return res;
+                        }
+                    },
+                    new SucceededResult([])
+                );
+            }
         );
     }
 
@@ -1554,12 +1795,29 @@ export namespace Result {
      * @param input - The input Option
      * @return The value returned by either _fnSome_ or _fnNone_
      */
-    export function match<TInSuccess, TInError, TOutSuccess, TOutError>(
-        fnSuccess: (val: TInSuccess) => TOutSuccess,
-        fnError: (err: TInError) => TOutError,
-        input: Result<TInSuccess, TInError>
-    ): TOutSuccess | TOutError {
-        return input.match(fnSuccess, fnError);
+    // Eager form.
+    export function match<TInS, TInE, TOutS, TOutE>(
+        fnSuccess: (val: TInS) => TOutS,
+        fnError: (err: TInE) => TOutE,
+        input: Result<TInS, TInE>
+    ): TOutS | TOutE;
+
+    // Curried (point-free) form.
+    export function match<TInS, TInE, TOutS, TOutE>(
+        fnSuccess: (val: TInS) => TOutS,
+        fnError: (err: TInE) => TOutE
+    ): (input: Result<TInS, TInE>) => TOutS | TOutE;
+
+    export function match(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            3,
+            args,
+            (
+                fnSuccess: (val: unknown) => unknown,
+                fnError: (err: unknown) => unknown,
+                input: Result<unknown, unknown>
+            ) => input.match(fnSuccess, fnError)
+        );
     }
 
 
@@ -1578,12 +1836,29 @@ export namespace Result {
      * @param input - The input Option
      * @return The value returned by the invoked handler function
      */
-    export function matchWith<TInSuccess, TInError, TOutSuccess, TOutError>(
-        matcherFns: {success: (val: TInSuccess) => TOutSuccess, error: (err: TInError) => TOutError},
-        input: Result<TInSuccess, TInError>
-    ): TOutSuccess | TOutError {
-        const out = input.match(matcherFns.success, matcherFns.error);
-        return out;
+    // Eager form.
+    export function matchWith<TInS, TInE, TOutS, TOutE>(
+        matcherFns: {success: (val: TInS) => TOutS, error: (err: TInE) => TOutE},
+        input: Result<TInS, TInE>
+    ): TOutS | TOutE;
+
+    // Curried (point-free) form.
+    export function matchWith<TInS, TInE, TOutS, TOutE>(
+        matcherFns: {success: (val: TInS) => TOutS, error: (err: TInE) => TOutE}
+    ): (input: Result<TInS, TInE>) => TOutS | TOutE;
+
+    export function matchWith(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (
+                matcherFns: {success: (val: unknown) => unknown, error: (err: unknown) => unknown},
+                input: Result<unknown, unknown>
+            ) => {
+                const out = input.match(matcherFns.success, matcherFns.error);
+                return out;
+            }
+        );
     }
 
 
@@ -1596,11 +1871,26 @@ export namespace Result {
      * @param input - The input Result
      * @return A Promise for the matched output
      */
-    export function matchWithAsync<TInSuccess, TInError, TOutSuccess, TOutError>(
-        matcherFns: {success: (val: TInSuccess) => Promise<TOutSuccess>, error: (err: TInError) => Promise<TOutError>},
-        input: Result<TInSuccess, TInError>
-    ): Promise<TOutSuccess | TOutError> {
-        return input.matchWithAsync(matcherFns);
+    // Eager form.
+    export function matchWithAsync<TInS, TInE, TOutS, TOutE>(
+        matcherFns: {success: (val: TInS) => Promise<TOutS>, error: (err: TInE) => Promise<TOutE>},
+        input: Result<TInS, TInE>
+    ): Promise<TOutS | TOutE>;
+
+    // Curried (point-free) form.
+    export function matchWithAsync<TInS, TInE, TOutS, TOutE>(
+        matcherFns: {success: (val: TInS) => Promise<TOutS>, error: (err: TInE) => Promise<TOutE>}
+    ): (input: Result<TInS, TInE>) => Promise<TOutS | TOutE>;
+
+    export function matchWithAsync(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (
+                matcherFns: {success: (val: unknown) => Promise<unknown>, error: (err: unknown) => Promise<unknown>},
+                input: Result<unknown, unknown>
+            ) => input.matchWithAsync(matcherFns)
+        );
     }
 
 
@@ -1634,11 +1924,23 @@ export namespace Result {
      * @returns A successful Result if the input is falsy; a failure Result
      * otherwise.
      */
-    export function requireFalsy<TError, TVal>(
-        trueErrVal: TError,
+    // Eager form.
+    export function requireFalsy<TE, TVal>(
+        trueErrVal: TE,
         val: TVal
-    ): Result<TVal, TError> {
-        return val ? new FailedResult(trueErrVal) : new SucceededResult(val);
+    ): Result<TVal, TE>;
+
+    // Curried (point-free) form.
+    export function requireFalsy<TE, TVal>(
+        trueErrVal: TE
+    ): (val: TVal) => Result<TVal, TE>;
+
+    export function requireFalsy(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (trueErrVal: unknown, val: unknown) => val ? new FailedResult(trueErrVal) : new SucceededResult(val)
+        );
     }
 
 
@@ -1651,11 +1953,23 @@ export namespace Result {
      * @returns If _ok_ is truthy, a successful Result wrapping _val_.
      * Otherwise, a failed Result containing the error message.
      */
-    export function requireOk<TError, TVal extends {ok: boolean}>(
-        errVal: TError,
+    // Eager form.
+    export function requireOk<TE, TVal extends {ok: boolean}>(
+        errVal: TE,
         val: TVal
-    ): Result<TVal, TError> {
-        return val.ok ? new SucceededResult(val) : new FailedResult(errVal);
+    ): Result<TVal, TE>;
+
+    // Curried (point-free) form.
+    export function requireOk<TE, TVal extends {ok: boolean}>(
+        errVal: TE
+    ): (val: TVal) => Result<TVal, TE>;
+
+    export function requireOk(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (errVal: unknown, val: {ok: boolean}) => val.ok ? new SucceededResult(val) : new FailedResult(errVal)
+        );
     }
 
 
@@ -1669,48 +1983,88 @@ export namespace Result {
      * @returns A successful Result if the input is truthy; a failure Result
      * otherwise.
      */
-    export function requireTruthy<TError, TVal>(
-        errVal: TError,
+    // Eager form.
+    export function requireTruthy<TE, TVal>(
+        errVal: TE,
         val: TVal | undefined | null
-    ): Result<TVal, TError> {
-        return val ? new SucceededResult(val) : new FailedResult(errVal);
+    ): Result<TVal, TE>;
+
+    // Curried (point-free) form.
+    export function requireTruthy<TE, TVal>(
+        errVal: TE
+    ): (val: TVal | undefined | null) => Result<TVal, TE>;
+
+    export function requireTruthy(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (errVal: unknown, val: unknown) => val ? new SucceededResult(val) : new FailedResult(errVal)
+        );
     }
 
 
     /**
      * Converts a possibly empty array to a Result for the array.
      *
-     * @param arr - The possibly empty array
      * @param errVal - The error value returned if _arr_ is empty
+     * @param arr - The possibly empty array
      * @return If _arr_ is empty, a failure result containing _emptyErrVal_.
      * Otherwise, a successful Result containing _arr_.
      */
-    export function requireNonEmptyArray<TElem, TError>(
-        arr: Array<TElem>,
-        errVal: TError
-    ): Result<Array<TElem>, TError> {
-        return arr.length === 0 ?
-            new FailedResult(errVal) :
-            new SucceededResult(arr);
+    // Eager form.
+    export function requireNonEmptyArray<TElem, TE>(
+        errVal: TE,
+        arr: Array<TElem>
+    ): Result<Array<TElem>, TE>;
+
+    // Curried (point-free) form.
+    export function requireNonEmptyArray<TElem, TE>(
+        errVal: TE
+    ): (arr: Array<TElem>) => Result<Array<TElem>, TE>;
+
+    export function requireNonEmptyArray(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (errVal: unknown, arr: Array<unknown>) => {
+                return arr.length === 0 ?
+                    new FailedResult(errVal) :
+                    new SucceededResult(arr);
+            }
+        );
     }
 
 
     /**
      * Converts an array to a Result for the array.
      *
-     * @param arr - The input array
      * @param errVal - The error value returned if _arr_ does not have exactly
      * one element
+     * @param arr - The input array
      * @return If _arr_ has one element, a successful Result containing the one
      * element of _arr_. Otherwise, a failure Result containing _errVal_.
      */
-    export function requireOneElementArray<TElem, TError>(
-        arr: Array<TElem>,
-        errVal: TError
-    ): Result<TElem, TError> {
-        return arr.length === 1 ?
-            new SucceededResult(arr[0]!) :
-            new FailedResult(errVal);
+    // Eager form.
+    export function requireOneElementArray<TElem, TE>(
+        errVal: TE,
+        arr: Array<TElem>
+    ): Result<TElem, TE>;
+
+    // Curried (point-free) form.
+    export function requireOneElementArray<TElem, TE>(
+        errVal: TE
+    ): (arr: Array<TElem>) => Result<TElem, TE>;
+
+    export function requireOneElementArray(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (errVal: unknown, arr: Array<unknown>) => {
+                return arr.length === 1 ?
+                    new SucceededResult(arr[0]!) :
+                    new FailedResult(errVal);
+            }
+        );
     }
 
 
@@ -1721,11 +2075,23 @@ export namespace Result {
      * @param input - The input Result
      * @returns The original input Result
      */
-    export function tap<TSuccess, TError>(
-        fn: (res: Result<TSuccess, TError>) => unknown,
-        input: Result<TSuccess, TError>
-    ): Result<TSuccess, TError> {
-        return input.tap(fn);
+    // Eager form.
+    export function tap<TInS, TE>(
+        fn: (res: Result<TInS, TE>) => unknown,
+        input: Result<TInS, TE>
+    ): Result<TInS, TE>;
+
+    // Curried (point-free) form.
+    export function tap<TInS, TE>(
+        fn: (res: Result<TInS, TE>) => unknown
+    ): (input: Result<TInS, TE>) => Result<TInS, TE>;
+
+    export function tap(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (res: Result<unknown, unknown>) => unknown, input: Result<unknown, unknown>) => input.tap(fn)
+        );
     }
 
 
@@ -1736,11 +2102,23 @@ export namespace Result {
      * @param input - The input Result
      * @returns The original input Result
      */
-    export function tapAsync<TSuccess, TError>(
-        fn: (res: Result<TSuccess, TError>) => Promise<unknown>,
-        input: Result<TSuccess, TError>
-    ): Promise<Result<TSuccess, TError>> {
-        return input.tapAsync(fn);
+    // Eager form.
+    export function tapAsync<TInS, TE>(
+        fn: (res: Result<TInS, TE>) => Promise<unknown>,
+        input: Result<TInS, TE>
+    ): Promise<Result<TInS, TE>>;
+
+    // Curried (point-free) form.
+    export function tapAsync<TInS, TE>(
+        fn: (res: Result<TInS, TE>) => Promise<unknown>
+    ): (input: Result<TInS, TE>) => Promise<Result<TInS, TE>>;
+
+    export function tapAsync(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (res: Result<unknown, unknown>) => Promise<unknown>, input: Result<unknown, unknown>) => input.tapAsync(fn)
+        );
     }
 
 
@@ -1751,11 +2129,23 @@ export namespace Result {
      * @param input - The input Result
      * @returns The original input Result
      */
-    export function tapError<TSuccess, TError>(
-        fn: (val: TError) => unknown,
-        input: Result<TSuccess, TError>
-    ): Result<TSuccess, TError> {
-        return input.tapError(fn);
+    // Eager form.
+    export function tapError<TInS, TE>(
+        fn: (val: TE) => unknown,
+        input: Result<TInS, TE>
+    ): Result<TInS, TE>;
+
+    // Curried (point-free) form.
+    export function tapError<TInS, TE>(
+        fn: (val: TE) => unknown
+    ): (input: Result<TInS, TE>) => Result<TInS, TE>;
+
+    export function tapError(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (val: unknown) => unknown, input: Result<unknown, unknown>) => input.tapError(fn)
+        );
     }
 
 
@@ -1766,11 +2156,23 @@ export namespace Result {
      * @param input - The input Result
      * @returns The original input Result
      */
-    export function tapErrorAsync<TSuccess, TError>(
-        fn: (val: TError) => Promise<unknown>,
-        input: Result<TSuccess, TError>
-    ): Promise<Result<TSuccess, TError>> {
-        return input.tapErrorAsync(fn);
+    // Eager form.
+    export function tapErrorAsync<TInS, TE>(
+        fn: (val: TE) => Promise<unknown>,
+        input: Result<TInS, TE>
+    ): Promise<Result<TInS, TE>>;
+
+    // Curried (point-free) form.
+    export function tapErrorAsync<TInS, TE>(
+        fn: (val: TE) => Promise<unknown>
+    ): (input: Result<TInS, TE>) => Promise<Result<TInS, TE>>;
+
+    export function tapErrorAsync(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (val: unknown) => Promise<unknown>, input: Result<unknown, unknown>) => input.tapErrorAsync(fn)
+        );
     }
 
 
@@ -1781,11 +2183,23 @@ export namespace Result {
      * @param input - The input Result
      * @returns The original input Result
      */
-    export function tapSuccess<TSuccess, TError>(
-        fn: (val: TSuccess) => unknown,
-        input: Result<TSuccess, TError>
-    ): Result<TSuccess, TError> {
-        return input.tapSuccess(fn);
+    // Eager form.
+    export function tapSuccess<TInS, TE>(
+        fn: (val: TInS) => unknown,
+        input: Result<TInS, TE>
+    ): Result<TInS, TE>;
+
+    // Curried (point-free) form.
+    export function tapSuccess<TInS, TE>(
+        fn: (val: TInS) => unknown
+    ): (input: Result<TInS, TE>) => Result<TInS, TE>;
+
+    export function tapSuccess(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (val: unknown) => unknown, input: Result<unknown, unknown>) => input.tapSuccess(fn)
+        );
     }
 
 
@@ -1796,11 +2210,23 @@ export namespace Result {
      * @param input - The input Result
      * @returns The original input Result
      */
-    export function tapSuccessAsync<TSuccess, TError>(
-        fn: (val: TSuccess) => Promise<unknown>,
-        input: Result<TSuccess, TError>
-    ): Promise<Result<TSuccess, TError>> {
-        return input.tapSuccessAsync(fn);
+    // Eager form.
+    export function tapSuccessAsync<TInS, TE>(
+        fn: (val: TInS) => Promise<unknown>,
+        input: Result<TInS, TE>
+    ): Promise<Result<TInS, TE>>;
+
+    // Curried (point-free) form.
+    export function tapSuccessAsync<TInS, TE>(
+        fn: (val: TInS) => Promise<unknown>
+    ): (input: Result<TInS, TE>) => Promise<Result<TInS, TE>>;
+
+    export function tapSuccessAsync(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (fn: (val: unknown) => Promise<unknown>, input: Result<unknown, unknown>) => input.tapSuccessAsync(fn)
+        );
     }
 
 
@@ -1825,10 +2251,11 @@ export namespace Result {
      * @param result - The input Result
      * @returns The unwrapped successful Result value
      */
-    export function throwIfFailedWith<TSuccess, TError>(
+    // Eager form (string).
+    export function throwIfFailedWith<TInS, TE>(
         errorMsg: string,
-        result: Result<TSuccess, TError>
-    ): TSuccess;
+        result: Result<TInS, TE>
+    ): TInS;
 
     /**
      * Unwraps a successful Result, throwing if it is a failure.
@@ -1838,16 +2265,28 @@ export namespace Result {
      * @param result - The input Result
      * @returns The unwrapped successful Result value
      */
-    export function throwIfFailedWith<TSuccess, TError>(
-        errorMapFn: (err: TError) => string,
-        result: Result<TSuccess, TError>
-    ): TSuccess;
+    // Eager form (function).
+    export function throwIfFailedWith<TInS, TE>(
+        errorMapFn: (err: TE) => string,
+        result: Result<TInS, TE>
+    ): TInS;
 
-    export function throwIfFailedWith<TSuccess, TError>(
-        errorMsgOrFn: string | ((err: TError) => string),
-        result: Result<TSuccess, TError>
-    ): TSuccess {
-        return result.throwIfFailedWith(errorMsgOrFn);
+    // Curried (point-free) form (string).
+    export function throwIfFailedWith<TInS, TE>(
+        errorMsg: string
+    ): (result: Result<TInS, TE>) => TInS;
+
+    // Curried (point-free) form (function).
+    export function throwIfFailedWith<TInS, TE>(
+        errorMapFn: (err: TE) => string
+    ): (result: Result<TInS, TE>) => TInS;
+
+    export function throwIfFailedWith(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (errorMsgOrFn: string | ((err: unknown) => string), result: Result<unknown, unknown>) => result.throwIfFailedWith(errorMsgOrFn)
+        );
     }
 
 
@@ -1872,10 +2311,11 @@ export namespace Result {
      * @param result - The input Result
      * @returns The unwrapped failed Result error.
      */
-    export function throwIfSucceededWith<TSuccess, TError>(
+    // Eager form (string).
+    export function throwIfSucceededWith<TInS, TE>(
         errorMsg: string,
-        result: Result<TSuccess, TError>
-    ): TError;
+        result: Result<TInS, TE>
+    ): TE;
 
     /**
      * Unwraps a failed Result, throwing if it is a success.
@@ -1886,17 +2326,28 @@ export namespace Result {
      * @param result - The input Result
      * @returns The unwrapped failed Result error.
      */
-    export function throwIfSucceededWith<TSuccess, TError>(
-        errorMapFn: (val: TSuccess) => string,
-        result: Result<TSuccess, TError>
-    ): TError;
+    // Eager form (function).
+    export function throwIfSucceededWith<TInS, TE>(
+        errorMapFn: (val: TInS) => string,
+        result: Result<TInS, TE>
+    ): TE;
 
+    // Curried (point-free) form (string).
+    export function throwIfSucceededWith<TInS, TE>(
+        errorMsg: string
+    ): (result: Result<TInS, TE>) => TE;
 
-    export function throwIfSucceededWith<TSuccess, TError>(
-        errorMsgOrFn: string | ((val: TSuccess) => string),
-        result: Result<TSuccess, TError>
-    ): TError {
-        return result.throwIfSucceededWith(errorMsgOrFn);
+    // Curried (point-free) form (function).
+    export function throwIfSucceededWith<TInS, TE>(
+        errorMapFn: (val: TInS) => string
+    ): (result: Result<TInS, TE>) => TE;
+
+    export function throwIfSucceededWith(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (errorMsgOrFn: string | ((val: unknown) => string), result: Result<unknown, unknown>) => result.throwIfSucceededWith(errorMsgOrFn)
+        );
     }
 
 
@@ -1909,11 +2360,23 @@ export namespace Result {
      * @param result - The input Result
      * @return The resulting nullable value
      */
-    export function toNullable<TSuccess, TError, TNullish extends undefined | null>(
+    // Eager form.
+    export function toNullable<TInS, TE, TNullish extends undefined | null>(
         nullishValue: TNullish,
-        result: Result<TSuccess, TError>
-    ): TSuccess | TNullish {
-        return result.toNullable(nullishValue);
+        result: Result<TInS, TE>
+    ): TInS | TNullish;
+
+    // Curried (point-free) form.
+    export function toNullable<TInS, TE, TNullish extends undefined | null>(
+        nullishValue: TNullish
+    ): (result: Result<TInS, TE>) => TInS | TNullish;
+
+    export function toNullable(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            (nullishValue: undefined | null, result: Result<unknown, unknown>) => result.toNullable(nullishValue)
+        );
     }
 
 

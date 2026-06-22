@@ -1,4 +1,5 @@
 import { BufReader } from "./bufReader.mjs";
+import { SucceededResult } from "./result.mjs";
 
 
 describe("BufReader", () => {
@@ -40,6 +41,44 @@ describe("BufReader", () => {
             const resRead = reader.seek(4);
             expect(resRead.failed).toBeTrue();
             expect(reader.currentOffset).toEqual(0);
+        });
+
+    });
+
+
+    describe("readTo16BitBoundary()", () => {
+
+        it("does nothing when already aligned", () => {
+            const reader = new BufReader(Uint8Array.from([0xAA, 0xBB]));
+
+            const resPad = reader.readTo16BitBoundary();
+
+            expect(resPad.succeeded).toBeTrue();
+            expect(reader.currentOffset).toEqual(0);
+            expect(reader.remainingBytes).toEqual(2);
+        });
+
+
+        it("consumes one byte when unaligned", () => {
+            const reader = new BufReader(Uint8Array.from([0xAA, 0xBB, 0xCC]));
+            reader.readUInt8();
+
+            const resPad = reader.readTo16BitBoundary();
+
+            expect(resPad.succeeded).toBeTrue();
+            expect(reader.currentOffset).toEqual(2);
+            expect(reader.remainingBytes).toEqual(1);
+        });
+
+
+        it("fails when unaligned and no bytes remain", () => {
+            const reader = new BufReader(Uint8Array.from([0xAA]));
+            reader.readUInt8();
+            expect(reader.currentOffset).toEqual(1);
+
+            const resPad = reader.readTo16BitBoundary();
+
+            expect(resPad.failed).toBeTrue();
         });
 
     });
@@ -235,6 +274,141 @@ describe("BufReader", () => {
 
             source[0] = 0x00;
             expect(Array.from(resRead.value!)).toEqual([0xAA, 0xBB]);
+        });
+
+    });
+
+
+    describe("attempt()", () => {
+
+        it("advances the cursor by bytes consumed when the callback succeeds", () => {
+            const reader = new BufReader(Uint8Array.from([0xAA, 0xBB, 0xCC, 0xDD]));
+
+            const result = reader.attempt((r) => {
+                const a = r.readUInt8();
+                const b = r.readUInt16();
+                if (a.failed) { return a; }
+                if (b.failed) { return b; }
+                return new SucceededResult({ a: a.value, b: b.value });
+            });
+
+            expect(result.succeeded).toBeTrue();
+            expect(reader.currentOffset).toEqual(3);
+        });
+
+
+        it("leaves the cursor unchanged when the callback fails", () => {
+            const reader = new BufReader(Uint8Array.from([0xAA, 0xBB]));
+
+            const result = reader.attempt((r) => {
+                return r.readUInt32();  // needs 4 bytes, only 2 available
+            });
+
+            expect(result.failed).toBeTrue();
+            expect(reader.currentOffset).toEqual(0);
+        });
+
+
+        it("returns the value produced by the callback on success", () => {
+            const reader = new BufReader(Uint8Array.from([0x42]));
+
+            const result = reader.attempt((r) => r.readUInt8());
+
+            expect(result.succeeded).toBeTrue();
+            expect(result.value).toEqual(0x42);
+        });
+
+
+        it("allows reading after a failed attempt", () => {
+            const reader = new BufReader(Uint8Array.from([0xAA, 0xBB]));
+
+            reader.attempt((r) => r.readUInt32());  // fails — cursor stays at 0
+
+            const res = reader.readUInt8();
+            expect(res.value).toEqual(0xAA);
+        });
+
+
+        it("composes: nested attempt advances outer cursor only on success", () => {
+            const reader = new BufReader(Uint8Array.from([0x01, 0x02, 0x03]));
+
+            reader.attempt((outer) => {
+                const a = outer.readUInt8();
+                if (a.failed) { return a; }
+
+                const inner = outer.attempt((r) => r.readUInt16());
+                if (inner.failed) { return inner; }
+
+                return inner;
+            });
+
+            expect(reader.currentOffset).toEqual(3);
+        });
+
+    });
+
+
+    describe("peek()", () => {
+
+        it("returns a BufReader over the next n bytes without advancing the cursor", () => {
+            const reader = new BufReader(Uint8Array.from([0xAA, 0xBB, 0xCC, 0xDD]));
+
+            const resPeek = reader.peek(2);
+            expect(resPeek.succeeded).toBeTrue();
+            expect(reader.currentOffset).toEqual(0);
+
+            const peeked = resPeek.value!;
+            expect(peeked.readUInt8().value).toEqual(0xAA);
+            expect(peeked.readUInt8().value).toEqual(0xBB);
+        });
+
+
+        it("does not affect the original reader's subsequent reads", () => {
+            const reader = new BufReader(Uint8Array.from([0xAA, 0xBB, 0xCC]));
+
+            reader.peek(2);
+
+            const resRead = reader.readUInt8();
+            expect(resRead.value).toEqual(0xAA);
+        });
+
+
+        it("respects the current cursor position when peeking", () => {
+            const reader = new BufReader(Uint8Array.from([0xAA, 0xBB, 0xCC, 0xDD]));
+            reader.readUInt8();  // advance past 0xAA
+
+            const resPeek = reader.peek(2);
+            expect(resPeek.succeeded).toBeTrue();
+
+            const peeked = resPeek.value!;
+            expect(peeked.readUInt8().value).toEqual(0xBB);
+            expect(peeked.readUInt8().value).toEqual(0xCC);
+        });
+
+
+        it("succeeds when peeking zero bytes", () => {
+            const reader = new BufReader(Uint8Array.from([0xAA]));
+
+            const resPeek = reader.peek(0);
+            expect(resPeek.succeeded).toBeTrue();
+            expect(resPeek.value!.remainingBytes).toEqual(0);
+        });
+
+
+        it("fails when peeking more bytes than remain", () => {
+            const reader = new BufReader(Uint8Array.from([0xAA, 0xBB]));
+
+            const resPeek = reader.peek(3);
+            expect(resPeek.failed).toBeTrue();
+            expect(reader.currentOffset).toEqual(0);
+        });
+
+
+        it("fails when given a non-integer count", () => {
+            const reader = new BufReader(Uint8Array.from([0xAA, 0xBB]));
+
+            const resPeek = reader.peek(1.5);
+            expect(resPeek.failed).toBeTrue();
         });
 
     });

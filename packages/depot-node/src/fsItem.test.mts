@@ -1,7 +1,7 @@
 import { getTimerPromise } from "@repo/depot/promiseHelpers";
 import { NoneOption, SomeOption } from "@repo/depot/option";
 import { File } from "./file.mjs";
-import { tmpDir } from "./specHelpers.test.mjs";
+import { getUniqueTmpDir, tmpDir } from "./specHelpers.test.mjs";
 import { updateTimes } from "./fsItem.mjs";
 
 
@@ -96,6 +96,14 @@ describe("updateTimes()", () => {
 
 
     it("works on a directory too", async () => {
+        const tmpDir = getUniqueTmpDir();
+        const timePeriodMs = 100;
+
+        // Wait for a period of time longer than the time period so we can be
+        // sure that the updateTimes() call below is responsible for the updated
+        // times rather than the directory creation itself.
+        await getTimerPromise(timePeriodMs * 1.1, undefined);
+
         const res = await updateTimes(tmpDir, new SomeOption(new Date()), new SomeOption(new Date()));
         expect(res.succeeded).toBeTrue();
         const stats = await tmpDir.exists();
@@ -105,8 +113,8 @@ describe("updateTimes()", () => {
         }
 
         const now = Date.now();
-        expect(now - stats.atime.valueOf()).toBeLessThan(100);
-        expect(now - stats.mtime.valueOf()).toBeLessThan(100);
+        expect(now - stats.atime.valueOf()).toBeLessThan(timePeriodMs);
+        expect(now - stats.mtime.valueOf()).toBeLessThan(timePeriodMs);
     });
 
 });

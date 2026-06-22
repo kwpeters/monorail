@@ -42,9 +42,9 @@ export function sendError(
     if (res.headersSent) {
         return;
     }
-    const body = errDetails !== undefined
-        ? {success: false, errMsg, errDetails}
-        : {success: false, errMsg};
+    const body = errDetails !== undefined ?
+        {success: false, errMsg, errDetails} :
+        {success: false, errMsg};
     res.status(statusCode).json(body);
 }
 
@@ -64,9 +64,9 @@ export function sendSuccess(
     if (res.headersSent) {
         return;
     }
-    const body = value !== undefined
-        ? {...value, success: true}
-        : {success: true};
+    const body = value !== undefined ?
+        {...value, success: true} :
+        {success: true};
     res.status(statusCode).json(body);
 }
 

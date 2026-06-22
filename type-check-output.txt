@@ -1,0 +1,247 @@
+
+> monorail@1.0.0 type-check
+> turbo type-check
+
+ΓÇó turbo 2.9.16
+
+   ΓÇó Packages in scope: @repo/abspath, @repo/app-config, @repo/build-app-assist, @repo/capcom, @repo/convert-int, @repo/copy-latest-sharex-img, @repo/copywrite, @repo/depot, @repo/depot-node, @repo/diff-buf, @repo/difftui, @repo/eslint-config, @repo/evaluate, @repo/fantomas-modified, @repo/findgrep, @repo/findgrep2, @repo/hr, @repo/idea-diff, @repo/local-work, @repo/merged-branches, @repo/mille-bornes-engine, @repo/mille-bornes-server, @repo/mille-bornes-shared, @repo/mm, @repo/move-photos, @repo/npm-run-parallel, @repo/photo-lib, @repo/quiz, @repo/random-file, @repo/rmrf, @repo/run-admin, @repo/sample-app-sea-xyzzy, @repo/sample-app-xyzzy, @repo/sample-express-xyzzy, @repo/sample-lib-xyzzy, @repo/splat, @repo/touchem, @repo/ts-generator, @repo/typescript-config, @repo/unique, @repo/watch, @repo/win-drives, @repo/windows-spotlight-images, airliner
+   ΓÇó Running type-check in 44 packages
+   ΓÇó Remote caching disabled
+
+@repo/eslint-config:type-check: cache hit, replaying logs 55a76684e182bee6
+@repo/eslint-config:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/eslint-config:type-check: > @repo/eslint-config@0.0.0 type-check
+@repo/eslint-config:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe ΓáÖ
+@repo/eslint-config:type-check: [K[?9001l[?1004l
+@repo/depot:type-check: cache hit, replaying logs 60276623e4e9e5b6
+@repo/depot:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/depot:type-check: > @repo/depot@0.0.0 type-check
+@repo/depot:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/depot:type-check: [K[?9001l[?1004l
+@repo/sample-lib-xyzzy:type-check: cache hit, replaying logs acb231efc26dbb62
+@repo/sample-lib-xyzzy:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/sample-lib-xyzzy:type-check: > @repo/sample-lib-xyzzy@0.0.0 type-check
+@repo/sample-lib-xyzzy:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe ΓáÖ
+@repo/sample-lib-xyzzy:type-check: [K[?9001l[?1004l
+@repo/depot-node:type-check: cache hit, replaying logs 03479b33c9c7e96d
+@repo/depot-node:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/depot-node:type-check: > @repo/depot-node@0.0.0 type-check
+@repo/depot-node:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/depot-node:type-check: [K[?9001l[?1004l
+@repo/mille-bornes-shared:type-check: cache hit, replaying logs 0d449d08c746eec4
+@repo/mille-bornes-shared:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/mille-bornes-shared:type-check: > @repo/mille-bornes-shared@0.0.0 type-check
+@repo/mille-bornes-shared:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/mille-bornes-shared:type-check: [K[?9001l[?1004l
+@repo/fantomas-modified:type-check: cache hit, replaying logs 05156c0842787efb
+@repo/fantomas-modified:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/fantomas-modified:type-check: > @repo/fantomas-modified@0.0.0 type-check
+@repo/fantomas-modified:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/fantomas-modified:type-check: [K[?9001l[?1004l
+@repo/sample-app-xyzzy:type-check: cache hit, replaying logs 317f86c544d75a6e
+@repo/sample-app-xyzzy:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/sample-app-xyzzy:type-check: > @repo/sample-app-xyzzy@0.0.0 type-check
+@repo/sample-app-xyzzy:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \[?9001l[?1004l
+@repo/sample-app-xyzzy:type-check: [K
+@repo/local-work:type-check: cache hit, replaying logs ad9c9fbb2f1e4db4
+@repo/local-work:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/local-work:type-check: > @repo/local-work@0.0.0 type-check
+@repo/local-work:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/local-work:type-check: [K[?9001l[?1004l
+@repo/ts-generator:type-check: cache hit, replaying logs cac3fe1d8a17475a
+@repo/ts-generator:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/ts-generator:type-check: > @repo/ts-generator@0.0.0 type-check
+@repo/ts-generator:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/ts-generator:type-check: [K[?9001l[?1004l
+@repo/idea-diff:type-check: cache hit, replaying logs 21d42a626854c6e4
+@repo/idea-diff:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/idea-diff:type-check: > @repo/idea-diff@0.0.0 type-check
+@repo/idea-diff:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/idea-diff:type-check: [K[?9001l[?1004l
+@repo/move-photos:type-check: cache hit, replaying logs 87e493baf885f6d2
+@repo/move-photos:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/move-photos:type-check: > @repo/move-photos@0.0.0 type-check
+@repo/move-photos:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/move-photos:type-check: [K[?9001l[?1004l
+@repo/build-app-assist:type-check: cache hit, replaying logs b7b16bd13771c713
+@repo/build-app-assist:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/build-app-assist:type-check: > @repo/build-app-assist@0.0.0 type-check
+@repo/build-app-assist:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/build-app-assist:type-check: [K[?9001l[?1004l
+@repo/npm-run-parallel:type-check: cache hit, replaying logs d97c38d659801f0a
+@repo/npm-run-parallel:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/npm-run-parallel:type-check: > @repo/npm-run-parallel@0.0.0 type-check
+@repo/npm-run-parallel:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/npm-run-parallel:type-check: [K[?9001l[?1004l
+@repo/convert-int:type-check: cache hit, replaying logs afe33faaca69ff5f
+@repo/convert-int:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/convert-int:type-check: > @repo/convert-int@0.0.0 type-check
+@repo/convert-int:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/convert-int:type-check: [K[?9001l[?1004l
+@repo/mm:type-check: cache hit, replaying logs 42813d42d9d05ce1
+@repo/mm:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/mm:type-check: > @repo/mm@0.0.0 type-check
+@repo/mm:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/mm:type-check: [K[?9001l[?1004l
+@repo/capcom:type-check: cache hit, replaying logs ff030aeff0a70331
+@repo/capcom:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/capcom:type-check: > @repo/capcom@0.0.0 type-check
+@repo/capcom:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/capcom:type-check: [K[?9001l[?1004l
+@repo/diff-buf:type-check: cache hit, replaying logs d813323142336239
+@repo/diff-buf:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/diff-buf:type-check: > @repo/diff-buf@0.0.0 type-check
+@repo/diff-buf:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/diff-buf:type-check: [K[?9001l[?1004l
+@repo/sample-express-xyzzy:type-check: cache hit, replaying logs 82117855e3ae3cc3
+@repo/sample-express-xyzzy:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/sample-express-xyzzy:type-check: > @repo/sample-express-xyzzy@0.0.0 type-check
+@repo/sample-express-xyzzy:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/sample-express-xyzzy:type-check: [K[?9001l[?1004l
+@repo/random-file:type-check: cache hit, replaying logs b52cecefcc314278
+@repo/random-file:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/random-file:type-check: > @repo/random-file@0.0.0 type-check
+@repo/random-file:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/random-file:type-check: [K[?9001l[?1004l
+@repo/run-admin:type-check: cache hit, replaying logs 289ffc932d6d4cef
+@repo/run-admin:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/run-admin:type-check: > @repo/run-admin@0.0.0 type-check
+@repo/run-admin:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/run-admin:type-check: [K[?9001l[?1004l
+@repo/merged-branches:type-check: cache hit, replaying logs bbf27c8b38a44ce6
+@repo/merged-branches:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/merged-branches:type-check: > @repo/merged-branches@0.0.0 type-check
+@repo/merged-branches:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/merged-branches:type-check: [K[?9001l[?1004l
+@repo/abspath:type-check: cache hit, replaying logs fb8d1bd0f04513e2
+@repo/abspath:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/abspath:type-check: > @repo/abspath@0.0.0 type-check
+@repo/abspath:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/abspath:type-check: [K[?9001l[?1004l
+@repo/win-drives:type-check: cache hit, replaying logs e244ca44211f7fa2
+@repo/win-drives:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/win-drives:type-check: > @repo/win-drives@0.0.0 type-check
+@repo/win-drives:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/win-drives:type-check: [K[?9001l[?1004l
+airliner:type-check: cache hit, replaying logs 6473c26f7827b2b3
+airliner:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+airliner:type-check: > airliner@0.0.1 type-check
+airliner:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+airliner:type-check: [K[?9001l[?1004l
+@repo/copy-latest-sharex-img:type-check: cache hit, replaying logs 64a8c96dc864bac8
+@repo/copy-latest-sharex-img:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/copy-latest-sharex-img:type-check: > @repo/copy-latest-sharex-img@0.0.0 type-check
+@repo/copy-latest-sharex-img:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/copy-latest-sharex-img:type-check: [K[?9001l[?1004l
+@repo/copywrite:type-check: cache hit, replaying logs 143e8c6ea1ee9733
+@repo/copywrite:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/copywrite:type-check: > @repo/copywrite@0.0.0 type-check
+@repo/copywrite:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/copywrite:type-check: [K[?9001l[?1004l
+@repo/mille-bornes-engine:type-check: cache hit, replaying logs 6aabb26f0dd23069
+@repo/mille-bornes-engine:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/mille-bornes-engine:type-check: > @repo/mille-bornes-engine@0.0.0 type-check
+@repo/mille-bornes-engine:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/mille-bornes-engine:type-check: [K[?9001l[?1004l
+@repo/windows-spotlight-images:type-check: cache hit, replaying logs 79d4d41e2f99c35d
+@repo/windows-spotlight-images:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/windows-spotlight-images:type-check: > @repo/windows-spotlight-images@0.0.0 type-check
+@repo/windows-spotlight-images:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/windows-spotlight-images:type-check: [K[?9001l[?1004l
+@repo/hr:type-check: cache hit, replaying logs 2d799227b01be1ef
+@repo/hr:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/hr:type-check: > @repo/hr@0.0.0 type-check
+@repo/hr:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/hr:type-check: [K[?9001l[?1004l
+@repo/findgrep:type-check: cache miss, executing ad80e6136ea582fb
+@repo/watch:type-check: cache hit, replaying logs 691fe6cc5a3d0475
+@repo/watch:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/watch:type-check: > @repo/watch@0.0.0 type-check
+@repo/watch:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/watch:type-check: [K[?9001l[?1004l
+@repo/unique:type-check: cache hit, replaying logs 94f32b9e374cd093
+@repo/touchem:type-check: cache miss, executing e8b84896e0c97704
+@repo/unique:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/unique:type-check: > @repo/unique@0.0.0 type-check
+@repo/unique:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/unique:type-check: [K[?9001l[?1004l
+@repo/rmrf:type-check: cache hit, replaying logs 198802e984749ff0
+@repo/rmrf:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/rmrf:type-check: > @repo/rmrf@0.0.0 type-check
+@repo/rmrf:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/rmrf:type-check: [K[?9001l[?1004l
+@repo/app-config:type-check: cache hit, replaying logs 92a7c72d646a41c1
+@repo/app-config:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/app-config:type-check: > @repo/app-config@0.0.0 type-check
+@repo/app-config:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/app-config:type-check: [K[?9001l[?1004l
+@repo/evaluate:type-check: cache hit, replaying logs c39387a420ad7d7f
+@repo/evaluate:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/evaluate:type-check: > @repo/evaluate@0.0.0 type-check
+@repo/evaluate:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/evaluate:type-check: [K[?9001l[?1004l
+@repo/photo-lib:type-check: cache hit, replaying logs 6080c46b4bf8f56e
+@repo/photo-lib:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/photo-lib:type-check: > @repo/photo-lib@0.0.0 type-check
+@repo/photo-lib:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/photo-lib:type-check: [K[?9001l[?1004l
+@repo/sample-app-sea-xyzzy:type-check: cache hit, replaying logs cb4537e2ab2e1b3c
+@repo/sample-app-sea-xyzzy:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/sample-app-sea-xyzzy:type-check: > @repo/sample-app-sea-xyzzy@0.0.0 type-check
+@repo/sample-app-sea-xyzzy:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/sample-app-sea-xyzzy:type-check: [K[?9001l[?1004l
+@repo/findgrep2:type-check: cache hit, replaying logs 8816bd78e74ef671
+@repo/findgrep2:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/quiz:type-check: cache miss, executing 86cec1685bec135f
+@repo/findgrep2:type-check: > @repo/findgrep2@0.0.0 type-check
+@repo/findgrep2:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/findgrep2:type-check: [K[?9001l[?1004l
+@repo/difftui:type-check: cache hit, replaying logs 7f89b03aab16c283
+@repo/difftui:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/difftui:type-check: > @repo/difftui@0.0.0 type-check
+@repo/difftui:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/difftui:type-check: [K[?9001l[?1004l
+@repo/splat:type-check: cache hit, replaying logs 345b29948104fab0
+@repo/splat:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/splat:type-check: > @repo/splat@0.0.0 type-check
+@repo/splat:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/splat:type-check: [K[?9001l[?1004l
+@repo/mille-bornes-server:type-check: cache hit, replaying logs 386dc0d035f19f59
+@repo/mille-bornes-server:type-check: [6n[?9001h[?1004h[m]0;C:\WINDOWS\system32\cmd.exe[?25h]0;npm]0;npm run type-check[?25l
+@repo/mille-bornes-server:type-check: > @repo/mille-bornes-server@0.0.0 type-check
+@repo/mille-bornes-server:type-check: > tsc --project tsconfig.json --noEmit[5;1H[?25h]0;C:\WINDOWS\system32\cmd.exe \
+@repo/mille-bornes-server:type-check: [K[?9001l[?1004l
+@repo/findgrep:type-check: 
+@repo/findgrep:type-check: > @repo/findgrep@0.0.0 type-check
+@repo/findgrep:type-check: > tsc --project tsconfig.json --noEmit
+@repo/findgrep:type-check: 
+@repo/touchem:type-check: 
+@repo/touchem:type-check: > @repo/touchem@0.0.0 type-check
+@repo/touchem:type-check: > tsc --project tsconfig.json --noEmit
+@repo/touchem:type-check: 
+@repo/quiz:type-check: 
+@repo/quiz:type-check: > @repo/quiz@0.0.0 type-check
+@repo/quiz:type-check: > tsc --project tsconfig.json --noEmit
+@repo/quiz:type-check: 
+@repo/findgrep:type-check: src/main.mts(139,63): error TS2345: Argument of type 'string[]' is not assignable to parameter of type '(curItem: unknown) => Result<unknown, unknown>'.
+@repo/findgrep:type-check:   Type 'string[]' provides no match for the signature '(curItem: unknown): Result<unknown, unknown>'.
+@repo/findgrep:type-check: src/main.mts(142,9): error TS2322: Type 'FailedResult<unknown>' is not assignable to type 'Result<IFindGrepConfig, string>'.
+@repo/findgrep:type-check:   Type 'FailedResult<unknown>' is not assignable to type 'FailedResult<string>'.
+@repo/findgrep:type-check:     Type 'unknown' is not assignable to type 'string'.
+@repo/findgrep:type-check: src/main.mts(148,9): error TS2322: Type 'unknown[]' is not assignable to type 'RegExp[]'.
+@repo/findgrep:type-check:   Type 'unknown' is not assignable to type 'RegExp'.
+@repo/findgrep:type-check: npm error Lifecycle script `type-check` failed with error:
+@repo/findgrep:type-check: npm error code 2
+@repo/findgrep:type-check: npm error path C:\Users\kwpet\dev\kwp\monorail\work\apps\findgrep
+@repo/findgrep:type-check: npm error workspace @repo/findgrep@0.0.0
+@repo/findgrep:type-check: npm error location C:\Users\kwpet\dev\kwp\monorail\work\apps\findgrep
+@repo/findgrep:type-check: npm error command failed
+@repo/findgrep:type-check: npm error command C:\WINDOWS\system32\cmd.exe /d /s /c tsc --project tsconfig.json --noEmit
+ ERROR  @repo/findgrep#type-check: command (C:\Users\kwpet\dev\kwp\monorail\work\apps\findgrep) C:\Users\kwpet\AppData\Roaming\nodejs\npm.cmd run type-check exited (2)
+
+ Tasks:    40 successful, 43 total
+Cached:    40 cached, 43 total
+  Time:    6.595s 
+Failed:    @repo/findgrep#type-check
+
+ ERROR  run failed: command  exited (2)

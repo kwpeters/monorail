@@ -33,11 +33,12 @@ npm run all && npm run type-check
 - For TypeScript:
   - Leave two blank lines after imports.
   - Leave two blank lines between class members.
+  - For overloaded functions, leave one blank line between each overload signature and between the last overload and the implementation signature (do not bunch them together).
   - Wrap comments to 80 columns.
   - Align successive type annotations and `extends` clauses when practical.
   - Break long signatures and chained expressions over 100 columns onto multiple lines.
   - When method calls are chained, Start new lines with `.` and do not indent that operator.
-  - Ternary formatting: For non-nested ternaries, place `?` and `:` at the end of the line; for nested ternaries, keep the condition, `?` and true expression on a single line.
+  - Ternary formatting: For non-nested multi-line ternaries, place `?` and `:` at the end of the line; for nested ternaries, keep the condition, `?` and true expression on a single line.
 - Prefer Zod-based enums, for example `HttpSuccess` in `packages\depot\src\httpStatusCodes.mts`.  Zod enums provide validation, enumeration and convenient type mapping.
 - Prefer functional patterns and the `depot` helpers `Result`, `Option`, `pipe`, `pipeAsync`, and `resolutionPipeline`.
 - Naming:

@@ -37,10 +37,10 @@ export class NonNegativeInt {
     public static fromString(str: string): Result<NonNegativeInt, string> {
         return pipe(
             isNonBlankString(str, "An empty string is not a valid NonNegativeInt value."),
-            (res) => Result.bind((str) => {
+            Result.bind((str) => {
                 const num = Number(str);
                 return NonNegativeInt.create(num);
-            }, res)
+            })
         );
     }
 
@@ -131,10 +131,10 @@ export class Int8 {
     public static fromString(str: string): Result<Int8, string> {
         return pipe(
             isNonBlankString(str, "An empty string is not a valid Int8 value."),
-            (res) => Result.bind((str) => {
+            Result.bind((str) => {
                 const num = Number(str);
                 return Int8.create(num);
-            }, res)
+            })
         );
     }
 
@@ -238,7 +238,7 @@ export class UInt8 {
      * Gets the maximum value for this data type
      * @return The maximum value that can be stored
      */
-    public static readonly DATA_TYPE_MAX: number = Math.pow(2, 8) - 1; // 255
+    public static readonly DATA_TYPE_MAX: number = Math.pow(2, 8) - 1; // 255, 0xFF
 
 
     /**
@@ -263,10 +263,10 @@ export class UInt8 {
     public static fromString(str: string): Result<UInt8, string> {
         return pipe(
             isNonBlankString(str, "An empty string is not a valid UInt8 value."),
-            (res) => Result.bind((str) => {
+            Result.bind((str) => {
                 const num = Number(str);
                 return UInt8.create(num);
-            }, res)
+            })
         );
     }
 
@@ -395,10 +395,10 @@ export class Int16 {
     public static fromString(str: string): Result<Int16, string> {
         return pipe(
             isNonBlankString(str, "An empty string is not a valid Int16 value."),
-            (res) => Result.bind((str) => {
+            Result.bind((str) => {
                 const num = Number(str);
                 return Int16.create(num);
-            }, res)
+            })
         );
     }
 
@@ -527,10 +527,10 @@ export class UInt16 {
     public static fromString(str: string): Result<UInt16, string> {
         return pipe(
             isNonBlankString(str, "An empty string is not a valid UInt16 value."),
-            (res) => Result.bind((str) => {
+            Result.bind((str) => {
                 const num = Number(str);
                 return UInt16.create(num);
-            }, res)
+            })
         );
     }
 
@@ -659,10 +659,10 @@ export class Int32 {
     public static fromString(str: string): Result<Int32, string> {
         return pipe(
             isNonBlankString(str, "An empty string is not a valid Int32 value."),
-            (res) => Result.bind((str) => {
+            Result.bind((str) => {
                 const num = Number(str);
                 return Int32.create(num);
-            }, res)
+            })
         );
     }
 
@@ -791,10 +791,10 @@ export class UInt32 {
     public static fromString(str: string): Result<UInt32, string> {
         return pipe(
             isNonBlankString(str, "An empty string is not a valid UInt32 value."),
-            (res) => Result.bind((str) => {
+            Result.bind((str) => {
                 const num = Number(str);
                 return UInt32.create(num);
-            }, res)
+            })
         );
     }
 
@@ -923,7 +923,7 @@ export class Int64 {
     public static fromString(str: string): Result<Int64, string> {
         return pipe(
             isNonBlankString(str, "An empty string is not a valid INT value."),
-            (res) => Result.bind(
+            Result.bind(
                 (str) => {
                     try {
                         const num = BigInt(str);
@@ -932,8 +932,7 @@ export class Int64 {
                     catch (err) {
                         return new FailedResult(`"${str}" is not a valid LINT value.  Must be an integer.`);
                     }
-                },
-                res
+                }
             )
         );
     }
@@ -1065,7 +1064,7 @@ export class UInt64 {
     public static fromString(str: string): Result<UInt64, string> {
         return pipe(
             isNonBlankString(str, "An empty string is not a valid UInt64 value."),
-            (res) => Result.bind(
+            Result.bind(
                 (str) => {
 
                     try {
@@ -1075,8 +1074,7 @@ export class UInt64 {
                     catch (err) {
                         return new FailedResult(`"${str}" is not a valid UInt64 value.  Must be an integer.`);
                     }
-                },
-                res
+                }
             )
         );
     }
@@ -1200,10 +1198,10 @@ export class Float32 {
     public static fromString(str: string): Result<Float32, string> {
         return pipe(
             isNonBlankString(str, "An empty string is not a valid Float32 value."),
-            (res) => Result.bind((str) => {
+            Result.bind((str) => {
                 const num = Number(str);
                 return Float32.create(num);
-            }, res)
+            })
         );
     }
 
@@ -1284,10 +1282,10 @@ export class Float64 {
     public static fromString(str: string): Result<Float64, string> {
         return pipe(
             isNonBlankString(str, "An empty string is not a valid Float64 value."),
-            (res) => Result.bind((str) => {
+            Result.bind((str) => {
                 const num = Number(str);
                 return Float64.create(num);
-            }, res)
+            })
         );
     }
 

@@ -136,7 +136,7 @@ async function getConfiguration(): Promise<Result<IFindGrepConfig, string>> {
     const pathIgnoreArrRes =
         new SucceededResult(toArray<string>(argv.pathIgnore as string | Array<string>)) as Result<string[], string>;
     const pathIgnoresResult = pipe(pathIgnoreArrRes)
-    .pipe((r) => Result.bind((v) => Result.mapWhileSuccessful(v, strToRegExp), r))
+    .pipe((r) => Result.bind((v) => Result.mapWhileSuccessful(strToRegExp, v), r))
     .end();
     if (pathIgnoresResult.failed) {
         return pathIgnoresResult;
