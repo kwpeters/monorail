@@ -80,12 +80,12 @@ async function handler(argv: ArgumentsCamelCase<IArgsCommand>): Promise<Result<n
 
     const res = await pipeAsync(
         createBundle(config.inputCjsFile, bundleFile),
-        (res) => res.tapSuccess(console.log),
-        (res) => res.bindAsync(() => createSeaConfigFile(bundleFile, exeFile, seaConfigFile)),
-        (res) => res.tapSuccess(console.log),
-        (res) => res.bindAsync(() => createSeaExe(seaConfigFile)),
-        (res) => res.tapSuccess(console.log),
-        (res) => res.tapSuccess(() => console.log(`✅ Successfully created ${exeFile.toString()}.`)),
+        Result.tapSuccess(console.log),
+        Result.bindAsync(() => createSeaConfigFile(bundleFile, exeFile, seaConfigFile)),
+        Result.tapSuccess(console.log),
+        Result.bindAsync(() => createSeaExe(seaConfigFile)),
+        Result.tapSuccess(console.log),
+        Result.tapSuccess(() => console.log(`✅ Successfully created ${exeFile.toString()}.`)),
     );
 
     if (res.failed) {

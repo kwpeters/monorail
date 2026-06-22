@@ -76,7 +76,7 @@ function checkEnvironment(): Result<undefined, string> {
     return pipe(
         // eslint-disable-next-line turbo/no-undeclared-env-vars
         Result.requireTruthy("Environment variable CLOUDHOME is not defined", process.env.CLOUDHOME),
-        (res) => Result.mapSuccess(() => undefined, res)
+        Result.mapSuccess(() => undefined)
     );
 }
 

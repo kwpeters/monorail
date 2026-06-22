@@ -28,23 +28,20 @@ async function main(): Promise<Result<number, string>> {
     return pipeAsync(
         getConfiguration(),
 
-        (configRes) => Result.tapSuccess(
-            async (config) => {
-                // Loop through the files in the configuration and print
-                // their information.
-                for (const curFile of config.files) {
-                    // Print the file's absolute path.
-                    console.log(curFile.absPath());
+        Result.tapSuccess(async (config) => {
+            // Loop through the files in the configuration and print
+            // their information.
+            for (const curFile of config.files) {
+                // Print the file's absolute path.
+                console.log(curFile.absPath());
 
-                    // If we can get a UNC path for the file, print that too.
-                    const uncRes = await getUncPath(curFile);
-                    if (uncRes.succeeded) {
-                        console.log(uncRes.value);
-                    }
+                // If we can get a UNC path for the file, print that too.
+                const uncRes = await getUncPath(curFile);
+                if (uncRes.succeeded) {
+                    console.log(uncRes.value);
                 }
-            },
-            configRes
-        ),
+            }
+        }),
 
 
         // (configRes) => PromiseResult.bind(
@@ -65,7 +62,7 @@ async function main(): Promise<Result<number, string>> {
         //     },
         //     absPathsRes
         // ),
-        (res) => Result.mapSuccess(() => 0, res)
+        Result.mapSuccess(() => 0)
     );
 }
 

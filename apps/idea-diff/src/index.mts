@@ -101,7 +101,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
     function argToDirOrFile(arg: string | undefined) {
         return pipe(arg)
         .pipe((arg) => arg === undefined ? new FailedResult("File or directory not specified.") : new SucceededResult(arg))
-        .pipe((res) => Result.bind(isDirOrFile, res))
+        .pipe(Result.bind(isDirOrFile))
         .end();
     }
 
@@ -111,13 +111,12 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
             argToDirOrFile(argv._[1] as string | undefined)
         ]
     ))
-    .pipe((res) => Result.bind(
+    .pipe(Result.bind(
         ([left, right]) => {
             return left!.constructor.name === right!.constructor.name ?
                 new SucceededResult({ left: left!, right: right! }) :
                 new FailedResult("Both arguments must be either a directory or a file.");
         },
-        res
     ))
     .end();
 }
@@ -133,7 +132,7 @@ async function findIde(): Promise<Result<File, string>> {
 
     const resUserProfileDir = await pipeAsync(
         getUserProfileDir(),
-        (res) => Result.mapSuccess((dir) => dir.toString().replaceAll("\\", "/"), res)
+        Result.mapSuccess((dir) => dir.toString().replaceAll("\\", "/"))
     );
 
     const globs = [

@@ -108,10 +108,10 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
             new SucceededResult(positionals[0]) :
             new FailedResult("A single positional argument specifying the text regex to search for is required."),
         // Make sure the one positional is a string.
-        (res) => res.bind((positional) => typeof positional === "string" ?
+        Result.bind((positional) => typeof positional === "string" ?
             new SucceededResult(positional) :
             new FailedResult("The positional argument specifying the text regex to search for must be a string.")),
-        (res) => res.bind((str) => strToRegExp(str))
+        Result.bind(strToRegExp)
     );
     if (resTextRegexp.failed) {
         return resTextRegexp;
@@ -140,7 +140,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
             (paths) => Promise.all(paths.map((curPath) => fsPathToFsItem(curPath))),
             // Convert array of Results to a Result for an array.
             (results) => Result.allArrayM(results),
-            (res) => res.mapSuccess((fsItems) => fsItems.filter((fsItem): fsItem is File => fsItem instanceof File))
+            Result.mapSuccess((fsItems) => fsItems.filter((fsItem): fsItem is File => fsItem instanceof File))
         );
     }
 }

@@ -88,7 +88,7 @@ function getNotesFolder(): Result<Directory, string> {
 function getLogixFile(): Result<File, string> {
     return pipe(
         getNotesFolder(),
-        (dirRes) => Result.mapSuccess((dir) => new File(dir, "rockwell", "logix.org"), dirRes)
+        Result.mapSuccess((dir) => new File(dir, "rockwell", "logix.org"))
     );
 }
 

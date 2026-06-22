@@ -40,7 +40,7 @@ async function mainImpl(): Promise<Result<number, string>> {
     const resFlashcards = await pipeAsync(
         mapAsync(config.inputFiles, getFlashcardsFromFile),
         (results) => Result.allArrayM(results),
-        (res) => Result.mapSuccess((decks) => decks.flat(), res)
+        Result.mapSuccess((decks) => decks.flat())
     );
     if (resFlashcards.failed) {
         return resFlashcards;

@@ -49,7 +49,7 @@ async function main(): Promise<Result<number, string>> {
 
     const configRes = await pipeAsync(
         getCliConfiguration(),
-        (res) => res.bindAsync((cliConfig) => getSubjectConfiguration(cliConfig.subjectsConfigFile))
+        Result.bindAsync((cliConfig) => getSubjectConfiguration(cliConfig.subjectsConfigFile))
     );
     if (configRes.failed) {
         return configRes;

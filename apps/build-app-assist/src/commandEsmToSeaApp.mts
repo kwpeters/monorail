@@ -87,14 +87,14 @@ async function handler(argv: ArgumentsCamelCase<IArgsCommand>): Promise<Result<n
 
     const res = await pipeAsync(
         createBundle(config.inputEsmFile, esmBundleFile),
-        (res) => res.tapSuccess(console.log),
-        (res) => res.bindAsync(() => convertEsmBundleToCjsBundle(esmBundleFile, cjsBundleFile)),
-        (res) => res.tapSuccess(console.log),
-        (res) => res.bindAsync(() => createSeaConfigFile(cjsBundleFile, exeFile, seaConfigFile)),
-        (res) => res.tapSuccess(console.log),
-        (res) => res.bindAsync(() => createSeaExe(seaConfigFile)),
-        (res) => res.tapSuccess(console.log),
-        (res) => res.tapSuccess(() => console.log(`✅ Successfully created ${exeFile.toString()}.`)),
+        Result.tapSuccess(console.log),
+        Result.bindAsync(() => convertEsmBundleToCjsBundle(esmBundleFile, cjsBundleFile)),
+        Result.tapSuccess(console.log),
+        Result.bindAsync(() => createSeaConfigFile(cjsBundleFile, exeFile, seaConfigFile)),
+        Result.tapSuccess(console.log),
+        Result.bindAsync(() => createSeaExe(seaConfigFile)),
+        Result.tapSuccess(console.log),
+        Result.tapSuccess(() => console.log(`✅ Successfully created ${exeFile.toString()}.`)),
     );
 
     if (res.failed) {

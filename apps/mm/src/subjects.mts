@@ -106,8 +106,8 @@ export const executableCommandDefinitions = [
                 subject,
                 (s) => spawn(s.executable, s.args, { cwd: s.cwd ?? "." }),
                 (spawnOut) => spawnOut.closePromise,
-                (res) => Result.mapError(spawnErrorToString, res),
-                (res) => Result.tapSuccess((outputText) => clipboard.writeSync(outputText), res)
+                Result.mapError(spawnErrorToString),
+                Result.tapSuccess((outputText) => clipboard.writeSync(outputText))
             );
         }
     },

@@ -17,7 +17,7 @@ export function create(
 ): Result<Immutable<GameState>, string> {
     return pipe(
         safeParse(gameConfigSchema, gameConfig),
-        (resConfig) => resConfig.mapSuccess((gameConfig) => {
+        Result.mapSuccess((gameConfig) => {
 
             //
             // Get the shuffled deck.
@@ -94,6 +94,6 @@ export function create(
             return gameState;
         }),
         // Run the game state through the schema to make sure it is valid.
-        (resGameState) => resGameState.bind((gameState) => safeParse(gameStateSchema, gameState))
+        Result.bind((gameState) => safeParse(gameStateSchema, gameState))
     );
 }

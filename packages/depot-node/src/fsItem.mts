@@ -59,7 +59,7 @@ export async function deleteFsItem(fsItem: FsItem): Promise<Result<FsItem, strin
     else if (fsItem instanceof Symlink) {
         return pipeAsync(
             fsItem.delete(),
-            (res) => res.mapSuccess(() => fsItem)
+            Result.mapSuccess(() => fsItem)
         );
     }
     else {

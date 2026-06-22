@@ -107,7 +107,7 @@ export class Directory {
                 }
             ),
             Result.mapSuccess((str) => new FsPath(str)),
-            (resPath) => resPath.bindAsync((path) => Directory.createIfExtant(path))
+            Result.bindAsync(Directory.createIfExtant)
         );
         return resDir;
     }
