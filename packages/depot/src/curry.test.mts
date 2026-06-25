@@ -1,4 +1,4 @@
-import { dispatchFirst, dispatchLast, dual, dualFlip } from "./curry.mjs";
+import { dispatchFirst, dispatchLast, dual, dualFlip, partial } from "./curry.mjs";
 
 
 describe("dispatchLast()", () => {
@@ -146,6 +146,53 @@ describe("dualFlip()", () => {
         const addBar = append("bar");
         expect(typeof addBar).toEqual("function");
         expect(addBar("foo")).toEqual("foobar");
+    });
+
+});
+
+
+describe("partial()", () => {
+
+    const add3 = (a: number, b: number, c: number): number => a + b + c;
+
+
+    it("binds a single leading argument and awaits the rest", () => {
+        const add5 = partial(add3, 5);
+        expect(typeof add5).toEqual("function");
+        expect(add5(10, 20)).toEqual(35);
+    });
+
+
+    it("binds multiple leading arguments", () => {
+        const add5And10 = partial(add3, 5, 10);
+        expect(add5And10(20)).toEqual(35);
+    });
+
+
+    it("binds no arguments, behaving like the original function", () => {
+        const same = partial(add3);
+        expect(same(1, 2, 3)).toEqual(6);
+    });
+
+
+    it("preserves the order of preset and remaining arguments", () => {
+        const concat = (a: string, b: string, c: string): string => `${a}-${b}-${c}`;
+        const withPrefix = partial(concat, "first");
+        expect(withPrefix("second", "third")).toEqual("first-second-third");
+    });
+
+
+    it("invokes the underlying function each time the partial is called", () => {
+        let numInvocations = 0;
+        const fn = (a: number, b: number): number => {
+            numInvocations++;
+            return a + b;
+        };
+
+        const add1 = partial(fn, 1);
+        expect(add1(2)).toEqual(3);
+        expect(add1(9)).toEqual(10);
+        expect(numInvocations).toEqual(2);
     });
 
 });

@@ -1,7 +1,8 @@
 import * as _ from "lodash-es";
 import {assertNever} from "./never.mjs";
 import { type CompareFunc, CompareResult } from "./compare.mjs";
-import { groupConsecutiveBy } from "./arrayHelpers.mjs";
+import { groupConsecutiveBy } from "./iterableHelpers.mjs";
+import { pipe } from "./pipe2.mjs";
 
 
 export enum DiffChangeType {
@@ -194,7 +195,7 @@ export function elideEqual<T>(
     elidedVal: T
 ): [Array<T>, Array<T>] {
 
-    const groupedDiffItems = groupConsecutiveBy(diffItems, (x, y) => x.change === y.change);
+    const groupedDiffItems = pipe(diffItems, groupConsecutiveBy((x, y) => x.change === y.change));
 
     const resultParts =
         groupedDiffItems.reduce<IAccumulatedParts<T>>(

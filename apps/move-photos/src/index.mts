@@ -2,7 +2,7 @@ import * as url from "node:url";
 import * as path from "node:path";
 import * as _ from "lodash-es";
 import { matchesAny } from "@repo/depot/regexpHelpers";
-import { mapAsync, zipWithAsyncValues } from "@repo/depot/promiseHelpers";
+import { mapAsync, zipWithAsync } from "@repo/depot/iterableHelpers";
 import { Result, SucceededResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
 import { Directory } from "@repo/depot-node/directory";
@@ -54,9 +54,9 @@ async function main(): Promise<Result<number, string>> {
     // the various datestamp strategies.
     //
     const strategies = [datestampStrategyFilePath];
-    const srcAndDeductionAggregates = await zipWithAsyncValues(srcFiles, async (curSrcFile) => {
+    const srcAndDeductionAggregates = await zipWithAsync(async (curSrcFile) => {
         return applyDatestampStrategies(curSrcFile, destDir, strategies);
-    });
+    }, srcFiles);
 
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -169,6 +169,6 @@ async function promptAndDeleteFiles(files: Array<File>, prompt: string): Promise
         return false;
     }
 
-    await mapAsync(files, async (curFile) => curFile.delete());
+    await mapAsync(async (curFile) => curFile.delete(), files);
     return true;
 }

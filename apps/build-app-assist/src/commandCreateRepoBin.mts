@@ -7,7 +7,7 @@ import { Directory } from "@repo/depot-node/directory";
 import { File } from "@repo/depot-node/file";
 import { NodePackage } from "@repo/depot-node/nodePackage";
 import { getLaunchScriptCode } from "@repo/depot-node/nodeUtil";
-import { mapAsync } from "@repo/depot/promiseHelpers";
+import { mapAsync } from "@repo/depot/iterableHelpers";
 
 
 const commandDescription = [
@@ -61,8 +61,8 @@ async function handler(argv: ArgumentsCamelCase<IArgsCommand>): Promise<Result<n
 
     const resCreateLaunchers = await pipeAsync(
         packagesRes.value,
-        (packages) => mapAsync(packages, (pkg) => creatLaunchScriptsForPackage(binDir, pkg)),
-        (results) => Result.allArrayM(results)
+        mapAsync((pkg) => createLaunchScriptsForPackage(binDir, pkg)),
+        Result.allArrayM
     );
     if (resCreateLaunchers.failed) {
         return resCreateLaunchers;
@@ -81,19 +81,16 @@ async function handler(argv: ArgumentsCamelCase<IArgsCommand>): Promise<Result<n
 }
 
 
-async function creatLaunchScriptsForPackage(
+async function createLaunchScriptsForPackage(
     launchScriptDir: Directory,
     pkg: NodePackage
 ): Promise<Result<File[], string>> {
 
     return pipeAsync(
-        pkg.binFiles,
-        (binFilesMap) => Array.from(binFilesMap.entries()),
-        (entries) => {
-            return mapAsync(entries, ([binName, pkgRelativeFile]) => {
-                return createLaunchScript(launchScriptDir, pkg.directory, pkgRelativeFile, binName);
-            });
-        },
+        pkg.binFiles.entries(),
+        mapAsync(([binName, pkgRelativeFile]) => {
+            return createLaunchScript(launchScriptDir, pkg.directory, pkgRelativeFile, binName);
+        }),
         (results) => Result.allArrayM(results)
     );
 }

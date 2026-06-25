@@ -5,7 +5,7 @@ import wrap from "word-wrap";
 import { hideBin } from "yargs/helpers";
 import { fromError } from "zod-validation-error";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
-import { mapAsync } from "@repo/depot/promiseHelpers";
+import { mapAsync } from "@repo/depot/iterableHelpers";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { assertNever } from "@repo/depot/never";
 import { promptForChoice, promptForString } from "@repo/depot-node/prompts";
@@ -38,7 +38,7 @@ async function mainImpl(): Promise<Result<number, string>> {
     const config = resConfig.value;
 
     const resFlashcards = await pipeAsync(
-        mapAsync(config.inputFiles, getFlashcardsFromFile),
+        mapAsync(getFlashcardsFromFile, config.inputFiles),
         (results) => Result.allArrayM(results),
         Result.mapSuccess((decks) => decks.flat())
     );

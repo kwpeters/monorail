@@ -9,7 +9,7 @@ import * as chardet from "chardet";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { Deferred } from "@repo/depot/deferred";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
-import { mapAsync } from "@repo/depot/promiseHelpers";
+import { map, mapAsync } from "@repo/depot/iterableHelpers";
 import { ListenerTracker } from "./listenerTracker.mjs";
 import { Directory } from "./directory.mjs";
 import { type PathPart, reducePathParts } from "./pathHelpers.mjs";
@@ -934,7 +934,8 @@ export async function stringsToFiles(
     const fsPaths = fileCandidates.map((curStr) => new FsPath(curStr));
 
     const [extantFiles, nonExtantFiles] = await pipeAsync(
-        mapAsync(fsPaths, async (fsPath) => {
+        fsPaths,
+        mapAsync(async (fsPath) => {
             let isFile: boolean;
             try {
                 const stats = await fsp.stat(fsPath.toString());
@@ -951,7 +952,7 @@ export async function stringsToFiles(
     return pipeAsync(
         extantFiles.map((extantFileObj) => extantFileObj.fsPath),
         // Map to File objects.
-        (paths) => paths.map((curPath) => new File(curPath.toString())),
+        map((curPath) => new File(curPath.toString())),
         (files) => [nonExtantFiles.map((x) => x.fsPath.toString()), files]
     );
 

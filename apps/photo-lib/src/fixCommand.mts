@@ -4,7 +4,8 @@ import { glob } from "glob";
 import table from "text-table";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
-import { mapAsync, type Task } from "@repo/depot/promiseHelpers";
+import { type Task } from "@repo/depot/promiseHelpers";
+import { mapAsync } from "@repo/depot/iterableHelpers";
 import { StorageSize } from "@repo/depot/storageSize";
 import { PromiseResult } from "@repo/depot/promiseResult";
 import { Directory } from "@repo/depot-node/directory";
@@ -106,7 +107,7 @@ async function removeDuplicates(config: IFixConfig): Promise<Result<number, stri
 
     const dupeInfos = await pipeAsync(
         dirs,
-        (dirs) => mapAsync(dirs, async (curDir) => taskQueue.push(() => getDuplicateFiles(curDir))),
+        mapAsync(async (curDir) => taskQueue.push(() => getDuplicateFiles(curDir))),
         (dupes) => dupes.flat()
     );
 
@@ -142,7 +143,7 @@ async function removeDuplicates(config: IFixConfig): Promise<Result<number, stri
 
     const {succeeded, failed} = await pipeAsync(
         dupeInfos.map((curDupeInfo) => curDupeInfo.duplicateFile),
-        (dupeFiles) => mapAsync(dupeFiles, async (dupeFile) => taskQueue.push(getDeleteFileTask(dupeFile))),
+        mapAsync(async (dupeFile) => taskQueue.push(getDeleteFileTask(dupeFile))),
         (results) => Result.partition(results)
     );
 

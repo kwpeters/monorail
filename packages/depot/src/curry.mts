@@ -112,3 +112,26 @@ export function dualFlip<TFn>(
     const fn = (...args: Array<unknown>): unknown => dispatchFirst(arity, args, impl);
     return fn as unknown as TFn;
 }
+
+
+/**
+ * Partially applies `fn` by binding its leading arguments.  Returns a new
+ * function that accepts the remaining (trailing) arguments and invokes `fn` with
+ * the preset arguments followed by the remaining ones.
+ *
+ * @example
+ * const add = (a: number, b: number, c: number) => a + b + c;
+ * const add5 = partial(add, 5);      // (b, c) => 5 + b + c
+ * add5(10, 20);                       // 35
+ *
+ * @param fn - The function to partially apply.
+ * @param presetArgs - The leading arguments to bind now.
+ * @return A function that takes the remaining arguments and calls `fn` with the
+ * preset arguments prepended.
+ */
+export function partial<TTrailingArgs extends any[], TPresetArgs extends any[], TReturn>(
+    fn: (...args: [...TPresetArgs, ...TTrailingArgs]) => TReturn,
+    ...presetArgs: TPresetArgs
+): (...remainingArgs: TTrailingArgs) => TReturn {
+    return (...remainingArgs: TTrailingArgs) => fn(...presetArgs, ...remainingArgs);
+}

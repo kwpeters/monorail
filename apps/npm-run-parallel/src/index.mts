@@ -3,7 +3,7 @@ import * as url from "node:url";
 import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
 import { toArray } from "@repo/depot/arrayHelpers";
-import { mapAsync } from "@repo/depot/promiseHelpers";
+import { mapAsync } from "@repo/depot/iterableHelpers";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
 import { Directory } from "@repo/depot-node/directory";
@@ -172,7 +172,7 @@ async function getConfig(): Promise<Result<IConfig, string>> {
     //
     const searchDirs = toArray(argv.searchDir).map((str) => new Directory(str));
     const allSearchDirsExist =
-        (await mapAsync(searchDirs, (searchDir) => searchDir.exists()))
+        (await mapAsync((searchDir) => searchDir.exists(), searchDirs))
         .every((stat) => stat !== undefined);
     if (!allSearchDirsExist) {
         return new FailedResult("One or more of the specified search directories do not exist.");

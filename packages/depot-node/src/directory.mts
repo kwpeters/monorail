@@ -4,7 +4,8 @@ import * as path from "node:path";
 import * as _ from "lodash-es";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { Result, SucceededResult, FailedResult } from "@repo/depot/result";
-import { sequence, mapAsync } from "@repo/depot/promiseHelpers";
+import { sequence } from "@repo/depot/promiseHelpers";
+import { mapAsync } from "@repo/depot/iterableHelpers";
 import { StorageSize } from "@repo/depot/storageSize";
 import { matchesAny } from "@repo/depot/regexpHelpers";
 import { FsPath } from "./fsPath.mjs";
@@ -486,22 +487,25 @@ export class Directory {
 
             const contents: IDirectoryContents = {subdirs: [], files: []};
 
-            return mapAsync(fsEntryPaths, (curPath) => {
-                return fsp.lstat(curPath)
-                .then((stats) => {
-                    if (stats.isFile()) {
-                        contents.files.push(new File(curPath));
-                    }
-                    else if (stats.isDirectory()) {
-                        contents.subdirs.push(new Directory(curPath));
-                    }
-                    // Note: We are ignoring symbolic links here.
+            return pipeAsync(
+                fsEntryPaths,
+                mapAsync((curPath) => {
+                    return fsp.lstat(curPath)
+                    .then((stats) => {
+                        if (stats.isFile()) {
+                            contents.files.push(new File(curPath));
+                        }
+                        else if (stats.isDirectory()) {
+                            contents.subdirs.push(new Directory(curPath));
+                        }
+                        // Note: We are ignoring symbolic links here.
+                    })
+                    .catch(() => {
+                        // We failed to stat the current item.  This is probably a
+                        // permissions error.  Pretend like it's not here.
+                    });
                 })
-                .catch(() => {
-                    // We failed to stat the current item.  This is probably a
-                    // permissions error.  Pretend like it's not here.
-                });
-            })
+            )
             .then(() => {
                 return contents;
             });
@@ -574,24 +578,27 @@ export class Directory {
     public prune(): Promise<void> {
         return this.contents()
         .then((contents) => {
-            return mapAsync(contents.subdirs, (curSubdir) => {
-                //
-                // Prune the current subdirectory.
-                //
-                return curSubdir.prune()
-                .then(() => {
+            return pipeAsync(
+                contents.subdirs,
+                mapAsync((curSubdir) => {
                     //
-                    // If the subdirectory is now empty, delete it.
+                    // Prune the current subdirectory.
                     //
-                    return curSubdir.isEmpty();
+                    return curSubdir.prune()
+                    .then(() => {
+                        //
+                        // If the subdirectory is now empty, delete it.
+                        //
+                        return curSubdir.isEmpty();
+                    })
+                    .then((dirIsEmpty) => {
+                        if (dirIsEmpty) {
+                            return curSubdir.delete();
+                        }
+                        return undefined;
+                    });
                 })
-                .then((dirIsEmpty) => {
-                    if (dirIsEmpty) {
-                        return curSubdir.delete();
-                    }
-                    return undefined;
-                });
-            })
+            )
             .then(() => {
                 return;
             });
@@ -862,20 +869,20 @@ export class Directory {
 
         if (includeRootFiles) {
             // Process the files in this directory.
-            await mapAsync(
+            await pipeAsync(
                 thisDirectoryContents.files,
-                async (curFile) => {
+                mapAsync(async (curFile) => {
                     const res = await Promise.resolve(cb(curFile));
                     if (res.include) {
                         selected.push(curFile);
                     }
-                }
+                })
             );
         }
 
-        await mapAsync(
+        await pipeAsync(
             thisDirectoryContents.subdirs,
-            async (curSubdir) => {
+            mapAsync(async (curSubdir) => {
                 const res = await Promise.resolve(cb(curSubdir));
                 if (res.include) {
                     selected.push(curSubdir);
@@ -884,7 +891,7 @@ export class Directory {
                     const subdirFsItems = await curSubdir.filter(cb, true);
                     selected = selected.concat(subdirFsItems);
                 }
-            }
+            })
         );
 
         return selected;

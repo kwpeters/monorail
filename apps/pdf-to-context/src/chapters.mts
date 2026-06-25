@@ -86,7 +86,7 @@ export function finalizeChapters(
 
     // Two chapters that start on the same page would produce an invalid
     // (negative-width) range, so reject that up front.
-    const dupOpt = findFirstDuplicateBy(sorted, (entry) => entry.start);
+    const dupOpt = findFirstDuplicateBy((entry) => entry.start, sorted);
     if (dupOpt.isSome) {
         return new FailedResult(`Two chapters share the same start page (${dupOpt.value.criterion}). Each chapter must start on a distinct page.`);
     }

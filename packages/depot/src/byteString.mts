@@ -1,6 +1,7 @@
 import { sprintf } from "sprintf-js";
 import { FailedResult, Result, SucceededResult } from "./result.mjs";
 import { isBlank } from "./stringHelpers.mjs";
+import { filter } from "./iterableHelpers.mjs";
 import { pipe } from "./pipe2.mjs";
 
 
@@ -26,7 +27,7 @@ export class ByteString {
         // of the string).
         const tokens = pipe(
             str.split(/\s+/),
-            (tokens) => tokens.filter((token) => !isBlank(token))
+            filter((token) => !isBlank(token))
         );
 
         const byteRegex = getByteRegex();

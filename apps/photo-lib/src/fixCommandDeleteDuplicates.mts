@@ -3,7 +3,7 @@ import * as _ from "lodash-es";
 import { Result } from "@repo/depot/result";
 import { NoneOption, Option, SomeOption } from "@repo/depot/option";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
-import { mapAsync } from "@repo/depot/promiseHelpers";
+import { mapAsync } from "@repo/depot/iterableHelpers";
 import { strToRegExp } from "@repo/depot/regexpHelpers";
 import { StorageSize } from "@repo/depot/storageSize";
 import { id } from "@repo/depot/functional";
@@ -15,13 +15,13 @@ export async function getDuplicateFiles(dir: Directory): Promise<IDuplicateFileI
     return pipeAsync(
         dir.contents(false),
         (contents) => contents.files,
-        (files) => mapAsync(files, async (curFile, idx, files) => {
+        (files) => mapAsync(async (curFile) => {
             return pipeAsync(
                 _.without(files, curFile),
-                (otherFiles) => mapAsync(otherFiles, async (curOtherFile) => isDuplicateFile(curFile, curOtherFile)),
+                mapAsync(async (curOtherFile) => isDuplicateFile(curFile, curOtherFile)),
                 (opts) => Option.choose(id, opts)
             );
-        }),
+        }, files),
         (dupes) => dupes.flat()
     );
 }

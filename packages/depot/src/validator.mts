@@ -1,5 +1,6 @@
 import * as _ from "lodash-es";
-import {mapAsync} from "./promiseHelpers.mjs";
+import {mapAsync} from "./iterableHelpers.mjs";
+import {pipeAsync} from "./pipeAsync2.mjs";
 
 
 /**
@@ -62,11 +63,14 @@ export function validate<TSubject>(
     validatorFuncs: Array<ValidatorFunc<TSubject>>
 ): Promise<boolean> {
 
-    return mapAsync(validatorFuncs, (curValidatorFunc) => {
-        const result: Promise<boolean> | boolean = curValidatorFunc(subject);
-        // Wrap each return value in a Promise.
-        return Promise.resolve(result);
-    })
+    return pipeAsync(
+        validatorFuncs,
+        mapAsync((curValidatorFunc) => {
+            const result: Promise<boolean> | boolean = curValidatorFunc(subject);
+            // Wrap each return value in a Promise.
+            return Promise.resolve(result);
+        })
+    )
     .then((validationResults) => {
         // Return true only if every validator returned true.
         return _.every(validationResults);

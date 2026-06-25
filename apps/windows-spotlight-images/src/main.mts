@@ -17,7 +17,8 @@ import * as os from "node:os";
 import * as _ from "lodash-es";
 import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
-import { mapAsync, filterAsync, getTimerPromise, removeAsync } from "@repo/depot/promiseHelpers";
+import { getTimerPromise } from "@repo/depot/promiseHelpers";
+import { mapAsync, filterAsync, partitionAsync } from "@repo/depot/iterableHelpers";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { Directory } from "@repo/depot-node/directory";
 import { File } from "@repo/depot-node/file";
@@ -77,27 +78,27 @@ async function mainImpl(): Promise<Result<number, string>> {
 
     // Keep only the files greater than a certain size.  This gets rid of icons
     // that are also kept in this directory.
-    assetFiles = await filterAsync(assetFiles, async (curFile) => {
+    assetFiles = await filterAsync(async (curFile) => {
         const stats = (await curFile.exists())!;
         return stats.size > 200 * 1024;
-    });
+    }, assetFiles);
 
     const fileComparers = _.map(assetFiles, (curSrcFile) => {
         const destFile = new File(outDir, curSrcFile.baseName + ".jpg");
         return FileComparer.create(curSrcFile, destFile);
     });
 
-    const removed = await removeAsync(fileComparers, async (curFileComparer) => {
+    const [identical, newFileComparers] = await partitionAsync(async (curFileComparer) => {
         const areIdentical = await curFileComparer.bothExistAndIdentical();
         return areIdentical;
-    });
+    }, fileComparers);
 
-    console.log(`Identical files: ${removed.length}`);
-    console.log(`New files:       ${fileComparers.length}`);
+    console.log(`Identical files: ${identical.length}`);
+    console.log(`New files:       ${newFileComparers.length}`);
 
-    const __destFiles = await mapAsync(fileComparers, (curFileComparer) => {
+    const __destFiles = await mapAsync((curFileComparer) => {
         return curFileComparer.leftFile.copy(curFileComparer.rightFile);
-    });
+    }, newFileComparers);
 
     await getTimerPromise(5 * 1000, true);
     return new SucceededResult(0);

@@ -3,7 +3,8 @@ import {EOL} from "node:os";
 import * as childProcess from "node:child_process";
 import { promisify } from "node:util";
 import * as _ from "lodash-es";
-import { mapAsync } from "@repo/depot/promiseHelpers";
+import { mapAsync } from "@repo/depot/iterableHelpers";
+import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
 import {Directory} from "./directory.mjs";
@@ -124,7 +125,10 @@ export function makeAllJsScriptsExecutable(dir: Directory, recursive = false): P
     return dir.contents(recursive)
     .then((contents) => {
         const scriptFiles = _.filter(contents.files, (curFile) => curFile.extName === ".js");
-        return mapAsync(scriptFiles, (curScriptFile) => makeNodeScriptExecutable(curScriptFile))
+        return pipeAsync(
+            scriptFiles,
+            mapAsync((curScriptFile) => makeNodeScriptExecutable(curScriptFile))
+        )
         .then(() => {
             return scriptFiles;
         });

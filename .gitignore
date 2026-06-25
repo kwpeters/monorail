@@ -33,6 +33,7 @@ tmp/
 bin/
 *.tsbuildinfo
 *.vsix
+*.pdf
 
 # Debug
 npm-debug.log*

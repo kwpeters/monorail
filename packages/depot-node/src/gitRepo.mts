@@ -3,7 +3,8 @@ import {insertIf} from "@repo/depot/arrayHelpers";
 import {outdent, trimBlankLines, splitIntoLines} from "@repo/depot/stringHelpers";
 import {Url} from "@repo/depot/url";
 import {CommitHash} from "@repo/depot/commitHash";
-import {mapAsync} from "@repo/depot/promiseHelpers";
+import {mapAsync} from "@repo/depot/iterableHelpers";
+import {pipeAsync} from "@repo/depot/pipeAsync2";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
 import {Directory} from "./directory.mjs";
@@ -900,9 +901,9 @@ export class GitRepo {
             lines = _.filter(lines, (curLine) => !_.includes(curLine, " -> "));
 
             // Map each line to a GitBranch instance.
-            let branches = await mapAsync<string, GitBranch>(
+            let branches = await pipeAsync(
                 lines,
-                async (curLine) => {
+                mapAsync(async (curLine) => {
                     const match = reOutputLine.exec(curLine);
                     if (!match) {
                         throw new Error("Command output did not match parsing regex.");
@@ -915,7 +916,7 @@ export class GitRepo {
                         throw new Error(branchResult.error);
                     }
                     return branchResult.value;
-                }
+                })
             );
 
             if (findLocalBranches && findRemoteBranches) {

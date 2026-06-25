@@ -2,7 +2,8 @@ import * as fs from "node:fs";
 import * as cp from "node:child_process";
 import * as compressing from "compressing";
 import { Result, SucceededResult } from "@repo/depot/result";
-import { mapAsync } from "@repo/depot/promiseHelpers";
+import { mapAsync } from "@repo/depot/iterableHelpers";
+import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { PromiseResult } from "@repo/depot/promiseResult";
 import {Directory} from "./directory.mjs";
 import {File} from "./file.mjs";
@@ -53,9 +54,9 @@ export class NodePackage {
             };
         }, includeRootDir) as Array<File>;
 
-        const packagesPromise = mapAsync(
+        const packagesPromise = pipeAsync(
             packageJsonFiles,
-            (curPkgJson) => NodePackage.fromDirectory(curPkgJson.directory)
+            mapAsync((curPkgJson) => NodePackage.fromDirectory(curPkgJson.directory))
         );
 
         return PromiseResult.fromPromise(packagesPromise);
@@ -189,9 +190,9 @@ export class NodePackage {
     public async makeBinsExecutable(): Promise<Result<ReadonlyMap<string, File>, string>> {
 
         // TODO: Write unit tests for this method.
-        await mapAsync(
-            Array.from(this.binFiles.entries()),
-            async ([binName, binScript]) => {
+        await pipeAsync(
+            this.binFiles.entries(),
+            mapAsync(async ([binName, binScript]) => {
                 // Prepend a shebang line to the script.
                 const shebangRes = await addShebang(binScript);
                 if (shebangRes.failed) {
@@ -205,7 +206,7 @@ export class NodePackage {
                 }
 
                 return undefined;
-            }
+            })
         );
 
         // Return to the caller a map of all the bin files that were made

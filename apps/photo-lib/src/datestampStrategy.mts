@@ -1,4 +1,4 @@
-import { mapAsync } from "@repo/depot/promiseHelpers";
+import { mapAsync } from "@repo/depot/iterableHelpers";
 import { padLeft } from "@repo/depot/stringHelpers";
 import { File } from "@repo/depot-node/file";
 import { Directory } from "@repo/depot-node/directory";
@@ -70,7 +70,7 @@ export async function applyDatestampStrategies(
     destDir: Directory,
     strategies: Array<IDatestampStrategy>
 ): Promise<DatestampDeductionAggregate> {
-    const allDeductions = await mapAsync(strategies, (curStrategy) => curStrategy(source, destDir));
+    const allDeductions = await mapAsync((curStrategy) => curStrategy(source, destDir), strategies);
 
     const aggregateDeduction = new DatestampDeductionAggregate();
     for (const curResult of allDeductions) {

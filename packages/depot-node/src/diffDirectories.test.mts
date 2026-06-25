@@ -1,10 +1,11 @@
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
-import { mapAsync } from "@repo/depot/promiseHelpers";
+import { mapAsync } from "@repo/depot/iterableHelpers";
+import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { File } from "./file.mjs";
 import { Directory } from "./directory.mjs";
 import { Symlink } from "./symlink.mjs";
-import { diffDirectories, ActionPriority, FileCompareActionType, FileComparer } from "./diffDirectories.mjs";
+import { diffDirectories, ActionPriority, FileCompareActionType, FileComparer, DiffDirFileItem } from "./diffDirectories.mjs";
 import { tmpDir } from "./specHelpers.test.mjs";
 
 
@@ -334,10 +335,13 @@ describe("diffDirectories()", () => {
 
             expect(diffDirFileItems.length).toEqual(3);
 
-            await mapAsync(diffDirFileItems, async (curDiffDirFileItem) => {
-                // Execute the first action for each file item.
-                return (await curDiffDirFileItem.actions(ActionPriority.SyncLeftToRight))[0]!.execute();
-            });
+            await pipeAsync(
+                diffDirFileItems,
+                mapAsync(async (curDiffDirFileItem: DiffDirFileItem) => {
+                    // Execute the first action for each file item.
+                    return (await curDiffDirFileItem.actions(ActionPriority.SyncLeftToRight))[0]!.execute();
+                })
+            );
 
             // Check the state of the left directory.  It should be unchanged.
             expect(new File(leftDir, "leftOnly.txt").readSync()).toEqual("leftOnly");
@@ -384,10 +388,13 @@ describe("diffDirectories()", () => {
             const result = await diffDirectories(leftDir, rightDir);
 
             expect(result.length).toEqual(3);
-            await mapAsync(result, async (curDiffDirFileItem) => {
-                // Execute the first action for each file item.
-                return (await curDiffDirFileItem.actions(ActionPriority.SyncRightToLeft))[0]!.execute();
-            });
+            await pipeAsync(
+                result,
+                mapAsync(async (curDiffDirFileItem: DiffDirFileItem) => {
+                    // Execute the first action for each file item.
+                    return (await curDiffDirFileItem.actions(ActionPriority.SyncRightToLeft))[0]!.execute();
+                })
+            );
 
             // Check the state of the left directory.
             expect(new File(leftDir, "leftOnly.txt").existsSync()).toEqual(undefined);   // deleted
@@ -434,10 +441,13 @@ describe("diffDirectories()", () => {
             const result = await diffDirectories(leftDir, rightDir);
 
             expect(result.length).toEqual(3);
-            await mapAsync(result, async (curDiffDirFileItem) => {
-                // Execute the first action for each file item.
-                return (await curDiffDirFileItem.actions(ActionPriority.Preserve))[0]!.execute();
-            });
+            await pipeAsync(
+                result,
+                mapAsync(async (curDiffDirFileItem: DiffDirFileItem) => {
+                    // Execute the first action for each file item.
+                    return (await curDiffDirFileItem.actions(ActionPriority.Preserve))[0]!.execute();
+                })
+            );
 
             // Check the state of the left directory.
             expect(new File(leftDir, "leftOnly.txt").readSync()).toEqual("leftOnly");    // unchanged

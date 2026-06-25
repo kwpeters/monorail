@@ -6,7 +6,7 @@ import { NoneOption, Option, SomeOption } from "@repo/depot/option";
 import { assertNever } from "@repo/depot/never";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { errorToString } from "@repo/depot/errorHelpers";
-import { mapAsync } from "@repo/depot/promiseHelpers";
+import { mapAsync } from "@repo/depot/iterableHelpers";
 import { Directory } from "./directory.mjs";
 import { File } from "./file.mjs";
 import { Symlink } from "./symlink.mjs";
@@ -143,7 +143,8 @@ export async function stringsToFsItems(
     const fsPaths = candidates.map((curStr) => new FsPath(curStr));
 
     const [extant, nonExtant] = await pipeAsync(
-        mapAsync(fsPaths, async (fsPath) => {
+        fsPaths,
+        mapAsync(async (fsPath) => {
 
             const res = await fsPathToFsItem(fsPath);
             if (res.succeeded) {
