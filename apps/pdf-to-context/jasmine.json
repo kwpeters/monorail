@@ -1,0 +1,12 @@
+﻿{
+    "spec_dir": "src",
+    "spec_files": [
+        "**/*.test.mts"
+    ],
+    "helpers": [],
+    "stopSpecOnExpectationFailure": false,
+    "random": false,
+    "env": {
+        "forbidDuplicateNames": false
+    }
+}

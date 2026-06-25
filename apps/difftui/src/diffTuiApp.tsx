@@ -10,6 +10,8 @@ import {
 } from "@repo/depot-node/diffDirectories";
 import { showVsCodeDiff, openInVsCode } from "@repo/depot-node/vsCode";
 import { Directory } from "@repo/depot-node/directory";
+import { VoSet } from "@repo/depot/voSet";
+import { type HashString } from "@repo/depot/hash";
 import {
     type IDiffTuiSettings,
     actionPriorityToString,
@@ -98,6 +100,32 @@ function statusColor(status: string): string {
 
 
 // ---------------------------------------------------------------------------
+// Ignored-files set
+// ---------------------------------------------------------------------------
+
+/**
+ * Creates a session-only set of "ignored" diff items.  Items are hashed by
+ * their relative file path so that membership survives a refresh (which builds
+ * brand-new item/File instances) and a config reload (which may repoint the
+ * compared directories).
+ *
+ * @param initial - Items to seed the new set with
+ * @return A new VoSet keyed by relative file path
+ */
+function createIgnoredSet(
+    initial?: Iterable<DiffDirFileItem>
+): VoSet<DiffDirFileItem> {
+    // The relative file path is already a unique identity for an item, so it is
+    // used directly as the hash (branded as HashString) — no risk of the hash
+    // collisions a derived hash could introduce.
+    return new VoSet<DiffDirFileItem>(
+        (item) => item.relativeFilePath as HashString,
+        initial
+    );
+}
+
+
+// ---------------------------------------------------------------------------
 // Settings panel state
 // ---------------------------------------------------------------------------
 
@@ -151,14 +179,14 @@ const SETTINGS_FIELD_COUNT = 6;
 
 /**
  * Total lines consumed by fixed chrome:
- *   header (border + 1 content + border)          = 3
+ *   header (border + 1 content + border)                             =  3
  *   details pane (border + paddingY + 6 content + paddingY + border) = 10
- *   footer (hint + optional status msg)           = 2
- *   scroll indicators in list (⬆ + ⬇, worst case)= 2
- *                                               ────
- *                                               17 lines
+ *   footer (2 hint lines + optional status + optional ignored count) =  4
+ *   scroll indicators in list (⬆ + ⬇, worst case)                    =  2
+ *                                                                    ────
+ *                                                                      19 lines
  */
-const FIXED_OVERHEAD = 17;
+const FIXED_OVERHEAD = 19;
 
 /** Minimum rows to show in the scrollable file list. */
 const MIN_LIST_ROWS = 3;
@@ -196,6 +224,13 @@ export function DiffTuiApp({
     // The resolved diff list with statuses.
     const [items, setItems] = useState<Array<IItemWithStatus>>([]);
 
+    // Session-only set of files the user has chosen to temporarily ignore.
+    // Not persisted to the config file and not cleared on a config reload.
+    const [ignored, setIgnored] = useState<VoSet<DiffDirFileItem>>(() => createIgnoredSet());
+
+    // Whether ignored files are shown (dimmed) in the list or hidden entirely.
+    const [showIgnored, setShowIgnored] = useState(false);
+
     // Whether we're loading.
     const [loading, setLoading] = useState(true);
 
@@ -230,6 +265,13 @@ export function DiffTuiApp({
         return Math.max(MIN_LIST_ROWS, (stdout.rows || DEFAULT_TERMINAL_ROWS) - FIXED_OVERHEAD);
     }
 
+    // The list actually shown to (and navigated by) the user.  Ignored items are
+    // hidden unless the "show ignored" view is enabled.  All selection, scroll
+    // and action logic operates on this derived list, not the full `items`.
+    const visibleItems = showIgnored ?
+        items :
+        items.filter((entry) => !ignored.has(entry.item));
+
     // ---------------------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------------------
@@ -239,7 +281,9 @@ export function DiffTuiApp({
         diffLeftDir: Directory,
         diffRightDir: Directory,
         prevPath: string | undefined,
-        prevIdx: number
+        prevIdx: number,
+        ignoredSet: VoSet<DiffDirFileItem>,
+        showIgnoredFlag: boolean
     ) => {
         setLoading(true);
         setStatusMsg("");
@@ -260,7 +304,13 @@ export function DiffTuiApp({
             );
 
             setItems(withStatus);
-            const newIdx = retainSelection(prevPath, diffItems, prevIdx);
+
+            // Selection is tracked against the visible list, so retain it
+            // against the same filtering the UI applies.
+            const visible = showIgnoredFlag ?
+                withStatus :
+                withStatus.filter((entry) => !ignoredSet.has(entry.item));
+            const newIdx = retainSelection(prevPath, visible.map((entry) => entry.item), prevIdx);
             setSelectedIndex(newIdx < 0 ? 0 : newIdx);
         }
         catch (err) {
@@ -275,8 +325,9 @@ export function DiffTuiApp({
 
 
     async function refreshFromCurrentState(settings: IDiffTuiSettings): Promise<void> {
-        const prevPath = items[selectedIndex]?.item.relativeFilePath;
-        await computeDiff(settings, currentLeftDir, currentRightDir, prevPath, selectedIndex);
+        const prevPath = visibleItems[selectedIndex]?.item.relativeFilePath;
+        await computeDiff(settings, currentLeftDir, currentRightDir, prevPath, selectedIndex,
+                          ignored, showIgnored);
     }
 
 
@@ -311,20 +362,23 @@ export function DiffTuiApp({
         setPendingSettings(refreshedSettings);
         setSettingsDraft(settingsToEditorDraft(refreshedSettings));
 
-        const prevPath = items[selectedIndex]?.item.relativeFilePath;
+        const prevPath = visibleItems[selectedIndex]?.item.relativeFilePath;
         await computeDiff(
             refreshedSettings,
             refreshedLeftDir,
             refreshedRightDir,
             prevPath,
-            selectedIndex
+            selectedIndex,
+            ignored,
+            showIgnored
         );
     }
 
 
     // Initial load.
     useEffect(() => {
-        void computeDiff(appliedSettings, currentLeftDir, currentRightDir, undefined, 0);
+        void computeDiff(appliedSettings, currentLeftDir, currentRightDir, undefined, 0,
+                         ignored, showIgnored);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -332,7 +386,7 @@ export function DiffTuiApp({
     // Load available actions (Skip excluded) whenever selection changes or mode returns.
     useEffect(() => {
         if (mode !== "list" && mode !== "action") { return; }
-        const entry = items[selectedIndex];
+        const entry = visibleItems[selectedIndex];
         if (entry === undefined) {
             setAvailableActions([]);
             return;
@@ -342,7 +396,8 @@ export function DiffTuiApp({
             setAvailableActions(acts.filter((a) => a.type !== FileCompareActionType.Skip));
             setActionIndex(0);
         });
-    }, [selectedIndex, items, appliedSettings.actionPriority, mode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedIndex, items, ignored, showIgnored, appliedSettings.actionPriority, mode]);
 
 
     // Scroll the file list to keep the selected item visible.
@@ -357,12 +412,14 @@ export function DiffTuiApp({
     }, [selectedIndex, stdout.rows]);
 
 
-    // After a refresh the list may shrink; clamp scroll offset to the new bounds.
+    // After a refresh, an ignore toggle, or a view change the list may shrink;
+    // clamp the scroll offset and selected index to the new bounds.
     useEffect(() => {
         const visCount = getListRows();
-        setScrollOffset((prev) => Math.min(prev, Math.max(0, items.length - visCount)));
+        setScrollOffset((prev) => Math.min(prev, Math.max(0, visibleItems.length - visCount)));
+        setSelectedIndex((prev) => Math.min(prev, Math.max(0, visibleItems.length - 1)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [items, stdout.rows]);
+    }, [visibleItems.length, stdout.rows]);
 
 
     // ---------------------------------------------------------------------------
@@ -455,13 +512,15 @@ export function DiffTuiApp({
                     setMode("list");
                     setConfirmAction(undefined);
                     void act.execute().then(async () => {
-                        const prevPath = items[selectedIndex]?.item.relativeFilePath;
+                        const prevPath = visibleItems[selectedIndex]?.item.relativeFilePath;
                         await computeDiff(
                             appliedSettings,
                             currentLeftDir,
                             currentRightDir,
                             prevPath,
-                            selectedIndex
+                            selectedIndex,
+                            ignored,
+                            showIgnored
                         );
                     });
                 }
@@ -483,7 +542,7 @@ export function DiffTuiApp({
                 return;
             }
 
-            const entry        = items[selectedIndex];
+            const entry        = visibleItems[selectedIndex];
             const extraActions = entry !== undefined ?
                 getExtraActions(entry.status) :
                 ["diff-vscode" as ExtraVsCodeAction];
@@ -530,9 +589,9 @@ export function DiffTuiApp({
                                         if (stats?.size === 0) {
                                             await entry.item.rightFile.delete();
                                         }
-                                        const prevPath = items[selectedIndex]?.item.relativeFilePath;
+                                        const prevPath = visibleItems[selectedIndex]?.item.relativeFilePath;
                                         await computeDiff(appliedSettings, currentLeftDir, currentRightDir,
-                                                          prevPath, selectedIndex);
+                                                          prevPath, selectedIndex, ignored, showIgnored);
                                     })();
                                 }
                                 else if (entry.status === "rightOnly") {
@@ -543,9 +602,9 @@ export function DiffTuiApp({
                                         if (stats?.size === 0) {
                                             await entry.item.leftFile.delete();
                                         }
-                                        const prevPath = items[selectedIndex]?.item.relativeFilePath;
+                                        const prevPath = visibleItems[selectedIndex]?.item.relativeFilePath;
                                         await computeDiff(appliedSettings, currentLeftDir, currentRightDir,
-                                                          prevPath, selectedIndex);
+                                                          prevPath, selectedIndex, ignored, showIgnored);
                                     })();
                                 }
                                 else {
@@ -606,17 +665,55 @@ export function DiffTuiApp({
             return;
         }
 
-        if (key.upArrow && items.length > 0) {
+        // Toggle ignore on the selected file.
+        if (input === "i") {
+            const entry = visibleItems[selectedIndex];
+            if (entry !== undefined) {
+                const wasIgnored = ignored.has(entry.item);
+                const next = createIgnoredSet(ignored);
+                if (wasIgnored) {
+                    next.delete(entry.item);
+                }
+                else {
+                    next.add(entry.item);
+                }
+                setIgnored(next);
+                setStatusMsg(
+                    wasIgnored ?
+                        `No longer ignoring ${entry.item.relativeFilePath}` :
+                        `Ignoring ${entry.item.relativeFilePath}`
+                );
+            }
+            return;
+        }
+
+        // Toggle whether ignored files are shown (dimmed) in the list.
+        if (input === "I") {
+            setShowIgnored((prev) => !prev);
+            return;
+        }
+
+        // Un-ignore all files.
+        if (input === "u") {
+            const count = ignored.size;
+            if (count > 0) {
+                setIgnored(createIgnoredSet());
+                setStatusMsg(`Un-ignored ${count} file${count === 1 ? "" : "s"}.`);
+            }
+            return;
+        }
+
+        if (key.upArrow && visibleItems.length > 0) {
             setSelectedIndex((i) => Math.max(0, i - 1));
             return;
         }
 
-        if (key.downArrow && items.length > 0) {
-            setSelectedIndex((i) => Math.min(items.length - 1, i + 1));
+        if (key.downArrow && visibleItems.length > 0) {
+            setSelectedIndex((i) => Math.min(visibleItems.length - 1, i + 1));
             return;
         }
 
-        if (key.return && items.length > 0) {
+        if (key.return && visibleItems.length > 0) {
             setMode("action");
             return;
         }
@@ -660,10 +757,22 @@ export function DiffTuiApp({
             );
         }
 
+        if (visibleItems.length === 0) {
+            return (
+                <Box paddingX={2} paddingY={1}>
+                    <Text dimColor>All {items.length} matching file{items.length === 1 ? " is" : "s are"} ignored. Press </Text>
+                    <Text bold>I</Text>
+                    <Text dimColor> to show them or </Text>
+                    <Text bold>u</Text>
+                    <Text dimColor> to un-ignore all.</Text>
+                </Box>
+            );
+        }
+
         const visCount = getListRows();
         const hasAbove = scrollOffset > 0;
-        const hasBelow = scrollOffset + visCount < items.length;
-        const visibleItems = items.slice(scrollOffset, scrollOffset + visCount);
+        const hasBelow = scrollOffset + visCount < visibleItems.length;
+        const pageItems = visibleItems.slice(scrollOffset, scrollOffset + visCount);
 
         return (
             <Box flexDirection="column">
@@ -672,9 +781,10 @@ export function DiffTuiApp({
                         <Text dimColor>⬆ {scrollOffset} more above</Text>
                     </Box>
                 )}
-                {visibleItems.map((entry, relIdx) => {
+                {pageItems.map((entry, relIdx) => {
                     const idx = scrollOffset + relIdx;
                     const isSelected = idx === selectedIndex;
+                    const isIgnored = ignored.has(entry.item);
                     const badge = statusBadge(entry.status);
                     const color = statusColor(entry.status);
                     return (
@@ -682,18 +792,20 @@ export function DiffTuiApp({
                             <Text {...(isSelected ? { color: "blue" as const } : {})} bold={isSelected}>
                                 {isSelected ? "▶" : "  "}
                             </Text>
-                            <Text color={color}>[{badge}] </Text>
+                            <Text color={color} dimColor={isIgnored}>[{badge}] </Text>
                             <Text
                                 color={isSelected ? "white" as const : "gray" as const}
-                                bold={isSelected}>
+                                bold={isSelected}
+                                dimColor={isIgnored}>
                                 {entry.item.relativeFilePath}
                             </Text>
+                            {isIgnored && <Text dimColor> (ignored)</Text>}
                         </Box>
                     );
                 })}
                 {hasBelow && (
                     <Box paddingX={1}>
-                        <Text dimColor>⬇ {items.length - scrollOffset - visCount} more below</Text>
+                        <Text dimColor>⬇ {visibleItems.length - scrollOffset - visCount} more below</Text>
                     </Box>
                 )}
             </Box>
@@ -702,18 +814,19 @@ export function DiffTuiApp({
 
 
     function renderDetailsPane(): React.ReactElement {
-        const entry = items[selectedIndex];
+        const entry = visibleItems[selectedIndex];
         if (entry === undefined) {
             return <Box />;
         }
 
         const badge = statusBadge(entry.status);
         const color = statusColor(entry.status);
+        const isIgnored = ignored.has(entry.item);
 
         return (
             <Box flexDirection="column" paddingX={2} paddingY={1} borderStyle="single">
-                <Text bold>Selected ({selectedIndex + 1} of {items.length}): </Text>
-                <Text>{entry.item.relativeFilePath}</Text>
+                <Text bold>Selected ({selectedIndex + 1} of {visibleItems.length}): </Text>
+                <Text>{entry.item.relativeFilePath}{isIgnored ? " (ignored)" : ""}</Text>
                 <Text color={color}>Status: [{badge}] {entry.status}</Text>
                 <Newline />
                 <Text dimColor>Left:  {entry.item.leftFile.toString()}</Text>
@@ -742,7 +855,7 @@ export function DiffTuiApp({
             label: act.type,
             index: i
         }));
-        const entry        = items[selectedIndex];
+        const entry        = visibleItems[selectedIndex];
         const extraActions = entry !== undefined ?
             getExtraActions(entry.status) :
             ["diff-vscode" as ExtraVsCodeAction];
@@ -858,8 +971,16 @@ export function DiffTuiApp({
                 {statusMsg.length > 0 && (
                     <Text color="yellow">{statusMsg}</Text>
                 )}
+                {ignored.size > 0 && (
+                    <Text color="magenta">
+                        {ignored.size} ignored{showIgnored ? " (shown)" : " (hidden)"}
+                    </Text>
+                )}
                 <Text dimColor>
-                    [↑↓] Select  [Enter] Actions  [s] Settings  [r] Refresh  [Ctrl+E] Export  [q] Quit
+                    [↑↓] Select  [Enter] Actions  [i] Ignore  [I] Show ignored  [u] Un-ignore all
+                </Text>
+                <Text dimColor>
+                    [s] Settings  [r] Refresh  [Ctrl+E] Export  [q] Quit
                 </Text>
             </Box>
         );

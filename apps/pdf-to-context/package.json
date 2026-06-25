@@ -1,0 +1,34 @@
+{
+    "name": "@repo/pdf-to-context",
+    "version": "0.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "echo 'Add dev script here'",
+        "build": "npm run build:ts && npm run build:sea",
+        "build:ts": "tsc --build tsconfig.src.json",
+        "build:sea": "tsx ../build-app-assist/src/index.mts cjsToSeaApp --inputCjsFile ./dist/index.cjs --exeBaseName pdf-to-context",
+        "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
+        "lint": "eslint .",
+        "type-check": "tsc --project tsconfig.json --noEmit",
+        "depcheck": "depcheck"
+    },
+    "bin": {
+        "pdf-to-context": "./dist/index.cjs"
+    },
+    "dependencies": {
+        "@repo/depot": "*",
+        "@repo/depot-node": "*",
+        "yargs": "^17.7.2",
+        "zod": "^4.3.6"
+    },
+    "devDependencies": {
+        "@repo/build-app-assist": "*",
+        "@repo/eslint-config": "*",
+        "@repo/typescript-config": "*",
+        "@types/jasmine": "^6.0.0",
+        "@types/node": "^25.4.0",
+        "@types/yargs": "^17.0.24",
+        "eslint": "^10.0.1",
+        "jasmine": "^6.1.0"
+    }
+}
