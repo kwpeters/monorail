@@ -63,7 +63,7 @@ export const NANOSECONDS_PER_DAY_BIGINT =
  * Returns whether a Gregorian calendar year is a leap year.
  *
  * @param year - Year number in the proleptic Gregorian calendar.
- * @return True when the year has 366 days; otherwise false.
+ * @returns True when the year has 366 days; otherwise false.
  */
 export function isLeapYear(year: number): boolean {
     return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
@@ -77,7 +77,7 @@ export function isLeapYear(year: number): boolean {
  *
  * @param year - Year number in the proleptic Gregorian calendar.
  * @param month - Month number in the range 1-12.
- * @return Number of days in the requested month.
+ * @returns Number of days in the requested month.
  */
 export function daysInMonth(year: number, month: number): number {
     switch (month) {
@@ -107,7 +107,7 @@ export function daysInMonth(year: number, month: number): number {
  * @param year - Full year in proleptic Gregorian calendar.
  * @param month - Month number in the range 1-12.
  * @param day - Day number in the range 1-31 (already calendar-validated).
- * @return Number of days since 1970-01-01, where 1970-01-01 is 0.
+ * @returns Number of days since 1970-01-01, where 1970-01-01 is 0.
  */
 export function daysFromCivil(year: number, month: number, day: number): bigint {
     // Treat Jan/Feb as months 13/14 of the previous year.
@@ -140,7 +140,7 @@ export function daysFromCivil(year: number, month: number, day: number): bigint 
  * date epochs.
  *
  * @param daysFromEpoch - Number of days since 1970-01-01.
- * @return Civil date components in the proleptic Gregorian calendar.
+ * @returns Civil date components in the proleptic Gregorian calendar.
  */
 export function civilFromDays(daysFromEpoch: bigint): { year: number, month: number, day: number } {
     // Shift to civil-date epoch expected by the algorithm.

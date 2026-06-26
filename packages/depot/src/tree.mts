@@ -78,7 +78,7 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
     /**
      * Determines whether this tree contains any nodes.
      *
-     * @return true if this tree is empty; otherwise false.
+     * @returns true if this tree is empty; otherwise false.
      */
     public isEmpty(): boolean {
         return this._root.children.length === 0;
@@ -117,7 +117,7 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      * Gets the specified node's value
      *
      * @param node - The node whose value will be gotten
-     * @return The specified node's value
+     * @returns The specified node's value
      */
     public value(node: ITreeNode<TPayload>): TPayload {
         return node.payload;
@@ -129,7 +129,7 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      * children)
      *
      * @param node - The node to be tested
-     * @return Whether _node_ is a leaf node.
+     * @returns Whether _node_ is a leaf node.
      */
     public isLeaf(node: ITreeNode<TPayload>): boolean {
         return node.children.length === 0;
@@ -141,7 +141,7 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      * Gets the specified node's child nodes
      *
      * @param parent - The node whose child nodes will be gotten
-     * @return The child nodes
+     * @returns The child nodes
      */
     public childNodes(parent: ITreeNode<TPayload> | undefined): ReadonlyArray<ITreeNode<TPayload>> {
         return parent === undefined ? this._root.children : parent.children;
@@ -152,7 +152,7 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      * Gets the specified node's parent node
      *
      * @param node - The node whose parent will be found
-     * @return The node's parent node or undefined if the specified node is a
+     * @returns The node's parent node or undefined if the specified node is a
      * top level node.
      */
     public parent(node: ITreeNode<TPayload>): ITreeNode<TPayload> | undefined {
@@ -165,7 +165,7 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      * have a depth of 0.
      *
      * @param node - The node to calculate the depth of
-     * @return The node's depth
+     * @returns The node's depth
      */
     public depth(node: ITreeNode<TPayload>): number {
         // Start at -1 to account for the internal root node.
@@ -183,7 +183,7 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      * Gets the specified node's  first child node
      *
      * @param parent - The parent node whose first child will be found
-     * @return The node's first child node or undefined if the node has no
+     * @returns The node's first child node or undefined if the node has no
      * children
      */
     public firstChild(parent: ITreeNode<TPayload> | undefined): ITreeNode<TPayload> | undefined {
@@ -197,7 +197,7 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      * Gets the specified node's previous sibling
      *
      * @param node - The node whose previous sibling will be found
-     * @return The previous sibling node or undefined if there is no previous sibling
+     * @returns The previous sibling node or undefined if there is no previous sibling
      */
     public prevSibling(node: ITreeNode<TPayload>): ITreeNode<TPayload> | undefined {
         const parent = node.parent;
@@ -221,7 +221,7 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      * Gets the specified node's next sibling
      *
      * @param node - The node whose next sibling will be found
-     * @return The next sibling node or undefined if there is no next sibling
+     * @returns The next sibling node or undefined if there is no next sibling
      */
     public nextSibling(node: ITreeNode<TPayload>): ITreeNode<TPayload> | undefined {
         const parent = node.parent.isRoot ? this._root : node.parent;
@@ -253,7 +253,7 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      * front of.  undefined if the new node is to be appended to the child
      * collection.
      * @param childVal - The value attached to the new node
-     * @return The newly inserted node
+     * @returns The newly inserted node
      */
     public insert(
         parent:       ITreeNode<TPayload> | undefined,
@@ -295,7 +295,7 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      * if the entire tree should be traversed.
      * @param includeSubtreeRoot - When _subtreeRoot_ is specified, indicates
      * whether that node is to be included in the traversal.
-     * @return A depth-first iterator
+     * @returns A depth-first iterator
      */
     public *traverseDF(
         subtreeRoot?:        ITreeNode<TPayload>,
@@ -328,7 +328,7 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      * iterator will traverse *only the subtree* rooted at this node.
      * @param includeSubtreeRoot - When _subtreeRoot_ is specified, indicates
      * whether that node is to be included in the traversal.
-     * @return A breadth-first iterator
+     * @returns A breadth-first iterator
      */
     public *traverseBF(
         subtreeRoot?:        ITreeNode<TPayload>,
@@ -367,7 +367,7 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      * @param startNode - The node to start at
      * @param includeStartNode - true to include _startNode_; false to start
      * with its parent node.
-     * @return The ancestor iterator
+     * @returns The ancestor iterator
      */
     public *ancestors(
         startNode: ITreeNode<TPayload>,
@@ -390,7 +390,7 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      * iterator will search *only the subtree* rooted at this node.
      * @param includeSubtreeRoot - When _subtreeRoot_ is specified, indicates
      * whether that node is to be included in the search.
-     * @return The leaf node iterator
+     * @returns The leaf node iterator
      */
     public *leafNodes(
         subtreeRoot?: ITreeNode<TPayload>,
@@ -413,7 +413,7 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      * iterator will search *only the subtree* rooted at this node.
      * @param includeSubtreeRoot - When _subtreeRoot_ is specified, indicates
      * whether _subtreeRoot_ is to be included in the resulting paths.
-     * @return The path iterator
+     * @returns The path iterator
      */
     public *leafNodePaths(
         subtreeRoot?: ITreeNode<TPayload>,
@@ -448,7 +448,7 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      * @param subtreeRoot - The root of the subtree to be traversed
      * @param includeSubtreeRoot - When _subtreeRoot_ is specified, indicates
      * whether that node should be included
-     * @return An iterator yielding each node path.  The returned paths will
+     * @returns An iterator yielding each node path.  The returned paths will
      * start at a tree top level node when _subtreeRoot_ is not specified.  When
      * _subtreeRoot_ is specified, the returned paths will start at either
      * _subtreeRoot_ or one of its children, depending on the value of
@@ -487,7 +487,7 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      *
      * @param fn - The mapping function that accepts input about nodes in this
      * Tree and returns the value for the corresponding node in the new Tree.
-     * @return The new Tree
+     * @returns The new Tree
      */
     public map<TOut>(
         fn: (srcVal: TPayload, srcNode: ITreeNode<TPayload>, srcTree: Tree<TPayload>,
@@ -505,7 +505,7 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      *
      * @param fn - The filter function that returns true if the node should be
      * included in the returned Tree.
-     * @return The new filtered Tree
+     * @returns The new filtered Tree
      */
     public filter(
         fn: (srcVal: TPayload, srcNode: ITreeNode<TPayload>, srcTree: Tree<TPayload>) => boolean
@@ -527,7 +527,7 @@ export class Tree<TPayload> implements IReadonlyTree<TPayload> {
      * @param stopNode - A node that will not be passed when trying to advance
      * in depth first order.  This is useful when you want to limit the
      * traversal to a subtree.  undefined if no limit is desired.
-     * @return The next (depth first) node or undefined if there is no next node
+     * @returns The next (depth first) node or undefined if there is no next node
      */
     private advanceDF(
         node:     ITreeNode<TPayload> | undefined,

@@ -607,7 +607,7 @@ export type AllErrorTypes<T extends Record<string, Result<unknown, unknown>>> = 
  *     // type Error1 = string | boolean
  *
  * @param param - Description
- * @return Description
+ * @returns Description
  */
 export type PossibleErrors<T extends Record<string, Result<unknown, unknown>>> = AllErrorTypes<T>[keyof AllErrorTypes<T>];
 
@@ -626,7 +626,7 @@ export namespace Result {
      *
      * @param namedResults - An object where the keys are strings and the values are
      * Result objects.
-     * @return If all Results are successful, a successful Result wrapping an
+     * @returns If all Results are successful, a successful Result wrapping an
      * object having the same keys and the values are the Result values.
      * Otherwise, the first failure Result is returned.
      */
@@ -991,7 +991,7 @@ export namespace Result {
      *
      * @param fn - Async augment function invoked for successful input
      * @param input - The input Result
-     * @return A Promise for the augmented Result
+     * @returns A Promise for the augmented Result
      */
     // Eager form.
     export function augmentAsync<TInS extends object, TInE, TOutS, TOutE>(
@@ -1027,7 +1027,7 @@ export namespace Result {
      * @param fn - The function to invoke on _input.value_ when _input_ is
      * successful.
      * @param input - The input Result.
-     * @return Either the passed-through failure Result or the Result returned from
+     * @returns Either the passed-through failure Result or the Result returned from
      * _fn_.
      */
     // Eager form.
@@ -1056,7 +1056,7 @@ export namespace Result {
      *
      * @param fn - Async bind function invoked for successful input
      * @param input - The input Result
-     * @return A Promise for the bound Result
+     * @returns A Promise for the bound Result
      */
     // Eager form.
     export function bindAsync<TInS, TInE, TOutS, TOutE>(
@@ -1088,7 +1088,7 @@ export namespace Result {
      * @param fn - The function to invoke when _input_ is an error.  It is
      * passed the error.
      * @param input - The input Result.
-     * @return Either the passed-through successful Result or the Result
+     * @returns Either the passed-through successful Result or the Result
      * returned from _fn_.
      */
     // Eager form.
@@ -1117,7 +1117,7 @@ export namespace Result {
      *
      * @param fn - Async function invoked for failed input
      * @param input - The input Result
-     * @return A Promise for the bound Result
+     * @returns A Promise for the bound Result
      */
     // Eager form.
     export function bindErrorAsync<TInS, TInE, TOutS, TOutE>(
@@ -1205,7 +1205,7 @@ export namespace Result {
      *
      * @param fn - Async fallback function invoked for failed input
      * @param input - The input Result
-     * @return A Promise for either the success value or fallback value
+     * @returns A Promise for either the success value or fallback value
      */
     // Eager form.
     export function defaultWithAsync<TInS, TE, TDefault>(
@@ -1405,7 +1405,7 @@ export namespace Result {
      * unwraps them.
      *
      * @param results - The input Results
-     * @return An array containing the unwrapped values of the failure
+     * @returns An array containing the unwrapped values of the failure
      * Results.
      */
     export function filterErrors<TSuccess, TError>(
@@ -1422,7 +1422,7 @@ export namespace Result {
      * unwraps them.
      *
      * @param results - The input Results
-     * @return An array containing the unwrapped values of the successful
+     * @returns An array containing the unwrapped values of the successful
      * Results.
      */
     export function filterSuccesses<TSuccess, TError>(
@@ -1462,7 +1462,7 @@ export namespace Result {
      *
      * @param err - Error value to be used if _nullable_ is undefined or null
      * @param nullable - A value that may be undefined or null
-     * @return A successful Result containing _nullable_ if it was neither
+     * @returns A successful Result containing _nullable_ if it was neither
      * undefined or null.  Otherwise, a failure Result containing _err_.
      */
     // Eager form.
@@ -1494,7 +1494,7 @@ export namespace Result {
      *
      * @param err - The error value to use when _opt_ is None
      * @param opt - The Option to be converted
-     * @return The converted Result
+     * @returns The converted Result
      */
     // Eager form.
     export function fromOption<TInS, TE>(
@@ -1529,7 +1529,7 @@ export namespace Result {
      * @param errFn - A function that will be invoked if _opt_ is None.  This
      * function must return the failed error value.
      * @param opt - The Option to be converted
-     * @return The converted Result
+     * @returns The converted Result
      */
     // Eager form.
     export function fromOptionWith<TInS, TE>(
@@ -1567,7 +1567,7 @@ export namespace Result {
      *  successful input is returned.  If this function returns a failure, that
      *  failed Result is returned.
      * @param input - The input Result
-     * @return _input_ is returned if it is a failed Result.  Otherwise, if _fn_
+     * @returns _input_ is returned if it is a failed Result.  Otherwise, if _fn_
      * is successful, _input_ is returned.  If _fn_ is a failure, that failed
      * result is returned.
      */
@@ -1599,7 +1599,7 @@ export namespace Result {
      *
      * @param fn - Async gate function invoked for successful input
      * @param input - The input Result
-     * @return A Promise for either original success or gate failure
+     * @returns A Promise for either original success or gate failure
      */
     // Eager form.
     export function gateAsync<TInS, TInE, TOutS, TOutE>(
@@ -1626,7 +1626,7 @@ export namespace Result {
      *
      * @param fn - Function that maps the wrapped error value to another value.
      * @param input - The input Result.
-     * @return Either the passed-through successful Result or the mapped error
+     * @returns Either the passed-through successful Result or the mapped error
      * Result.
      */
     // Eager form.
@@ -1654,7 +1654,7 @@ export namespace Result {
      *
      * @param fn - Async error mapping function
      * @param input - The input Result
-     * @return A Promise for the mapped Result
+     * @returns A Promise for the mapped Result
      */
     // Eager form.
     export function mapErrorAsync<TInS, TInE, TOutE>(
@@ -1681,7 +1681,7 @@ export namespace Result {
      *
      * @param fn - Function that maps the wrapped success value to another value.
      * @param input - The input Result.
-     * @return Either the mapped successful Result or the passed-through failure
+     * @returns Either the mapped successful Result or the passed-through failure
      * Result.
      */
     // Eager form.
@@ -1709,7 +1709,7 @@ export namespace Result {
      *
      * @param fn - Async success mapping function
      * @param input - The input Result
-     * @return A Promise for the mapped Result
+     * @returns A Promise for the mapped Result
      */
     // Eager form.
     export function mapSuccessAsync<TInS, TOutS, TE>(
@@ -1739,7 +1739,7 @@ export namespace Result {
      * is run through this function and it must return a successful result wrapping
      * the mapped value or a failure result wrapping the error.
      * @param collection - The source collection
-     * @return A successful result wrapping an array of the mapped values or a
+     * @returns A successful result wrapping an array of the mapped values or a
      * failure result wrapping the first failure encountered.
      */
     // Eager form.
@@ -1793,7 +1793,7 @@ export namespace Result {
      * @param fnError - Function that will be invoked when _input_ is an error
      * Result
     * @param input - The input Result
-    * @return The value returned by either _fnSuccess_ or _fnError_
+    * @returns The value returned by either _fnSuccess_ or _fnError_
      */
     // Eager form.
     export function match<TInS, TInE, TOutS, TOutE>(
@@ -1834,7 +1834,7 @@ export namespace Result {
      * @param matcherFns - An object that specifies the success and error
      * functions
     * @param input - The input Result
-     * @return The value returned by the invoked handler function
+     * @returns The value returned by the invoked handler function
      */
     // Eager form.
     export function matchWith<TInS, TInE, TOutS, TOutE>(
@@ -1869,7 +1869,7 @@ export namespace Result {
      *
      * @param matcherFns - Async success and error handlers
      * @param input - The input Result
-     * @return A Promise for the matched output
+     * @returns A Promise for the matched output
      */
     // Eager form.
     export function matchWithAsync<TInS, TInE, TOutS, TOutE>(
@@ -1899,7 +1899,7 @@ export namespace Result {
      * and those that failed.
      *
      * @param results - The results to be partitioned
-     * @return An object with a succeeded property containing the succeeded
+     * @returns An object with a succeeded property containing the succeeded
      * results and a failed property containing the failed results
      */
     export function partition<TSuccess, TError>(
@@ -2008,7 +2008,7 @@ export namespace Result {
      *
      * @param errVal - The error value returned if _arr_ is empty
      * @param arr - The possibly empty array
-    * @return If _arr_ is empty, a failure result containing _errVal_.
+    * @returns If _arr_ is empty, a failure result containing _errVal_.
      * Otherwise, a successful Result containing _arr_.
      */
     // Eager form.
@@ -2041,7 +2041,7 @@ export namespace Result {
      * @param errVal - The error value returned if _arr_ does not have exactly
      * one element
      * @param arr - The input array
-     * @return If _arr_ has one element, a successful Result containing the one
+     * @returns If _arr_ has one element, a successful Result containing the one
      * element of _arr_. Otherwise, a failure Result containing _errVal_.
      */
     // Eager form.
@@ -2234,7 +2234,7 @@ export namespace Result {
      * Unwraps a successful Result, throwing if it is a failure.
      *
      * @param result - The Result to be unwrapped
-     * @return The unwrapped successful Result value
+     * @returns The unwrapped successful Result value
      */
     export function throwIfFailed<TSuccess, TError>(
         result: Result<TSuccess, TError>
@@ -2294,7 +2294,7 @@ export namespace Result {
      * Unwraps a failed Result, throwing if it is successful.
      *
      * @param result - The Result to be unwrapped
-     * @return The unwrapped failed Result error
+     * @returns The unwrapped failed Result error
      */
     export function throwIfSucceeded<TSuccess, TError>(
         result: Result<TSuccess, TError>
@@ -2358,7 +2358,7 @@ export namespace Result {
      *
      * @param nullishValue - The value to return if the Result is a failure
      * @param result - The input Result
-     * @return The resulting nullable value
+     * @returns The resulting nullable value
      */
     // Eager form.
     export function toNullable<TInS, TE, TNullish extends undefined | null>(
@@ -2384,7 +2384,7 @@ export namespace Result {
      * Converts a Result to an Option.
      *
      * @param result - The Result to be converted
-     * @return If the input Result is successful, an Option containing the
+     * @returns If the input Result is successful, an Option containing the
      * value.  If the input Result is a failure, NoneOption.
      */
     export function toOption<TSuccess, TError>(

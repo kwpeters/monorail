@@ -30,7 +30,7 @@ export function hasIndex(arr: readonly unknown[], idx: number): boolean {
  * @param idx - The index of the item to retrieve (negative indices are
  *     intentionally not supported)
  * @param defaultValue - The value to return if the index is out of bounds
- * @return The item at the specified index or the default value if out of bounds
+ * @returns The item at the specified index or the default value if out of bounds
  */
 export function atOrDefault<TElem, TDefault>(
     arr: readonly TElem[],
@@ -48,7 +48,7 @@ export function atOrDefault<TElem, TDefault>(
  * Returns the last index of the specified array, or undefined if the array is empty.
  *
  * @param arr - The array to get the last index from
- * @return The last index of the array or undefined if the array is empty
+ * @returns The last index of the array or undefined if the array is empty
  */
 export function lastIndex(arr: Array<unknown>): number | undefined {
     if (arr.length === 0) {
@@ -77,7 +77,7 @@ export function lastIndex(arr: Array<unknown>): number | undefined {
  * @param condition - The condition that controls whether to insert the items
  * @param items - The items that will be in the returned array if `condition` is
  * truthy
- * @return An array containing `items` if `condition` is truthy.  An empty array
+ * @returns An array containing `items` if `condition` is truthy.  An empty array
  * if `condition` is falsy.
  */
 export function insertIf<TItem>(
@@ -105,7 +105,7 @@ export function insertIf<TItem>(
  * @param condition - The condition that controls whether to insert the items
  * @param fn - A function that returns the items that will be in the returned
  * array if `condition` is truthy
- * @return An array containing the result of `fn()` if `condition` is truthy.  An
+ * @returns An array containing the result of `fn()` if `condition` is truthy.  An
  * empty array if `condition` is falsy.
  */
 export function insertIfWith<TReturn>(
@@ -170,7 +170,7 @@ export function toArray<T>(val: undefined | null | T | Array<T>): Array<T> {
  * Filters an array and keeps only those items that are not null or undefined.
  *
  * @param collection - The collection to be filtered
- * @return A new array containing the items from `collection` that are not null
+ * @returns A new array containing the items from `collection` that are not null
  *      or undefined
  */
 export function filterDefined<TItem>(
@@ -186,7 +186,7 @@ export function filterDefined<TItem>(
  * Converts a nullable array to a non-nullable array.
  *
  * @param nullableArr - The nullable array to convert
- * @return The non-nullable array
+ * @returns The non-nullable array
  */
 export function fromNullable<T>(nullableArr: T[] | null | undefined): T[] {
     if (nullableArr === null || nullableArr === undefined) {

@@ -542,7 +542,7 @@ export class Iterator<TValue> implements Iterator<TValue> {
     * times.
     *
     * @param offset - The number of times to advance the new iterator.
-    * @return The new iterator
+    * @returns The new iterator
     */
     public offset(offset: number): Iterator<TValue> {
         // Make a copy of this iterator and then advance it.

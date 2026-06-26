@@ -69,7 +69,7 @@ export const float64Schema =
  * Creates a Zod schema for an Option type.
  *
  * @param valueSchema - The schema of the value to be wrapped by the Option
- * @return A Zod schema that will validate the input and (upon success)
+ * @returns A Zod schema that will validate the input and (upon success)
  * transform the output to an Option.
  */
 export function discriminatedOptionSchema<TValue>(
@@ -91,7 +91,7 @@ export function discriminatedOptionSchema<TValue>(
  * become SomeOption.
  *
  * @param valueSchema - The schema of the value that may be omitted
- * @return A Zod schema that converts optional input into an Option
+ * @returns A Zod schema that converts optional input into an Option
  */
 export function optionalValueToOptionSchema<TValue>(
     valueSchema: z.ZodType<TValue>
@@ -140,7 +140,7 @@ export function regexpSchema(): z.ZodType<RegExp> {
  * all slash separators to the value returned by _separatorFn_.
  *
  * @param separatorFn - Function that returns the path separator to use
- * @return A Zod schema that normalizes slash separators in path strings
+ * @returns A Zod schema that normalizes slash separators in path strings
  */
 export function fileSystemPathSchema(
     separatorFn: () => "/" | "\\"
@@ -154,7 +154,7 @@ export function fileSystemPathSchema(
  *
  * @param path - The path string to normalize
  * @param separator - The separator character to apply
- * @return A normalized path string
+ * @returns A normalized path string
  */
 export function normalizePathSeparators(path: string, separator: "/" | "\\"): string {
     return path.replace(/[\\/]/g, separator);

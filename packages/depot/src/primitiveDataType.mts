@@ -10,21 +10,21 @@ import { setBitInBigInt, setBitInNumber } from "./bitstringHelpers.mjs";
 export class NonNegativeInt {
     /**
      * Gets the minimum value for this data type
-     * @return The minimum value that can be stored
+     * @returns The minimum value that can be stored
      */
     public static readonly DATA_TYPE_MIN: number = 0;
 
 
     /**
      * Gets the maximum value for this data type
-     * @return The maximum value that can be stored
+     * @returns The maximum value that can be stored
      */
     public static readonly DATA_TYPE_MAX: number = Math.pow(2, 53) - 1; // 9_007_199_254_740_991
 
 
     /**
      * Gets the number of bits used by this data type
-     * @return The number of bits used
+     * @returns The number of bits used
      */
     public static readonly NUM_BITS: number = 64; // This type is based on Number which is a 64-bit floating point value.
 
@@ -32,7 +32,7 @@ export class NonNegativeInt {
     /**
      * Creates an instance from a string representation
      * @param str - The string to parse
-     * @return A Result containing the new instance or an error message
+     * @returns A Result containing the new instance or an error message
      */
     public static fromString(str: string): Result<NonNegativeInt, string> {
         return pipe(
@@ -48,7 +48,7 @@ export class NonNegativeInt {
     /**
      * Creates an instance from a number
      * @param val - The number to wrap
-     * @return A Result containing the new instance or an error message
+     * @returns A Result containing the new instance or an error message
      */
     public static create(val: number): Result<NonNegativeInt, string> {
         if (val < NonNegativeInt.DATA_TYPE_MIN || val > NonNegativeInt.DATA_TYPE_MAX) {
@@ -68,7 +68,7 @@ export class NonNegativeInt {
 
     /**
      * Gets a reference to this class's type
-     * @return The class type
+     * @returns The class type
      */
     public get static(): typeof NonNegativeInt {
         return NonNegativeInt;
@@ -82,7 +82,7 @@ export class NonNegativeInt {
 
     /**
      * Gets the wrapped value
-     * @return The stored value
+     * @returns The stored value
      */
     public get value(): number {
         return this._val;
@@ -97,28 +97,28 @@ export class NonNegativeInt {
 export class Int8 {
     /**
      * Gets the minimum value for this data type
-     * @return The minimum value that can be stored
+     * @returns The minimum value that can be stored
      */
     public static readonly DATA_TYPE_MIN: number = Math.pow(-2, 7); // -128
 
 
     /**
      * Gets the maximum value for this data type
-     * @return The maximum value that can be stored
+     * @returns The maximum value that can be stored
      */
     public static readonly DATA_TYPE_MAX: number = Math.pow(2, 7) - 1; // 127
 
 
     /**
      * Gets the number of bits used by this data type
-     * @return The number of bits used
+     * @returns The number of bits used
      */
     public static readonly NUM_BITS: number = 8;
 
 
     /**
      * Gets the highest valid bit index for this data type
-     * @return The maximum bit index
+     * @returns The maximum bit index
      */
     public static readonly MAX_BIT_INDEX: number = Int8.NUM_BITS - 1;
 
@@ -126,7 +126,7 @@ export class Int8 {
     /**
      * Creates an instance from a string representation
      * @param str - The string to parse
-     * @return A Result containing the new instance or an error message
+     * @returns A Result containing the new instance or an error message
      */
     public static fromString(str: string): Result<Int8, string> {
         return pipe(
@@ -142,7 +142,7 @@ export class Int8 {
     /**
      * Creates an instance from a number
      * @param val - The number to wrap
-     * @return A Result containing the new instance or an error message
+     * @returns A Result containing the new instance or an error message
      */
     public static create(val: number): Result<Int8, string> {
         if (val < Int8.DATA_TYPE_MIN || val > Int8.DATA_TYPE_MAX) {
@@ -167,14 +167,14 @@ export class Int8 {
 
     /**
      * Gets a reference to this class's type
-     * @return The class type
+     * @returns The class type
      */
     public readonly static: typeof Int8 = Int8;
 
 
     /**
      * Gets the wrapped value
-     * @return The stored value
+     * @returns The stored value
      */
     public get value(): number {
         return this._val;
@@ -184,7 +184,7 @@ export class Int8 {
     /**
      * Gets the value of a specific bit
      * @param bitIndex - Zero-based index of the bit to read
-     * @return A Result containing the bit value or an error message
+     * @returns A Result containing the bit value or an error message
      */
     public getBit(bitIndex: number): Result<boolean, string> {
         if (bitIndex < 0 || bitIndex > Int8.MAX_BIT_INDEX) {
@@ -204,7 +204,7 @@ export class Int8 {
      * Returns a new instance with the specified bit set to the specified value
      * @param bitIndex - Zero-based index of the bit to write
      * @param newBitVal - The value to write to the bit
-     * @return A Result containing a new instance with the modified bit or an error message
+     * @returns A Result containing a new instance with the modified bit or an error message
      */
     public setBit(bitIndex: number, newBitVal: boolean): Result<Int8, string> {
         if (bitIndex < 0 || bitIndex > Int8.MAX_BIT_INDEX) {
@@ -229,28 +229,28 @@ export class Int8 {
 export class UInt8 {
     /**
      * Gets the minimum value for this data type
-     * @return The minimum value that can be stored
+     * @returns The minimum value that can be stored
      */
     public static readonly DATA_TYPE_MIN: number = 0;
 
 
     /**
      * Gets the maximum value for this data type
-     * @return The maximum value that can be stored
+     * @returns The maximum value that can be stored
      */
     public static readonly DATA_TYPE_MAX: number = Math.pow(2, 8) - 1; // 255, 0xFF
 
 
     /**
      * Gets the number of bits used by this data type
-     * @return The number of bits used
+     * @returns The number of bits used
      */
     public static readonly NUM_BITS: number = 8;
 
 
     /**
      * Gets the highest valid bit index for this data type
-     * @return The maximum bit index
+     * @returns The maximum bit index
      */
     public static readonly MAX_BIT_INDEX: number = UInt8.NUM_BITS - 1;
 
@@ -258,7 +258,7 @@ export class UInt8 {
     /**
      * Creates an instance from a string representation
      * @param str - The string to parse
-     * @return A Result containing the new instance or an error message
+     * @returns A Result containing the new instance or an error message
      */
     public static fromString(str: string): Result<UInt8, string> {
         return pipe(
@@ -274,7 +274,7 @@ export class UInt8 {
     /**
      * Creates an instance from a number
      * @param val - The number to wrap
-     * @return A Result containing the new instance or an error message
+     * @returns A Result containing the new instance or an error message
      */
     public static create(val: number): Result<UInt8, string> {
         if (val < UInt8.DATA_TYPE_MIN || val > UInt8.DATA_TYPE_MAX) {
@@ -299,14 +299,14 @@ export class UInt8 {
 
     /**
      * Gets a reference to this class's type
-     * @return The class type
+     * @returns The class type
      */
     public readonly static: typeof UInt8 = UInt8;
 
 
     /**
      * Gets the wrapped value
-     * @return The stored value
+     * @returns The stored value
      */
     public get value(): number {
         return this._val;
@@ -316,7 +316,7 @@ export class UInt8 {
     /**
      * Gets the value of a specific bit
      * @param bitIndex - Zero-based index of the bit to read
-     * @return A Result containing the bit value or an error message
+     * @returns A Result containing the bit value or an error message
      */
     public getBit(bitIndex: number): Result<boolean, string> {
         if (bitIndex < 0 || bitIndex > UInt8.MAX_BIT_INDEX) {
@@ -336,7 +336,7 @@ export class UInt8 {
      * Returns a new instance with the specified bit set to the specified value
      * @param bitIndex - Zero-based index of the bit to write
      * @param newBitVal - The value to write to the bit
-     * @return A Result containing a new instance with the modified bit or an error message
+     * @returns A Result containing a new instance with the modified bit or an error message
      */
     public setBit(bitIndex: number, newBitVal: boolean): Result<UInt8, string> {
         if (bitIndex < 0 || bitIndex > UInt8.MAX_BIT_INDEX) {
@@ -361,28 +361,28 @@ export class UInt8 {
 export class Int16 {
     /**
      * Gets the minimum value for this data type
-     * @return The minimum value that can be stored
+     * @returns The minimum value that can be stored
      */
     public static readonly DATA_TYPE_MIN: number = Math.pow(-2, 15); // -32_768
 
 
     /**
      * Gets the maximum value for this data type
-     * @return The maximum value that can be stored
+     * @returns The maximum value that can be stored
      */
     public static readonly DATA_TYPE_MAX: number = Math.pow(2, 15) - 1; // 32_767
 
 
     /**
      * Gets the number of bits used by this data type
-     * @return The number of bits used
+     * @returns The number of bits used
      */
     public static readonly NUM_BITS: number = 16;
 
 
     /**
      * Gets the highest valid bit index for this data type
-     * @return The maximum bit index
+     * @returns The maximum bit index
      */
     public static readonly MAX_BIT_INDEX: number = Int16.NUM_BITS - 1;
 
@@ -390,7 +390,7 @@ export class Int16 {
     /**
      * Creates an instance from a string representation
      * @param str - The string to parse
-     * @return A Result containing the new instance or an error message
+     * @returns A Result containing the new instance or an error message
      */
     public static fromString(str: string): Result<Int16, string> {
         return pipe(
@@ -406,7 +406,7 @@ export class Int16 {
     /**
      * Creates an instance from a number
      * @param val - The number to wrap
-     * @return A Result containing the new instance or an error message
+     * @returns A Result containing the new instance or an error message
      */
     public static create(val: number): Result<Int16, string> {
         if (val < Int16.DATA_TYPE_MIN || val > Int16.DATA_TYPE_MAX) {
@@ -431,14 +431,14 @@ export class Int16 {
 
     /**
      * Gets a reference to this class's type
-     * @return The class type
+     * @returns The class type
      */
     public readonly static: typeof Int16 = Int16;
 
 
     /**
      * Gets the wrapped value
-     * @return The stored value
+     * @returns The stored value
      */
     public get value(): number {
         return this._val;
@@ -448,7 +448,7 @@ export class Int16 {
     /**
      * Gets the value of a specific bit
      * @param bitIndex - Zero-based index of the bit to read
-     * @return A Result containing the bit value or an error message
+     * @returns A Result containing the bit value or an error message
      */
     public getBit(bitIndex: number): Result<boolean, string> {
         if (bitIndex < 0 || bitIndex > Int16.MAX_BIT_INDEX) {
@@ -468,7 +468,7 @@ export class Int16 {
      * Returns a new instance with the specified bit set to the specified value
      * @param bitIndex - Zero-based index of the bit to write
      * @param newBitVal - The value to write to the bit
-     * @return A Result containing a new instance with the modified bit or an error message
+     * @returns A Result containing a new instance with the modified bit or an error message
      */
     public setBit(bitIndex: number, newBitVal: boolean): Result<Int16, string> {
         if (bitIndex < 0 || bitIndex > Int16.MAX_BIT_INDEX) {
@@ -493,28 +493,28 @@ export class Int16 {
 export class UInt16 {
     /**
      * Gets the minimum value for this data type
-     * @return The minimum value that can be stored
+     * @returns The minimum value that can be stored
      */
     public static readonly DATA_TYPE_MIN: number = 0;
 
 
     /**
      * Gets the maximum value for this data type
-     * @return The maximum value that can be stored
+     * @returns The maximum value that can be stored
      */
     public static readonly DATA_TYPE_MAX: number = Math.pow(2, 16) - 1; // 65_535
 
 
     /**
      * Gets the number of bits used by this data type
-     * @return The number of bits used
+     * @returns The number of bits used
      */
     public static readonly NUM_BITS: number = 16;
 
 
     /**
      * Gets the highest valid bit index for this data type
-     * @return The maximum bit index
+     * @returns The maximum bit index
      */
     public static readonly MAX_BIT_INDEX: number = UInt16.NUM_BITS - 1;
 
@@ -522,7 +522,7 @@ export class UInt16 {
     /**
      * Creates an instance from a string representation
      * @param str - The string to parse
-     * @return A Result containing the new instance or an error message
+     * @returns A Result containing the new instance or an error message
      */
     public static fromString(str: string): Result<UInt16, string> {
         return pipe(
@@ -538,7 +538,7 @@ export class UInt16 {
     /**
      * Creates an instance from a number
      * @param val - The number to wrap
-     * @return A Result containing the new instance or an error message
+     * @returns A Result containing the new instance or an error message
      */
     public static create(val: number): Result<UInt16, string> {
         if (val < UInt16.DATA_TYPE_MIN || val > UInt16.DATA_TYPE_MAX) {
@@ -563,14 +563,14 @@ export class UInt16 {
 
     /**
      * Gets a reference to this class's type
-     * @return The class type
+     * @returns The class type
      */
     public readonly static: typeof UInt16 = UInt16;
 
 
     /**
      * Gets the wrapped value
-     * @return The stored value
+     * @returns The stored value
      */
     public get value(): number {
         return this._val;
@@ -580,7 +580,7 @@ export class UInt16 {
     /**
      * Gets the value of a specific bit
      * @param bitIndex - Zero-based index of the bit to read
-     * @return A Result containing the bit value or an error message
+     * @returns A Result containing the bit value or an error message
      */
     public getBit(bitIndex: number): Result<boolean, string> {
         if (bitIndex < 0 || bitIndex > UInt16.MAX_BIT_INDEX) {
@@ -600,7 +600,7 @@ export class UInt16 {
      * Returns a new instance with the specified bit set to the specified value
      * @param bitIndex - Zero-based index of the bit to write
      * @param newBitVal - The value to write to the bit
-     * @return A Result containing a new instance with the modified bit or an error message
+     * @returns A Result containing a new instance with the modified bit or an error message
      */
     public setBit(bitIndex: number, newBitVal: boolean): Result<UInt16, string> {
         if (bitIndex < 0 || bitIndex > UInt16.MAX_BIT_INDEX) {
@@ -625,28 +625,28 @@ export class UInt16 {
 export class Int32 {
     /**
      * Gets the minimum value for this data type
-     * @return The minimum value that can be stored
+     * @returns The minimum value that can be stored
      */
     public static readonly DATA_TYPE_MIN: number = Math.pow(-2, 31); // -2_147_483_648
 
 
     /**
      * Gets the maximum value for this data type
-     * @return The maximum value that can be stored
+     * @returns The maximum value that can be stored
      */
     public static readonly DATA_TYPE_MAX: number = Math.pow(2, 31) - 1; // 2_147_483_647
 
 
     /**
      * Gets the number of bits used by this data type
-     * @return The number of bits used
+     * @returns The number of bits used
      */
     public static readonly NUM_BITS: number = 32;
 
 
     /**
      * Gets the highest valid bit index for this data type
-     * @return The maximum bit index
+     * @returns The maximum bit index
      */
     public static readonly MAX_BIT_INDEX: number = Int32.NUM_BITS - 1;
 
@@ -654,7 +654,7 @@ export class Int32 {
     /**
      * Creates an instance from a string representation
      * @param str - The string to parse
-     * @return A Result containing the new instance or an error message
+     * @returns A Result containing the new instance or an error message
      */
     public static fromString(str: string): Result<Int32, string> {
         return pipe(
@@ -670,7 +670,7 @@ export class Int32 {
     /**
      * Creates an instance from a number
      * @param val - The number to wrap
-     * @return A Result containing the new instance or an error message
+     * @returns A Result containing the new instance or an error message
      */
     public static create(val: number): Result<Int32, string> {
         if (val < Int32.DATA_TYPE_MIN || val > Int32.DATA_TYPE_MAX) {
@@ -695,14 +695,14 @@ export class Int32 {
 
     /**
      * Gets a reference to this class's type
-     * @return The class type
+     * @returns The class type
      */
     public readonly static: typeof Int32 = Int32;
 
 
     /**
      * Gets the wrapped value
-     * @return The stored value
+     * @returns The stored value
      */
     public get value(): number {
         return this._val;
@@ -712,7 +712,7 @@ export class Int32 {
     /**
      * Gets the value of a specific bit
      * @param bitIndex - Zero-based index of the bit to read
-     * @return A Result containing the bit value or an error message
+     * @returns A Result containing the bit value or an error message
      */
     public getBit(bitIndex: number): Result<boolean, string> {
         if (bitIndex < 0 || bitIndex > Int32.MAX_BIT_INDEX) {
@@ -732,7 +732,7 @@ export class Int32 {
      * Returns a new instance with the specified bit set to the specified value
      * @param bitIndex - Zero-based index of the bit to write
      * @param newBitVal - The value to write to the bit
-     * @return A Result containing a new instance with the modified bit or an error message
+     * @returns A Result containing a new instance with the modified bit or an error message
      */
     public setBit(bitIndex: number, newBitVal: boolean): Result<Int32, string> {
         if (bitIndex < 0 || bitIndex > Int32.MAX_BIT_INDEX) {
@@ -757,28 +757,28 @@ export class Int32 {
 export class UInt32 {
     /**
      * Gets the minimum value for this data type
-     * @return The minimum value that can be stored
+     * @returns The minimum value that can be stored
      */
     public static readonly DATA_TYPE_MIN: number = 0;
 
 
     /**
      * Gets the maximum value for this data type
-     * @return The maximum value that can be stored
+     * @returns The maximum value that can be stored
      */
     public static readonly DATA_TYPE_MAX: number = Math.pow(2, 32) - 1; // 4_294_967_295
 
 
     /**
      * Gets the number of bits used by this data type
-     * @return The number of bits used
+     * @returns The number of bits used
      */
     public static readonly NUM_BITS: number = 32;
 
 
     /**
      * Gets the highest valid bit index for this data type
-     * @return The maximum bit index
+     * @returns The maximum bit index
      */
     public static readonly MAX_BIT_INDEX: number = UInt32.NUM_BITS - 1;
 
@@ -786,7 +786,7 @@ export class UInt32 {
     /**
      * Creates an instance from a string representation
      * @param str - The string to parse
-     * @return A Result containing the new instance or an error message
+     * @returns A Result containing the new instance or an error message
      */
     public static fromString(str: string): Result<UInt32, string> {
         return pipe(
@@ -802,7 +802,7 @@ export class UInt32 {
     /**
      * Creates an instance from a number
      * @param val - The number to wrap
-     * @return A Result containing the new instance or an error message
+     * @returns A Result containing the new instance or an error message
      */
     public static create(val: number): Result<UInt32, string> {
         if (val < UInt32.DATA_TYPE_MIN || val > UInt32.DATA_TYPE_MAX) {
@@ -827,14 +827,14 @@ export class UInt32 {
 
     /**
      * Gets a reference to this class's type
-     * @return The class type
+     * @returns The class type
      */
     public readonly static: typeof UInt32 = UInt32;
 
 
     /**
      * Gets the wrapped value
-     * @return The stored value
+     * @returns The stored value
      */
     public get value(): number {
         return this._val;
@@ -844,7 +844,7 @@ export class UInt32 {
     /**
      * Gets the value of a specific bit
      * @param bitIndex - Zero-based index of the bit to read
-     * @return A Result containing the bit value or an error message
+     * @returns A Result containing the bit value or an error message
      */
     public getBit(bitIndex: number): Result<boolean, string> {
         if (bitIndex < 0 || bitIndex > UInt32.MAX_BIT_INDEX) {
@@ -864,7 +864,7 @@ export class UInt32 {
      * Returns a new instance with the specified bit set to the specified value
      * @param bitIndex - Zero-based index of the bit to write
      * @param newBitVal - The value to write to the bit
-     * @return A Result containing a new instance with the modified bit or an error message
+     * @returns A Result containing a new instance with the modified bit or an error message
      */
     public setBit(bitIndex: number, newBitVal: boolean): Result<UInt32, string> {
         if (bitIndex < 0 || bitIndex > UInt32.MAX_BIT_INDEX) {
@@ -889,28 +889,28 @@ export class UInt32 {
 export class Int64 {
     /**
      * Gets the minimum value for this data type
-     * @return The minimum value that can be stored
+     * @returns The minimum value that can be stored
      */
     public static readonly DATA_TYPE_MIN: bigint = -(2n ** 63n); // -9_223_372_036_854_775_808n
 
 
     /**
      * Gets the maximum value for this data type
-     * @return The maximum value that can be stored
+     * @returns The maximum value that can be stored
      */
     public static readonly DATA_TYPE_MAX: bigint = (2n ** 63n) - 1n; // 9_223_372_036_854_775_807n
 
 
     /**
      * Gets the number of bits used by this data type
-     * @return The number of bits used
+     * @returns The number of bits used
      */
     public static readonly NUM_BITS: number = 64;
 
 
     /**
      * Gets the highest valid bit index for this data type
-     * @return The maximum bit index
+     * @returns The maximum bit index
      */
     public static readonly MAX_BIT_INDEX: number = Int64.NUM_BITS - 1;
 
@@ -918,7 +918,7 @@ export class Int64 {
     /**
      * Creates an instance from a string representation
      * @param str - The string to parse
-     * @return A Result containing the new instance or an error message
+     * @returns A Result containing the new instance or an error message
      */
     public static fromString(str: string): Result<Int64, string> {
         return pipe(
@@ -941,7 +941,7 @@ export class Int64 {
     /**
      * Creates an instance from a number
      * @param val - The number to wrap
-     * @return A Result containing the new instance or an error message
+     * @returns A Result containing the new instance or an error message
      */
     public static create(val: bigint): Result<Int64, string> {
         if (val < Int64.DATA_TYPE_MIN || val > Int64.DATA_TYPE_MAX) {
@@ -968,14 +968,14 @@ export class Int64 {
 
     /**
      * Gets a reference to this class's type
-     * @return The class type
+     * @returns The class type
      */
     public readonly static: typeof Int64 = Int64;
 
 
     /**
      * Gets the wrapped value
-     * @return The stored value
+     * @returns The stored value
      */
     public get value(): bigint {
         return this._val;
@@ -985,7 +985,7 @@ export class Int64 {
     /**
      * Gets the value of a specific bit
      * @param bitIndex - Zero-based index of the bit to read
-     * @return A Result containing the bit value or an error message
+     * @returns A Result containing the bit value or an error message
      */
     public getBit(bitIndex: number): Result<boolean, string> {
         if (bitIndex < 0 || bitIndex > Int64.MAX_BIT_INDEX) {
@@ -1005,7 +1005,7 @@ export class Int64 {
      * Returns a new instance with the specified bit set to the specified value
      * @param bitIndex - Zero-based index of the bit to write
      * @param newBitVal - The value to write to the bit
-     * @return A Result containing a new instance with the modified bit or an error message
+     * @returns A Result containing a new instance with the modified bit or an error message
      */
     public setBit(bitIndex: number, newBitVal: boolean): Result<Int64, string> {
         if (bitIndex < 0 || bitIndex > Int64.MAX_BIT_INDEX) {
@@ -1030,28 +1030,28 @@ export class Int64 {
 export class UInt64 {
     /**
      * Gets the minimum value for this data type
-     * @return The minimum value that can be stored
+     * @returns The minimum value that can be stored
      */
     public static readonly DATA_TYPE_MIN: bigint = 0n; // 0n
 
 
     /**
      * Gets the maximum value for this data type
-     * @return The maximum value that can be stored
+     * @returns The maximum value that can be stored
      */
     public static readonly DATA_TYPE_MAX: bigint = (2n ** 64n) - 1n; // 18_446_744_073_709_551_615n
 
 
     /**
      * Gets the number of bits used by this data type
-     * @return The number of bits used
+     * @returns The number of bits used
      */
     public static readonly NUM_BITS: number = 64;
 
 
     /**
      * Gets the highest valid bit index for this data type
-     * @return The maximum bit index
+     * @returns The maximum bit index
      */
     public static readonly MAX_BIT_INDEX: number = UInt64.NUM_BITS - 1;
 
@@ -1059,7 +1059,7 @@ export class UInt64 {
     /**
      * Creates an instance from a string representation
      * @param str - The string to parse
-     * @return A Result containing the new instance or an error message
+     * @returns A Result containing the new instance or an error message
      */
     public static fromString(str: string): Result<UInt64, string> {
         return pipe(
@@ -1083,7 +1083,7 @@ export class UInt64 {
     /**
      * Creates an instance from a number
      * @param val - The number to wrap
-     * @return A Result containing the new instance or an error message
+     * @returns A Result containing the new instance or an error message
      */
     public static create(val: bigint): Result<UInt64, string> {
         if (val < UInt64.DATA_TYPE_MIN || val > UInt64.DATA_TYPE_MAX) {
@@ -1110,14 +1110,14 @@ export class UInt64 {
 
     /**
      * Gets a reference to this class's type
-     * @return The class type
+     * @returns The class type
      */
     public readonly static: typeof UInt64 = UInt64;
 
 
     /**
      * Gets the wrapped value
-     * @return The stored value
+     * @returns The stored value
      */
     public get value(): bigint {
         return this._val;
@@ -1127,7 +1127,7 @@ export class UInt64 {
     /**
      * Gets the value of a specific bit
      * @param bitIndex - Zero-based index of the bit to read
-     * @return A Result containing the bit value or an error message
+     * @returns A Result containing the bit value or an error message
      */
     public getBit(bitIndex: number): Result<boolean, string> {
         if (bitIndex < 0 || bitIndex > UInt64.MAX_BIT_INDEX) {
@@ -1147,7 +1147,7 @@ export class UInt64 {
      * Returns a new instance with the specified bit set to the specified value
      * @param bitIndex - Zero-based index of the bit to write
      * @param newBitVal - The value to write to the bit
-     * @return A Result containing a new instance with the modified bit or an error message
+     * @returns A Result containing a new instance with the modified bit or an error message
      */
     public setBit(bitIndex: number, newBitVal: boolean): Result<UInt64, string> {
         if (bitIndex < 0 || bitIndex > UInt64.MAX_BIT_INDEX) {
@@ -1172,20 +1172,20 @@ export class UInt64 {
 export class Float32 {
     /**
      * Gets the minimum value for this data type
-     * @return The minimum value that can be stored
+     * @returns The minimum value that can be stored
      */
     public static readonly DATA_TYPE_MIN: number = -3.4028235e38;
 
     /**
      * Gets the maximum value for this data type
-     * @return The maximum value that can be stored
+     * @returns The maximum value that can be stored
      */
     public static readonly DATA_TYPE_MAX: number = 3.4028235e38;
 
 
     /**
      * Gets the number of bits used by this data type
-     * @return The number of bits used
+     * @returns The number of bits used
      */
     public static readonly NUM_BITS: number = 32;
 
@@ -1193,7 +1193,7 @@ export class Float32 {
     /**
      * Creates an instance from a string representation
      * @param str - The string to parse
-     * @return A Result containing the new instance or an error message
+     * @returns A Result containing the new instance or an error message
      */
     public static fromString(str: string): Result<Float32, string> {
         return pipe(
@@ -1209,7 +1209,7 @@ export class Float32 {
     /**
      * Creates an instance from a number
      * @param val - The number to wrap
-     * @return A Result containing the new instance or an error message
+     * @returns A Result containing the new instance or an error message
      */
     public static create(val: number): Result<Float32, string> {
         if (val < Float32.DATA_TYPE_MIN || val > Float32.DATA_TYPE_MAX) {
@@ -1234,14 +1234,14 @@ export class Float32 {
 
     /**
      * Gets a reference to this class's type
-     * @return The class type
+     * @returns The class type
      */
     public readonly static: typeof Float32 = Float32;
 
 
     /**
      * Gets the wrapped value
-     * @return The stored value
+     * @returns The stored value
      */
     public get value(): number {
         return this._val;
@@ -1255,21 +1255,21 @@ export class Float32 {
 export class Float64 {
     /**
      * Gets the minimum value for this data type
-     * @return The minimum value that can be stored
+     * @returns The minimum value that can be stored
      */
     public static readonly DATA_TYPE_MIN: number = -1 * Number.MAX_VALUE;
 
 
     /**
      * Gets the maximum value for this data type
-     * @return The maximum value that can be stored
+     * @returns The maximum value that can be stored
      */
     public static readonly DATA_TYPE_MAX: number = Number.MAX_VALUE;
 
 
     /**
      * Gets the number of bits used by this data type
-     * @return The number of bits used
+     * @returns The number of bits used
      */
     public static readonly NUM_BITS: number = 64;
 
@@ -1277,7 +1277,7 @@ export class Float64 {
     /**
      * Creates an instance from a string representation
      * @param str - The string to parse
-     * @return A Result containing the new instance or an error message
+     * @returns A Result containing the new instance or an error message
      */
     public static fromString(str: string): Result<Float64, string> {
         return pipe(
@@ -1293,7 +1293,7 @@ export class Float64 {
     /**
      * Creates an instance from a number
      * @param val - The number to wrap
-     * @return A Result containing the new instance or an error message
+     * @returns A Result containing the new instance or an error message
      */
     public static create(val: number): Result<Float64, string> {
         if (val < Float64.DATA_TYPE_MIN || val > Float64.DATA_TYPE_MAX) {
@@ -1318,14 +1318,14 @@ export class Float64 {
 
     /**
      * Gets a reference to this class's type
-     * @return The class type
+     * @returns The class type
      */
     public readonly static: typeof Float64 = Float64;
 
 
     /**
      * Gets the wrapped value
-     * @return The stored value
+     * @returns The stored value
      */
     public get value(): number {
         return this._val;

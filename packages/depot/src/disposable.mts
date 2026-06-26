@@ -17,7 +17,7 @@ export type Disposable<T> =
  *
  * @param obj - The object to make disposable
  * @param disposeFn - The function to call when disposing of the object
- * @return A disposable version of the provided object.
+ * @returns A disposable version of the provided object.
  */
 export function makeDisposable<T>(obj: T, disposeFn: (obj: T) => void): Disposable<T> {
     const disposable = {
@@ -48,7 +48,7 @@ export type AsyncDisposable<T> =
  *
  * @param obj - The object to make asynchronously disposable
  * @param asyncDisposeFn - The function to call when disposing of the object
- * @return An asynchronously disposable version of the provided object.
+ * @returns An asynchronously disposable version of the provided object.
  */
 export function makeAsyncDisposable<T>(obj: T, asyncDisposeFn: (x: T) => Promise<void>): AsyncDisposable<T> {
     const asyncDisposable = {

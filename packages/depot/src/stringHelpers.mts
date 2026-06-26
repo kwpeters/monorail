@@ -52,7 +52,7 @@ export function hexStr32(val: number): string {
  * Converts the specified number into exponential notation as displayed in
  * Studio 5000.
  * @param val - The value
- * @return A string containing the exponential notation form of val
+ * @returns A string containing the exponential notation form of val
  */
 export function toExponential(val: number): string {
     let powerOfTen = 0;
@@ -84,7 +84,7 @@ export function toExponential(val: number): string {
  * a boolean value.  Leading and trailing whitespace is ignored.
  *
  * @param str - The string to interpret
- * @return The boolean value represented by the string, or false if the string
+ * @returns The boolean value represented by the string, or false if the string
  * is not "true" or "false"
  */
 export function boolStrToBool(str: string): boolean {
@@ -100,7 +100,7 @@ export function boolStrToBool(str: string): boolean {
  * Counts the number of times _padStr_ occurs at the beginning of str.
  * @param str - The string to inspect
  * @param padStr - The substring to count occurrences of
- * @return The number of times _padStr_ occurs at the beginning of _str_
+ * @returns The number of times _padStr_ occurs at the beginning of _str_
  */
 export function numInitial(str: string, padStr: string): number {
     if (padStr === "") {
@@ -128,7 +128,7 @@ export function numInitial(str: string, padStr: string): number {
  * @param src - The string to be indented
  * @param numSpacesOrPad - The number of spaces to indent each line
  * @param skipFirstLine - If truthy, the first line will not be indented
- * @return A new string where each line is indented
+ * @returns A new string where each line is indented
  */
 export function indent(
     src: string,
@@ -173,7 +173,7 @@ export function indent(
  * @param padStr - The string that has been used to indent lines in str
  * @param greedy - If `true`, as many occurrences of `padStr` will be removed as
  *     possible.  If `false`, only one occurrence will be removed.
- * @return A new version of str without the indentations
+ * @returns A new version of str without the indentations
  */
 export function outdent(str: string, padStr = " ", greedy = true): string {
     const lines = splitIntoLines(str, true);
@@ -202,7 +202,7 @@ const blankLineRegex = /^\s*$/;
 /**
  * Creates a new version of str without leading and trailing blank lines
  * @param str - The original string
- * @return A version of str without leading and trailing blank lines
+ * @returns A version of str without leading and trailing blank lines
  */
 export function trimBlankLines(str: string): string {
     const lines = splitIntoLines(str, true);
@@ -230,7 +230,7 @@ export function trimBlankLines(str: string): string {
 /**
  * Returns a string that is the same as `str`, but with blank lines removed.
  * @param str - The source string
- * @return A new string with blank lines removed
+ * @returns A new string with blank lines removed
  */
 export function removeBlankLines(str: string): string {
     if (str.length === 0) {
@@ -258,7 +258,7 @@ export function removeBlankLines(str: string): string {
 /**
  * Determines whether `text` consists of nothing but whitespace.
  * @param text - The string to analyze
- * @return true if `text` is nothing but whitespace; false otherwise.
+ * @returns true if `text` is nothing but whitespace; false otherwise.
  */
 export function isBlank(text: string): boolean {
     return text.length === 0 || blankLineRegex.test(text);
@@ -272,7 +272,7 @@ export function isBlank(text: string): boolean {
  * @param val - The value to test
  * @param errMsg - The error message that will be returned if _val_ is not a
  * string or is blank.
- * @return Whether the value is a string containing one or more non-whitespace
+ * @returns Whether the value is a string containing one or more non-whitespace
  * characters.
  */
 export function isNonBlankString(val: unknown, errMsg: string): Result<string, string> {
@@ -288,7 +288,7 @@ const whitespaceRegex = /\s+/g;
 /**
  * Creates a new string in which all whitespace has been removed from str.
  * @param str - The original string to remove whitespace from
- * @return A new string in which all whitespace has been removed.
+ * @returns A new string in which all whitespace has been removed.
  */
 export function removeWhitespace(str: string): string {
     return str.replace(whitespaceRegex, "");
@@ -301,7 +301,7 @@ export function removeWhitespace(str: string): string {
  * @param str - The original string to remove whitespace from
  * @param replacement - the string that will replace all occurrences of
  *     one or more whitespace characters
- * @return A new string in which all whitespace has been collapsed.
+ * @returns A new string in which all whitespace has been collapsed.
  */
 export function collapseWhitespace(str: string, replacement: string = " "): string {
     const collapsed = str.replace(whitespaceRegex, replacement);
@@ -313,7 +313,7 @@ export function collapseWhitespace(str: string, replacement: string = " "): stri
  * Splits a string into its individual lines.
  * @param text - The text to be split into individual lines
  * @param retainLineEndings - Whether each line should include the original line endings
- * @return An array containing the individual lines from `text`.
+ * @returns An array containing the individual lines from `text`.
  */
 export function splitIntoLines(text: string, retainLineEndings = false): Array<string> {
     if (text.length === 0) {
@@ -353,7 +353,7 @@ export function splitIntoLines(text: string, retainLineEndings = false): Array<s
  * Splits a string into individual lines. The source string may contain
  * posix-style newlines, Windows-style newlines, or a mixture of the two.
  * @param src - The string to be split.
- * @return An array of string segments
+ * @returns An array of string segments
  */
 export function splitLinesOsIndependent(src: string): Array<string> {
     let lines = _.split(src, "\n");
@@ -399,7 +399,7 @@ export function padRight(src: string, pad: string, desiredLength: number): strin
 /**
  * Figures our what EOL string is being used in the specified string.
  * @param text - The string to analyze
- * @return A string representing the EOL characters being used in `text`.  If no
+ * @returns A string representing the EOL characters being used in `text`.  If no
  * end-of-line is found, undefined is returned.
  */
 export function getEol(text: string): string | undefined {
@@ -417,7 +417,7 @@ export function getEol(text: string): string | undefined {
  * Repeats _str_ to build a new string containing `numChars` characters.
  * @param str - The string to repeat until the given length is achieved
  * @param numChars - The desired length of the returned string.
- * @return A new string containing _str_ repeated until the specified length is
+ * @returns A new string containing _str_ repeated until the specified length is
  * achieved.
  */
 export function repeat(str: string, numChars: number): string {
@@ -542,7 +542,7 @@ export interface IPairing {
  * overlap) and all begin tokens are paired with the corresponding end token.
  * @param pairings - An array of associated begin and end tokens to check
  * @param str - The string to check
- * @return true if all tokens are properly nested and paired; false otherwise.
+ * @returns true if all tokens are properly nested and paired; false otherwise.
  */
 export function containsNestedPairs(pairings: Array<IPairing>, str: string): boolean {
     // All begin and end tokens combined in a single array.
@@ -619,7 +619,7 @@ export function containsNestedPairs(pairings: Array<IPairing>, str: string): boo
  *
  * @param str - The string to be parsed
  * @param radix - The radix used in _str_.
- * @return A successful Result containing the parsed integer or a failed Result
+ * @returns A successful Result containing the parsed integer or a failed Result
  * containing a descriptive error message.
  */
 export function tryParseInt(str: string, radix?: number): Result<number, string> {
@@ -636,7 +636,7 @@ export function tryParseInt(str: string, radix?: number): Result<number, string>
  *
  * @param arr - The array to search
  * @param searchStr - The value to search for
- * @return Description
+ * @returns Description
  */
 export function includesCaseInsensitive(arr: string[], searchStr: string): boolean {
     const found = arr.find((curStr) => compareStrI(curStr, searchStr) === CompareResult.EQUAL);
@@ -658,7 +658,7 @@ export interface ITrimOptions {
  *
  * @param str - The string to be trimmed
  * @param toTrim - The string to look for at the beginning and end of _str_.
- * @return The trimmed string
+ * @returns The trimmed string
  */
 export function trimString(str: string, toTrim: string, opts: ITrimOptions): string {
 

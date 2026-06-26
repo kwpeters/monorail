@@ -24,7 +24,7 @@ type AsyncResultStep<TInSuccess, TOutSuccess, TOutError> =
  *     (n) => new SucceededResult(n - 3)
  * );
  *
- * @return If a FailedResult is returned by any function, execution of
+ * @returns If a FailedResult is returned by any function, execution of
  * subsequent functions is short circuited and a Promise for the FailedResult is
  * returned. If the entire pipeline succeeds, a Promise for the Result returned
  * by the last function is returned.

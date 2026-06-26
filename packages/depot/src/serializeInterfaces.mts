@@ -18,7 +18,7 @@ export interface ISerializable {
      * Serializes this instance to a plain object suitable for JSON
      * serialization.
      *
-     * @return A plain object representing this instance.
+     * @returns A plain object representing this instance.
      */
     serialize(): { $type: string };
 

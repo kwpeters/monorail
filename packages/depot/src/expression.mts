@@ -255,7 +255,7 @@ export function tokenize(input: string): Result<Array<ExpressionToken>, string> 
  * Converts a sequence of infix tokens to the postfix version using the
  * Shunting-yard algorithm.
  * @param infixTokens - The infix tokens
- * @return When successful, an array of the token reordered into postfix
+ * @returns When successful, an array of the token reordered into postfix
  * notation.  If unbalanced parenthesis are found, a failure with a descriptive
  * message is returned.
  */

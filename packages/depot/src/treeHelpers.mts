@@ -8,7 +8,7 @@ import { NoneOption, Option, SomeOption } from "./option.mjs";
  * is an array of cells.
  *
  * @param tree - The tree to be converted
- * @return An array of rows, where each row is an array of Option values.  Each
+ * @returns An array of rows, where each row is an array of Option values.  Each
  * Option value represents a cell in the table.  The Option is NoneOption if the
  * cell contains the same ITreeNode as the corresponding cell in the previous
  * row.  The Option is a SomeOption containing an ITreeNode if it is different

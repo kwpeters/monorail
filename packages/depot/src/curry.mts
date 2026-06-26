@@ -41,7 +41,7 @@
  * @param arity - The number of arguments the eager form accepts.
  * @param args - The arguments the caller actually supplied.
  * @param impl - The data-last implementation `(...config, value) => result`.
- * @return Either the eager result or a `(value) => result` continuation.
+ * @returns Either the eager result or a `(value) => result` continuation.
  */
 export function dispatchLast(
     arity: number,
@@ -63,7 +63,7 @@ export function dispatchLast(
  * @param arity - The number of arguments the eager form accepts.
  * @param args - The arguments the caller actually supplied.
  * @param impl - The implementation, written value-first: `(value, ...config)`.
- * @return Either the eager result or a `(value) => result` continuation.
+ * @returns Either the eager result or a `(value) => result` continuation.
  */
 export function dispatchFirst(
     arity: number,
@@ -83,7 +83,7 @@ export function dispatchFirst(
  *
  * @param arity - The number of arguments the eager form accepts.
  * @param impl - The data-last implementation.
- * @return A function supporting both calling conventions.  The precise public
+ * @returns A function supporting both calling conventions.  The precise public
  * type is supplied by the call-signature annotation on the exported member.
  */
 export function dual<TFn>(
@@ -102,7 +102,7 @@ export function dual<TFn>(
  *
  * @param arity - The number of arguments the eager form accepts.
  * @param impl - The implementation, written value-first: `(value, ...config)`.
- * @return A function supporting both the eager (value-first) and curried
+ * @returns A function supporting both the eager (value-first) and curried
  * (config-first) calling conventions.
  */
 export function dualFlip<TFn>(
@@ -126,7 +126,7 @@ export function dualFlip<TFn>(
  *
  * @param fn - The function to partially apply.
  * @param presetArgs - The leading arguments to bind now.
- * @return A function that takes the remaining arguments and calls `fn` with the
+ * @returns A function that takes the remaining arguments and calls `fn` with the
  * preset arguments prepended.
  */
 export function partial<TTrailingArgs extends any[], TPresetArgs extends any[], TReturn>(

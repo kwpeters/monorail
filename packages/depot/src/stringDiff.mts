@@ -20,7 +20,7 @@ import * as lcs from "./lcs.mjs";
  * present in the output (not elided)
  * @param finalPartsToKeep - The number of final parts that will always be
  * present in the output (not elided)
- * @return A tuple containing the unique parts of each array.  In each,
+ * @returns A tuple containing the unique parts of each array.  In each,
  * sequences of equal parts are replaced with the specified _elidedVal_.
  */
 export function elideEqual(

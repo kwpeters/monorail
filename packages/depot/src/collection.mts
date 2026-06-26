@@ -11,7 +11,7 @@ export interface IFindResult<TCollectionItem, TPredicateReturn> {
  * return null or undefined when unsuccessful to allow for maximum type checking
  * (this implementation cannot remove false from the returned result's
  * predicateReturn property).
- * @return The item and the predicate return value associated with the first
+ * @returns The item and the predicate return value associated with the first
  * truthy invocation of the predicate. _undefined_ if the predicate returned a
  * falsy value for every item.
  */

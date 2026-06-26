@@ -62,7 +62,7 @@ export class Heap<T> {
 
     /**
      * Returns the number of items in this heap
-     * @return The number of items in this heap
+     * @returns The number of items in this heap
      */
     public get length(): number {
         // Subtract 1, because element 0 is never used.
@@ -72,7 +72,7 @@ export class Heap<T> {
 
     /**
      * Determines whether this heap is empty.
-     * @return true if this heap is empty; false otherwise
+     * @returns true if this heap is empty; false otherwise
      */
     public get isEmpty(): boolean {
         return this.length === 0;
@@ -81,7 +81,7 @@ export class Heap<T> {
 
     /**
      * Calculates the maximum depth of this heap.
-     * @return The maximum depth of the this heap
+     * @returns The maximum depth of the this heap
      */
     public get depth(): number {
         if (this.length === 0) {
@@ -116,7 +116,7 @@ export class Heap<T> {
 
     /**
      * Gets the greatest item from this heap (without removing it)
-     * @return The item with the greatest value (as determined by compareFunc)
+     * @returns The item with the greatest value (as determined by compareFunc)
      */
     public peek(): T | undefined {
         if (this._store.length === 0) {
@@ -129,7 +129,7 @@ export class Heap<T> {
 
     /**
      * Gets the greatest item from this heap
-     * @return The item with the greatest value (as determined by compareFunc)
+     * @returns The item with the greatest value (as determined by compareFunc)
      */
     public pop(): T | undefined {
         // The length of the backing store upon start.
@@ -218,7 +218,7 @@ export class Heap<T> {
     /**
      * Determines whether the specified index is the root of this heap's tree.
      * @param index - The index of the item to check
-     * @return true if the specified index is the root of this heap; false
+     * @returns true if the specified index is the root of this heap; false
      * otherwise.
      */
     private isRoot(index: number): boolean {
@@ -233,7 +233,7 @@ export class Heap<T> {
      * Compares the items at the specified indices
      * @param indexA - Index of the left side argument
      * @param indexB - Index of the right sided argument
-     * @return The result of comparing the specified items
+     * @returns The result of comparing the specified items
      */
     private compare(indexA: number, indexB: number): CompareResult {
         if (!this.isValidIndex(indexA) ||
@@ -265,7 +265,7 @@ export class Heap<T> {
     /**
      * Determines whether index is a valid index for this heap
      * @param index - The index to check
-     * @return true if index is valid; false otherwise
+     * @returns true if index is valid; false otherwise
      */
     private isValidIndex(index: number): boolean {
         if (index === 0) {
@@ -280,7 +280,7 @@ export class Heap<T> {
     /**
      * Finds the parent of the specified item
      * @param index - Index of the item for which the parent index is to be found
-     * @return The parent index.  Undefined if index is the root of this heap
+     * @returns The parent index.  Undefined if index is the root of this heap
      */
     private parentIndex(index: number): number | undefined {
         if (!this.isValidIndex(index)) {
@@ -299,7 +299,7 @@ export class Heap<T> {
     /**
      * Finds the left child of the specified item
      * @param index - Index of the item for which the left child index is to be found
-     * @return The left child index.  Undefined if index has no left child
+     * @returns The left child index.  Undefined if index has no left child
      */
     private leftChild(index: number): number | undefined {
         if (!this.isValidIndex(index)) {
@@ -313,7 +313,7 @@ export class Heap<T> {
     /**
      * Finds the right child of the specified item
      * @param index - Index of the item for which the right child index is to be found
-     * @return The right child index.  Undefined if index has no right child
+     * @returns The right child index.  Undefined if index has no right child
      */
     private rightChild(index: number): number | undefined {
         if (!this.isValidIndex(index)) {

@@ -168,7 +168,7 @@ export function assertStaticShape<TExpected>(_class: ClassValue & TExpected): vo
  * @param targetObj - The target object to ensure properties on.
  * @param templateObj - The template object to use as a reference.
  * @param defaultValue - The default value to use for missing properties.
- * @return The updated target object with all properties from the template.
+ * @returns The updated target object with all properties from the template.
  */
 export function ensureAllProperties<TTemplate extends Record<PropertyKey, unknown>, TValue>(
     targetObj: Partial<Record<keyof TTemplate, TValue>>,

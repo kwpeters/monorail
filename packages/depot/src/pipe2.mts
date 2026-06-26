@@ -18,7 +18,7 @@
  * // pipe() can also make chained transformations that return Option easy to
  * // write.
  *
- * @return The value returned from the last function.
+ * @returns The value returned from the last function.
  */
 export function pipe<T001>(
     v001: T001

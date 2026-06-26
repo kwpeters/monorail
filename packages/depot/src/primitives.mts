@@ -42,7 +42,7 @@ export function isIHasLength(other: unknown): other is IHasLength {
  * @param startIndex - The index into the buffer
  * @param itemsNeeded - The number of bytes to be read starting at _index_.
  * @param buf - The buffer to be read from
- * @return A successful Result containing the index if it is valid.  A failed
+ * @returns A successful Result containing the index if it is valid.  A failed
  * Result containing an error message otherwise.
  */
 export function validateIndex(startIndex: number, itemsNeeded: number, container: IHasLength): Result<number, string> {

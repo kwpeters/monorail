@@ -14,7 +14,7 @@ export namespace PositiveInteger {
      * Attempts to create a new PositiveInteger.
      *
      * @param x - The number to be wrapped
-     * @return If _x_ is valid, a successful Result containing the
+     * @returns If _x_ is valid, a successful Result containing the
      * PositiveInteger.  Otherwise, a failed Result containing an error
      * message.
      */
@@ -35,7 +35,7 @@ export namespace PositiveInteger {
      * Creates a new PositiveInteger.  Throws if the input is invalid.
      *
      * @param x - The number to be wrapped
-     * @return If _x_ is valid, the resulting PositiveInteger value.
+     * @returns If _x_ is valid, the resulting PositiveInteger value.
      * Otherwise, an exception is thrown.
      */
     export function create(x: number): PositiveInteger {

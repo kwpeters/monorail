@@ -9,7 +9,7 @@ import { pipe } from "./pipe2.mjs";
  * expressions have state, a function is used here to create new instances for
  * clients.
  * @param flags - Any RegExp flag that should be used when creating the regex.
- * @return The newly created regex
+ * @returns The newly created regex
  */
 export function createEolRegex(flags?: string): RegExp {
     return new RegExp("\\r?\\n", flags);
@@ -21,7 +21,7 @@ export function createEolRegex(flags?: string): RegExp {
  * expressions.
  * @param str - The string to test.
  * @param regexes - The regexes to test.
- * @return true if one or more of the regular expressions match `str`; false
+ * @returns true if one or more of the regular expressions match `str`; false
  * otherwise.
  */
 export function matchesAny(str: string, regexes: Array<RegExp>): boolean {
@@ -36,7 +36,7 @@ export function matchesAny(str: string, regexes: Array<RegExp>): boolean {
  *
  * @param strings - The collection of strings to be searched
  * @param strOrRegex - The string or regular expression to search for
- * @return An Option containing the found string, or NoneOption if not found
+ * @returns An Option containing the found string, or NoneOption if not found
  */
 export function includesStrOrMatch(strings: Iterable<string>, strOrRegex: string | RegExp): Option<string> {
 
@@ -143,7 +143,7 @@ export function strToRegExp(str: string): Result<RegExp, string> {
  * @param regex - The pattern to match
  * @param param - The group name that is to be extracted upon a successful match
  * @param text - The text to match against
- * @return If the match was successful, a SomeOption containing the text matched
+ * @returns If the match was successful, a SomeOption containing the text matched
  *     by the specified named group.  Otherwise, a NoneOption.
  */
 export function extractNamedGroup(

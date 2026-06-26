@@ -6,7 +6,7 @@ import { Result, FailedResult, SucceededResult } from "./result.mjs";
  * Converts a Zod error to a human-readable error message string.
  *
  * @param error - The ZodError to convert
- * @return A string summarizing all validation issues
+ * @returns A string summarizing all validation issues
  */
 export function zodErrorToString(error: z.ZodError): string {
     return error.issues
@@ -20,7 +20,7 @@ export function zodErrorToString(error: z.ZodError): string {
  * Converts a Zod safeParse result into a Result type in a type-safe way.
  *
  * @param zodResult - The Zod safeParse result to convert
- * @return A Result containing either the parsed data or error message
+ * @returns A Result containing either the parsed data or error message
  */
 export function zodResultToResult<TSuccessParseData>(
     zodResult: z.ZodSafeParseResult<TSuccessParseData>
@@ -40,7 +40,7 @@ export function zodResultToResult<TSuccessParseData>(
  *
  * @param schema - The Zod schema to use for parsing
  * @param input - The unknown input to parse
- * @return A Result containing either the parsed data or error message
+ * @returns A Result containing either the parsed data or error message
  */
 export function safeParse<TSchema extends z.ZodType>(
     schema: TSchema,
@@ -56,7 +56,7 @@ export function safeParse<TSchema extends z.ZodType>(
  *
  * @param schema - The Zod schema to use for parsing
  * @param input - The unknown input to parse
- * @return A Promise of Result containing either the parsed data or error message
+ * @returns A Promise of Result containing either the parsed data or error message
  */
 export async function safeParseAsync<TSchema extends z.ZodType>(
     schema: TSchema,
@@ -72,7 +72,7 @@ export async function safeParseAsync<TSchema extends z.ZodType>(
  *
  * @param resInput - The Result to convert
  * @param ctx - The Zod refinement context
- * @return The value if the Result is successful, otherwise z.NEVER
+ * @returns The value if the Result is successful, otherwise z.NEVER
  */
 export function unwrapOrAddIssue<TSuccess>(
     resInput: Result<TSuccess, string>,

@@ -38,7 +38,7 @@ export class Bitstring<
      * Creates a new Bitstring instance
      * @param backingValue - The backing integer value
      * @param bitfieldDefs - The bitfield definitions
-     * @return A Result containing either the new Bitstring instance or an error
+     * @returns A Result containing either the new Bitstring instance or an error
      * message
      */
     static create<
@@ -65,7 +65,7 @@ export class Bitstring<
 
     /**
      * Gets the backing value for this Bitstring
-     * @return The backing value
+     * @returns The backing value
      */
     public get backingValue(): TBackingValue {
         return this._backingValue;
@@ -74,7 +74,7 @@ export class Bitstring<
 
     /**
      * Gets the names of the bitfields within this Bitstring
-     * @return The bitfield definitions
+     * @returns The bitfield definitions
      */
     public enumBitfields(): IterableIterator<keyof TBitfieldDef> {
         return Object.keys(this._bitfieldDefs)[Symbol.iterator]();
@@ -85,7 +85,7 @@ export class Bitstring<
     /**
      * Gets the value of the specified bitfield
      * @param bitfieldName - The name of the bitfield to get
-     * @return The value of the bitfield
+     * @returns The value of the bitfield
      */
     public getBitfield(bitfieldName: keyof TBitfieldDef): number {
         const bitfiledDef = this._bitfieldDefs[bitfieldName]!;
@@ -105,7 +105,7 @@ export class Bitstring<
 
     /**
      * Gets the name and value of all bitfields within this Bitstring.
-     * @return An array of tuples.  Each tuple contains the bitfield name and
+     * @returns An array of tuples.  Each tuple contains the bitfield name and
      * its value.
      */
     public *getAllBitfields(): IterableIterator<[keyof TBitfieldDef, number]> {
@@ -131,7 +131,7 @@ export class Bitstring<
      * those bitfields that have a non-zero value.  Provided as a convenience,
      * because it is common to want to iterate over all bitfields that are
      * non-zero.
-     * @return An array of tuples.  Each tuple contains the bitfield name and
+     * @returns An array of tuples.  Each tuple contains the bitfield name and
      * its value.
      */
     public *getAllNonZeroBitfields(): IterableIterator<[keyof TBitfieldDef, number]> {
@@ -156,7 +156,7 @@ export class Bitstring<
      * new value.
      * @param bitfieldName - The name of the bitfield to set
      * @param value - The new value of the bitfield
-     * @return The new Bitstring instance with the specified bitfield set to the
+     * @returns The new Bitstring instance with the specified bitfield set to the
      * new value
      */
     public setBitfield(bitfieldName: keyof TBitfieldDef, value: number): Bitstring<TBackingValue, TBitfieldDef> {
@@ -186,7 +186,7 @@ export class Bitstring<
  * ranges are valid and do not overlap.
  * @param bitfieldDefs - The bitfield definitions to validate
  * @param cls - The class type of the backing integer
- * @return If the definitions are valid, a successful Result containing the
+ * @returns If the definitions are valid, a successful Result containing the
  * definitions; otherwise a failed Result containing an error message
  */
 function bitfieldDefinitionsAreValid<TBackingValue extends UInt8 | UInt16 | UInt32>(

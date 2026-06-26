@@ -8,7 +8,7 @@ import { FailedResult, SucceededResult, type Result } from "./result.mjs";
  *
  * @param text - The text content
  * @param offset - The character offset (0-based).
- * @return An object containing the line and column numbers.
+ * @returns An object containing the line and column numbers.
  */
 export function offsetToLineColumn(text: string, offset: number): { line: number, column: number} {
     let line = 1;
@@ -67,7 +67,7 @@ export class SourceLocation {
      * the file path, line number, and column number. The format is
      * "filePath:line:col", but parts are omitted if they are not specified.
      *
-     * @return The starting location string
+     * @returns The starting location string
      */
     public startToString(): Result<string, string> {
         return this.toString(this._start);
@@ -79,7 +79,7 @@ export class SourceLocation {
      * the file path, line number, and column number. The format is
      * "filePath:line:col", but parts are omitted if they are not specified.
      *
-     * @return The ending location string
+     * @returns The ending location string
      */
     public endToString(): Result<string, string> {
         if (this._optEnd.isNone) {
@@ -94,7 +94,7 @@ export class SourceLocation {
     /**
      * Converts this object into the format expected by @babel/code-frame.
      *
-     * @return The code frame representation
+     * @returns The code frame representation
      */
     public get codeFrame(): ICodeFrame {
         return {

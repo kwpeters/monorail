@@ -40,7 +40,7 @@ export class Validator<TSubject> {
     /**
      * Evaluates the validity of subject.
      * @param subject - The data to be validated
-     * @return A promise for the validity of subject.  This promise will never
+     * @returns A promise for the validity of subject.  This promise will never
      * reject.
      */
     public isValid(subject: TSubject): Promise<boolean> {
@@ -56,7 +56,7 @@ export class Validator<TSubject> {
  *
  * @param subject - The value to be validated
  * @param validatorFuncs - The functions that will perform the validation
- * @return Whether or not the value is valid
+ * @returns Whether or not the value is valid
  */
 export function validate<TSubject>(
     subject: TSubject,

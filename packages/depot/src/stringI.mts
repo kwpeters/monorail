@@ -28,14 +28,14 @@ export class StringI implements IEquatable<StringI>,
      * Compares this StringI to another StringI in a case-insensitive manner.
      *
      * @param other - The other instance
-     * @return true if the instances are equal (case-insensitive); false otherwise.
+     * @returns true if the instances are equal (case-insensitive); false otherwise.
      */
     public equals(other: StringI): boolean;
     /**
      * Compares this StringI to a string in a case-insensitive manner.
      *
      * @param other - The string to compare against.
-     * @return true if the instances are equal (case-insensitive); false otherwise.
+     * @returns true if the instances are equal (case-insensitive); false otherwise.
      */
     public equals(other: string): boolean;
     public equals(other: StringI | string): boolean {
@@ -52,7 +52,7 @@ export class StringI implements IEquatable<StringI>,
      * Calculates the hash for this string.  Equal StringI instances will
      * produce the same hash.
      *
-     * @return This instance's hash
+     * @returns This instance's hash
      */
     public getHash(): HashString {
         const intrinsics = {

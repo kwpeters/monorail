@@ -15,7 +15,7 @@ export namespace NonnegativeInteger {
      * Attempts to create a new NonnegativeInteger.
      *
      * @param x - The number to be wrapped
-     * @return If _x_ is valid, a successful Result containing the
+     * @returns If _x_ is valid, a successful Result containing the
      * NonnegativeInteger.  Otherwise, a failed Result containing an error
      * message.
      */
@@ -36,7 +36,7 @@ export namespace NonnegativeInteger {
      * Creates a new NonnegativeInteger.  Throws if the input is invalid.
      *
      * @param x - The number to be wrapped
-     * @return If _x_ is valid, the resulting NonnegativeInteger value.
+     * @returns If _x_ is valid, the resulting NonnegativeInteger value.
      * Otherwise, an exception is thrown.
      */
     export function create(x: number): NonnegativeInteger {

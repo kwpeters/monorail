@@ -460,7 +460,7 @@ export namespace Option {
      *
      * @param namedOptions - An object where the keys are strings and the values are
      * Option objects.
-     * @return If all Options are some, a some Option wrapping an
+     * @returns If all Options are some, a some Option wrapping an
      * object having the same keys and the values are the Option values.
      * Otherwise, a none Option is returned.
      */
@@ -533,7 +533,7 @@ export namespace Option {
      *
      * @param fn - Async augment function invoked for Some input
      * @param input - The input Option
-     * @return A Promise for the augmented Option
+     * @returns A Promise for the augmented Option
      */
     // Eager form.
     export function augmentAsync<TInput extends object, TAugment>(
@@ -598,7 +598,7 @@ export namespace Option {
      *
      * @param fn - Async bind function invoked for Some input
      * @param input - The input Option
-     * @return A Promise for the bound Option
+     * @returns A Promise for the bound Option
      */
     // Eager form.
     export function bindAsync<TIn, TOut>(
@@ -629,7 +629,7 @@ export namespace Option {
      *
      * @param fn - The function to invoke when _input_ is none.
      * @param input - The input Option
-     * @return Either the passed-through "some" Option or the Option returned
+     * @returns Either the passed-through "some" Option or the Option returned
      * from _fn_.
      */
     // Eager form.
@@ -658,7 +658,7 @@ export namespace Option {
      *
      * @param fn - Async fallback function invoked for None input
      * @param input - The input Option
-     * @return A Promise for the resulting Option
+     * @returns A Promise for the resulting Option
      */
     // Eager form.
     export function bindNoneAsync<TIn, TOut>(
@@ -820,7 +820,7 @@ export namespace Option {
      * @param fn - Async function that can be invoked to get the default value.
      * Not executed unless input is None.
      * @param input - The input Option
-     * @return A Promise for the contained value if input is Some, else the
+     * @returns A Promise for the contained value if input is Some, else the
      * value returned by _fn_
      */
     // Eager form.
@@ -866,7 +866,7 @@ export namespace Option {
      * that value.
      *
      * @param nullable - A value that may be undefined or null
-     * @return The resulting Option
+     * @returns The resulting Option
      */
     export function fromNullable<T>(nullable: T | undefined | null): Option<T> {
         return (nullable === undefined) || (nullable === null) ?
@@ -879,7 +879,7 @@ export namespace Option {
      * Converts a possibly empty array to an Option for the array.
      *
      * @param arr - The possibly empty array
-     * @return If _arr_ was empty, NoneOption.  If _arr_ contained some items, a
+     * @returns If _arr_ was empty, NoneOption.  If _arr_ contained some items, a
      * SomeOption containing _arr_.
      */
     export function requireNonEmptyArray<T>(arr: Array<T>): Option<Array<T>> {
@@ -893,7 +893,7 @@ export namespace Option {
      * Converts an array to an Option for the array.
      *
      * @param arr - The input array
-     * @return If _arr_ has one element, a SomeOption containing the one element
+     * @returns If _arr_ has one element, a SomeOption containing the one element
      * of _arr_. Otherwise, a NoneOption.
      */
     export function requireOneElementArray<T>(arr: Array<T>): Option<T> {
@@ -936,7 +936,7 @@ export namespace Option {
      *
      * @param fn - Async mapping function invoked for Some input
      * @param input - The input Option
-     * @return A Promise for the mapped Option
+     * @returns A Promise for the mapped Option
      */
     // Eager form.
     export function mapSomeAsync<TIn, TOut>(
@@ -965,7 +965,7 @@ export namespace Option {
      * @param fnSome - Function that will be invoked when _input_ is a SomeOption.
      * @param fnNone - Function that will be invoked when _input_ is a NoneOption.
      * @param input - The input Option
-     * @return The value returned by either _fnSome_ or _fnNone_
+     * @returns The value returned by either _fnSome_ or _fnNone_
      */
     // Eager form.
     export function match<TIn, TSomeOut, TNoneOut>(
@@ -1000,7 +1000,7 @@ export namespace Option {
      * @param fnSome - Async function invoked when _input_ is a SomeOption
      * @param fnNone - Async function invoked when _input_ is a NoneOption
      * @param input - The input Option
-     * @return A Promise for the value returned by either _fnSome_ or _fnNone_
+     * @returns A Promise for the value returned by either _fnSome_ or _fnNone_
      */
     // Eager form.
     export function matchAsync<TIn, TSomeOut, TNoneOut>(
@@ -1038,7 +1038,7 @@ export namespace Option {
      *
      * @param matcherFns - An object that contains the some and none functions
      * @param input - The input Option
-     * @return The value returned by the invoked handler function
+     * @returns The value returned by the invoked handler function
      */
     // Eager form.
     export function matchWith<TIn, TSomeOut, TNoneOut>(
@@ -1074,7 +1074,7 @@ export namespace Option {
      * @param matcherFns - An object that contains the async some and none
      * handler functions
      * @param input - The input Option
-     * @return A Promise for the value returned by the invoked handler function
+     * @returns A Promise for the value returned by the invoked handler function
      */
     // Eager form.
     export function matchWithAsync<TIn, TSomeOut, TNoneOut>(
@@ -1149,7 +1149,7 @@ export namespace Option {
      * @param fn - Async function that will be invoked to get the error message
      * when the Option is a NoneOption
      * @param opt - The input Option
-     * @return A Promise for the unwrapped SomeOption value
+     * @returns A Promise for the unwrapped SomeOption value
      */
     // Eager form.
     export function throwIfNoneWithAsync<T>(
@@ -1176,7 +1176,7 @@ export namespace Option {
      * error message.
      *
      * @param opt - The input Option
-     * @return Description
+     * @returns Description
      */
     export function throwIfSome<T>(
         opt: Option<T>
@@ -1190,7 +1190,7 @@ export namespace Option {
      * specified function to generate the error message.
      *
      * @param param - Description
-     * @return Description
+     * @returns Description
      */
     // Eager form.
     export function throwIfSomeWith<T>(
@@ -1218,7 +1218,7 @@ export namespace Option {
      *
      * @param fn - Async function that generates the error message
      * @param opt - The input Option
-     * @return A Promise that resolves when no error is thrown
+     * @returns A Promise that resolves when no error is thrown
      */
     // Eager form.
     export function throwIfSomeWithAsync<T>(
@@ -1247,7 +1247,7 @@ export namespace Option {
      *
      * @param nullishValue - The value to return if the Option is a NoneOption
      * @param opt - The input Option
-     * @return The resulting nullable value
+     * @returns The resulting nullable value
      */
     // Eager form.
     export function toNullable<TOption, TNullish extends undefined | null>(

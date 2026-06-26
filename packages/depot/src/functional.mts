@@ -2,7 +2,7 @@
  * The identity function.
  *
  * @param arg - The item that will be returned.
- * @return The value that was passed in
+ * @returns The value that was passed in
  */
 export function id<T>(arg: T): T {
     return arg;
@@ -33,7 +33,7 @@ export type SelfMapperAsync<T> = (arg: T) => Promise<T>;
  *
  * @param inputs - The array of input values to transform.
  * @param mappers - The array of functions to apply sequentially to each input.
- * @return An array containing the final transformed value for each input.
+ * @returns An array containing the final transformed value for each input.
  */
 export function applyMappers<T>(inputs: T[], mappers: SelfMapper<T>[]): T[] {
     return inputs.map(
@@ -49,7 +49,7 @@ export function applyMappers<T>(inputs: T[], mappers: SelfMapper<T>[]): T[] {
  * @param inputs - The array of input values to transform.
  * @param mappers - The array of asynchronous functions to apply sequentially to
  * each input.
- * @return A promise that resolves to an array containing the final transformed
+ * @returns A promise that resolves to an array containing the final transformed
  * value for each input.
  */
 export async function applyMappersAsync<T>(

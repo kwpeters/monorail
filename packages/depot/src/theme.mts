@@ -12,7 +12,7 @@ export type ThemeWith<TKeys extends string | number | symbol> = Record<TKeys, Fo
  * formatters.
  *
  * @param theme - The original theme object
- * @return A new theme object with the same properties as `theme` but with nop
+ * @returns A new theme object with the same properties as `theme` but with nop
  * formatters
  */
 export function createNopTheme<TTheme extends Record<string, FormatterFn>>(

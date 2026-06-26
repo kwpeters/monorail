@@ -11,7 +11,7 @@ export interface IDecoderStatic<TDecoded> {
      * Decodes a value from the specified buffer reader.
      *
      * @param reader - The buffer reader to read from
-     * @return A Result containing the decoded value or an error message
+     * @returns A Result containing the decoded value or an error message
      */
     decode(reader: BufReader): Result<TDecoded, string>;
 }
@@ -25,7 +25,7 @@ export interface IEncoderInstance {
     /**
      * Encodes this instance into an ArrayBuffer.
      *
-     * @return An ArrayBuffer containing the encoded value
+     * @returns An ArrayBuffer containing the encoded value
      */
     encode(): ArrayBuffer;
 }

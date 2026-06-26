@@ -11,7 +11,7 @@ import { FailedResult, Result } from "./result.mjs";
  * @param keyFn - The function that returns each item's key, invoked with the
  * item and its index
  * @param items - The items that will become the values in the map
- * @return The resulting Map
+ * @returns The resulting Map
  */
 // Eager (data-last) form.
 export function buildIndex<T>(
@@ -54,7 +54,7 @@ export function buildIndex(...args: Array<unknown>): unknown {
  * @param criterionFn - The function that determines the criterion for
  * identifying duplicates, invoked with the item and its index
  * @param items - The iterable to search for duplicates
- * @return An Option containing the first duplicate item and its criterion, or
+ * @returns An Option containing the first duplicate item and its criterion, or
  * NoneOption if no duplicates are found
  */
 // Eager (data-last) form.
@@ -101,7 +101,7 @@ export function findFirstDuplicateBy(...args: Array<unknown>): unknown {
  *
  * @param fn - The mapping function, invoked with each item and its index.
  * @param items - The Iterable of items to map over.
- * @return An array of the mapped values.
+ * @returns An array of the mapped values.
  */
 // Eager (data-last) form.
 export function map<TIn, TOut>(
@@ -138,7 +138,7 @@ export function map(...args: Array<unknown>): unknown {
  *
  * @param fn - The async mapping function, invoked with each item and its index.
  * @param items - The Iterable of items to map over.
- * @return A Promise for an array of the mapped values.
+ * @returns A Promise for an array of the mapped values.
  */
 // Eager (data-last) form.
 export function mapAsync<TIn, TOut>(
@@ -176,7 +176,7 @@ export function mapAsync(...args: Array<unknown>): unknown {
  * @param asyncValueFn - The function that returns the data that will augment the
  * original item, invoked with each item and its index.
  * @param items - The Iterable of items to augment.
- * @return A Promise for an array of the augmented items.
+ * @returns A Promise for an array of the augmented items.
  */
 // Eager (data-last) form.
 export function augmentAsync<TIn, TAugment>(
@@ -221,7 +221,7 @@ export function augmentAsync(...args: Array<unknown>): unknown {
  * @param asyncValueFn - The async function called for each item, invoked with
  * the item and its index.
  * @param items - The Iterable of items to zip.
- * @return A Promise for an array of 2-element tuples.  The first element is the
+ * @returns A Promise for an array of 2-element tuples.  The first element is the
  * item and the second is the resolved value returned from `asyncValueFn`.
  */
 // Eager (data-last) form.
@@ -262,7 +262,7 @@ export function zipWithAsync(...args: Array<unknown>): unknown {
  * @param predicate - Invoked with each item and its index; items for which it
  * returns a truthy value are kept.
  * @param items - The Iterable of items to filter.
- * @return A new array containing the items that satisfied the predicate.
+ * @returns A new array containing the items that satisfied the predicate.
  */
 // Eager (data-last) form.
 export function filter<T>(
@@ -308,7 +308,7 @@ export function filter(...args: Array<unknown>): unknown {
  * @param asyncPredicate - The async predicate, invoked with each item and its
  * index.  Items whose predicate resolves to a truthy value are kept.
  * @param items - The Iterable of items to filter.
- * @return A Promise for an array of the items that satisfied the predicate.
+ * @returns A Promise for an array of the items that satisfied the predicate.
  */
 // Eager (data-last) form.
 export function filterAsync<T>(
@@ -351,7 +351,7 @@ export function filterAsync(...args: Array<unknown>): unknown {
  * @param asyncPredicate - The async predicate, invoked with each item and its
  * index.
  * @param items - The Iterable of items to partition.
- * @return A Promise for a 2-element tuple.  The first array holds the items
+ * @returns A Promise for a 2-element tuple.  The first array holds the items
  * whose predicate resolved to a truthy value; the second holds those that
  * resolved to a falsy value.
  */
@@ -394,7 +394,7 @@ export function partitionAsync(...args: Array<unknown>): unknown {
  * the item, and its index.
  * @param initialValue - The initial accumulator value.
  * @param items - The Iterable of items to reduce.
- * @return The final accumulator value.
+ * @returns The final accumulator value.
  */
 // Eager (data-last) form.
 export function reduce<TItem, TAcc>(
@@ -444,7 +444,7 @@ export function reduce(...args: Array<unknown>): unknown {
  * index.
  * @param initialAcc - The initial accumulator value.
  * @param items - The Iterable of items to reduce.
- * @return A Promise for the final accumulator value.
+ * @returns A Promise for the final accumulator value.
  */
 // Eager (data-last) form.
 export function reduceAsync<TItem, TAcc>(
@@ -504,7 +504,7 @@ export function reduceAsync(...args: Array<unknown>): unknown {
  *
  * @param regex - The pattern to search for.  Should not use the `g` or `y` flag.
  * @param items - The Iterable of strings to search.
- * @return The first match found, or undefined if no string matched.
+ * @returns The first match found, or undefined if no string matched.
  */
 // Eager (data-last) form.
 export function firstMatch(
@@ -543,7 +543,7 @@ export function firstMatch(...args: Array<unknown>): unknown {
  *
  * @param separator - The value to insert between items.
  * @param items - The Iterable of items to intersperse.
- * @return A new array with `separator` inserted between the items.
+ * @returns A new array with `separator` inserted between the items.
  */
 // Eager (data-last) form.
 export function intersperse<T>(
@@ -585,7 +585,7 @@ export function intersperse(...args: Array<unknown>): unknown {
  * @param numToTake - The maximum number of items to place in the first array.  A
  * value less than or equal to zero puts all items in the second array.
  * @param items - The Iterable of items to split.
- * @return A 2-element tuple `[first, second]`, where `first` has up to
+ * @returns A 2-element tuple `[first, second]`, where `first` has up to
  * `numToTake` items and `second` has the remainder.
  */
 // Eager (data-last) form.
@@ -632,7 +632,7 @@ export function split(...args: Array<unknown>): unknown {
  * @param isSimilarFn - Determines whether two adjacent items belong in the same
  * group.
  * @param items - The Iterable of items to group.
- * @return An array of arrays.  Each inner array is a run of consecutive items
+ * @returns An array of arrays.  Each inner array is a run of consecutive items
  * considered similar.  Item order is preserved.
  */
 // Eager (data-last) form.
@@ -693,7 +693,7 @@ export function groupConsecutiveBy(...args: Array<unknown>): unknown {
  * @param fn - Maps each item to either a successful value (included in the
  * output) or a failure (contributes nothing).
  * @param collection - The Iterable of items to map.
- * @return The array of chosen (successful) values.
+ * @returns The array of chosen (successful) values.
  */
 // Eager (data-last) form.
 export function choose<TIn, TOut, TError>(
@@ -736,7 +736,7 @@ export function choose(...args: Array<unknown>): unknown {
  * @param fn - Maps each item to either a successful value (included in the
  * output) or a failure (contributes nothing).
  * @param collection - The Iterable of items to map.
- * @return A Promise for the array of chosen (successful) values.
+ * @returns A Promise for the array of chosen (successful) values.
  */
 // Eager (data-last) form.
 export function chooseAsync<TIn, TOut, TError>(
@@ -787,7 +787,7 @@ export function chooseAsync(...args: Array<unknown>): unknown {
  * @param fn - The function invoked for each input.
  * @param errVal - The failed Result value used when no input produces a success.
  * @param inputs - The Iterable of inputs to pass to `fn`.
- * @return The first successful Result, or a failed Result wrapping `errVal`.
+ * @returns The first successful Result, or a failed Result wrapping `errVal`.
  */
 // Eager (data-last) form.
 export function chooseFirst<TIn, TFnSuccess, TFnError, TError>(
@@ -836,7 +836,7 @@ export function chooseFirst(...args: Array<unknown>): unknown {
  * @param fn - The (potentially async) function invoked for each input.
  * @param errVal - The failed Result value used when no input produces a success.
  * @param inputs - The Iterable of inputs to pass to `fn`.
- * @return A Promise for the first successful Result, or a failed Result wrapping
+ * @returns A Promise for the first successful Result, or a failed Result wrapping
  * `errVal`.
  */
 // Eager (data-last) form.

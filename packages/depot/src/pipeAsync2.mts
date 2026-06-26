@@ -21,7 +21,7 @@ import type { MaybePromise } from "./typeUtils.mjs";
  * // pipeAsync() can also make chained transformations that return Option easy to
  * // write.
  *
- * @return A Promise for the value returned from the last function.
+ * @returns A Promise for the value returned from the last function.
  */
 export function pipeAsync<T001>(
     v001: MaybePromise<T001>

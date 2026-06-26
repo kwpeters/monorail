@@ -24,7 +24,7 @@ export interface IComparable<T> {
  *
  * @param x - The first item
  * @param y - The second item
- * @return The result of the comparison
+ * @returns The result of the comparison
  */
 export function compareIntrinsic<T>(x: T, y: T): CompareResult {
     if (x < y) {
@@ -44,7 +44,7 @@ export function compareIntrinsic<T>(x: T, y: T): CompareResult {
  *
  * @param x - The first string
  * @param y - The second string
- * @return The result of the comparison
+ * @returns The result of the comparison
  */
 export function compareStr(x: string, y: string): CompareResult {
     return compareIntrinsic(x, y);
@@ -56,7 +56,7 @@ export function compareStr(x: string, y: string): CompareResult {
  *
  * @param x - The first string
  * @param y - The second string
- * @return The result of the comparison
+ * @returns The result of the comparison
  */
 export function compareStrI(x: string, y: string): CompareResult {
     const res = x.localeCompare(y, "en", {sensitivity: "base"});

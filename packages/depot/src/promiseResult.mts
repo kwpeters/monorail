@@ -85,7 +85,7 @@ export namespace PromiseResult {
      * Converts a Promise<Result<>> to a Promise.
      *
      * @param pr - The Promise<Result<>> to be converted.
-     * @return Either a resolved promise or a rejected promise based on the input
+     * @returns Either a resolved promise or a rejected promise based on the input
      */
     export async function toPromise<TSuccess, TError>(
         pr: Promise<Result<TSuccess, TError>>
@@ -103,7 +103,7 @@ export namespace PromiseResult {
      * Results can optionally be asynchronous.
      *
      * @param inputResults - The Results to be searched
-     * @return The first successful Result found is returned immediately.  If
+     * @returns The first successful Result found is returned immediately.  If
      *  all Results are failures a failure Result is returned wrapping an array
      *  of all the errors.
      */
@@ -131,7 +131,7 @@ export namespace PromiseResult {
      * Results can optionally be asynchronous.
      *
      * @param inputResults - The Results to be searched
-     * @return If a failure Result is found, a successful Result is returned
+     * @returns If a failure Result is found, a successful Result is returned
      * wrapping the error.  If all inputs are successful, a failure Result is
      * returned wrapping an array of the success values.
      */
@@ -209,7 +209,7 @@ export namespace PromiseResult {
      *
      * @param namedPromiseResults - An object where the keys are strings and the
      * values are Promise<Result<>> objects.
-     * @return If all Promise<Result<>> objects resolve with successful Results,
+     * @returns If all Promise<Result<>> objects resolve with successful Results,
      * a successful Result wrapping an object having the same keys and the
      * values are the unwrapped success values. Otherwise, the first failure Result is
      * returned.
@@ -424,7 +424,7 @@ export namespace PromiseResult {
      * Result failure type.
      *
      * @param promises - The input array of Promise<Result<>>s.
-     * @return If all input Promises resolve with successful Results, a successful
+     * @returns If all input Promises resolve with successful Results, a successful
      * Result containing an array of those successful values.  Otherwise, a failure
      * Result is returned as soon as possible containing information about the first
      * error.
@@ -528,7 +528,7 @@ export namespace PromiseResult {
       *  successful input is returned.  If this function returns a failure, that
       *  failed Result is returned.
     * @param input - The input Result or Promise<Result>
-    * @return _input_ is returned if it is a failed Result.  Otherwise, if _fn_
+    * @returns _input_ is returned if it is a failed Result.  Otherwise, if _fn_
     * is successful, the original input is returned.  If _fn_ is a failure,
     * that failed result is returned.
       */
@@ -576,7 +576,7 @@ export namespace PromiseResult {
      * @param fn - The function to invoke when _input_ is an error.  It is
      * passed the error.
     * @param input - The input Result or Promise<Result>
-    * @return Either the passed-through successful Result or the Result returned
+    * @returns Either the passed-through successful Result or the Result returned
     * from _fn_.
      */
     // Eager form.

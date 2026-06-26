@@ -97,7 +97,7 @@ export class TreeTable implements IHasToString {
      * draw the tree structure.
      *
      * @param tree - The tree to be decorated
-     * @return A new tree that is identical to _tree_ except that the first
+     * @returns A new tree that is identical to _tree_ except that the first
      *     TextBlock of each node's value array is prefixed with the the Unicode
      *     characters that are needed to draw the tree structure
      */

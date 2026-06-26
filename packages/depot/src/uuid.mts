@@ -42,7 +42,7 @@ export const reStrUuidFormatN = "[0-9a-f]{32}";
 /**
  * Returns a uuid v4 string in the desired format.
  * @param format - The format of the returned uuid string (default: dashed)
- * @return The generated uuid
+ * @returns The generated uuid
  */
 export function generateUuid(format: UuidFormat = UuidFormat.D): string {
     let uuid = uuidv4();
@@ -73,7 +73,7 @@ export class Uuid implements IEquatable<Uuid>, IEquatable<string> {
      * Creates a new Uuid instance.
      *
      * @param format - The format that should be used for the generated UUID.
-     * @return The new Uuid instance.
+     * @returns The new Uuid instance.
      */
     public static create(format: UuidFormat = UuidFormat.D): Uuid {
         const uuidStr = generateUuid(format);
@@ -86,7 +86,7 @@ export class Uuid implements IEquatable<Uuid>, IEquatable<string> {
      * Creates a new Uuid instance that wraps the specified value.
      *
      * @param uuidStr - The raw value of the UUID to be wrapped.
-     * @return A successful result containing the new instance or a failed result
+     * @returns A successful result containing the new instance or a failed result
      * containing an error message.
      */
     public static fromString(uuidStr: string): Result<Uuid, string> {
@@ -105,7 +105,7 @@ export class Uuid implements IEquatable<Uuid>, IEquatable<string> {
      * validation and comparison simpler.
      *
      * @param uuidStr - The string UUID to be normalized
-     * @return The normalized version of the specified UUID string.
+     * @returns The normalized version of the specified UUID string.
      */
     public static toNormalizedString(uuidStr: string): string {
         return uuidStr.toLowerCase().replace(/-/g, "");
@@ -131,7 +131,7 @@ export class Uuid implements IEquatable<Uuid>, IEquatable<string> {
      * Determines whether two Uuid instances are equal.
      *
      * @param other - The Uuid instance to compare this instance to
-     * @return Whether this instance equals `other`.
+     * @returns Whether this instance equals `other`.
      */
     public equals(other: Uuid | string): boolean {
         if (typeof other === "string") {
@@ -152,7 +152,7 @@ export class Uuid implements IEquatable<Uuid>, IEquatable<string> {
     /**
      * The string representation of this Uuid.
      *
-     * @return The string representation of this Uuid.
+     * @returns The string representation of this Uuid.
      */
     public toString(): string {
         return this._uuidStr;

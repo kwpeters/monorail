@@ -8,7 +8,7 @@ import { type Result, SucceededResult, FailedResult } from "./result.mjs";
  * significant bit is index 0.
  * @param value - The new value of the bit. If true, the bit is set. If false,
  * the bit is cleared.
- * @return The new number with the specified bit set or cleared.
+ * @returns The new number with the specified bit set or cleared.
  */
 export function setBitInNumber(inputInt: number, bitIndex: number, value: boolean | 0 | 1): number {
 
@@ -33,7 +33,7 @@ export function setBitInNumber(inputInt: number, bitIndex: number, value: boolea
  * significant bit is index 0.
  * @param value - The new value of the bit. If true, the bit is set. If false,
  * the bit is cleared.
- * @return The new bigint with the specified bit set or cleared.
+ * @returns The new bigint with the specified bit set or cleared.
  */
 export function setBitInBigInt(inputInt: bigint, bitIndex: number, value: boolean | 0 | 1): bigint {
     const mask = 1n << BigInt(bitIndex);
@@ -49,7 +49,7 @@ export function setBitInBigInt(inputInt: bigint, bitIndex: number, value: boolea
  * @param bitIndex - The candidate bit index.
  * @param maxBitIndex - The maximum allowed bit index.
  * @param typeName - The data type display name used in error messaging.
- * @return A successful Result if bitIndex is valid; otherwise a failed Result
+ * @returns A successful Result if bitIndex is valid; otherwise a failed Result
  * with the validation error message.
  */
 export function validateBitIndex(

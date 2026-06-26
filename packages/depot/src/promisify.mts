@@ -6,7 +6,7 @@ type NodeCallback<TSuccess> = (err: unknown, result?: TSuccess) => void;
  * that takes no arguments and returns a Promise.
  *
  * @param fn - The Node-style function that takes only a callback function.
- * @return A function that takes no arguments and returns a Promise for the
+ * @returns A function that takes no arguments and returns a Promise for the
  * result.
  */
 export function promisify0<TSuccess>(
@@ -34,7 +34,7 @@ export function promisify0<TSuccess>(
  *
  * @param fn - The Node-style function that takes one argument and a callback
  * function.
- * @return A function that takes one argument and returns a Promise for the
+ * @returns A function that takes one argument and returns a Promise for the
  * result.
  */
 export function promisify1<TSuccess, TArg1>(
@@ -62,7 +62,7 @@ export function promisify1<TSuccess, TArg1>(
  *
  * @param fn - The Node-style function that takes two arguments and a callback
  * function.
- * @return A function that takes two arguments and returns a Promise for the
+ * @returns A function that takes two arguments and returns a Promise for the
  * result.
  */
 export function promisify2<TSuccess, TArg1, TArg2>(
@@ -90,7 +90,7 @@ export function promisify2<TSuccess, TArg1, TArg2>(
  *
  * @param fn - The Node-style function that takes three arguments and a callback
  * function.
- * @return A function that takes three arguments and returns a Promise for the
+ * @returns A function that takes three arguments and returns a Promise for the
  * result.
  */
 export function promisify3<TSuccess, TArg1, TArg2, TArg3>(
@@ -118,7 +118,7 @@ export function promisify3<TSuccess, TArg1, TArg2, TArg3>(
  *
  * @param fn - The Node-style function that takes four arguments and a callback
  * function.
- * @return A function that takes four arguments and returns a Promise for the
+ * @returns A function that takes four arguments and returns a Promise for the
  * result.
  */
 export function promisify4<TSuccess, TArg1, TArg2, TArg3, TArg4>(
@@ -146,7 +146,7 @@ export function promisify4<TSuccess, TArg1, TArg2, TArg3, TArg4>(
  *
  * @param fn - The Node-style function that takes five arguments and a callback
  * function.
- * @return A function that takes five arguments and returns a Promise for the
+ * @returns A function that takes five arguments and returns a Promise for the
  * result.
  */
 export function promisify5<TSuccess, TArg1, TArg2, TArg3, TArg4, TArg5>(

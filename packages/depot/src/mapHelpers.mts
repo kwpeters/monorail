@@ -38,7 +38,7 @@ export function jsonToStrMap<TValue>(jsonStr: string): Map<string, TValue> {
  * @param srcMap - The map to be converted.
  * @param keyMapper - A function that will be invoked with each key from
  * _srcMap_ that returns the new string key.
- * @return The new Map.
+ * @returns The new Map.
  */
 export function mapToStrMap<TKey, TValue>(
     srcMap: Map<TKey, TValue>,
@@ -59,7 +59,7 @@ export function mapToStrMap<TKey, TValue>(
  * @param keyMapper - A function that will be invoked with each key from
  * @param replacer - Replacer function.
  * @param space - JSON indentation.
- * @return Description
+ * @returns Description
  */
 export function mapToJson<TKey, TValue>(
     srcMap: Map<TKey, TValue>,

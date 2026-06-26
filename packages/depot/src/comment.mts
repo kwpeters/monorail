@@ -14,7 +14,7 @@ function getCommentToken(): string {
  * @param linesToComment - The source to be commented
  * @param precedingLine - The line preceding the source to be commented.  Used
  *     to infer preceding comment indentation.
- * @return A new string representing the commented version of the source.
+ * @returns A new string representing the commented version of the source.
  * `undefined` is returned if there was an error and the original source should
  * not be replaced.
  */
@@ -101,7 +101,7 @@ export function comment(
 /**
  * Transform `linesToUncomment` into lines that are no longer commented out.
  * @param linesToUncomment - The source to be uncommented
- * @return A new string representing the uncommented version of the source.
+ * @returns A new string representing the uncommented version of the source.
  * `undefined` is returned if there was an error and the original source should
  * not be replaced.
  */
@@ -147,7 +147,7 @@ export function uncomment(linesToUncomment: string): string | undefined {
  * Toggles the commented state of `linesToToggle`
  * @param linesToToggle - The source lines to be toggled
  * @param precedingLine - The line preceding `linesToToggle`.  Used as context.
- * @return A new string representing the toggled source.  `undefined` is
+ * @returns A new string representing the toggled source.  `undefined` is
  * returned if there was an error and the original source should not be
  * replaced.
  */

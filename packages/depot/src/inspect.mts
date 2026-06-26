@@ -15,7 +15,7 @@ const defaultOpts = {
  * object needs to be passed.
  *
  * @param obj - The object whose string representation is to be gotten
- * @return _obj_'s string representation
+ * @returns _obj_'s string representation
  */
 export function inspect(obj: unknown): string {
     const str = inspectLibFn(obj, defaultOpts);

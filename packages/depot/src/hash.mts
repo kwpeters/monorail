@@ -30,7 +30,7 @@ export type HashAlgorithm = typeof hashAlgorithms[keyof typeof hashAlgorithms];
  * Hashes the specified string.  Works in both browsers and Node.js.
  *
  * @param message - The text to be encrypted
- * @return Description
+ * @returns Description
  */
 export async function hash(
     message: string
@@ -91,7 +91,7 @@ export function hashSync(
  * favored over cryptographic strength.
  *
  * @param str - The string to hash
- * @return The hashed value of the string
+ * @returns The hashed value of the string
  */
 export function hashStringFastSync(str: string): HashString {
     let hash = 0x811c9dc5;

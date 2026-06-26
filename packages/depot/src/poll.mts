@@ -51,7 +51,7 @@ type Func<TReturn> = (() => TReturn);
  * these objects, use the _continuePollingYes()_ and _continuePollingNo()_
  * functions.  When _IContinuePollingNo_ is returned, the value specified for
  * _result_ will be returned.
- * @return The _result_ value the predicate specified when returning
+ * @returns The _result_ value the predicate specified when returning
  * _IContinuePollingNo_.
  */
 export async function poll<TReturn, TResult>(
@@ -107,7 +107,7 @@ export class PollingTimeoutError<TSuccess, TError> extends Error {
  *      invocations of _asyncResultop_.
  * @param timeoutMs - Number of milliseconds from the start time to give up and
  *      return the most recent failure result.
- * @return A Result for the polling operation.  If the async operation succeeded
+ * @returns A Result for the polling operation.  If the async operation succeeded
  * and the donePollingPredicate returned true (if specified) the async
  * operation's successful result is returned.  If polling times out, a
  * PollingTimeoutError is returned.  That error will contain the async

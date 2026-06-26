@@ -128,7 +128,7 @@ export function partition<TValue>(
  * @param falseFn - When the predicate returns a falsy value, this function is
  *      invoked with _val_ to determine the return value.  If undefined, _val_
  *      will be returned.
- * @return The value returned from _trueFn_ or _falseFn_.
+ * @returns The value returned from _trueFn_ or _falseFn_.
  */
 export function ternary<TIn, TOutTrue, TOutFalse>(
     val:       TIn,

@@ -71,7 +71,7 @@ export class Url {
 
     /**
      * Creates a duplicate instance of this URL
-     * @return The new instance
+     * @returns The new instance
      */
     public clone(): Url {
         const newInstParsed = _.cloneDeep(this._parsed);
@@ -97,7 +97,7 @@ export class Url {
     /**
      * Gets a new Url instance with a modified protocol.
      * @param newProtocol - The new instance's protocol
-     * @return The new Url instance
+     * @returns The new Url instance
      */
     public replaceProtocol(newProtocol: string): Url {
         // FUTURE: Deprecate this method in favor of cloning and mutating the URL

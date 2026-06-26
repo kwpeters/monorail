@@ -12,7 +12,7 @@ const byteRegexStr = "^[0-9a-fA-F]{1,2}$";
  * A function to get a regex that matches a single byte.  Getting this regex
  * is wrapped by this function, because the returned RegExp object has state.
  *
- * @return The regex used to match a hexadecimal byte in string form.
+ * @returns The regex used to match a hexadecimal byte in string form.
  */
 function getByteRegex(): RegExp {
     return new RegExp(byteRegexStr);

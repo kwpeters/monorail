@@ -31,7 +31,7 @@ export interface StringEnumDef<TValues extends StringEnumSource> {
      * Tests whether the provided input is a valid enumeration value.
      *
      * @param other - The value to test
-     * @return True if the input is a value in this enumeration
+     * @returns True if the input is a value in this enumeration
      */
     isValue(other: unknown): other is TValues[number];
 
@@ -55,7 +55,7 @@ export type StringEnumValue<T> = T extends StringEnumDef<infer TValues> ? TValue
  * Builds a string-literal enumeration definition from a list of values.
  *
  * @param values - The string literals that define the enumeration.
- * @return A {@link StringEnumDef} exposing object, values, schema, and value
+ * @returns A {@link StringEnumDef} exposing object, values, schema, and value
  *     guards/assertions.
  * @throws Error if {@link values} is empty
  */

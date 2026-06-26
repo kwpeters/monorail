@@ -63,7 +63,7 @@ export function* dateRange(startInclusive: Date, endExclusive: Date): Generator<
  * Converts a month number (1 - 12) to a month index (0 - 11).
  *
  * @param month - The month number to be converted
- * @return Converts a month number as it is typically displayed for users to
+ * @returns Converts a month number as it is typically displayed for users to
  *      a month index that is used by the Date constructor.
  */
 export function monthToMonthIndex(month: number): number {
@@ -75,7 +75,7 @@ export function monthToMonthIndex(month: number): number {
  * Converts a month index (0 - 11) to a month number (1 - 12).
  *
  * @param monthIndex - The month index to be converted
- * @return Converts a month index (used by Date class) to a month number that is
+ * @returns Converts a month index (used by Date class) to a month number that is
  *      typically displayed for users.
  */
 export function monthIndexToMonth(monthIndex: number): number {
@@ -87,7 +87,7 @@ export function monthIndexToMonth(monthIndex: number): number {
  * Converts milliseconds to seconds.
  *
  * @param ms - The millisecond value to be converted.
- * @return The converted number of seconds
+ * @returns The converted number of seconds
  */
 export function msToSec(ms: number): number {
     return ms / 1000;
@@ -99,7 +99,7 @@ export function msToSec(ms: number): number {
  *
  * @param t1 - One of the timestamps (order does not matter)
  * @param t2 - One of the timestamps (order does not matter)
- * @return A string containing the duration between the two timestamps.
+ * @returns A string containing the duration between the two timestamps.
  */
 export function durationString(t1: Date | number, t2: Date | number): string {
 

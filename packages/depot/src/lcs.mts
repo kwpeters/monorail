@@ -33,7 +33,7 @@ export type Table = Array<Row>;
  *
  * @param x - The first sequence, represented by the rows in the returned table
  * @param y - The second sequence, represented by the columns in the returned table
- * @return Description
+ * @returns Description
  */
 export function createLcsTable<T>(x: Array<T>, y: Array<T>, compareFn: CompareFunc<T>): Table {
 
@@ -123,7 +123,7 @@ export type DiffItem<T> = IDiffItemUniqueToX<T> | IDiffItemUniqueToY<T> | IDiffI
  * @param x - The first sequence
  * @param y - The second sequence
  * @param compareFn - A function used to compare items in the sequences
- * @return An array of items describing the minimal differences between the two
+ * @returns An array of items describing the minimal differences between the two
  */
 export function getDiff<T>(x: Array<T>, y: Array<T>, compareFn: CompareFunc<T>): Array<DiffItem<T>> {
     const table = createLcsTable(x, y, compareFn);
@@ -185,7 +185,7 @@ interface IAccumulatedParts<T> {
  *
  * @param diffItems - The results of comparing the two items
  * @param elidedVal - The value that will replace sequences of equal values
- * @return A tuple containing two arrays. The first array contains the values
+ * @returns A tuple containing two arrays. The first array contains the values
  * from the x side of the comparison and the second array contains the values
  * from the y side of the comparison.  In the arrays, sequences of equal values
  * have been replaced with the specified _elidedVal_.

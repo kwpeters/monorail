@@ -17,7 +17,7 @@ export class TextBlock implements IHasToString {
      * is split into individual lines if it contains newline characters.
      *
      * @param lines - An array of strings representing the lines of the TextBlock.
-     * @return A new instance of TextBlock containing the processed lines.
+     * @returns A new instance of TextBlock containing the processed lines.
      */
     public static fromLines(lines: Array<string>): TextBlock {
         const updatedLines = [] as Array<string>;
@@ -33,7 +33,7 @@ export class TextBlock implements IHasToString {
      * using newline characters.
      *
      * @param text - A string representing the text to be converted into a TextBlock.
-     * @return A new instance of TextBlock containing the processed lines.
+     * @returns A new instance of TextBlock containing the processed lines.
      */
     public static fromString(text: string): TextBlock {
         const lines = splitIntoLines(text);
@@ -78,7 +78,7 @@ export class TextBlock implements IHasToString {
      * Returns a string representation of this TextBlock. Each line is joined
      * by newline characters.
      *
-     * @return A string representation of this TextBlock.
+     * @returns A string representation of this TextBlock.
      */
     public toString(): string {
         return this._lines.join("\n");
@@ -92,7 +92,7 @@ export class TextBlock implements IHasToString {
      * @param numLines - The total number of lines the new TextBlock should have.
      *     If this number is less than or equal to the current number of lines,
      *     the current TextBlock is returned unchanged.
-     * @return A new TextBlock instance with the updated lines of text
+     * @returns A new TextBlock instance with the updated lines of text
      */
     public bottomJustify(numLines: number, padLine = ""): TextBlock {
         let linesToAdd = numLines - this.numLines;
@@ -113,7 +113,7 @@ export class TextBlock implements IHasToString {
      * @param numLines - The total number of lines the new TextBlock should have.
      *     If this number is less than or equal to the current number of lines,
      *     the current TextBlock is returned unchanged.
-     * @return A new TextBlock instance with the updated lines of text
+     * @returns A new TextBlock instance with the updated lines of text
      */
     public topJustify(numLines: number, padLine = ""): TextBlock {
         let linesToAdd = numLines - this.numLines;
@@ -157,7 +157,7 @@ export class TextBlock implements IHasToString {
      * @param numColumns - The total number of columns the new TextBlock should have.
      *     If this number is less than or equal to the current number of columns,
      *     the current TextBlock is returned unchanged.
-     * @return A new TextBlock instance with the updated lines of text
+     * @returns A new TextBlock instance with the updated lines of text
      */
     public padLines(numColumns: number): TextBlock {
         const newLines = this._lines.map((line) => line.padEnd(numColumns, " "));
@@ -171,7 +171,7 @@ export class TextBlock implements IHasToString {
  * Calculates the maximum number of lines present in _textBlocks_.
  *
  * @param textBlocks - The text blocks to consider
- * @return The maximum number of lines found
+ * @returns The maximum number of lines found
  */
 export function maxLines(textBlocks: readonly TextBlock[]): number {
     return textBlocks.reduce((acc, tb) => Math.max(acc, tb.numLines), 0);

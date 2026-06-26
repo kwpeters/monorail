@@ -51,7 +51,7 @@ export interface ObjectEnumDef<TObj extends ObjectEnumSource> {
      * Tests whether the provided input is a valid enumeration value.
      *
      * @param other - The value to test
-     * @return True if the input is a value in this enumeration
+     * @returns True if the input is a value in this enumeration
      */
     isValue(other: unknown): other is TObj[keyof TObj];
 
@@ -67,7 +67,7 @@ export interface ObjectEnumDef<TObj extends ObjectEnumSource> {
      * Tests whether the provided input is a valid enumeration key.
      *
      * @param other - The key to test
-     * @return True if the input is a key in this enumeration
+     * @returns True if the input is a key in this enumeration
      */
     isKey(other: unknown): other is keyof TObj & string;
 
@@ -86,7 +86,7 @@ export interface ObjectEnumDef<TObj extends ObjectEnumSource> {
      * object iteration order wins and is the key that will be returned.
      *
      * @param value - The enumeration value to look up
-     * @return The string key associated with the value
+     * @returns The string key associated with the value
      */
     keyForValue<TValue extends TObj[keyof TObj]>(value: TValue): ObjectEnumKeyForValue<TObj, TValue>;
 }
@@ -122,7 +122,7 @@ export type ObjectEnumKeyForValue<
  * @param obj - A const object mapping string keys to string or number values.
  *     Pass an object literal (ideally declared `as const` or inline) so the
  *     literal key and value types are preserved.
- * @return An {@link ObjectEnumDef} exposing the source object, its keys and
+ * @returns An {@link ObjectEnumDef} exposing the source object, its keys and
  *     values, Zod schemas for the values and keys, and a value-to-key reverse
  *     lookup.
  * @throws Error if {@link obj} is empty

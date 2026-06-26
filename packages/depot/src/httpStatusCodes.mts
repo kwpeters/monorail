@@ -42,7 +42,7 @@ export type HttpSuccessKey = keyof typeof HttpSuccess;
  * HttpSuccess.
  *
  * @param successHttpStatusCode - The HttpSuccess to find the key of
- * @return The key that corresponds to the specified HttpSuccess.
+ * @returns The key that corresponds to the specified HttpSuccess.
  */
 export function successHttpStatusCodeKey(successHttpStatusCode: HttpSuccess): HttpSuccessKey {
     for (const [key, val] of Object.entries(HttpSuccess)) {
@@ -125,7 +125,7 @@ export type HttpErrorKey = keyof typeof HttpError;
  * HttpError.
  *
  * @param httpError - The HttpError to find the key of
- * @return The key that corresponds to the specified HttpError.
+ * @returns The key that corresponds to the specified HttpError.
  */
 export function errorHttpStatusCodeKey(httpError: HttpError): HttpErrorKey {
     for (const [key, val] of Object.entries(HttpError)) {

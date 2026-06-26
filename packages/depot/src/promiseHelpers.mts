@@ -67,7 +67,7 @@ export function getTimerPromise<TResolve>(
  * @param ms - The number of milliseconds to delay before the returned Promise
  * will reject.
  * @param err - The rejection value
- * @return A Promise that will reject with the specified value after the
+ * @returns A Promise that will reject with the specified value after the
  * specified delay.
  */
 export function getDelayedRejection(ms: number, err: unknown): Promise<never> {
@@ -85,7 +85,7 @@ export function getDelayedRejection(ms: number, err: unknown): Promise<never> {
  * @param task - The task that is run when `condition` is truthy
  * @param falseResolveValue - The value the returned promise will resolve with
  * when `condition` is falsy.
- * @return When `condition` is true, a promise that resolves with the result of
+ * @returns When `condition` is true, a promise that resolves with the result of
  * `task`.  When `condition` is false, a promise that resolves with
  * `falseResolveValue`.
  */
@@ -343,7 +343,7 @@ export type AllResolveTypes<T extends Record<string, Promise<unknown>>> = {
  *
  * @param namedPromises - An object where the keys are strings and the values
  * are promises.
- * @return If all Promises resolve, the returned Promise will resolve with an
+ * @returns If all Promises resolve, the returned Promise will resolve with an
  * object containing their resolved values.  Otherwise, the first rejection is
  * returned.
  */

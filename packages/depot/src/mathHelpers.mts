@@ -8,7 +8,7 @@ const FACTORIAL_THRESHOLD = 100;
  * memoization for small inputs and iterative calculation for large inputs.
  *
  * @param val - The non-negative integer to calculate the factorial for.
- * @return The factorial of the input value as a BigInt. To test if it can be
+ * @returns The factorial of the input value as a BigInt. To test if it can be
  * safely converted to a regular number without precision loss:
  * ```js
  * if (Number(result) === result) {
@@ -61,7 +61,7 @@ export function factorial(val: number): bigint {
  * @param n - The total number of elements.
  * @param duplicateCounts - Array of counts for duplicate groups (default: []).
  * Each count must be an integer > 1.
- * @return The number of distinct permutations as a BigInt.
+ * @returns The number of distinct permutations as a BigInt.
  * @throws {Error} If n is not a non-negative integer, or if duplicateCounts
  * contains invalid values, or if the sum of duplicates exceeds n.
  *
@@ -105,7 +105,7 @@ export function numPermutations(n: number, duplicateCounts: number[] = []): bigi
  * precision loss. Returns Some(number) if convertible, None otherwise.
  *
  * @param val - The BigInt to test for conversion.
- * @return An Option containing the number if conversion is safe, None if not.
+ * @returns An Option containing the number if conversion is safe, None if not.
  */
 export function tryBigIntToNumber(val: bigint): Option<number> {
     // Check if the bigint is within the safe integer range

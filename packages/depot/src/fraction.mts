@@ -282,7 +282,7 @@ export class Fraction {
 
     /**
      * Returns the whole part of this fraction
-     * @return The whole part of this fraction.  If this fraction is negative
+     * @returns The whole part of this fraction.  If this fraction is negative
      * and the whole part is non-zero, the returned whole part will be negative.
      */
     public wholePart(): number {
@@ -299,7 +299,7 @@ export class Fraction {
 
     /**
      * Return the fractional part of this fraction
-     * @return The fractional part of this fraction.  If this fraction is
+     * @returns The fractional part of this fraction.  If this fraction is
      * negative and the fractional part is non-zero, the returned fractional
      * part will be negative.
      */
@@ -456,7 +456,7 @@ export class Fraction {
 
     /**
      * Returns the largest integer less than or equal to this number.
-     * @return The next smallest integer
+     * @returns The next smallest integer
      */
     public floor(): number {
         const whole = this.wholePart();
@@ -476,7 +476,7 @@ export class Fraction {
 
     /**
      * Returns the smallest integer greater than or equal to this value.
-     * @return The next largest integer
+     * @returns The next largest integer
      */
     public ceil(): number {
         const whole = this.wholePart();
@@ -496,7 +496,7 @@ export class Fraction {
 
     /**
      * Returns the absolute value of this value
-     * @return The absolute value of this value
+     * @returns The absolute value of this value
      */
     public abs(): Fraction {
         const num = Math.abs(this._num);
@@ -511,7 +511,7 @@ export class Fraction {
     /**
      * Finds the increment below and above this value.
      * @param increment - The increment size (must be positive)
-     * @return The increment below and above this value as well as the increment
+     * @returns The increment below and above this value as well as the increment
      * that is closest.
      */
     public bracket(
