@@ -2,7 +2,7 @@
 import Long from "long";
 import { IntRange } from "@repo/depot/intRange";
 import { Result } from "@repo/depot/result";
-import { pipe } from "@repo/depot/pipe";
+import { pipe } from "@repo/depot/pipe2";
 import { validateIndex } from "@repo/depot/primitives";
 // TODO: Remove the following dependency and this file can move to depot.
 import { BufReader } from "./bufReader.mjs";
@@ -21,40 +21,51 @@ export class Lint {
 
 
     public static fromBuffer(buf: Buffer, offset: number = 0): Result<Lint, string> {
-        return pipe(validateIndex(offset, 8, buf))
-        .pipe(Result.mapSuccess((idx) => {
-            const littleEndianBytes = Array.from(new IntRange(0, 8)).map((curIndex) => {
-                return buf.readUInt8(idx + curIndex);
-            });
 
-            const val = Long.fromBytesLE(littleEndianBytes, false);
-            return new Lint(val);
-        }))
-        .end();
+        return pipe(
+            validateIndex(offset, 8, buf),
+
+            Result.mapSuccess((idx) => {
+                const littleEndianBytes = Array.from(new IntRange(0, 8)).map((curIndex) => {
+                    return buf.readUInt8(idx + curIndex);
+                });
+
+                const val = Long.fromBytesLE(littleEndianBytes, false);
+                return new Lint(val);
+            }),
+        );
     }
 
 
     public static fromBufReader(reader: BufReader): Result<Lint, string> {
-        return pipe(reader.numBytesRemaining())
-        .pipe((bytesRemaining) => Result.fromBool(
-            undefined,
-            `Cannot read Lint from BufReader that only has ${bytesRemaining} remaining bytes`,
-            bytesRemaining >= 8
-        ))
-        .pipe(Result.bind(() => {
-            return pipe(Array.from(new IntRange(0, 8)).map(() => reader.readUInt8()))
-            .pipe(Result.allArrayM)
-            .end();
-        }))
-        .pipe(Result.mapSuccess((bytes) => new Lint(Long.fromBytesLE(bytes, false))))
-        .end();
+
+
+        return pipe(
+            reader.numBytesRemaining(),
+
+            (bytesRemaining) => Result.fromBool(
+                undefined,
+                `Cannot read Lint from BufReader that only has ${bytesRemaining} remaining bytes`,
+                bytesRemaining >= 8
+            ),
+
+            Result.bind(() => {
+                return pipe(
+                    Array.from(new IntRange(0, 8)).map(() => reader.readUInt8()),
+                    Result.allArrayM
+                );
+            }),
+
+            Result.mapSuccess((bytes) => new Lint(Long.fromBytesLE(bytes, false)))
+        );
     }
 
 
     public static fromBytesLE(bytes: Array<number>): Result<Lint, string> {
-        return pipe(validateIndex(0, 8, bytes))
-        .pipe(Result.mapSuccess(() => new Lint(Long.fromBytesLE(bytes, false))))
-        .end();
+        return pipe(
+            validateIndex(0, 8, bytes),
+            Result.mapSuccess(() => new Lint(Long.fromBytesLE(bytes, false)))
+        );
     }
 
 
@@ -109,40 +120,50 @@ export class Ulint {
 
 
     public static fromBuffer(buf: Buffer, offset: number = 0): Result<Ulint, string> {
-        return pipe(validateIndex(offset, 8, buf))
-        .pipe(Result.mapSuccess((idx) => {
-            const littleEndianBytes = Array.from(new IntRange(0, 8)).map((curIndex) => {
-                return buf.readUInt8(idx + curIndex);
-            });
 
-            const val = Long.fromBytesLE(littleEndianBytes, true);
-            return new Ulint(val);
-        }))
-        .end();
+        return pipe(
+            validateIndex(offset, 8, buf),
+
+            Result.mapSuccess((idx) => {
+                const littleEndianBytes = Array.from(new IntRange(0, 8)).map((curIndex) => {
+                    return buf.readUInt8(idx + curIndex);
+                });
+
+                const val = Long.fromBytesLE(littleEndianBytes, true);
+                return new Ulint(val);
+            })
+        );
     }
 
 
     public static fromBufReader(reader: BufReader): Result<Ulint, string> {
-        return pipe(reader.numBytesRemaining())
-        .pipe((bytesRemaining) => Result.fromBool(
-            undefined,
-            `Cannot read Ulint from BufReader that only has ${bytesRemaining} remaining bytes`,
-            bytesRemaining >= 8
-        ))
-        .pipe(Result.bind(() => {
-            return pipe(Array.from(new IntRange(0, 8)).map(() => reader.readUInt8()))
-            .pipe(Result.allArrayM)
-            .end();
-        }))
-        .pipe(Result.mapSuccess((bytes) => new Ulint(Long.fromBytesLE(bytes, true))))
-        .end();
+
+        return pipe(
+            reader.numBytesRemaining(),
+
+            (bytesRemaining) => Result.fromBool(
+                undefined,
+                `Cannot read Ulint from BufReader that only has ${bytesRemaining} remaining bytes`,
+                bytesRemaining >= 8
+            ),
+
+            Result.bind(() => {
+                return pipe(
+                    Array.from(new IntRange(0, 8)).map(() => reader.readUInt8()),
+                    Result.allArrayM
+                );
+            }),
+
+            Result.mapSuccess((bytes) => new Ulint(Long.fromBytesLE(bytes, true)))
+        );
     }
 
 
     public static fromBytesLE(bytes: Array<number>): Result<Ulint, string> {
-        return pipe(validateIndex(0, 8, bytes))
-        .pipe(Result.mapSuccess(() => new Ulint(Long.fromBytesLE(bytes, true))))
-        .end();
+        return pipe(
+            validateIndex(0, 8, bytes),
+            Result.mapSuccess(() => new Ulint(Long.fromBytesLE(bytes, true)))
+        );
     }
 
 
