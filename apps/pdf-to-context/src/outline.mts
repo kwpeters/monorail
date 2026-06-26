@@ -13,7 +13,7 @@ import { type IChapterMapEntry } from "./chapters.mjs";
  * not specific to any one PDF: any PDF that ships a bookmark outline works.
  *
  * @param xml - The XML text emitted by `pdftohtml -xml`
- * @return On success, the top-level chapter entries sorted by start page (an
+ * @returns On success, the top-level chapter entries sorted by start page (an
  * empty array if the PDF has no usable outline).  On failure, a parse-error
  * message.
  */

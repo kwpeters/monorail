@@ -47,7 +47,7 @@ export type Card = z.infer<typeof cardSchema>;
 //  * Card.
 //  *
 //  * @param Card - The Card to find the key of
-//  * @return The key that corresponds to the specified Card.
+//  * @returns The key that corresponds to the specified Card.
 //  */
 // export function CardKey(card: Card): CardKey {
 //     for (const [key, val] of Object.entries(Card)) {

@@ -39,7 +39,7 @@ export const defaultDiffTuiSettings: IDiffTuiSettings = {
  * Converts an ActionPriority value to its CLI/config string representation.
  *
  * @param priority - The ActionPriority to convert
- * @return The string representation used in config and display
+ * @returns The string representation used in config and display
  */
 export function actionPriorityToString(
     priority: ActionPriority
@@ -56,7 +56,7 @@ export function actionPriorityToString(
  * Converts a config/CLI string to an ActionPriority.
  *
  * @param value - The string to parse
- * @return The corresponding ActionPriority, or Preserve if unrecognized
+ * @returns The corresponding ActionPriority, or Preserve if unrecognized
  */
 export function stringToActionPriority(value: string): ActionPriority {
     if (value === "sync-left-to-right") { return ActionPriority.SyncLeftToRight; }
@@ -71,7 +71,7 @@ export function stringToActionPriority(value: string): ActionPriority {
  *
  * @param text - Comma-separated pattern string
  * @param defaults - Fallback patterns when text yields no patterns
- * @return An array of patterns
+ * @returns An array of patterns
  */
 export function parsePatternsText(text: string, defaults: Array<string>): Array<string> {
     const patterns = text
@@ -87,7 +87,7 @@ export function parsePatternsText(text: string, defaults: Array<string>): Array<
  * settings panel.
  *
  * @param patterns - Array of patterns
- * @return A comma-separated string
+ * @returns A comma-separated string
  */
 export function patternArrayToText(patterns: Array<string>): string {
     return patterns.join(", ");
@@ -108,7 +108,7 @@ export function patternArrayToText(patterns: Array<string>): string {
  *     undefined if nothing was selected
  * @param newItems - The refreshed list of diff items
  * @param previousIndex - The zero-based index that was selected before refresh
- * @return The new selection index, or -1 when the new list is empty
+ * @returns The new selection index, or -1 when the new list is empty
  */
 export function retainSelection(
     previousPath:  string | undefined,

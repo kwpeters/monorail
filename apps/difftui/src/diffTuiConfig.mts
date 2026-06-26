@@ -47,7 +47,7 @@ export type DiffTuiConfig = z.infer<typeof schemaDiffTuiConfig>;
  * @param settings  - The current settings object
  * @param leftDir   - Absolute or relative path to the left directory
  * @param rightDir  - Absolute or relative path to the right directory
- * @return A plain object ready for JSON serialization
+ * @returns A plain object ready for JSON serialization
  */
 export function settingsToConfig(
     settings: IDiffTuiSettings,
@@ -71,7 +71,7 @@ export function settingsToConfig(
  * Converts a parsed DiffTuiConfig back to IDiffTuiSettings.
  *
  * @param config - The parsed config object
- * @return The corresponding settings
+ * @returns The corresponding settings
  */
 export function configToSettings(config: DiffTuiConfig): IDiffTuiSettings {
     return {
@@ -94,7 +94,7 @@ export function configToSettings(config: DiffTuiConfig): IDiffTuiSettings {
  * - If the file is valid, returns a succeeded result with the full config.
  *
  * @param filePath - Absolute path to the config file
- * @return A Result containing the full config or an error message
+ * @returns A Result containing the full config or an error message
  */
 export function loadConfigFromFile(
     filePath: string
@@ -128,7 +128,7 @@ export function loadConfigFromFile(
  *   config.
  *
  * @param dir - The directory to look in (defaults to process.cwd())
- * @return A Result containing the parsed config or undefined, or an error message
+ * @returns A Result containing the parsed config or undefined, or an error message
  */
 export function loadConfig(
     dir: string = process.cwd()
@@ -152,7 +152,7 @@ export function loadConfig(
  * @param rightDir  - The right directory path to include in the config
  * @param dir       - The directory to write the file to (defaults to
  *     process.cwd())
- * @return A Result indicating success or an error message
+ * @returns A Result indicating success or an error message
  */
 export function saveConfig(
     settings: IDiffTuiSettings,
@@ -180,7 +180,7 @@ export function saveConfig(
  *
  * @param loaded   - Parsed config from file, or undefined
  * @param defaults - The baseline defaults
- * @return The merged settings
+ * @returns The merged settings
  */
 export function mergeWithDefaults(
     loaded:   DiffTuiConfig | undefined,

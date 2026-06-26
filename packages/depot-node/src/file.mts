@@ -36,7 +36,7 @@ export class File {
      *
      * @param from - The starting point
      * @param to - The ending point
-     * @return An array of strings representing the path segments needed to get
+     * @returns An array of strings representing the path segments needed to get
      * from `from` to `to`.
      */
     public static relativeParts(from: Directory, to: File): Array<string> {
@@ -70,7 +70,7 @@ export class File {
      * Gets the directory portion of this file's path (everything before the
      * file name and extension).
      *
-     * @return The directory portion of this file's path.  This string will
+     * @returns The directory portion of this file's path.  This string will
      * always end with the OS's directory separator ("/").
      */
     public get dirName(): string {
@@ -82,7 +82,7 @@ export class File {
      * Gets this file's base name.  This is the part of the file name preceding
      * the extension.
      *
-     * @return This file's base name.
+     * @returns This file's base name.
      */
     public get baseName(): string {
         const extName: string = path.extname(this._filePath);
@@ -94,7 +94,7 @@ export class File {
      * Gets the full file name of this file.  This includes both the base name
      * and extension.
      *
-     * @return This file's file name
+     * @returns This file's file name
      */
     public get fileName(): string {
         return path.basename(this._filePath);
@@ -105,7 +105,7 @@ export class File {
      * Gets the extension of this file.  This includes the initial dot (".").
      * If the file has no extension an empty string is returned.
      *
-     * @return This file's extension
+     * @returns This file's extension
      */
     public get extName(): string {
         return path.extname(this._filePath);
@@ -115,7 +115,7 @@ export class File {
     /**
      * Gets the directory containing this file
      *
-     * @return A Directory object representing this file's directory.
+     * @returns A Directory object representing this file's directory.
      */
     public get directory(): Directory {
         const dirName: string = path.dirname(this._filePath);
@@ -158,7 +158,7 @@ export class File {
      * Checks to see if this File exists.  If this file is a symbolic link,
      * the targeted file will be stated.
      *
-     * @return A Promise that always resolves.  It is resolved with a truthy
+     * @returns A Promise that always resolves.  It is resolved with a truthy
      * fs.Stats object if it exists.  Otherwise, it is resolved with undefined.
      */
     public exists(): Promise<fs.Stats | undefined> {
@@ -195,7 +195,7 @@ export class File {
     /**
      * Gets the other files in the same directory as this file.
      *
-     * @return A promise that resolves with an array of sibling files.  This
+     * @returns A promise that resolves with an array of sibling files.  This
      * promise will reject if this file does not exist.  The relative/absolute
      * nature of the returned files' path will match that of this file.
      */
@@ -224,7 +224,7 @@ export class File {
      *
      * @param mode - Numeric value representing the new access modes.  See
      * fs.constants.S_I*.
-     * @return A promise for this file (for easy chaining)
+     * @returns A promise for this file (for easy chaining)
      */
     public chmod(mode: number): Promise<File> {
         return new Promise((resolve, reject) => {
@@ -245,7 +245,7 @@ export class File {
      *
      * @param mode - Numeric value representing the new access modes.  See
      * fs.constants.S_I*.
-     * @return A promise for this file (for easy chaining)
+     * @returns A promise for this file (for easy chaining)
      */
     public chmodSync(mode: number): void {
         fs.chmodSync(this._filePath, mode);
@@ -324,7 +324,7 @@ export class File {
      * @param dstFileName - When destDirOrFile is a Directory,
      * optionally specifies the destination file name.  If omitted, the
      * destination file name will be the same as the source (this File).
-     * @return A Promise for a File representing the destination file.
+     * @returns A Promise for a File representing the destination file.
      */
     public copy(dstDirOrFile: Directory | File, dstFileName?: string): Promise<File> {
         //
@@ -388,7 +388,7 @@ export class File {
      * @param dstFileName - When destDirOrFile is a Directory,
      * optionally specifies the destination file name.  If omitted, the
      * destination file name will be the same as the source (this File).
-     * @return A File representing the destination file.
+     * @returns A File representing the destination file.
      */
     public copySync(dstDirOrFile: Directory | File, dstFileName?: string): File {
         //
@@ -446,7 +446,7 @@ export class File {
      * @param dstFileName - When destDirOrFile is a Directory,
      * optionally specifies the destination file name.  If omitted, the
      * destination file name will be the same as the source (this File).
-     * @return A Promise for a File representing the destination file.
+     * @returns A Promise for a File representing the destination file.
      */
     public move(dstDirOrFile: Directory | File, dstFileName?: string): Promise<File> {
         //
@@ -516,7 +516,7 @@ export class File {
      * @param dstFileName - When destDirOrFile is a Directory,
      * optionally specifies the destination file name.  If omitted, the
      * destination file name will be the same as the source (this File).
-     * @return A File representing the destination file.
+     * @returns A File representing the destination file.
      */
     public moveSync(dstDirOrFile: Directory | File, dstFileName?: string): File {
         //
@@ -573,7 +573,7 @@ export class File {
      * directories do not exist, they are created.
      *
      * @param text - The new contents of this file
-     * @return A Promise that is resolved when the file has been written.
+     * @returns A Promise that is resolved when the file has been written.
      */
     public write(text: string): Promise<void> {
         return this.directory.ensureExists()
@@ -610,7 +610,7 @@ export class File {
      * @param text - The text to be appended
      * @param createIfNonexistent - Whether to create the file if it does not
      * exist
-     * @return A successful Result if the file was appended to.  A failure
+     * @returns A successful Result if the file was appended to.  A failure
      * Result with a descriptive error message if the file could not be appended
      * to.
      */
@@ -643,7 +643,7 @@ export class File {
      * parent directories do not exist, they are created.
      *
      * @param data - The data to be stringified and written
-     * @return A Promise that is resolved when the file has been written
+     * @returns A Promise that is resolved when the file has been written
      */
     public writeJson(
         data: object
@@ -673,7 +673,7 @@ export class File {
      * @param algorithm - The hashing algorithm to use.  For example, "md5",
      * "sha256", "sha512".  To see algorithms available on your platform, use
      * crypto.getHashes().
-     * @return A Promise for a hexadecimal string containing the hash
+     * @returns A Promise for a hexadecimal string containing the hash
      */
     public getHash(algorithm = "md5"): Promise<string> {
         return new Promise<string>((resolve, reject) => {
@@ -703,7 +703,7 @@ export class File {
      * @param algorithm - The hashing algorithm to use.  For example, "md5",
      * "sha256", "sha512".  To see algorithms available on your platform, use
      * crypto.getHashes().
-     * @return A hexadecimal string containing the hash
+     * @returns A hexadecimal string containing the hash
      */
     public getHashSync(algorithm = "md5"): string {
         const fileData = fs.readFileSync(this._filePath);
@@ -717,7 +717,7 @@ export class File {
      * Reads the contents of this file as a string.  Rejects if this file does
      * not exist.
      *
-     * @return A Promise for the text contents of this file
+     * @returns A Promise for the text contents of this file
      */
     public read(): Promise<string> {
         return new Promise<string>((resolve: (text: string) => void, reject: (err: unknown) => void) => {
@@ -737,7 +737,7 @@ export class File {
      * Reads the contents of this file as a string.  Throws if this file does
      * not exist.
      *
-     * @return This file's contents
+     * @returns This file's contents
      */
     public readSync(): string {
         return fs.readFileSync(this._filePath, {encoding: "utf8"});
@@ -748,7 +748,7 @@ export class File {
      * Reads JSON data from this file.  Rejects if this file does not exist.  If
      * the JSON file contains comments, they will be stripped out.
      *
-     * @return A promise for the parsed data contained in this file
+     * @returns A promise for the parsed data contained in this file
      */
     public async readJson<T>(): Promise<T> {
         let text = await this.read();
@@ -760,7 +760,7 @@ export class File {
     /**
      * Reads JSON data from this file.  Throws if this file does not exist.
      *
-     * @return The parsed data contained in this file
+     * @returns The parsed data contained in this file
      */
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
     public readJsonSync<T>(): T {
@@ -828,7 +828,7 @@ export interface ICopyOptions {
  * @param sourceFilePath - The path to the source file
  * @param destFilePath - The path to the destination file
  * @param options - Options for the copy operation
- * @return A Promise that is resolved when the file has been copied.
+ * @returns A Promise that is resolved when the file has been copied.
  */
 function copyFile(sourceFilePath: string, destFilePath: string, options?: ICopyOptions): Promise<void> {
     //
@@ -923,7 +923,7 @@ function copyFileSync(sourceFilePath: string, destFilePath: string, options?: IC
  * represent extant files and File instances that represent extant files.
  *
  * @param fileCandidates - The strings that represent possible file paths
- * @return A tuple.  The first element contains the strings that represent non
+ * @returns A tuple.  The first element contains the strings that represent non
  * extant files.  The second element contains File instances that represent
  * extant files.
  */

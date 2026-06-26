@@ -12,7 +12,7 @@ import { File } from "./file.mjs";
  * Converts a File or XML string into an XML Document.
  *
  * @param arg - The input to convert. Can be a File or a string containing XML.
- * @return A Result containing the parsed XML Document if successful, or an
+ * @returns A Result containing the parsed XML Document if successful, or an
  * error message if parsing fails.
  */
 export async function toXmlDoc(file: File): Promise<Result<Document, string>>;
@@ -54,7 +54,7 @@ export async function toXmlDoc(arg: File | string): Promise<Result<Document, str
  * @param arg - The input to check. Can be a File, Document, or a string
  * containing XML.
  * @param rootElemName - The name of the root element to check for.
- * @return A boolean indicating whether the root element matches the specified
+ * @returns A boolean indicating whether the root element matches the specified
  * name.
  */
 export async function hasRootElem(file: File, rootElemName: string): Promise<boolean>;
@@ -89,7 +89,7 @@ export async function fileToXmlDoc(src: File): Promise<Result<Document, string>>
  * @param query - The query to run.  The text for the first matching Node is
  * returned.
  * @param contextNode - The context Node for the query
- * @return None if the query selected nothing.  Otherwise, you will get a Some
+ * @returns None if the query selected nothing.  Otherwise, you will get a Some
  * containing a string representation of the query's text.
  */
 export function trySelectText(query: string, contextNode: Node): Option<string> {
@@ -173,7 +173,7 @@ export function selectInteger(query: string, contextNode: Node): number {
  * document.
  *
  * @param val - The value to be tested
- * @return true if _val_ is a Document; false otherwise.
+ * @returns true if _val_ is a Document; false otherwise.
  */
 export function isDocument(val: unknown): val is Document {
     return (
@@ -190,7 +190,7 @@ export function isDocument(val: unknown): val is Document {
  * User-defined type guard that tests whether the specified object is a Node
  *
  * @param o - The object to test
- * @return true if _o_ is a Node; false otherwise.
+ * @returns true if _o_ is a Node; false otherwise.
  */
 export function isNode(o: unknown): o is Node {
     if (!o) {
@@ -209,7 +209,7 @@ export function isNode(o: unknown): o is Node {
  * Node.
  *
  * @param o - The object to test
- * @return true if _o_ is an Element; false otherwise.
+ * @returns true if _o_ is an Element; false otherwise.
  */
 export function isElement(o: unknown): o is Element {
     return isNode(o) &&
@@ -222,7 +222,7 @@ export function isElement(o: unknown): o is Element {
  * Attribute Node.
  *
  * @param o - The object to test
- * @return true if _o_ is an Attr; false otherwise.
+ * @returns true if _o_ is an Attr; false otherwise.
  */
 export function isAttribute(o: unknown): o is Attr {
     return isNode(o) &&
@@ -235,7 +235,7 @@ export function isAttribute(o: unknown): o is Attr {
  * Node.
  *
  * @param o - The object to test
- * @return true if _o_ is a Text Node; false otherwise.
+ * @returns true if _o_ is a Text Node; false otherwise.
  */
 export function isText(o: unknown): o is Text {
     return isNode(o) &&
@@ -249,7 +249,7 @@ export function isText(o: unknown): o is Text {
  * Array of Nodes to an array of Nodes.
  *
  * @param selectRetVal - The selection result that will be converted
- * @return If successful, a Some containing the array of Nodes.  Otherwise, a
+ * @returns If successful, a Some containing the array of Nodes.  Otherwise, a
  * None.
  */
 export function tryToNodeArray(selectRetVal: xpath.SelectReturnType): Option<Array<Node>> {
@@ -341,7 +341,7 @@ export function toElement<TElem extends Element = Element>(subject: null | xpath
  * Attempts to convert a selection result to an array of Elements.
  *
  * @param selectRetVal - The selection result that will be converted
- * @return If successful, a Some containing the array of Elements.  Otherwise, a
+ * @returns If successful, a Some containing the array of Elements.  Otherwise, a
  * None.
  */
 export function tryToElementArray<TElem extends Element = Element>(
@@ -368,7 +368,7 @@ export function tryToElementArray<TElem extends Element = Element>(
  * selection result did not include Elements.
  *
  * @param selectRetVal - The selection result that will be converted
- * @return The array of Elements.
+ * @returns The array of Elements.
  */
 export function toElementArray<TElem extends Element = Element>(
     selectRetVal: xpath.SelectReturnType
@@ -387,7 +387,7 @@ export function toElementArray<TElem extends Element = Element>(
  * Attempts to convert a selection result to a string.
  *
  * @param param - The selection result that will be converted
- * @return If successful, a Some containing string.  Otherwise, a None.
+ * @returns If successful, a Some containing string.  Otherwise, a None.
  */
 export function tryToString(selectRetVal: xpath.SelectReturnType): Option<string> {
     return typeof selectRetVal === "string" ?
@@ -401,7 +401,7 @@ export function tryToString(selectRetVal: xpath.SelectReturnType): Option<string
  * result was not a string.
  *
  * @param selectRetVal - The selection result that will be converted
- * @return The string
+ * @returns The string
  */
 export function toString(selectRetVal: xpath.SelectReturnType): string {
     const opt = tryToString(selectRetVal);
@@ -419,7 +419,7 @@ export function toString(selectRetVal: xpath.SelectReturnType): string {
  *
  * @param elem - The element containing the attribute to be read
  * @param attrName - The name of the attribute to be read
- * @return If the attribute exists, a successful Result containing its value;
+ * @returns If the attribute exists, a successful Result containing its value;
  * otherwise a failed Result containing an error message.
  */
 export function getAttr(elem: Element, attrName: string): Result<string, string> {
@@ -446,7 +446,7 @@ export function getAttr(elem: Element, attrName: string): Result<string, string>
  *
  * @param elem - The element to get the attribute from
  * @param attrName - The name of the attribute to get
- * @return The boolean value
+ * @returns The boolean value
  */
 export function getBoolAttr(elem: Element, attrName: string): boolean {
     const boolVal = pipe(
@@ -463,7 +463,7 @@ export function getBoolAttr(elem: Element, attrName: string): boolean {
  * Gets the preceding XML comment for the specified element by traversing
  * backwards through siblings until a Comment node is found.
  * @param element - The element to find the preceding comment for
- * @return A Some Option containing the comment text if found, otherwise None
+ * @returns A Some Option containing the comment text if found, otherwise None
  */
 export function getPrecedingXmlComment(element: Element): Option<string> {
     let currentNode: Node | null = element.previousSibling;

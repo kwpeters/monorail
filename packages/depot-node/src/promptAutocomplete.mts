@@ -21,7 +21,7 @@ export function registerFuzzyPrompt(): void {
  * @param message - The prompt to display
  * @param items - The items to choose from
  * @param nameFn - A function that converts each item to its display string
- * @return A Promise for the chosen item
+ * @returns A Promise for the chosen item
  */
 export async function promptForChoiceFuzzy<TItem>(
     message: string,

@@ -8,7 +8,7 @@ import { readableStreamToText } from "./streamHelpers.mjs";
  *
  * @param defaultNumCols - The number of columns to use if the width of the
  *      terminal window cannot be determined
- * @return The number of columns
+ * @returns The number of columns
  */
 export function getStdoutColumns(defaultNumCols: number = 80): number {
     return process.stdout.columns || defaultNumCols;
@@ -20,7 +20,7 @@ export function getStdoutColumns(defaultNumCols: number = 80): number {
  *
  * @param str - The horizontal rule will be composed of repeated instances of
  *      this string
- * @return The resulting horizontal rule string
+ * @returns The resulting horizontal rule string
  */
 export function hr(str: string): string {
     const cols = getStdoutColumns(80);
@@ -32,7 +32,7 @@ export function hr(str: string): string {
 /**
  * Gets lines of text that are piped into this app's stdin, if any.
  *
- * @return Lines of text that are being piped into this process, if any.
+ * @returns Lines of text that are being piped into this process, if any.
  */
 export async function getStdinPipedLines(): Promise<Array<string>> {
     const inputIsPiped = !process.stdin.isTTY;

@@ -122,7 +122,7 @@ async function main(): Promise<Result<number, string>> {
 /**
  * Prompts the user whether they wish to delete unwanted files from `srcFiles`.
  * @param srcFiles - The source files to be processed.
- * @return A new array containing only the wanted files.
+ * @returns A new array containing only the wanted files.
  */
 async function deleteUnwantedSourceFiles(srcFiles: Array<File>): Promise<Array<File>> {
     const unwantedPatterns = [
@@ -146,7 +146,7 @@ async function deleteUnwantedSourceFiles(srcFiles: Array<File>): Promise<Array<F
  * @param files - The files that may be deleted.
  * @param prompt - The prompt that will be displayed.  If confirmed, the
  * specified files will be deleted.
- * @return A promise that resolves to true when the user confirms the file
+ * @returns A promise that resolves to true when the user confirms the file
  * deletions.  A promise that resolves to false when the user cancels.
  */
 async function promptAndDeleteFiles(files: Array<File>, prompt: string): Promise<boolean> {

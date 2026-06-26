@@ -10,7 +10,7 @@ import { DatestampDeductionAggregate } from "./datestampDeductionAggregate.mjs";
  * A function that attempts to deduce the datestamp associated with the
  * specified file.
  * @param source - The file to analyze.
- * @return A promise that always resolves with a deduction result
+ * @returns A promise that always resolves with a deduction result
  * (indicating success or failure).
  */
 type IDatestampStrategy = (source: File, destDir: Directory) => Promise<DatestampDeduction>;

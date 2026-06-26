@@ -45,7 +45,7 @@ npm run all && npm run type-check
   - Use camelCase or kebab-case for source file names.
   - Use PascalCase for type names.
   - Start type parameter names with `T`.
-- Add JSDoc to externally accessible types and functions. Document every parameter with `@param` and non-`void` returns with `@return`.
+- Add JSDoc to externally accessible types and functions. Document every parameter with `@param` and non-`void` returns with `@returns`.
 
 ### Preferred Libraries and Frameworks
 

@@ -32,7 +32,7 @@ export type RollState = z.infer<typeof rollStateSchema>;
 //  * RollState.
 //  *
 //  * @param rollState - The RollState to find the key of
-//  * @return The key that corresponds to the specified RollState.
+//  * @returns The key that corresponds to the specified RollState.
 //  */
 // export function rollStateKey(rollState: RollState): RollStateKey {
 //     for (const [key, val] of Object.entries(RollState)) {

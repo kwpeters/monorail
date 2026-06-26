@@ -27,7 +27,7 @@ export class BufReader {
       * Reads a byte at the current read position within the Buffer without
       * advancing the read position.
       *
-      * @return A successful Result containing the byte value or a failed Result
+      * @returns A successful Result containing the byte value or a failed Result
       * containing an error message
       */
     public peekByte(): Result<number, string> {
@@ -42,7 +42,7 @@ export class BufReader {
      * Reads the next byte of data and returns it as a 1 or 0.  This is how
      * Studio 5000 displays BOOL values.
      *
-     * @return A successful Result containing the BOOL value or a failed Result
+     * @returns A successful Result containing the BOOL value or a failed Result
      * containing an error message
      */
     public readBOOL(): Result<0 | 1, string> {
@@ -56,7 +56,7 @@ export class BufReader {
     /**
      * Reads the next byte of data from the Buffer as an unsigned 8-bit value.
      *
-     * @return A successful Result containing the UInt8 value or a failed Result
+     * @returns A successful Result containing the UInt8 value or a failed Result
      * containing an error message
      */
     public readUInt8(): Result<number, string> {
@@ -75,7 +75,7 @@ export class BufReader {
     /**
      * Reads the next byte of data from the Buffer as an unsigned 8-bit value.
      *
-     * @return A successful Result containing the SINT value or a failed Result
+     * @returns A successful Result containing the SINT value or a failed Result
      * containing an error message
      */
     public readUSINT(): Result<number, string> { return this.readUInt8(); }
@@ -84,7 +84,7 @@ export class BufReader {
     /**
      * Reads the next byte of data from the Buffer as an unsigned 8-bit value.
      *
-     * @return A successful Result containing the BYTE value or a failed Result
+     * @returns A successful Result containing the BYTE value or a failed Result
      * containing an error message
      */
     public readBYTE(): Result<number, string> { return this.readUInt8(); }
@@ -93,7 +93,7 @@ export class BufReader {
     /**
      * Reads the next byte of data from the Buffer as an signed 8-bit value.
      *
-     * @return A successful Result containing the Int8 value or a failed Result
+     * @returns A successful Result containing the Int8 value or a failed Result
      * containing an error message
      */
     public readInt8(): Result<number, string> {
@@ -111,7 +111,7 @@ export class BufReader {
     /**
      * Reads the next byte of data from the Buffer as an signed 8-bit value.
      *
-     * @return A successful Result containing the SINT value or a failed Result
+     * @returns A successful Result containing the SINT value or a failed Result
      * containing an error message
      */
     public readSINT(): Result<number, string> { return this.readInt8(); }
@@ -338,7 +338,7 @@ export class BufReader {
      * Reads the next 4 bytes of data from the Buffer as a single precision
      * (32-bit) floating point number
      *
-     * @return A successful Result containing the float value or a failed Result
+     * @returns A successful Result containing the float value or a failed Result
      * containing an error message
      */
     public readFloat(): Result<number, string> {
@@ -356,7 +356,7 @@ export class BufReader {
      * Reads the next 4 bytes of data from the Buffer as a single precision
      * (32-bit) floating point number
      *
-     * @return A successful Result containing the REAL value or a failed Result
+     * @returns A successful Result containing the REAL value or a failed Result
      * containing an error message
      */
     public readREAL(): Result<number, string> { return this.readFloat(); }
@@ -366,7 +366,7 @@ export class BufReader {
      * Reads the next 8 bytes of data from the Buffer as a double precision
      * (64-bit) floating point number
      *
-     * @return A successful Result containing the double value or a failed Result
+     * @returns A successful Result containing the double value or a failed Result
      * containing an error message
      */
     public readDouble(): Result<number, string> {
@@ -384,7 +384,7 @@ export class BufReader {
      * Reads the next 8 bytes of data from the Buffer as a double precision
      * (64-bit) floating point number
      *
-     * @return A successful Result containing the LREAL value or a failed Result
+     * @returns A successful Result containing the LREAL value or a failed Result
      * containing an error message
      */
     public readLREAL(): Result<number, string> { return this.readDouble(); }
@@ -485,7 +485,7 @@ export class BufReader {
      * @param numBytes - The number of bytes to read.  If undefined, all
      * remaining bytes will be read.  If greater than the number of bytes
      * remaining, only the remaining bytes will be read.
-     * @return A successful Result containing a Buffer.  If there is an error, a
+     * @returns A successful Result containing a Buffer.  If there is an error, a
      * failed Result with an error message will be returned.  If numBytes was
      * specified and there are not that many bytes left be read from the Buffer,
      * a failed Result will be returned.

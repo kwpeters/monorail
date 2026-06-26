@@ -71,7 +71,7 @@ export interface ISpawnExitError {
  * @param stderrStream - The stream to receive stderr  A NullStream if
  *     undefined. For example:
  *     `new CombinedStream(new PrefixStream(".    "), process.stderr)`
- * @return An object implementing ISpawnResult.
+ * @returns An object implementing ISpawnResult.
  */
 export function spawn(
     cmd: string,

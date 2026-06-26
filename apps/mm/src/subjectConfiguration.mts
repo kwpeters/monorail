@@ -15,7 +15,7 @@ export type ConfigFile = z.infer<typeof configFileSchema>;
 /**
  * Gets the configuration for this application.
  *
- * @return If the configuration file is successfully read, the array of
+ * @returns If the configuration file is successfully read, the array of
  * Subjects defined in it.
  */
 export async function getSubjectConfiguration(subjectsConfigFile: File): Promise<Result<Array<Subject>, string>> {

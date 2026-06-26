@@ -36,7 +36,7 @@ export class ListenerTracker {
      * Registers a new event listener.
      * @param eventName - The name of the event being subscribed to
      * @param listenerCallback - The callback function/listener
-     * @return This ListenerTracker instance so that calls can be chained.
+     * @returns This ListenerTracker instance so that calls can be chained.
      */
     public on(
         eventName: string,
@@ -52,7 +52,7 @@ export class ListenerTracker {
      * the event occurs.
      * @param eventName - The name of the event being subscribed to
      * @param listenerCallback - The callback function/listener
-     * @return This ListenerTracker instance so that calls can be chained.
+     * @returns This ListenerTracker instance so that calls can be chained.
      */
     public once(
         eventName: string,

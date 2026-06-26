@@ -461,7 +461,7 @@ const associatedFilesCommand = {
  * Helper function that determines whether `position` is at the end of its line
  * @param doc - The document containing `position`
  * @param position - The position to be tested
- * @return Whether `position` is at the end of its line
+ * @returns Whether `position` is at the end of its line
  */
 function isAtEndOfLine(
     doc: vscode.TextDocument,

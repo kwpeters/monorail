@@ -32,7 +32,7 @@ export class GitBranch {
      * Validates the specified branch name
      *
      * @param branchName - The name to validate
-     * @return A promise for a boolean that will indicate whether branchName is
+     * @returns A promise for a boolean that will indicate whether branchName is
      * valid.  This promise will never reject.
      */
     public static isValidBranchName(this: unknown, branchName: string): Promise<boolean> {
@@ -70,7 +70,7 @@ export class GitBranch {
      * @param repo - The repo associated with the branch
      * @param branchName - The name of the branch
      * @param remoteName - The remote name (if a remote branch)
-     * @return A Promise that always resolves with a Result.  The result
+     * @returns A Promise that always resolves with a Result.  The result
      * indicates whether this operation succeeded.
      */
     public static async create(
@@ -92,7 +92,7 @@ export class GitBranch {
      * Enumerates the branches that exist within the specified repo.
      *
      * @param repo - The repo in which the branches are to be enumerated
-     * @return A Promise for an array of branches in the specified repo
+     * @returns A Promise for an array of branches in the specified repo
      */
     public static enumerateGitRepoBranches(repo: GitRepo): Promise<Array<GitBranch>> {
         return spawn("git", ["branch", "-a"], {cwd: repo.directory.toString()}).closePromise
@@ -157,7 +157,7 @@ export class GitBranch {
     /**
      * If this branch is a remote branch, gets the name of the remote repository.
      *
-     * @return The name of the remote this branch belongs to.  Returns undefined
+     * @returns The name of the remote this branch belongs to.  Returns undefined
      *      if this branch is local.
      */
     public get remoteName(): string | undefined {
@@ -180,7 +180,7 @@ export class GitBranch {
     /**
      * Determines whether the branch represented by this instance exists within
      * its Git repository.
-     * @return A Promise that resolves with a boolean indicating whether this
+     * @returns A Promise that resolves with a boolean indicating whether this
      * branch exists.
      */
     public async exists(): Promise<boolean> {
@@ -211,7 +211,7 @@ export class GitBranch {
     /**
      * Gets the remote branch that this branch is tracking (if there is one).
      *
-     * @return A Promise that always resolves.  The Promise will resolve with
+     * @returns A Promise that always resolves.  The Promise will resolve with
      * the branch this branch is tracking, or undefined if this branch is not
      * tracking a remote branch.
      */

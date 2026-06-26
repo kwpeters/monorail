@@ -51,7 +51,7 @@ export async function main(): Promise<number> {
 /**
  * Parses the command line and gathers the options into an easily consumable
  * form.
- * @return The configuration parameters for this script
+ * @returns The configuration parameters for this script
  */
 async function getConfiguration(): Promise<IWatchConfig> {
 
@@ -348,7 +348,7 @@ async function mainImpl(): Promise<Result<number, string>> {
  * Tests to see if any patterns match _str_
  * @param str - The string to test
  * @param patterns - The regular expressions to test against
- * @return true if one or more patterns match _str_
+ * @returns true if one or more patterns match _str_
  */
 function matchesAny(str: string, patterns: Array<RegExp>): boolean {
     return _.some(patterns, (curPattern) => curPattern.test(str));

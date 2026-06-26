@@ -34,7 +34,7 @@ export class Directory {
      * Creates a Directory representing the relative path from `from` to `to`
      * @param from - The starting directory
      * @param to - The ending directory
-     * @return A directory representing the relative path from `from` to `to`
+     * @returns A directory representing the relative path from `from` to `to`
      */
     public static relative(
         from: Directory,
@@ -49,7 +49,7 @@ export class Directory {
      * Calculates the parts of the relative path from `from` to `to`.
      * @param from - The starting point
      * @param to - The ending point
-     * @return An array of strings representing the path segments needed to get
+     * @returns An array of strings representing the path segments needed to get
      * from `from` to `to`.
      */
     public static relativeParts(from: Directory, to: Directory): Array<string> {
@@ -63,7 +63,7 @@ export class Directory {
      * extant directory.
      *
      * @param fsPath - The path to be checked
-     * @return If _fsPath_ refers to an extant directory, a successful Result
+     * @returns If _fsPath_ refers to an extant directory, a successful Result
      * containing the Directory instance.  Otherwise, a failed Result containing
      * an error message.
      */
@@ -90,7 +90,7 @@ export class Directory {
      * to an extant directory.
      *
      * @param envVarName - The name of the environment variable
-     * @return If the environment variable exists and contains the path to an extant
+     * @returns If the environment variable exists and contains the path to an extant
      * directory, a successful Result containing the Directory.  Otherwise, an error
      * Result containing an error message.
      */
@@ -170,7 +170,7 @@ export class Directory {
 
     /**
      * Gets the parent directory of this directory, if one exists.
-     * @return This directory's parent directory.  undefined is returned if this
+     * @returns This directory's parent directory.  undefined is returned if this
      * directory is the root of a drive.
      */
     public parentDir(): undefined | Directory {
@@ -193,7 +193,7 @@ export class Directory {
 
     /**
      * Determines whether this directory is the root of a drive.
-     * @return true if this directory is the root of a drive.  false otherwise.
+     * @returns true if this directory is the root of a drive.  false otherwise.
      */
     public isRoot(): boolean {
         return this.parentDir() === undefined;
@@ -202,7 +202,7 @@ export class Directory {
 
     /**
      * Gets the absolute path of this Directory.
-     * @return The absolute path of this Directory
+     * @returns The absolute path of this Directory
      */
     public absPath(): string {
         if (this._dirPath[1] === ":") {
@@ -219,7 +219,7 @@ export class Directory {
     /**
      * Makes another Directory instance that is wrapping this Directory's
      * absolute path.
-     * @return A new Directory representing this Directory's absolute path.
+     * @returns A new Directory representing this Directory's absolute path.
      */
     public absolute(): Directory {
         return new Directory(this.absPath());
@@ -471,7 +471,7 @@ export class Directory {
      * Reads the contents of this directory.
      * @param recursive - Whether to find subdirectories and files recursively
      * (default is false).
-     * @return The contents of the directory, separated into a list of files and
+     * @returns The contents of the directory, separated into a list of files and
      * a list of subdirectories.  The relative/absolute nature of the returned
      * File and Directory objects will be determined by the relative/absolute
      * nature of this Directory object.
@@ -534,7 +534,7 @@ export class Directory {
     /**
      * Reads the contents of this directory.
      * @param recursive - Whether to find subdirectories and files recursively
-     * @return The contents of the directory, separated into a list of files and a
+     * @returns The contents of the directory, separated into a list of files and a
      * list of subdirectories.  The relative/absolute nature of the returned
      * File and Directory objects will be determined by the relative/absolute
      * nature of this Directory object.
@@ -573,7 +573,7 @@ export class Directory {
 
     /**
      * Recursively removes empty subdirectories from within this directory.
-     * @return A Promise that is resolved when this directory has been pruned.
+     * @returns A Promise that is resolved when this directory has been pruned.
      */
     public prune(): Promise<void> {
         return this.contents()
@@ -630,7 +630,7 @@ export class Directory {
      * @param copyRoot - If true, this directory name will be a subdirectory of
      * `destDir`.  If false, only the contents of this directory will be copied
      * into `destDir`.
-     * @return A promise that is resolved with a Directory object representing
+     * @returns A promise that is resolved with a Directory object representing
      * the destination directory.  If copyRoot is false, this will be `destDir`.
      * If copyRoot is true, this will be this Directory's counterpart
      * subdirectory in `destDir`.
@@ -800,7 +800,7 @@ export class Directory {
      * @param moveRoot - If true, this directory name will be a subdirectory of
      * `destDir`.  If false, only the contents of this directory will be copied
      * into `destDir`.
-     * @return A promise that is resolved with a Directory object representing
+     * @returns A promise that is resolved with a Directory object representing
      * the destination directory.  If moveRoot is false, this will be `destDir`.
      * If moveRoot is true, this will be this Directory's counterpart
      * subdirectory in `destDir`.
@@ -827,7 +827,7 @@ export class Directory {
      *   item is a Directory, the function returns a boolean indicating whether
      *   to recurse into the directory.  When item is a File, the returned value
      *   is ignored.
-     * @return A promise that is resolved when the directory tree has been
+     * @returns A promise that is resolved when the directory tree has been
      *   completely walked.
      */
     public async walk(cb: WalkCallback): Promise<void> {
@@ -904,7 +904,7 @@ export class Directory {
      *
      * @param pattern - The pattern that the Directory's files will be tested
      * with.
-     * @return A Promise that resolves with the result array.  The array will be
+     * @returns A Promise that resolves with the result array.  The array will be
      * empty if no files were found.
      */
     public async findMatchingFiles(pattern: RegExp, recurse: boolean = false): Promise<Array<File>> {
@@ -966,7 +966,7 @@ export class Directory {
      * Helper method that splits this Directory's path into parts, adjusting
      * for UNC paths.
      *
-     * @return The path parts
+     * @returns The path parts
      */
     private split(): string[] {
         const absPath = this.absPath();

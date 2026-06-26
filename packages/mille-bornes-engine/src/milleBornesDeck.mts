@@ -72,7 +72,7 @@ export type MilleBornesShuffledDeck = Brand<Array<Card>, "MilleBornesShuffledDec
  *
  * @param cardCountFn - A function that returns the count of each card type
  * @param multiplier - The number of times to multiply each card count
- * @return If successful, a successful Result containing the new
+ * @returns If successful, a successful Result containing the new
  * MilleBornesDeck.  Otherwise, a failed Result containing an error message.
  */
 export function createDeck(
@@ -96,7 +96,7 @@ export function createDeck(
  * Shuffles a Mille Bornes deck into a random order.
  *
  * @param deck - The deck to shuffle
- * @return A new shuffled deck with cards in random order
+ * @returns A new shuffled deck with cards in random order
  */
 export function shuffleDeck(deck: MilleBornesDeck): MilleBornesShuffledDeck {
     const shuffled = _.shuffle(deck);

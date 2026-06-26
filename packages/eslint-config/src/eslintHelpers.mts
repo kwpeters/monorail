@@ -35,7 +35,7 @@ export function getIgnorePatterns(): string[] {
  *
  * @param browserGlobals - Whether to include browser globals
  * @param nodeGlobals - Whether to include Node.js globals
- * @return The JS/TS base configurations and customizations
+ * @returns The JS/TS base configurations and customizations
  */
 export function getJsConfig(browserGlobals: boolean, nodeGlobals: boolean): ConfigWithExtendsArray {
 
@@ -392,7 +392,7 @@ export function getJsConfig(browserGlobals: boolean, nodeGlobals: boolean): Conf
  * Gets TS base configuration and customizations.
  *
  * @param projDir - The project directory (typically `import.meta.dirname`)
- * @return The TypeScript-specific configurations and customizations
+ * @returns The TypeScript-specific configurations and customizations
  */
 export function getTsConfig(projDir: string): ConfigWithExtendsArray {
     return [
@@ -838,7 +838,7 @@ export function getTsConfig(projDir: string): ConfigWithExtendsArray {
  * Configures `eslint-plugin-react-hooks` with the two standard rules:
  * `rules-of-hooks` (error) and `exhaustive-deps` (warn).
  *
- * @return The React-specific configurations
+ * @returns The React-specific configurations
  */
 export function getReactConfig(): ConfigWithExtendsArray {
     // Load the plugin at runtime to avoid TypeScript ESM/CJS interop issues.

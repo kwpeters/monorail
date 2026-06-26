@@ -23,7 +23,7 @@ export const defaultNoisePatterns: Array<RegExp> = [
  * `input/noise.regex.txt` mechanism.
  *
  * @param noiseFile - An optional override file
- * @return The patterns to strip, or a failure if a line is not a valid regex.
+ * @returns The patterns to strip, or a failure if a line is not a valid regex.
  */
 export async function loadNoisePatterns(noiseFile: Option<File>): Promise<Result<Array<RegExp>, string>> {
     if (noiseFile.isNone) {

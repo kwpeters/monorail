@@ -56,7 +56,7 @@ export class PersistentCache<T> {
      * Creates a new PersistentCache instance.
      * @param name - The name of the cache
      * @param options - configuration options.  See IPersistentCacheOptions.
-     * @return A promise that resolves with the new cache instance or rejects
+     * @returns A promise that resolves with the new cache instance or rejects
      * if there were any errors.
      */
     public static async create<T>(
@@ -92,7 +92,7 @@ export class PersistentCache<T> {
      * Synchronously creates a new PersistentCache instance.
      * @param name - The name of the cache
      * @param options - Configuration options.  See IPersistentCacheOptions.
-     * @return The new cache instance
+     * @returns The new cache instance
      */
     public static createSync<T>(name: string, options?: Partial<IPersistentCacheOptions>): PersistentCache<T> {
         if (!isValidFilesystemName(name)) {
@@ -149,7 +149,7 @@ export class PersistentCache<T> {
      * Adds/overwrites a key in this cache.
      * @param key - The key
      * @param val - The value
-     * @return A promise that resolves when the value has been stored.  Rejects
+     * @returns A promise that resolves when the value has been stored.  Rejects
      * if the specified key name is invalid.
      */
     public async set(key: string, val: T): Promise<void> {
@@ -170,7 +170,7 @@ export class PersistentCache<T> {
     /**
      * Checks whether a key exists in this cache without fetching its value.
      * @param key - The key to check
-     * @return A promise that resolves with true if the key exists, false
+     * @returns A promise that resolves with true if the key exists, false
      * otherwise
      */
     public async has(key: string): Promise<boolean> {
@@ -186,7 +186,7 @@ export class PersistentCache<T> {
     /**
      * Reads a value from this cache.
      * @param key - The key to read
-     * @return A promise that resolves with a SomeOption containing the value
+     * @returns A promise that resolves with a SomeOption containing the value
      * if the key exists, or a NoneOption if the key is not present.
      */
     public async get(key: string): Promise<Option<T>> {
@@ -231,7 +231,7 @@ export class PersistentCache<T> {
      * Reads a value from this cache or computes and stores it when missing.
      * @param key - The key to read or create
      * @param fallbackFactory - Factory used when key is missing
-     * @return The extant or newly-computed value
+     * @returns The extant or newly-computed value
      */
     public async getOrSet(key: string, fallbackFactory: () => MaybePromise<T>): Promise<T>;
 
@@ -254,7 +254,7 @@ export class PersistentCache<T> {
     /**
      * Deletes the specified key from this cache
      * @param key - The key to delete
-     * @return A promise that resolves with true if the key existed
+     * @returns A promise that resolves with true if the key existed
      */
     public async delete(key: string): Promise<boolean> {
         // Remove it from the memory cache.
@@ -269,7 +269,7 @@ export class PersistentCache<T> {
 
     /**
      * Deletes all keys from this cache.
-     * @return A promise that resolves when the cache has been cleared
+     * @returns A promise that resolves when the cache has been cleared
      */
     public async clear(): Promise<void> {
         this._memCache.clear();
@@ -279,7 +279,7 @@ export class PersistentCache<T> {
 
     /**
      * Enumerates the keys in this cache
-     * @return A promise that resolves with the keys present in this cache
+     * @returns A promise that resolves with the keys present in this cache
      */
     public async keys(): Promise<Array<string>> {
         const directoryContents = await this._cacheDir.contents();
@@ -294,7 +294,7 @@ export class PersistentCache<T> {
      * Helper function that converts from a key name to its associated file in
      * the filesystem.
      * @param key - The key name to convert
-     * @return The corresponding File
+     * @returns The corresponding File
      */
     private keyToKeyFile(key: string): File {
         return new File(this._cacheDir, key + ".json");
@@ -304,7 +304,7 @@ export class PersistentCache<T> {
     /**
      * Helper function that converts from a File to the cache key it represents
      * @param keyFile - The file to convert
-     * @return The corresponding key string
+     * @returns The corresponding key string
      */
     private keyFileToKey(keyFile: File): string {
         return keyFile.baseName;
@@ -321,7 +321,7 @@ export class PersistentCache<T> {
  * Helper function that returns invalid filesystem characters that cannot appear
  * in cache or key names due to the fact they are persisted in filesystem
  * directory names and file names.
- * @return An array of illegal characters.
+ * @returns An array of illegal characters.
  */
 export function getIllegalChars(): Array<string> {
     return [
@@ -344,7 +344,7 @@ export function getIllegalChars(): Array<string> {
  * Determines whether the specified name is allowed (according to underlying
  * filesystem)
  * @param name - The name to be validated
- * @return true if `name` is valid.  false otherwise.
+ * @returns true if `name` is valid.  false otherwise.
  */
 function isValidFilesystemName(name: string): boolean {
     if (name.length === 0 || /^\s+$/u.test(name)) {
@@ -422,7 +422,7 @@ class CacheEntry<T> {
      * type "U", which represents the type of user data stored in the payload.
      * Note, static methods cannot use the class template type "T".
      * @param serialized - The serialized CacheEntry
-     * @return A CacheEntry instance
+     * @returns A CacheEntry instance
      */
     public static deserialize<TPayload>(serialized: {payload: TPayload}): CacheEntry<TPayload> {
         return new CacheEntry<TPayload>(serialized.payload);
@@ -445,7 +445,7 @@ class CacheEntry<T> {
 
     /**
      * Serializes this entry to an object that can be persisted.
-     * @return A version of this object that can be persisted and later
+     * @returns A version of this object that can be persisted and later
      * deserialized
      */
     public serialize(): {payload: T} {
@@ -457,7 +457,7 @@ class CacheEntry<T> {
 
     /**
      * Retrieves the user data stored in this entry.
-     * @return The user data
+     * @returns The user data
      */
     public get payload(): T {
         return this._payload;

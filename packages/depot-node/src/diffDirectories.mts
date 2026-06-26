@@ -56,7 +56,7 @@ export class FileCompareAction {
 
     /**
      * Performs this action.
-     * @return A promise that is resolved when the action has completed
+     * @returns A promise that is resolved when the action has completed
      *     successfully or rejects if it failed.
      */
     public execute(): Promise<void> {
@@ -361,7 +361,7 @@ export type DiffDirFileStatusKey = keyof typeof DiffDirFileStatus;
  * DiffDirFileStatus.
  *
  * @param diffDirFileStatus - The DiffDirFileStatus to find the key of
- * @return The key that corresponds to the specified DiffDirFileStatus.
+ * @returns The key that corresponds to the specified DiffDirFileStatus.
  */
 export function diffDirFileStatusKey(diffDirFileStatus: DiffDirFileStatus): DiffDirFileStatusKey {
     for (const [key, val] of Object.entries(DiffDirFileStatus)) {
@@ -387,7 +387,7 @@ export class DiffDirFileItem {
      *     compared)
      * @param actionPriority - The overall action being performed so that the
      *     actions associated with this file item can be prioritized
-     * @return A newly created DiffDirFileItem instance
+     * @returns A newly created DiffDirFileItem instance
      */
     public static create(
         leftRootDir:      Directory,
@@ -560,7 +560,7 @@ const defaultDiffDirectoriesOptions: IDiffDirectoriesOptions = {
  * @param leftDir - The left directory to be compared
  * @param rightDir - The right directory to be compared
  * @param options - Options that control the behavior of the comparison
- * @return An array of items representing the differences found between
+ * @returns An array of items representing the differences found between
  *     `leftDir` and `rightDir`.
  */
 export async function diffDirectories(

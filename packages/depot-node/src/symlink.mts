@@ -36,7 +36,7 @@ export class Symlink {
     /**
      * Gets the directory portion of this symlink's path (everything before the
      * file name and extension).
-     * @return The directory portion of this symlink's path.  This string will
+     * @returns The directory portion of this symlink's path.  This string will
      * always end with the OS's directory separator ("/").
      */
     public get dirName(): string {
@@ -47,7 +47,7 @@ export class Symlink {
     /**
      * Gets this symlink's base name.  This is the part of the name preceding
      * the extension.
-     * @return This symlink's base name.
+     * @returns This symlink's base name.
      */
     public get baseName(): string {
         const extName: string = path.extname(this._symlinkPath);
@@ -58,7 +58,7 @@ export class Symlink {
     /**
      * Gets the full file name of this symbolic link.  This includes both the
      * base name and extension.
-     * @return This symlink's file name
+     * @returns This symlink's file name
      */
     public get fileName(): string {
         return path.basename(this._symlinkPath);
@@ -68,7 +68,7 @@ export class Symlink {
     /**
      * Gets the extension of this symlink.  This includes the initial dot (".").
      * If the symlink has no extension an empty string is returned.
-     * @return This symlink's extension
+     * @returns This symlink's extension
      */
     public get extName(): string {
         return path.extname(this._symlinkPath);
@@ -77,7 +77,7 @@ export class Symlink {
 
     /**
      * Gets the directory containing this symlink
-     * @return A Directory object representing this symlink's directory.
+     * @returns A Directory object representing this symlink's directory.
      */
     public get directory(): Directory {
         const dirName: string = path.dirname(this._symlinkPath);
@@ -88,7 +88,7 @@ export class Symlink {
     /**
      * Returns the path of this symlink within the filesystem
      *
-     * @return The path of this symlink within the filesystem
+     * @returns The path of this symlink within the filesystem
      */
     public toString(): string {
         return this._symlinkPath;
@@ -98,7 +98,7 @@ export class Symlink {
     /**
      * Gets the absolute path of this symlink (not of the target)
      *
-     * @return The absolute path of this symlink (not of the target)
+     * @returns The absolute path of this symlink (not of the target)
      */
     public absPath(): string {
         return path.resolve(this._symlinkPath);
@@ -111,7 +111,7 @@ export class Symlink {
      * @param target - The target of this symlink
      * @param pathType - Whether the path to the specified target should be a
      * relative path or an absolute path
-     * @return A Promise that always resolves with a Result.  When successful,
+     * @returns A Promise that always resolves with a Result.  When successful,
      * the Result contains a reference to this instance.  When an error occurs,
      * the Result will contain a descriptive error message.
      */
@@ -169,7 +169,7 @@ export class Symlink {
      * @param dstSymlinkName - When _dstDirOrSymlink_ is a Directory,
      * optionally specifies the destination file name.  If omitted, the
      * destination file name will be the same as this Symlink.
-     * @return A Promise that always resolves with a Result.  If successful, the
+     * @returns A Promise that always resolves with a Result.  If successful, the
      * Result contains the destination Symlink instance.  If an error occurred,
      * an error message is contained.
      */
@@ -257,7 +257,7 @@ export class Symlink {
      * @param dstSymlinkName - When _dstDirOrSymlink_ is a Directory,
      * optionally specifies the destination file name.  If omitted, the
      * destination file name will be the same as this Symlink.
-     * @return A Promise that always resolves with a Result.  If successful, the
+     * @returns A Promise that always resolves with a Result.  If successful, the
      * Result contains the destination Symlink instance.  If an error occurred,
      * an error message is contained.
      */
@@ -279,7 +279,7 @@ export class Symlink {
     /**
      * Gets this symlink's path to its target.
      *
-     * @return A Promise that always resolves with a Result.  When successful,
+     * @returns A Promise that always resolves with a Result.  When successful,
      * the Result contains the path to the target (relative or absolute).  Upon
      * failure, the Result contains a descriptive error message.
      */
@@ -297,7 +297,7 @@ export class Symlink {
     /**
      * Checks to see if this Symlink exists.
      *
-     * @return A Promise that always resolves.  It is resolved with a truthy
+     * @returns A Promise that always resolves.  It is resolved with a truthy
      * fs.Stats object for the symbolic link (not the target) if it exists.
      * Otherwise, it is resolved with undefined.
      */
@@ -319,7 +319,7 @@ export class Symlink {
      * Follows this symbolic link once and yields the target Directory, File or
      * Symlink.
      *
-     * @return A Promise that always resolves with the operation status.  If
+     * @returns A Promise that always resolves with the operation status.  If
      * successful, the target Directory, File or Symlink is provided.  If this
      * symbolic link does not exist or the target does not exist, a failed
      * Result containing a descriptive error message is returned.
@@ -344,7 +344,7 @@ export class Symlink {
      * Follows all symbolic links until a destination Directory or File is
      * reached.
      *
-     * @return A Promise that always resolves with the operation status.  If
+     * @returns A Promise that always resolves with the operation status.  If
      * successful, the final Directory or File is provided.  If this symbolic
      * link does not exist or any symbolic link target does not exist, a failed
      * Result containing a descriptive error message is returned.

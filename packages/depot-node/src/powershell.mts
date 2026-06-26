@@ -10,7 +10,7 @@ import { spawn, spawnErrorToString } from "./spawn2.mjs";
  * Gets the executable file that runs legacy PowerShell.  Typically, this is:
  * %SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe
  *
- * @return If the legacy executable can be found, a successful Result containing
+ * @returns If the legacy executable can be found, a successful Result containing
  * a File representing that executable.  Otherwise, a failure Result containing
  * an error message.
  */
@@ -37,7 +37,7 @@ export async function getLegacyPowerShellExecutable(): Promise<Result<File, stri
  * Gets the executable file that runs modern PowerShell.  Typically, this is:
  * C:\Program Files\PowerShell\7\pwsh.exe
  *
- * @return If the modern executable can be found, a successful Result containing
+ * @returns If the modern executable can be found, a successful Result containing
  * a File representing that executable.  Otherwise, a failure Result containing
  * an error message.
  */
@@ -60,7 +60,7 @@ export async function getModernPowerShellExecutable(): Promise<Result<File, stri
 /**
  * Finds the most recent PowerShell executable.
  *
- * @return If any PowerShell executables could be found, a successful Result
+ * @returns If any PowerShell executables could be found, a successful Result
  * containing the found File.  Otherwise, an error Result containing an error
  * message.
  */

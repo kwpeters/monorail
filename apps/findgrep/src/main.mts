@@ -75,7 +75,7 @@ interface IFindGrepConfig {
 /**
  * Parses the command line and gathers the options into an easily consumable
  * form.
- * @return The configuration parameters for this script
+ * @returns The configuration parameters for this script
  */
 async function getConfiguration(): Promise<Result<IFindGrepConfig, string>> {
     const argv = await yargs(hideBin(process.argv))

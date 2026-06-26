@@ -61,7 +61,7 @@ export class DatestampDeductionAggregate {
 
     /**
      * Gets this aggregate's highest confidence deductions.
-     * @return Description
+     * @returns Description
      */
     public getHighestConfidenceDeductions(): Array<IDatestampDeductionSuccess> {
         const successfulDeductions = this.getSuccessfulDeductions();

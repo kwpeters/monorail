@@ -29,7 +29,7 @@ interface IGitLogEntry {
  * Gets a regular expression capable of parsing a git log entry.  This regex is
  * wrapped by this function, because the returned regex maintains state due to
  * the /g flag.
- * @return Description
+ * @returns Description
  */
 function getLogEntryRegex(): RegExp {
     //
@@ -50,7 +50,7 @@ function getLogEntryRegex(): RegExp {
 /**
  * Determines whether _dir_ is a directory containing a Git repository.
  * @param dir - The directory to inspect
- * @return A promise for a boolean indicating whether _dir_ contains a Git
+ * @returns A promise for a boolean indicating whether _dir_ contains a Git
  * repository.  This promise will never reject.
  */
 export function isGitRepoDir(dir: Directory): Promise<boolean> {
@@ -75,7 +75,7 @@ export class GitRepo {
      * Creates a new GitRepo instance, pointing it at the specified directory.
      *
      * @param dir - The directory containing the repo
-     * @return A Promise that always resolves.  Resolves with a new GitRepo
+     * @returns A Promise that always resolves.  Resolves with a new GitRepo
      * instance when successful.  Resolves with an error result containing a
      * descriptive error message upon failure.
      */
@@ -94,7 +94,7 @@ export class GitRepo {
      * The repo will be cloned into a subdirectory named after the project.
      * @param dirName - The name of the directory to place the cloned repository
      * into.  If not specified, the project's name will be used.
-     * @return A promise for the cloned Git repo.
+     * @returns A promise for the cloned Git repo.
      */
     public static clone(
         src: Url | Directory,
@@ -166,7 +166,7 @@ export class GitRepo {
 
     /**
      * Gets the directory containing this Git repo.
-     * @return The directory containing this git repo.
+     * @returns The directory containing this git repo.
      */
     public get directory(): Directory {
         return this._dir;
@@ -178,7 +178,7 @@ export class GitRepo {
      * instances are considered equal if they point to the same directory.
      *
      * @param other - The other GitRepo to compare with
-     * @return Whether the two GitRepo instances are equal
+     * @returns Whether the two GitRepo instances are equal
      */
     public equals(other: GitRepo): boolean {
         return this._dir.equals(other._dir);
@@ -187,7 +187,7 @@ export class GitRepo {
 
     /**
      * Gets the files that are under Git version control.
-     * @return A Promise for an array of files under Git version control.
+     * @returns A Promise for an array of files under Git version control.
      */
     public files(): Promise<Array<File>> {
         return spawn("git", ["ls-files"], {cwd: this._dir.toString()})
@@ -251,7 +251,7 @@ export class GitRepo {
 
     /**
      * Get the remotes configured for the Git repo.
-     * @return A Promise for an object where the remote names are the keys and
+     * @returns A Promise for an object where the remote names are the keys and
      * the remote URL is the value.
      */
     public remotes(): Promise<Record<string, string>> {
@@ -279,7 +279,7 @@ export class GitRepo {
      * is taken from the last part of the remote's URL.  Otherwise, the name
      * will be taken from the "name" property in package.json.  Otherwise, the
      * name will be the name of the folder the repo is in.
-     * @return A Promise for the name of this repository.
+     * @returns A Promise for the name of this repository.
      */
     public name(): Promise<string> {
         return this.remotes()
@@ -321,7 +321,7 @@ export class GitRepo {
 
     /**
      * Gets all the tags present in this repo.
-     * @return A Promise for an array of tag names.  An empty array is returned
+     * @returns A Promise for an array of tag names.  An empty array is returned
      * when there are no tags.
      */
     public tags(): Promise<Array<string>> {
@@ -340,7 +340,7 @@ export class GitRepo {
     /**
      * Determines whether `tagName` is a tag that exists in this repo.
      * @param tagName - The tag to search for
-     * @return A Promise for a boolean indicating whether `tagName` exists.
+     * @returns A Promise for a boolean indicating whether `tagName` exists.
      */
     public hasTag(tagName: string): Promise<boolean> {
         return this.tags()
@@ -357,7 +357,7 @@ export class GitRepo {
      * @param message - The message associated with the annotated tag
      * @param force - false when your intention is to create a new tag; true
      * when your intention is to move an existing tag.
-     * @return A Promise for this GitRepo instance (so that other calls may be
+     * @returns A Promise for this GitRepo instance (so that other calls may be
      * chained).
      */
     public createTag(tagName: string, message = "", force = false): Promise<GitRepo> {
@@ -381,7 +381,7 @@ export class GitRepo {
     /**
      * Deletes the specified tag.
      * @param tagName - The name of the tag to delete
-     * @return A Promise for this GitRepo instance (so that other calls may be
+     * @returns A Promise for this GitRepo instance (so that other calls may be
      * chained).
      */
     public deleteTag(tagName: string): Promise<GitRepo> {
@@ -409,7 +409,7 @@ export class GitRepo {
      * @param remoteName - The remote to push the tag to
      * @param force - false if your intention is to not affect any existing
      * tags; true if your intention is to move an existing tag.
-     * @return A Promise for this GitRepo instance (so that other calls may be
+     * @returns A Promise for this GitRepo instance (so that other calls may be
      * chained).
      */
     public pushTag(
@@ -437,7 +437,7 @@ export class GitRepo {
      * Gets a list of branches in this repo.
      * @param forceUpdate - false to use a cached list of branches (if
      * available); true to retrieve the latest list of branches.
-     * @return A Promise for the branches found
+     * @returns A Promise for the branches found
      */
     public getBranches(forceUpdate = false): Promise<Array<GitBranch>> {
         if (forceUpdate) {
@@ -471,7 +471,7 @@ export class GitRepo {
 
     /**
      * Gets the current working branch (if there is one)
-     * @return A Promise for the current working branch or undefined (when
+     * @returns A Promise for the current working branch or undefined (when
      * working in a detached head state).
      */
     public getCurrentBranch(): Promise<GitBranch | undefined> {
@@ -505,7 +505,7 @@ export class GitRepo {
      * @param branch - The branch to switch to
      * @param createIfNonexistent - true to create the branch if it does not
      * exist; false if your intention is to checkout an existing branch
-     * @return A Promise that resolves when the branch is checked out.
+     * @returns A Promise that resolves when the branch is checked out.
      */
     public checkoutBranch(branch: GitBranch, createIfNonexistent: boolean): Promise<void> {
         return this.getBranches()
@@ -536,7 +536,7 @@ export class GitRepo {
     /**
      * Checks out the specified commit
      * @param commit - The commit to checkout
-     * @return A Promise that resolves when the commit is checked out.
+     * @returns A Promise that resolves when the commit is checked out.
      */
     public checkoutCommit(commit: CommitHash): Promise<void> {
         return spawn("git", ["checkout", commit.toString()], {cwd: this._dir.toString()}).closePromise
@@ -546,7 +546,7 @@ export class GitRepo {
 
     /**
      * Stages all modified files that are not being ignored (via .gitignore)
-     * @return A Promise for this GitRepo instance (so that other calls may be
+     * @returns A Promise for this GitRepo instance (so that other calls may be
      * chained).
      */
     public stageAll(): Promise<GitRepo> {
@@ -590,7 +590,7 @@ export class GitRepo {
      * @param remoteName - The remote to push to
      * @param setUpstream - true to set the remote's branch as the upstream
      * branch
-     * @return A Promise that is resolved when the push has completed.  The
+     * @returns A Promise that is resolved when the push has completed.  The
      * promise will reject when working in a detached head state.
      */
     public pushCurrentBranch(remoteName = "origin", setUpstream = false): Promise<void> {
@@ -621,7 +621,7 @@ export class GitRepo {
     /**
      * Gets the number of commits ahead and behind the current branch is
      * @param trackingRemote - The remote containing the tracking branch
-     * @return A Promise for an object containing the result
+     * @returns A Promise for an object containing the result
      */
     public getCommitDeltas(trackingRemote = "origin"): Promise<{ahead: number, behind: number}> {
         // TODO: Write unit tests for this method.
@@ -696,7 +696,7 @@ export class GitRepo {
     /**
      * Commits staged files
      * @param msg - The commit message
-     * @return A Promise for the newly created Git log entry
+     * @returns A Promise for the newly created Git log entry
      */
     public commit(msg = ""): Promise<IGitLogEntry> {
         // TODO: Add unit tests for this method.
@@ -731,7 +731,7 @@ export class GitRepo {
      * @param remoteName - The remote to fetch from
      * @param fetchTags - Set to true in order to fetch tags that point to
      * objects that are not downloaded (see git fetch docs).
-     * @return A promise that is resolved when the command completes
+     * @returns A promise that is resolved when the command completes
      * successfully
      */
     public fetch(remoteName = "origin", fetchTags = false): Promise<void> {
@@ -756,7 +756,7 @@ export class GitRepo {
      * Gets this repo's commit log
      * @param forceUpdate - true to get a current snapshot of this repos log;
      * false if a previously cached log can be used (more performant)
-     * @return A Promise for an array of Git log entries
+     * @returns A Promise for an array of Git log entries
      */
     public getLog(forceUpdate?: boolean): Promise<Array<IGitLogEntry>> {
         if (forceUpdate) {
@@ -785,7 +785,7 @@ export class GitRepo {
     /**
      * Merges the specified branch into this repo's current branch.
      * @param sourceBranch - The branch to be merged into the current branch
-     * @return Successful results contain this GitRepo instance (to enable
+     * @returns Successful results contain this GitRepo instance (to enable
      * chaining).  Failed results contain a descriptive error message.
      */
     public async merge(sourceBranch: GitBranch): Promise<Result<GitRepo, string>> {
@@ -811,7 +811,7 @@ export class GitRepo {
      * @param force - Whether to force deletion when the branch has unmerged
      * commits.  This only applies if the branch is local.  Remote branches will
      * always be deleted.
-     * @return Successful results contain this GitRepo instance (to enable
+     * @returns Successful results contain this GitRepo instance (to enable
      * chaining).  Failed results contain a descriptive error message.
      */
     public async deleteBranch(
@@ -952,7 +952,7 @@ export class GitRepo {
     /**
      * Helper method that retrieves Git log entries
      *
-     * @return A promise for an array of structures describing each commit.
+     * @returns A promise for an array of structures describing each commit.
      */
     private getLogEntries(): Promise<Array<IGitLogEntry>> {
         return spawn("git", ["log"], {cwd: this._dir.toString()})

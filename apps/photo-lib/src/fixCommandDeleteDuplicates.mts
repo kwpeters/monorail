@@ -40,7 +40,7 @@ export interface IDuplicateFileInfo {
  *
  * @param referenceFile - The reference file
  * @param potentialDuplicateFile - The possible duplicate file
- * @return true if possibleDuplicateFile is a duplicate of referenceFile;
+ * @returns true if possibleDuplicateFile is a duplicate of referenceFile;
  * otherwise false.
  */
 export async function isDuplicateFile(
@@ -96,7 +96,7 @@ export async function isDuplicateFile(
  *
  * @param referenceFile - The reference file
  * @param possibleDuplicateFile - The possible duplicate file
- * @return true if possibleDuplicateFile has a name indicating that it is a
+ * @returns true if possibleDuplicateFile has a name indicating that it is a
  * possible duplicate of referenceFile.
  */
 export function isSimilarFileName(referenceFile: File, possibleDuplicateFile: File): boolean {

@@ -75,7 +75,7 @@ interface IConfig {
 /**
  * Gets the configuration for this script from the command line arguments.
  *
- * @return A Promise that always resolves with a Result.  If successful, the
+ * @returns A Promise that always resolves with a Result.  If successful, the
  * Result contains the app configuration.  Otherwise the Result contains an
  * error message.
  */

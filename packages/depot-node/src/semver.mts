@@ -63,7 +63,7 @@ export class SemVer {
 
     /**
      * Returns this version as a string (no prefixes)
-     * @return A string representation of this version
+     * @returns A string representation of this version
      */
     public toString(): string {
         return this._semver.toString();
@@ -73,7 +73,7 @@ export class SemVer {
     /**
      * Gets this version as a version string (prefixed), including only the
      * major version number.
-     * @return The major version string (prefixed)
+     * @returns The major version string (prefixed)
      */
     public getMajorVersionString(): string {
         return `${VERSION_STRING_PREFIX}${this._semver.major}`;
@@ -83,7 +83,7 @@ export class SemVer {
     /**
      * Gets this version as a version string (prefixed), including major and
      * minor version numbers.
-     * @return The minor version string (prefixed)
+     * @returns The minor version string (prefixed)
      */
     public getMinorVersionString(): string {
         return `${VERSION_STRING_PREFIX}${this._semver.major}.${this._semver.minor}`;
@@ -93,7 +93,7 @@ export class SemVer {
     /**
      * Gets this version as a version string (prefixed), including major, minor
      * and patch version numbers.
-     * @return The patch version string (prefixed)
+     * @returns The patch version string (prefixed)
      */
     public getPatchVersionString(): string {
         return `${VERSION_STRING_PREFIX}${this._semver.major}.${this._semver.minor}.${this._semver.patch}`;
@@ -104,7 +104,7 @@ export class SemVer {
      * Compares this version with other and determines whether the this version
      * is less, greater or equal to other.
      * @param other - The other version to compare to
-     * @return -1 if this version is less than other. 1 if this version is
+     * @returns -1 if this version is less than other. 1 if this version is
      * greater than other.  0 if this version equals other.
      */
     public compare(other: SemVer): -1 | 0 | 1 {

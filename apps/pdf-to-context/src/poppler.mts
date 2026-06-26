@@ -84,7 +84,7 @@ export const popplerFns: IPopplerFns = {
  * non-zero); it is considered missing only on an ENOENT system error.
  *
  * @param tools - The tool names to check (e.g. "pdfinfo")
- * @return A successful Result if all tools are present; otherwise a failed
+ * @returns A successful Result if all tools are present; otherwise a failed
  * Result naming the missing tool(s).
  */
 export async function ensureToolsAvailable(tools: Array<string>): Promise<Result<void, string>> {

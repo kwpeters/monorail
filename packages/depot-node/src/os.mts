@@ -14,7 +14,7 @@ export enum OperatingSystem {
 
 /**
  * Gets the current OS.
- * @return The current OS
+ * @returns The current OS
  */
 export function getOs(): OperatingSystem {
     const platform = os.platform();
@@ -33,7 +33,7 @@ export function getOs(): OperatingSystem {
 
 /**
  * Gets the current user's home directory
- * @return The current user's home directory
+ * @returns The current user's home directory
  */
 export function getHomeDir(): Directory {
     const dirStr = os.homedir();

@@ -130,7 +130,7 @@ async function createSeaConfigFile(
  *
  * @param seaConfigFile - The SEA config file containing all info about the
  * executable to create
- * @return If successful, a message describing the completed task; otherwise, an
+ * @returns If successful, a message describing the completed task; otherwise, an
  * error message
  */
 async function createSeaExe(
@@ -168,7 +168,7 @@ interface IConfig {
  * Converts this subcommand's arguments to its configuration object.
  *
  * @param argv - This subcommand's arguments
- * @return If successful, a successful Result containing the config object.
+ * @returns If successful, a successful Result containing the config object.
  */
 async function argsToConfig(
     argv: ArgumentsCamelCase<IArgsCommand>

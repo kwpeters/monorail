@@ -111,7 +111,7 @@ async function handler(argv: ArgumentsCamelCase<IArgsCommand>): Promise<Result<n
  *
  * @param inputEsm - The ESM entry point file
  * @param bundleFile - The output bundle file
- * @return If successful, a success message; otherwise, an error message
+ * @returns If successful, a success message; otherwise, an error message
  */
 async function createBundle(
     inputEsm: File,
@@ -155,7 +155,7 @@ async function createBundle(
  *
  * @param esmBundle - The ESM bundle produced by createBundle()
  * @param cjsBundle - Output path for the CJS bundle
- * @return If successful, a success message; otherwise an error message
+ * @returns If successful, a success message; otherwise an error message
  */
 async function convertEsmBundleToCjsBundle(
     esmBundle: File,
@@ -251,7 +251,7 @@ async function createSeaConfigFile(
  *
  * @param seaConfigFile - The SEA config file containing all info about the
  * executable to create
- * @return If successful, a message describing the completed task; otherwise, an
+ * @returns If successful, a message describing the completed task; otherwise, an
  * error message
  */
 async function createSeaExe(
@@ -290,7 +290,7 @@ interface IConfig {
  * Converts this subcommand's arguments to its configuration object.
  *
  * @param argv - This subcommand's arguments
- * @return If successful, a successful Result containing the config object.
+ * @returns If successful, a successful Result containing the config object.
  */
 async function argsToConfig(
     argv: ArgumentsCamelCase<IArgsCommand>

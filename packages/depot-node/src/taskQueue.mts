@@ -34,7 +34,7 @@ export class TaskQueue extends EventEmitter {
      * @param pauseWhenDrained - Whether task execution should automatically
      *   stop when this queue is emptied.  New tasks added to the queue will not
      *   run automatically.
-     * @return The new TaskQueue instance
+     * @returns The new TaskQueue instance
      */
     public constructor(numConcurrent: number | undefined, pauseWhenDrained = false) {
         super();

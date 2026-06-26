@@ -25,7 +25,7 @@ interface IConfig {
  * Entry point for the findgrep2 application. Runs the main implementation and
  * handles success/failure cases.
  *
- * @return 0 on success, -1 on failure
+ * @returns 0 on success, -1 on failure
  */
 export async function main(): Promise<number> {
     const res = await mainImpl();
@@ -43,7 +43,7 @@ export async function main(): Promise<number> {
  * Main implementation of the findgrep2 application. Gets configuration and
  * performs the text search operation.
  *
- * @return Success with exit code 0, or failure with error message
+ * @returns Success with exit code 0, or failure with error message
  */
 async function mainImpl(): Promise<Result<number, string>> {
 
@@ -69,7 +69,7 @@ async function mainImpl(): Promise<Result<number, string>> {
  * Parses command line arguments and stdin to create the application
  * configuration.
  *
- * @return Success with config object, or failure with error message
+ * @returns Success with config object, or failure with error message
  */
 async function getConfiguration(): Promise<Result<IConfig, string>> {
     const argv = await yargs(hideBin(process.argv))
@@ -126,7 +126,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
     /**
      * Reads lines from stdin and converts them to File objects.
      *
-     * @return Success with array of File objects, or failure with error message
+     * @returns Success with array of File objects, or failure with error message
      */
     async function pipedInputToFsItems(): Promise<Result<Array<File>, string>> {
         return pipeAsync(
@@ -175,7 +175,7 @@ const styles = {
  * Searches for text matches across all files in the configuration.
  *
  * @param config - The configuration containing files and text regex
- * @return The total number of matches found across all files
+ * @returns The total number of matches found across all files
  */
 async function doTextSearch(config: IConfig): Promise<number> {
     let totalMatches = 0;
@@ -197,7 +197,7 @@ async function doTextSearch(config: IConfig): Promise<number> {
  *
  * @param file - The file to search within
  * @param config - The configuration containing the text regex to search for
- * @return The number of matches found in this file
+ * @returns The number of matches found in this file
  */
 async function doTextSearchInFile(file: File, config: IConfig): Promise<number> {
     const fileText = styles.fileStyle(file.toString());

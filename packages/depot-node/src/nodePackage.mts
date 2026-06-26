@@ -36,7 +36,7 @@ export class NodePackage {
      * @param dir - The directory to search for Node packages
      * @param includeRootDir - Whether to include a Node package contained in
      *   the root directory _dir_.
-     * @return A Promise that always resolves with a Result.  If successful, the
+     * @returns A Promise that always resolves with a Result.  If successful, the
      *   Result contains an array of the found Node packages.  Otherwise, the
      *   Result contains an error message.
      */
@@ -66,7 +66,7 @@ export class NodePackage {
      * Creates a NodePackage representing the package in the specified directory.
      *
      * @param pkgDir - The directory containing the Node.js package
-     * @return A promise for the resulting NodePackage.  This promise will be
+     * @returns A promise for the resulting NodePackage.  This promise will be
      * rejected if the specified directory does not exist or does not contain a
      * package.json file.
      */
@@ -184,7 +184,7 @@ export class NodePackage {
      *     - Prepends a shebang line
      *     - Sets executable mode bits
      *
-     * @return A map of all files that were made executable.  The keys are a
+     * @returns A map of all files that were made executable.  The keys are a
      * string name, and the values are the File instances.
      */
     public async makeBinsExecutable(): Promise<Result<ReadonlyMap<string, File>, string>> {
@@ -220,7 +220,7 @@ export class NodePackage {
      *
      * @param outDir - The output directory where to place the output file.  If
      * not specified, the output will be placed in the package's folder.
-     * @return A File object representing the output .tgz file
+     * @returns A File object representing the output .tgz file
      */
     public pack(outDir?: Directory): Promise<File> {
         const spawnOptions: cp.SpawnOptions = { cwd: this._pkgDir.toString() };
@@ -263,7 +263,7 @@ export class NodePackage {
      * directory to remain.
      * @param tmpDir - A temporary directory that can be used when packing and
      * unpacking the package.
-     * @return A promise for publishDir
+     * @returns A promise for publishDir
      */
     public publish(publishDir: Directory, emptyPublishDir: boolean, tmpDir: Directory): Promise<Directory> {
         let packageBaseName: string;

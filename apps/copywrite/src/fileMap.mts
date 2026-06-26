@@ -13,7 +13,7 @@ export type FileNameMap = Map<string, File>;
  *  directory.
  *
  * @param dir - The directory to find files in
- * @return A Promise for a mapping of all found files
+ * @returns A Promise for a mapping of all found files
  */
 export function getFileMap(dir: Directory): Promise<FileNameMap> {
     // TODO: What should be done if the same filename is seen in multiple

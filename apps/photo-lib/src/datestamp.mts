@@ -11,7 +11,7 @@ export class Datestamp {
      * @param yearStr - The year for the resulting Datestamp
      * @param monthStr - The month for the resulting Datestamp
      * @param dayStr - The day for the resulting Datestamp
-     * @return A result object that will yield the new Datestamp instance or a
+     * @returns A result object that will yield the new Datestamp instance or a
      * failure describing why it could not be created.
      */
     public static fromStrings(yearStr: string, monthStr: string, dayStr: string): Result<Datestamp, string> {
@@ -68,7 +68,7 @@ export class Datestamp {
      * @param year - The year for the resulting instance
      * @param month - The month for the resulting instance
      * @param day - The day for the resulting instance
-     * @return Description
+     * @returns Description
      */
     private constructor(year: number, month: number, day: number) {
         this._year = year;
@@ -78,7 +78,7 @@ export class Datestamp {
 
 
     /**
-     * @return The year of this Datestamp
+     * @returns The year of this Datestamp
      */
     public get year(): number {
         return this._year;
@@ -86,7 +86,7 @@ export class Datestamp {
 
 
     /**
-     * @return The month (1-12) of this Datestamp
+     * @returns The month (1-12) of this Datestamp
      */
     public get month(): number {
         return this._month;
@@ -96,7 +96,7 @@ export class Datestamp {
     /**
      * Compares two Datestamp instances.
      * @param other - The other Datestamp instance to compare to.
-     * @return true if equal; false otherwise.
+     * @returns true if equal; false otherwise.
      */
     public equals(other: Datestamp): boolean {
         return this._year === other._year &&
@@ -107,7 +107,7 @@ export class Datestamp {
 
     /**
      * Gets a string that represents this Datestamp.
-     * @return A string representing this Datestamp.
+     * @returns A string representing this Datestamp.
      */
     public toString(): string {
         const yearStr = padLeft(this._year.toString(), "0", 4);

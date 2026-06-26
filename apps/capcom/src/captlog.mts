@@ -44,7 +44,7 @@ async function main(): Promise<Result<number, string>> {
 /**
  * Locates and appends the daily template (if needed).
  *
- * @return If successful, the captlog file.  Otherwise, an error message.
+ * @returns If successful, the captlog file.  Otherwise, an error message.
  */
 export async function appendToCaptlogIfNeeded(): Promise<Result<File, string>> {
     const fileRes = getCaptlogFile();
@@ -89,7 +89,7 @@ function getDailyDelimiterLine(): string {
  * an entry for today.
  *
  * @param captlogFile - The file to check
- * @return true if an entry for today was not found; false otherwise.
+ * @returns true if an entry for today was not found; false otherwise.
  */
 async function needToAppendDailyTemplate(captlogFile: File): Promise<boolean> {
     const delim = getDailyDelimiterLine();

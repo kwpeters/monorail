@@ -19,7 +19,7 @@ export const floydHomeDir = new Directory("\\\\floyd\\home");
  * that needs its own working directory should call this rather than using
  * `tmpDir` directly.  This prevents interference between tests when git
  * processes on Windows hold file handles after the spawned process exits.
- * @return A new, empty Directory with a UUID-based name inside `tmpDir`.
+ * @returns A new, empty Directory with a UUID-based name inside `tmpDir`.
  */
 export function getUniqueTmpDir(): Directory {
     const uniqueDir = new Directory(tmpDir, generateUuid(UuidFormat.N));
@@ -30,7 +30,7 @@ export function getUniqueTmpDir(): Directory {
 
 /**
  * Determines whether the shared `floyd` UNC path is currently available.
- * @return true when the share is reachable; false otherwise.
+ * @returns true when the share is reachable; false otherwise.
  */
 export function isFloydAvailable(): boolean {
     return floydHomeDir.existsSync() !== undefined;
@@ -40,7 +40,7 @@ export function isFloydAvailable(): boolean {
 /**
  * Marks the current spec pending when the shared `floyd` UNC path is not
  * reachable.
- * @return true when the caller should exit early; false otherwise.
+ * @returns true when the caller should exit early; false otherwise.
  */
 export function exitEarlyIfFloydUnavailable(): boolean {
     if (isFloydAvailable()) {
@@ -60,7 +60,7 @@ export function exitEarlyIfFloydUnavailable(): boolean {
  * @param dirName - Optional directory name for the clone.
  * @param bare - Whether to create a bare clone.
  * @param maxAttempts - Maximum number of clone attempts.
- * @return The cloned GitRepo.
+ * @returns The cloned GitRepo.
  */
 export async function cloneWithRetry(
     src: Url | Directory,

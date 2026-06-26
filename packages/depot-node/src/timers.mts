@@ -19,7 +19,7 @@ export class Timeout extends EventEmitter {
 
     /**
      * Returns this timer's running state.
-     * @return This timer's running state
+     * @returns This timer's running state
      */
     public isRunning(): boolean {
         return !!this._timeoutId;

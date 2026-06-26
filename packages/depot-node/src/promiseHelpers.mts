@@ -8,7 +8,7 @@ import {ListenerTracker} from "./listenerTracker.mjs";
  * @param emitter - The event emitter to listen to
  * @param resolveEventName - The event that will cause the Promise to resolve
  * @param rejectEventName - The event that will cause the Promise to reject
- * @return A Promise that will will resolve and reject as specified
+ * @returns A Promise that will will resolve and reject as specified
  */
 export function eventToPromise<TResolve>(
     emitter: EventEmitter,
@@ -39,7 +39,7 @@ export function eventToPromise<TResolve>(
 /**
  * Adapts a stream to a Promise interface.
  * @param stream - The stream to be adapted
- * @return A Promise that will be resolved when the stream emits the "finish"
+ * @returns A Promise that will be resolved when the stream emits the "finish"
  * event and rejects when it emits an "error" event.
  */
 export function streamToPromise(stream: Writable): Promise<void> {

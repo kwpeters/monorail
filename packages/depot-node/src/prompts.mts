@@ -10,7 +10,7 @@ import { File } from "./file.mjs";
  * @param message - The message to display
  * @param defaultToConfirm - true to make confirmation the default response.
  * false to make canceling the default.
- * @return A promise that is resolved with a boolean indicating whether the user
+ * @returns A promise that is resolved with a boolean indicating whether the user
  * has confirmed (true) or not (false).
  */
 export async function promptToContinue(
@@ -33,7 +33,7 @@ export async function promptToContinue(
  * Prompts the user to enter a string.
  * @param message - The prompt message to display
  * @param defaultValue - The default input value
- * @return A promise that resolves with the string the user entered.
+ * @returns A promise that resolves with the string the user entered.
  */
 export async function promptForString(
     message: string,
@@ -71,7 +71,7 @@ interface IChoiceFileOption {
  * Prompts the user to choose one of the specified choices.
  * @param message - The prompt to display
  * @param choices - The choices to present to the user.
- * @return A promise that resolves with the chosen choice's value.
+ * @returns A promise that resolves with the chosen choice's value.
  */
 export async function promptForChoice(
     message: string,
@@ -97,7 +97,7 @@ export async function promptForChoice(
  * "other" string value.
  * @param message - The prompt to display
  * @param choices - The provided choices to present along with "other"
- * @return A promise that resolves with the entered string. If the user selected
+ * @returns A promise that resolves with the entered string. If the user selected
  * from the choices, the choice's value is returned.  If the user chose to enter
  * another value, that value is returned.
  */
@@ -130,7 +130,7 @@ export async function promptForStringWithChoices(
  * Prompts the user to enter a string via their default editor.
  * @param message - The prompt message to display
  * @param defaultValue - The default input value
- * @return A promise that resolves with the string the user entered.
+ * @returns A promise that resolves with the string the user entered.
  */
 export async function promptForStringInEditor(
     message: string,
@@ -155,7 +155,7 @@ export async function promptForStringInEditor(
  * @param fileChoices - The provided choices to present along with "other"
  * @param fileMustExist - If true, the function will keep prompting the user
  *      until they have chosen an existing file.
- * @return A promise that resolves with the selected File.
+ * @returns A promise that resolves with the selected File.
  */
 export async function promptForFileWithChoices(
     message: string,

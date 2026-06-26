@@ -25,7 +25,7 @@ export async function launchAdmin(executable: File, cwd?: Directory): Promise<bo
  * Gets the UNC path to an item in the filesystem.
  *
  * @param fsItem - The item to get the UNC path to
- * @return A Promise that always resolves with a Result.  Successful results
+ * @returns A Promise that always resolves with a Result.  Successful results
  * contain the UNC path of fsItem.  Failed results contain an error message.
  */
 export async function getUncPath(fsItem: FsItem): Promise<Result<string, string>> {
@@ -68,7 +68,7 @@ export async function getUncPath(fsItem: FsItem): Promise<Result<string, string>
 /**
  * Gets the user's profile directory.
  *
- * @return If the user's profile directory could be detected, a successful
+ * @returns If the user's profile directory could be detected, a successful
  * Result containing the Directory.  Otherwise, an error message.
  */
 export async function getUserProfileDir(): Promise<Result<Directory, string>> {
@@ -79,7 +79,7 @@ export async function getUserProfileDir(): Promise<Result<Directory, string>> {
 /**
  * Gets the user's OneDrive directory.
  *
- * @return If the user's OneDrive directory could be detected, a successful
+ * @returns If the user's OneDrive directory could be detected, a successful
  * Result containing the Directory.  Otherwise, an error message.
  */
 export async function getOneDriveDir(): Promise<Result<Directory, string>> {
@@ -91,7 +91,7 @@ export async function getOneDriveDir(): Promise<Result<Directory, string>> {
 /**
  * Gets the "Program Files (x86)" install folder and makes sure it exists.
  *
- * @return When successful, the directory.  An error message upon failure.
+ * @returns When successful, the directory.  An error message upon failure.
  */
 export async function getProgramFilesX86Dir(): Promise<Result<Directory, string>> {
     return Directory.fromEnvVar("ProgramFiles(x86)");

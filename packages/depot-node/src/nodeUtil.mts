@@ -22,7 +22,7 @@ const NODEJS_SHEBANG = "#!/usr/bin/env node";
  * setting file permissions.
  *
  * @param file - The file to make executable
- * @return A promise that resolves with the file that was made executable
+ * @returns A promise that resolves with the file that was made executable
  */
 export async function makeNodeScriptExecutable(file: File): Promise<File> {
 
@@ -49,7 +49,7 @@ export async function makeNodeScriptExecutable(file: File): Promise<File> {
  * Adds a Node.js shebang line to the specified script file.
  *
  * @param file - The file to be modified
- * @return A failed result containing an error message if the specified file
+ * @returns A failed result containing an error message if the specified file
  *   does not exist or if it already contains a shebang line.  A successful
  *   result if the file already contains a Node.js shebang line or if it was
  *   successfully inserted.
@@ -85,7 +85,7 @@ export async function addShebang(file: File): Promise<Result<File, string>> {
  * Sets all executable bits for the specified file.
  *
  * @param param - The file to make executable
- * @return If successful, the file (for additional chaining); otherwise, an
+ * @returns If successful, the file (for additional chaining); otherwise, an
  * error message.
  */
 export async function makeFileExecutable(file: File): Promise<Result<File, string>> {
@@ -118,7 +118,7 @@ export async function makeFileExecutable(file: File): Promise<Result<File, strin
  *
  * @param dir - The directory containing the .js files
  * @param recursive - Whether to search `dir` recursively for .js files
- * @return A promise that resolves with an array of files that were made
+ * @returns A promise that resolves with an array of files that were made
  * executable.
  */
 export function makeAllJsScriptsExecutable(dir: Directory, recursive = false): Promise<Array<File>> {
@@ -143,7 +143,7 @@ export function makeAllJsScriptsExecutable(dir: Directory, recursive = false): P
  *
  * @param nodeBinFile - The node binary symbolic link file that exists in
  * `node_modules/.bin/`.
- * @return The node script file that should be executed for the current OS.
+ * @returns The node script file that should be executed for the current OS.
  */
 export function nodeBinForOs(nodeBinFile: File | string): File {
     const inputFile: File = nodeBinFile instanceof File ? nodeBinFile : new File(nodeBinFile);
@@ -162,7 +162,7 @@ export function nodeBinForOs(nodeBinFile: File | string): File {
  * will launch the specified .js file using Node.
  *
  * @param jsFile - The JavaScript file to be launched by node.exe
- * @return A File object representing the created .cmd file.  If not running on
+ * @returns A File object representing the created .cmd file.  If not running on
  *   Windows, a successful result containing undefined is returned.
  */
 export async function createCmdLaunchScript(jsFile: File): Promise<Result<File | undefined, string>> {
@@ -187,7 +187,7 @@ export async function createCmdLaunchScript(jsFile: File): Promise<Result<File |
 /**
  * Gets the .cmd file code needed to launch the specified .js file using node.
  * @param jsFile - The .js file that will be run
- * @return The .cmd file code needed to launch the specified .js file using node
+ * @returns The .cmd file code needed to launch the specified .js file using node
  */
 function getCmdLauncherCode(jsFile: File): string {
     const cmdCode = `@IF EXIST "%~dp0\\node.exe" (` + EOL +
@@ -213,7 +213,7 @@ interface ILaunchScript {
  * @param launchScriptDir - Where this launch script will eventually reside
  * within the filesystem
  * @param targetJsFile - The .js file that will be run by this script
- * @return The platform
+ * @returns The platform
  */
 export function getLaunchScriptCode(
     launchScriptDir: Directory,
@@ -258,7 +258,7 @@ export function getLaunchScriptCode(
 /**
  * Gets the absolute path to the Node.js executable.
  *
- * @return If successful, a successful Result containing the path to the Node
+ * @returns If successful, a successful Result containing the path to the Node
  *     executable. If unsuccessful, a failed Result with an error message.
  */
 export async function getNodeExePath(): Promise<Result<File, string>> {

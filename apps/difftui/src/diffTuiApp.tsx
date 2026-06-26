@@ -110,7 +110,7 @@ function statusColor(status: string): string {
  * compared directories).
  *
  * @param initial - Items to seed the new set with
- * @return A new VoSet keyed by relative file path
+ * @returns A new VoSet keyed by relative file path
  */
 function createIgnoredSet(
     initial?: Iterable<DiffDirFileItem>

@@ -12,7 +12,7 @@ import { type PathPart, reducePathParts } from "./pathHelpers.mjs";
 /**
  * Determines whether `path` represents an existing directory or file.
  * @param path - The path to the filesystem item in question
- * @return A Promise that resolves with a Directory or File object.  The Promise
+ * @returns A Promise that resolves with a Directory or File object.  The Promise
  *   is rejected if `path` does not exist.
  */
 export async function getFilesystemItem(
@@ -54,7 +54,7 @@ export async function getFilesystemItem(
  * Locates a file in the specified directory or a ancestor directory.
  * @param searchFileName - The file being searched for
  * @param startingDir - The directory where to start searching
- * @return A promise that resolves with a Result of the search.  If the search
+ * @returns A promise that resolves with a Result of the search.  If the search
  * succeeded, the Result is successful and contains the found file.  If the
  * search failed, the Result is a failure and contains a descriptive string.
  * The returned Promise only rejects if the search could not be performed.
@@ -101,7 +101,7 @@ export async function resolveFileLocation(
  * Locates a directory in the specified directory or an ancestor directory.
  * @param searchDirName - The directory being searched for
  * @param startingDir - The directory where to start searching
- * @return A promise that resolves with a Result of the search.  If the search
+ * @returns A promise that resolves with a Result of the search.  If the search
  * succeeded, the Result is successful and contains the found directory.  If the
  * search failed, the Result is a failure and contains a descriptive string.
  * The returned Promise only rejects if the search could not be performed.
@@ -167,7 +167,7 @@ interface IStatable {
  *
  * @param fsItems - The filesystem items to consider.  This array may contain
  * Directory instances, File instances or a mixture of the two.
- * @return A Promise for a Result containing the most recently modified item.
+ * @returns A Promise for a Result containing the most recently modified item.
  * An failed Result is returned when the input array is empty.
  */
 export async function getMostRecentlyModified<TFsItem extends IStatable>(

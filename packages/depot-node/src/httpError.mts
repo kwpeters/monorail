@@ -35,7 +35,7 @@ export class HttpError extends Error {
  * @param description - A description of the failed operation.  This will be the
  * first part of the returned error message.  Typically, "Failed to..."
  * @param resp - The failed response
- * @return The error message string
+ * @returns The error message string
  */
 export async function responseErrorMessage(description: string, resp: Response): Promise<string> {
     if (resp.ok) {

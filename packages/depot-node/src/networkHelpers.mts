@@ -6,7 +6,7 @@ import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 
 /**
  * Enumerates the external IPv4 addresses
- * @return A map in which the keys are the names of the network interfaces
+ * @returns A map in which the keys are the names of the network interfaces
  * and the values are the IPv4 addresses (as strings)
  */
 export function getExternalIpv4Addresses(): Map<string, string> {
@@ -31,7 +31,7 @@ export function getExternalIpv4Addresses(): Map<string, string> {
 
 /**
  * Gets the first externally exposed IPv4 address
- * @return The first externally exposed IPv4 address
+ * @returns The first externally exposed IPv4 address
  */
 export function getFirstExternalIpv4Address(): string {
     const addresses = getExternalIpv4Addresses();
@@ -44,7 +44,7 @@ export function getFirstExternalIpv4Address(): string {
  * Helper function that will determine if the specified port is available.
  * @param port - The port to test.  Specify 0 if you want to find the first
  * available port.
- * @return A promise that resolves with the port when available.  It rejects if
+ * @returns A promise that resolves with the port when available.  It rejects if
  * the specified port is not available.
  */
 function isAvailable(port: number): Promise<number> {
@@ -68,7 +68,7 @@ function isAvailable(port: number): Promise<number> {
 /**
  * Determines whether the specified TCP port is available.
  * @param port - The port to check
- * @return A promise that always resolves with a boolean indicating whether the
+ * @returns A promise that always resolves with a boolean indicating whether the
  * specified port is available.
  */
 export function isTcpPortAvailable(port: number): Promise<boolean> {
@@ -80,7 +80,7 @@ export function isTcpPortAvailable(port: number): Promise<boolean> {
 
 /**
  * Gets an available TCP port number
- * @return An available TCP port number
+ * @returns An available TCP port number
  */
 export function getAvailableTcpPort(): Promise<number> {
     return isAvailable(0);
@@ -90,7 +90,7 @@ export function getAvailableTcpPort(): Promise<number> {
 /**
  * Determines whether a URL can be fetched with an HTTP GET request.
  * @param url - The URL to fetch
- * @return A promise that resolves with true when the request completes and
+ * @returns A promise that resolves with true when the request completes and
  * false when it fails
  */
 export async function urlIsGettable(url: string): Promise<boolean> {
@@ -110,7 +110,7 @@ export async function urlIsGettable(url: string): Promise<boolean> {
  * returned.
  * @param preferredPorts - Ports that will be checked first to see if they are
  * available
- * @return An available TCP port number
+ * @returns An available TCP port number
  */
 export async function selectAvailableTcpPort(...preferredPorts: Array<number>): Promise<number> {
     // Remove any preferred ports that we know cannot be used.
@@ -140,7 +140,7 @@ export interface IPortConfig {
 /**
  * Determines a TCP port that a server can run at.
  * @param portConfig - Object describing the port requirements/preferences
- * @return A promise that resolves with Result containing either an available
+ * @returns A promise that resolves with Result containing either an available
  * TCP port number or an error message if a required port is not available.
  */
 export async function determinePort(portConfig?: IPortConfig): Promise<Result<number, string>> {

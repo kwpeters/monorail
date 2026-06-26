@@ -178,7 +178,7 @@ interface IConfig {
 /**
  * Gets the configuration for the quiz app from the command line.
  *
- * @return If the command line configuration is valid, a successful Result
+ * @returns If the command line configuration is valid, a successful Result
  * containing the app configuration.  Otherwise, an error message.
  */
 async function getConfiguration(): Promise<Result<IConfig, string>> {

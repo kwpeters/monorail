@@ -127,7 +127,7 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
 /**
  * Searches for JetBrains IDEA executable.
  *
- * @return A SucceededResult containing the found IDEA executable File, or a
+ * @returns A SucceededResult containing the found IDEA executable File, or a
  * FailedResult containing an error message.
  */
 async function findIde(): Promise<Result<File, string>> {

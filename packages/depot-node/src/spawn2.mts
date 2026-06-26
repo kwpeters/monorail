@@ -51,7 +51,7 @@ export type SpawnError = ISpawnSystemError | ISpawnExitError;
 /**
  * Converts a SpawnError to its string representation.
  * @param err - The error to convert
- * @return The string representation
+ * @returns The string representation
  */
 export function spawnErrorToString(err: SpawnError): string {
     switch (err.type) {
@@ -101,7 +101,7 @@ export interface ISpawnOutput {
  * @param stderrStream - The stream to receive stderr  A NullStream if
  *     undefined. For example:
  *     `new CombinedStream(new PrefixStream(".    "), process.stderr)`
- * @return An object implementing ISpawnResult.
+ * @returns An object implementing ISpawnResult.
  */
 export function spawn(
     cmd:           string,

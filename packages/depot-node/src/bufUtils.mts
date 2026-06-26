@@ -6,7 +6,7 @@ import { sprintf } from "sprintf-js";
  * the specified size or larger, theBuffer is returned.
  * @param theBuffer - The source Buffer
  * @param desiredNumBytes - The desired size
- * @return The original Buffer if it is already the specified size or larger.
+ * @returns The original Buffer if it is already the specified size or larger.
  * Otherwise, a copy of theBuffer that has been padded.
  */
 export function padBuffer(theBuffer: Buffer, desiredNumBytes: number): Buffer {
@@ -29,7 +29,7 @@ export function padBuffer(theBuffer: Buffer, desiredNumBytes: number): Buffer {
  * @param theBuffer - The buffer to be aligned
  * @param numBytes - The number of bytes to align to.  This number must be 2, 4,
  * or 8.  If any other value is passed, theBuffer is simply returned.
- * @return The aligned buffer.  If theBuffer is already aligned, it will be
+ * @returns The aligned buffer.  If theBuffer is already aligned, it will be
  * returned.  Otherwise, a copy is made.
  */
 export function alignBuffer(theBuffer: Buffer, numBytes: number): Buffer {
@@ -56,7 +56,7 @@ export function alignBuffer(theBuffer: Buffer, numBytes: number): Buffer {
  * @param num - The number to convert
  * @param numBytes - The number of bytes that should be represented in the
  * returned array.
- * @return An array representing the bits (in boolean form) of num
+ * @returns An array representing the bits (in boolean form) of num
  */
 export function boolify(num: number, numBytes: number): Array<boolean> {
     const result: Array<boolean> = [];
@@ -74,7 +74,7 @@ export function boolify(num: number, numBytes: number): Array<boolean> {
  * Converts a character code into its ascii representation.  Non-printable
  * character codes are converted to ".".
  * @param charCode - The character code to convert
- * @return The converted character
+ * @returns The converted character
  */
 function getPrintableChar(charCode: number): string {
     return (charCode >= 0x20) && (charCode <= 0x7e) ?
@@ -89,7 +89,7 @@ const HEX_DUMP_BYTES_PER_LINE: number = 0x10;
 /**
  * Helper function that calculates a single line hex dump.
  * @param theBuffer - The Buffer to dump
- * @return A single line hexadecimal dump
+ * @returns A single line hexadecimal dump
  */
 function hexDumpLine(theBuffer: Buffer): string {
 
@@ -128,7 +128,7 @@ function hexDumpLine(theBuffer: Buffer): string {
 /**
  * Gets a hex dump of the specified Buffer
  * @param theBuffer - The Buffer to dump the contents of
- * @return The hexadecimal dump
+ * @returns The hexadecimal dump
  */
 export function hexDump(theBuffer: Buffer): string {
 

@@ -77,7 +77,7 @@ export async function deleteFsItem(fsItem: FsItem): Promise<Result<FsItem, strin
  *      NoneOption, the current value will be preserved.
  * @param optModificationTime - An Option for the new last modified time.  If a
  *      NoneOption, the current value will be preserved.
- * @return The original _fsItem_
+ * @returns The original _fsItem_
  */
 export async function updateTimes(
     fsItem: FsItem,
@@ -132,7 +132,7 @@ export async function updateTimes(
  * objects.
  *
  * @param candidates - The strings that represent possible filesystem paths
- * @return A tuple.  The first element contains the strings that represent non
+ * @returns A tuple.  The first element contains the strings that represent non
  * extant filesystem objects.  The second element contains FsItem instances that
  * represent extant filesystem objects.
  */
