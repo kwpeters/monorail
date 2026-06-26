@@ -1,4 +1,5 @@
 ﻿import * as path from "node:path";
+import * as os from "node:os";
 import { type Argv, type Arguments } from "yargs";
 import { Result, FailedResult, SucceededResult } from "@repo/depot/result";
 import { Option } from "@repo/depot/option";
@@ -15,7 +16,7 @@ import {
 } from "./chapters.mjs";
 import { loadNoisePatterns } from "./noise.mjs";
 import { buildChapterText } from "./textExtraction.mjs";
-import { renderChapterImages } from "./imageRender.mjs";
+import { renderAllChapterImages } from "./imageRender.mjs";
 import { buildMasterText, buildIndexEntries, buildReadmeText } from "./bundle.mjs";
 
 
@@ -173,13 +174,27 @@ async function writeBundle(
             await new File(textDir, `${chap.slug}.txt`).write(textRes.value);
             chapterTexts.push(textRes.value);
             console.log(`  ${chap.name}  pages ${chap.start}-${chap.end}`);
+        }
 
-            if (!skipImages) {
-                const chapImageDir = new Directory(imagesDir, chap.slug);
-                const imgRes = await renderChapterImages(popplerFns.renderImages, pdf, chap, dpi, chapImageDir);
-                if (imgRes.failed) {
-                    return imgRes;
+        if (!skipImages) {
+            // Render every page concurrently (image rasterization is CPU-bound
+            // and parallelizes well), capped at the number of CPU cores.
+            const concurrency = os.cpus().length;
+            const imgRes = await renderAllChapterImages(
+                popplerFns.renderImages, pdf, ctx.chapters.chapters, dpi, imagesDir, concurrency,
+                ({ completed, total, concurrency: workers }) => {
+                    // Rewrite a single progress line in place.
+                    process.stdout.write(
+                        `\rRendering images: ${completed}/${total} pages (${workers} concurrent)`
+                    );
+                    if (completed === total) {
+                        process.stdout.write("\n");
+                    }
                 }
+            );
+            if (imgRes.failed) {
+                process.stdout.write("\n");
+                return imgRes;
             }
         }
 
