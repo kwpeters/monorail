@@ -1,10 +1,14 @@
 # TODO
 
-- When scrolling up and down the list of files, the user has to press Enter to
-  open the list of actions.  Pressing enter is not necessary.  The app should be
-  refactored to be master-detail and moving the selection updates the actions in
-  the detailed view.
+- DONE — Refactored to a master-detail view: the file list (master) sits beside
+  a detail pane (right) that reactively shows the actions for the current
+  selection — no Enter required.  `x` toggles multi-selection of files (the
+  detail pane then shows the actions common to all selected files).  The first
+  10 actions are numbered 1–9 then 0; pressing the number runs that action
+  (destructive actions confirm first).  Tab focuses the action pane to scroll
+  when there are more than 10 actions.
 
-- I would like to be able to select multiple files in the list.  When multiple
-  files are selected, the detail view should show the actions that are common to
-  all selected items (if any).
+- DONE — Added `**/*.tsbuildinfo` to the default list of exclude patterns.
+
+- DONE — The settings view now shows the absolute paths of the left and right
+  directories (read-only) and provides a `w` command to swap them.

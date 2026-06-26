@@ -189,7 +189,7 @@ describe("settingsToConfig() / configToSettings() round-trip", () => {
         expect(config.includeLeftOnly).toBe(true);
         expect(config.includeRightOnly).toBe(true);
         expect(config.includePatterns).toEqual(["**/*"]);
-        expect(config.excludePatterns).toEqual(["**/.turbo/**/*", "**/.git/**/*", "**/dist/**/*", "**/out/**/*", "**/node_modules/**/*"]);
+        expect(config.excludePatterns).toEqual(["**/.turbo/**/*", "**/.git/**/*", "**/dist/**/*", "**/out/**/*", "**/node_modules/**/*", "**/*.tsbuildinfo"]);
     });
 
 

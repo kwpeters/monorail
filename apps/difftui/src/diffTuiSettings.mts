@@ -30,7 +30,8 @@ export const defaultDiffTuiSettings: IDiffTuiSettings = {
         "**/.git/**/*",
         "**/dist/**/*",
         "**/out/**/*",
-        "**/node_modules/**/*"
+        "**/node_modules/**/*",
+        "**/*.tsbuildinfo"
     ]
 };
 
