@@ -762,16 +762,27 @@ describe("Result namespace", () => {
     describe("fromBool()", () => {
 
         it("returns a Result wrapping the truthy value when the condition is truthy", () => {
-            const result = Result.fromBool(1, "yes", "no");
+            const result = Result.fromBool("yes", "no", 1);
             expect(result.succeeded).toBeTrue();
             expect(result.value).toEqual("yes");
         });
 
 
         it("returns a Result wrapping the falsy value when the condition is falsy", () => {
-            const result = Result.fromBool(0, "yes", "no");
+            const result = Result.fromBool("yes", "no", 0);
             expect(result.failed).toBeTrue();
             expect(result.error).toEqual("no");
+        });
+
+
+        it("supports point-free usage", () => {
+            const result = pipe(
+                true,
+                Result.fromBool("yes", "no")
+            );
+
+            expect(result.succeeded).toBeTrue();
+            expect(result.value).toEqual("yes");
         });
     });
 

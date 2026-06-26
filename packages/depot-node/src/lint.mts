@@ -37,9 +37,9 @@ export class Lint {
     public static fromBufReader(reader: BufReader): Result<Lint, string> {
         return pipe(reader.numBytesRemaining())
         .pipe((bytesRemaining) => Result.fromBool(
-            bytesRemaining >= 8,
             undefined,
-            `Cannot read Lint from BufReader that only has ${bytesRemaining} remaining bytes`
+            `Cannot read Lint from BufReader that only has ${bytesRemaining} remaining bytes`,
+            bytesRemaining >= 8
         ))
         .pipe(Result.bind(() => {
             return pipe(Array.from(new IntRange(0, 8)).map(() => reader.readUInt8()))
@@ -125,9 +125,9 @@ export class Ulint {
     public static fromBufReader(reader: BufReader): Result<Ulint, string> {
         return pipe(reader.numBytesRemaining())
         .pipe((bytesRemaining) => Result.fromBool(
-            bytesRemaining >= 8,
             undefined,
-            `Cannot read Ulint from BufReader that only has ${bytesRemaining} remaining bytes`
+            `Cannot read Ulint from BufReader that only has ${bytesRemaining} remaining bytes`,
+            bytesRemaining >= 8
         ))
         .pipe(Result.bind(() => {
             return pipe(Array.from(new IntRange(0, 8)).map(() => reader.readUInt8()))

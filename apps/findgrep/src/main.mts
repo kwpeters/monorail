@@ -114,7 +114,7 @@ async function getConfiguration(): Promise<Result<IFindGrepConfig, string>> {
 
     // Get the path regex positional argument.
     const pathRegexResult = pipe(new SucceededResult(argv._[0] as string) as Result<string, string>)
-    .pipe(Result.bind((v) => Result.fromBool(_.isString(v), v, "Path regex not specified.")))
+    .pipe(Result.bind((v) => Result.fromBool(v, "Path regex not specified.", _.isString(v))))
     .pipe(Result.bind(strToRegExp))
     .end();
 

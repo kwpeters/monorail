@@ -393,7 +393,7 @@ export class BufReader {
         // augment the object with the current read index.
         .pipe(Result.augment(({numChars}) => {
             return pipe(validateIndex(this._curIndex, numChars, this._theBuffer))
-            .pipe((res) => Result.mapSuccess(() => ({idx: res.value!}), res))
+            .pipe(Result.mapSuccess((idx) => ({ idx })))
             .end();
         }))
         .pipe(Result.mapSuccess(({numChars, idx}) => {
@@ -421,7 +421,7 @@ export class BufReader {
         // augment the object with the current read index.
         .pipe(Result.augment(({numChars}) => {
             return pipe(validateIndex(this._curIndex, numChars, this._theBuffer))
-            .pipe((res) => Result.mapSuccess(() => ({idx: res.value!}), res))
+            .pipe(Result.mapSuccess((idx) => ({ idx })))
             .end();
         }))
         .pipe(Result.mapSuccess(({numChars, idx}) => {
