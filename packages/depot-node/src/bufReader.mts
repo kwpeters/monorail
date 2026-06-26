@@ -1,5 +1,5 @@
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
-import { pipe } from "@repo/depot/pipe";
+import { pipe } from "@repo/depot/pipe2";
 import { validateIndex } from "@repo/depot/primitives";
 import {Lint, Ulint} from "./lint.mjs";
 
@@ -31,9 +31,10 @@ export class BufReader {
       * containing an error message
       */
     public peekByte(): Result<number, string> {
-        return pipe(validateIndex(this._curIndex, 1, this._theBuffer))
-        .pipe(Result.mapSuccess((idx) => this._theBuffer[idx]!))
-        .end();
+        return pipe(
+            validateIndex(this._curIndex, 1, this._theBuffer),
+            Result.mapSuccess((idx) => this._theBuffer[idx]!)
+        );
     }
 
 
@@ -45,9 +46,10 @@ export class BufReader {
      * containing an error message
      */
     public readBOOL(): Result<0 | 1, string> {
-        return pipe(this.readUInt8())
-        .pipe(Result.mapSuccess((byteVal) => byteVal === 0 ? 0 : 1))
-        .end();
+        return pipe(
+            this.readUInt8(),
+            Result.mapSuccess((byteVal) => byteVal === 0 ? 0 : 1)
+        );
     }
 
 
@@ -58,14 +60,15 @@ export class BufReader {
      * containing an error message
      */
     public readUInt8(): Result<number, string> {
-        return pipe(validateIndex(this._curIndex, 1, this._theBuffer))
-        .pipe(Result.mapSuccess(
-            (idx) => {
-                this._curIndex += 1;
-                return this._theBuffer.readUInt8(idx);
-            }
-        ))
-        .end();
+        return pipe(
+            validateIndex(this._curIndex, 1, this._theBuffer),
+            Result.mapSuccess(
+                (idx) => {
+                    this._curIndex += 1;
+                    return this._theBuffer.readUInt8(idx);
+                }
+            )
+        );
     }
 
 
@@ -95,12 +98,13 @@ export class BufReader {
      */
     public readInt8(): Result<number, string> {
 
-        return pipe(validateIndex(this._curIndex, 1, this._theBuffer))
-        .pipe(Result.mapSuccess((idx) => {
-            this._curIndex += 1;
-            return this._theBuffer.readInt8(idx);
-        }))
-        .end();
+        return pipe(
+            validateIndex(this._curIndex, 1, this._theBuffer),
+            Result.mapSuccess((idx) => {
+                this._curIndex += 1;
+                return this._theBuffer.readInt8(idx);
+            })
+        );
     }
 
 
@@ -122,12 +126,13 @@ export class BufReader {
      */
     public readUInt16(): Result<number, string> {
 
-        return pipe(validateIndex(this._curIndex, 2, this._theBuffer))
-        .pipe(Result.mapSuccess((idx) => {
-            this._curIndex += 2;
-            return this._theBuffer.readUInt16LE(idx);
-        }))
-        .end();
+        return pipe(
+            validateIndex(this._curIndex, 2, this._theBuffer),
+            Result.mapSuccess((idx) => {
+                this._curIndex += 2;
+                return this._theBuffer.readUInt16LE(idx);
+            })
+        );
     }
 
 
@@ -159,12 +164,13 @@ export class BufReader {
      * Result containing an error message
      */
     public readUInt16BE(): Result<number, string> {
-        return pipe(validateIndex(this._curIndex, 2, this._theBuffer))
-        .pipe(Result.mapSuccess((idx) => {
-            this._curIndex += 2;
-            return this._theBuffer.readUInt16BE(idx);
-        }))
-        .end();
+        return pipe(
+            validateIndex(this._curIndex, 2, this._theBuffer),
+            Result.mapSuccess((idx) => {
+                this._curIndex += 2;
+                return this._theBuffer.readUInt16BE(idx);
+            })
+        );
     }
 
 
@@ -176,12 +182,13 @@ export class BufReader {
      * Result containing an error message
      */
     public readInt16(): Result<number, string> {
-        return pipe(validateIndex(this._curIndex, 2, this._theBuffer))
-        .pipe(Result.mapSuccess((idx) => {
-            this._curIndex += 2;
-            return this._theBuffer.readInt16LE(idx);
-        }))
-        .end();
+        return pipe(
+            validateIndex(this._curIndex, 2, this._theBuffer),
+            Result.mapSuccess((idx) => {
+                this._curIndex += 2;
+                return this._theBuffer.readInt16LE(idx);
+            })
+        );
     }
 
 
@@ -203,12 +210,13 @@ export class BufReader {
      * Result containing an error message
      */
     public readUInt32(): Result<number, string> {
-        return pipe(validateIndex(this._curIndex, 4, this._theBuffer))
-        .pipe(Result.mapSuccess((idx) => {
-            this._curIndex += 4;
-            return this._theBuffer.readUInt32LE(idx);
-        }))
-        .end();
+        return pipe(
+            validateIndex(this._curIndex, 4, this._theBuffer),
+            Result.mapSuccess((idx) => {
+                this._curIndex += 4;
+                return this._theBuffer.readUInt32LE(idx);
+            })
+        );
     }
 
 
@@ -240,12 +248,13 @@ export class BufReader {
      * Result containing an error message.
      */
     public readUInt32BE(): Result<number, string> {
-        return pipe(validateIndex(this._curIndex, 4, this._theBuffer))
-        .pipe(Result.mapSuccess((idx) => {
-            this._curIndex += 4;
-            return this._theBuffer.readUInt32BE(idx);
-        }))
-        .end();
+        return pipe(
+            validateIndex(this._curIndex, 4, this._theBuffer),
+            Result.mapSuccess((idx) => {
+                this._curIndex += 4;
+                return this._theBuffer.readUInt32BE(idx);
+            })
+        );
     }
 
 
@@ -257,12 +266,13 @@ export class BufReader {
      * Result containing an error message
      */
     public readInt32(): Result<number, string> {
-        return pipe(validateIndex(this._curIndex, 4, this._theBuffer))
-        .pipe(Result.mapSuccess((idx) => {
-            this._curIndex += 4;
-            return this._theBuffer.readInt32LE(idx);
-        }))
-        .end();
+        return pipe(
+            validateIndex(this._curIndex, 4, this._theBuffer),
+            Result.mapSuccess((idx) => {
+                this._curIndex += 4;
+                return this._theBuffer.readInt32LE(idx);
+            })
+        );
     }
 
 
@@ -284,9 +294,10 @@ export class BufReader {
      * Result containing an error message
      */
     public readUInt64(): Result<Ulint, string> {
-        return pipe(Ulint.fromBuffer(this._theBuffer, this._curIndex))
-        .pipe(Result.tapSuccess(() => this._curIndex += 8))
-        .end();
+        return pipe(
+            Ulint.fromBuffer(this._theBuffer, this._curIndex),
+            Result.tapSuccess(() => this._curIndex += 8)
+        );
     }
 
 
@@ -307,9 +318,10 @@ export class BufReader {
      * Result containing an error message.
      */
     public readInt64(): Result<Lint, string> {
-        return pipe(Lint.fromBuffer(this._theBuffer, this._curIndex))
-        .pipe(Result.tapSuccess(() => this._curIndex += 8))
-        .end();
+        return pipe(
+            Lint.fromBuffer(this._theBuffer, this._curIndex),
+            Result.tapSuccess(() => this._curIndex += 8)
+        );
     }
 
 
@@ -330,12 +342,13 @@ export class BufReader {
      * containing an error message
      */
     public readFloat(): Result<number, string> {
-        return pipe(validateIndex(this._curIndex, 4, this._theBuffer))
-        .pipe(Result.mapSuccess((idx) => {
-            this._curIndex += 4;
-            return this._theBuffer.readFloatLE(idx);
-        }))
-        .end();
+        return pipe(
+            validateIndex(this._curIndex, 4, this._theBuffer),
+            Result.mapSuccess((idx) => {
+                this._curIndex += 4;
+                return this._theBuffer.readFloatLE(idx);
+            })
+        );
     }
 
 
@@ -357,12 +370,13 @@ export class BufReader {
      * containing an error message
      */
     public readDouble(): Result<number, string> {
-        return pipe(validateIndex(this._curIndex, 8, this._theBuffer))
-        .pipe(Result.mapSuccess((idx) => {
-            this._curIndex += 8;
-            return this._theBuffer.readDoubleLE(idx);
-        }))
-        .end();
+        return pipe(
+            validateIndex(this._curIndex, 8, this._theBuffer),
+            Result.mapSuccess((idx) => {
+                this._curIndex += 8;
+                return this._theBuffer.readDoubleLE(idx);
+            })
+        );
     }
 
 
@@ -385,23 +399,29 @@ export class BufReader {
      * failed Result containing an error message
      */
     public readShortString(): Result<string, string> {
-        // Read the character count.
-        return pipe(this.readUInt8())
-        // Map to an object with a numChars property.
-        .pipe(Result.mapSuccess((numChars) => ({ numChars })))
-        // If the specified number of characters can be read from the buffer,
-        // augment the object with the current read index.
-        .pipe(Result.augment(({numChars}) => {
-            return pipe(validateIndex(this._curIndex, numChars, this._theBuffer))
-            .pipe(Result.mapSuccess((idx) => ({ idx })))
-            .end();
-        }))
-        .pipe(Result.mapSuccess(({numChars, idx}) => {
-            const str: string = this._theBuffer.toString("ascii", idx, idx + numChars);
-            this._curIndex += numChars;
-            return str;
-        }))
-        .end();
+
+        return pipe(
+            // Read the character count.
+            this.readUInt8(),
+
+            // Map to an object with a numChars property.
+            Result.mapSuccess((numChars) => ({ numChars })),
+
+            // If the specified number of characters can be read from the buffer,
+            // augment the object with the current read index.
+            Result.augment(({numChars}) => {
+                return pipe(
+                    validateIndex(this._curIndex, numChars, this._theBuffer),
+                    Result.mapSuccess((idx) => ({ idx }))
+                );
+            }),
+
+            Result.mapSuccess(({numChars, idx}) => {
+                const str: string = this._theBuffer.toString("ascii", idx, idx + numChars);
+                this._curIndex += numChars;
+                return str;
+            })
+        );
     }
 
 
@@ -414,22 +434,28 @@ export class BufReader {
      * Result containing an error message
      */
     public readString(): Result<string, string> {
-        return pipe(this.readUInt16())
-        // Map to an object with a numChars property.
-        .pipe(Result.mapSuccess((numChars) => ({numChars})))
-        // If the specified number of characters can be read from the buffer,
-        // augment the object with the current read index.
-        .pipe(Result.augment(({numChars}) => {
-            return pipe(validateIndex(this._curIndex, numChars, this._theBuffer))
-            .pipe(Result.mapSuccess((idx) => ({ idx })))
-            .end();
-        }))
-        .pipe(Result.mapSuccess(({numChars, idx}) => {
-            const str: string = this._theBuffer.toString("ascii", idx, idx + numChars);
-            this._curIndex += numChars;
-            return str;
-        }))
-        .end();
+
+        return pipe(
+            this.readUInt16(),
+
+            // Map to an object with a numChars property.
+            Result.mapSuccess((numChars) => ({numChars})),
+
+            // If the specified number of characters can be read from the buffer,
+            // augment the object with the current read index.
+            Result.augment(({numChars}) => {
+                return pipe(
+                    validateIndex(this._curIndex, numChars, this._theBuffer),
+                    Result.mapSuccess((idx) => ({ idx }))
+                );
+            }),
+
+            Result.mapSuccess(({numChars, idx}) => {
+                const str: string = this._theBuffer.toString("ascii", idx, idx + numChars);
+                this._curIndex += numChars;
+                return str;
+            })
+        );
     }
 
 
@@ -441,13 +467,14 @@ export class BufReader {
      * Result containing an error message
      */
     public readFixedLengthString(numChars: number): Result<string, string> {
-        return pipe(validateIndex(this._curIndex, numChars, this._theBuffer))
-        .pipe(Result.mapSuccess((idx) => {
-            const str: string = this._theBuffer.toString("ascii", idx, idx + numChars);
-            this._curIndex += numChars;
-            return str;
-        }))
-        .end();
+        return pipe(
+            validateIndex(this._curIndex, numChars, this._theBuffer),
+            Result.mapSuccess((idx) => {
+                const str: string = this._theBuffer.toString("ascii", idx, idx + numChars);
+                this._curIndex += numChars;
+                return str;
+            })
+        );
     }
 
 

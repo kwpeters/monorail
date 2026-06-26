@@ -5,7 +5,7 @@ import { globIterate } from "glob";
 import { hideBin } from "yargs/helpers";
 import { FailedResult, Result, SucceededResult } from "@repo/depot/result";
 import { PromiseResult } from "@repo/depot/promiseResult";
-import { pipe } from "@repo/depot/pipe";
+import { pipe } from "@repo/depot/pipe2";
 import { pipeAsync } from "@repo/depot/pipeAsync2";
 import { insertIfWith } from "@repo/depot/arrayHelpers";
 import { Directory } from "@repo/depot-node/directory";
@@ -99,26 +99,28 @@ async function getConfiguration(): Promise<Result<IConfig, string>> {
     }
 
     function argToDirOrFile(arg: string | undefined) {
-        return pipe(arg)
-        .pipe((arg) => arg === undefined ? new FailedResult("File or directory not specified.") : new SucceededResult(arg))
-        .pipe(Result.bind(isDirOrFile))
-        .end();
+        return pipe(
+            arg,
+            (arg) => arg === undefined ? new FailedResult("File or directory not specified.") : new SucceededResult(arg),
+            Result.bind(isDirOrFile)
+        );
     }
 
-    return pipe(Result.allArrayM(
-        [
-            argToDirOrFile(argv._[0] as string | undefined),
-            argToDirOrFile(argv._[1] as string | undefined)
-        ]
-    ))
-    .pipe(Result.bind(
-        ([left, right]) => {
-            return left!.constructor.name === right!.constructor.name ?
-                new SucceededResult({ left: left!, right: right! }) :
-                new FailedResult("Both arguments must be either a directory or a file.");
-        },
-    ))
-    .end();
+    return pipe(
+        Result.allArrayM(
+            [
+                argToDirOrFile(argv._[0] as string | undefined),
+                argToDirOrFile(argv._[1] as string | undefined)
+            ]
+        ),
+        Result.bind(
+            ([left, right]) => {
+                return left!.constructor.name === right!.constructor.name ?
+                    new SucceededResult({ left: left!, right: right! }) :
+                    new FailedResult("Both arguments must be either a directory or a file.");
+            },
+        )
+    );
 }
 
 
