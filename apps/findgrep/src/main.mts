@@ -15,7 +15,7 @@ import * as _ from "lodash-es";
 import { toArray } from "@repo/depot/arrayHelpers";
 import { matchesAny, strToRegExp } from "@repo/depot/regexpHelpers";
 import { Result, SucceededResult } from "@repo/depot/result";
-import { pipe } from "@repo/depot/pipe";
+import { pipe } from "@repo/depot/pipe2";
 import { Option } from "@repo/depot/option";
 import { highlightMatches } from "@repo/depot-node/chalkHelpers";
 import { Directory } from "@repo/depot-node/directory";
@@ -113,10 +113,11 @@ async function getConfiguration(): Promise<Result<IFindGrepConfig, string>> {
     .argv;
 
     // Get the path regex positional argument.
-    const pathRegexResult = pipe(new SucceededResult(argv._[0] as string) as Result<string, string>)
-    .pipe(Result.bind((v) => Result.fromBool(v, "Path regex not specified.", _.isString(v))))
-    .pipe(Result.bind(strToRegExp))
-    .end();
+    const pathRegexResult = pipe(
+        new SucceededResult(argv._[0] as string) as Result<string, string>,
+        Result.bind((v) => Result.fromBool(v, "Path regex not specified.", _.isString(v))),
+        Result.bind(strToRegExp)
+    );
 
 
     if (pathRegexResult.failed) {
@@ -124,10 +125,11 @@ async function getConfiguration(): Promise<Result<IFindGrepConfig, string>> {
     }
 
     // Get the optional text regex positional argument.
-    const textRegexOptResult = pipe(argv._[1] as string)
-    .pipe((str) => Option.fromBool(str, str))
-    .pipe(Option.mapSome(strToRegExp))
-    .end();
+    const textRegexOptResult = pipe(
+        argv._[1] as string,
+        (str) => Option.fromBool(str, str),
+        Option.mapSome(strToRegExp),
+    );
     if (textRegexOptResult.isSome && textRegexOptResult.value.failed) {
         return textRegexOptResult.value;
     }
@@ -135,9 +137,10 @@ async function getConfiguration(): Promise<Result<IFindGrepConfig, string>> {
     // Get the path ignore regexes from the --pathIgnore arguments.
     const pathIgnoreArrRes =
         new SucceededResult(toArray<string>(argv.pathIgnore as string | Array<string>)) as Result<string[], string>;
-    const pathIgnoresResult = pipe(pathIgnoreArrRes)
-    .pipe(Result.bind(Result.mapWhileSuccessful(strToRegExp)))
-    .end();
+    const pathIgnoresResult = pipe(
+        pathIgnoreArrRes,
+        Result.bind(Result.mapWhileSuccessful(strToRegExp)),
+    );
     if (pathIgnoresResult.failed) {
         return pathIgnoresResult;
     }
