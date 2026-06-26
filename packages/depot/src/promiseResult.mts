@@ -2,8 +2,10 @@
 
 
 import * as _ from "lodash-es";
+import { dispatchLast } from "./curry.mjs";
 import { FailedResult, Result, SucceededResult } from "./result.mjs";
 import { type IIndexedItem } from "./utilityTypes.mjs";
+import { type MaybePromise } from "./typeUtils.mjs";
 import { errorToString } from "./errorHelpers.mjs";
 
 
@@ -42,34 +44,40 @@ export namespace PromiseResult {
      * includes all of the input's properties.  It can also serve as a reality
      * check or gate when augmenting no additional properties.
      *
-     * @param fn - Function that will be invoked if the input Result is
-     * successful.  Returns a Result.  If successful, the properties will be
-     * added to _input_ and returned as a successful Result.
-     * @param input - The input Result
+        * @param fn - Function that will be invoked if the input Result is
+        * successful.  Returns a Promise<Result>.  If successful, the properties
+        * will be added to _input_ and returned as a successful Result.
+        * @param input - The input Result or Promise<Result>
      * @returns An error if the input is an error or _fn_ returns an error.
      * Otherwise, a successful Result containing all properties of the original
      * input and the value returned by _fn_.
      */
-    export async function augment<TInputSuccess, TInputError, TFnSuccess, TFnError>(
-        fn: (input: TInputSuccess) => Promise<Result<TFnSuccess, TFnError>>,
-        input: Result<TInputSuccess, TInputError>
-    ): Promise<Result<TInputSuccess & TFnSuccess, TInputError | TFnError>> {
+    // Eager form.
+    export function augment<TInS extends object, TInE, TOutS, TOutE>(
+        fn: (input: TInS) => Promise<Result<TOutS, TOutE>>,
+        input: Result<TInS, TInE> | Promise<Result<TInS, TInE>>
+    ): Promise<Result<TInS & TOutS, TInE | TOutE>>;
 
-        if (input.failed) {
-            return input;
-        }
+    // Curried (point-free) form.
+    export function augment<TInS extends object, TInE, TOutS, TOutE>(
+        fn: (input: TInS) => Promise<Result<TOutS, TOutE>>
+    ): (input: Result<TInS, TInE> | Promise<Result<TInS, TInE>>) => Promise<Result<TInS & TOutS, TInE | TOutE>>;
 
-        // The input is a successful Result.
-        const fnRes = await fn(input.value);
-        if (fnRes.failed) {
-            // _fn_ has errored.  Return that error.
-            return fnRes;
-        }
+    export function augment(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            async (fn: (input: object) => Promise<Result<unknown, unknown>>, input: Result<object, unknown> | Promise<Result<object, unknown>>) => {
+                const awaitedInput = await Promise.resolve(input);
 
-        // _fn_ has succeeded.  Return an object containing all properties of
-        // the original input and the value returned by _fn_.
-        const augmented = { ...input.value, ...fnRes.value };
-        return new SucceededResult(augmented);
+                // Narrow input to SucceededResult so TypeScript can verify the `this`
+                // constraint on augmentAsync(), which requires TSuccess to extend object.
+                if (awaitedInput.failed) {
+                    return awaitedInput;
+                }
+                return awaitedInput.augmentAsync(fn);
+            }
+        );
     }
 
 
@@ -475,24 +483,40 @@ export namespace PromiseResult {
      * _fn_, returning its Result or Promise<Result>.  If the input was not
      * successful, returns it.
      *
-     * @param fn - The function to invoke when the input is successful.
-     * @param input - The input Result or Promise<Result>
-     * @returns Either the passed through failure Result or the Result returned from
-     * _fn_.
+        * @param fn - The function to invoke when the input is successful.
+        * @param input - The input Result or Promise<Result>
+        * @returns Either the passed-through failure Result or the Result returned
+        * from _fn_.
      */
-    export async function bind<TInSuccess, TOutSuccess, TError>(
+    // Eager form.
+    export function bind<TInSuccess, TOutSuccess, TError>(
         fn: (x: TInSuccess) => Result<TOutSuccess, TError> | Promise<Result<TOutSuccess, TError>>,
         input: Result<TInSuccess, TError> | Promise<Result<TInSuccess, TError>>
-    ): Promise<Result<TOutSuccess, TError>> {
-        const awaitedInputRes = await Promise.resolve(input);
-        if (awaitedInputRes.succeeded) {
-            // Execute the specified fn.
-            const output = fn(awaitedInputRes.value);
-            return output;
-        }
-        else {
-            return awaitedInputRes;
-        }
+    ): Promise<Result<TOutSuccess, TError>>;
+
+    // Curried (point-free) form.
+    export function bind<TInSuccess, TOutSuccess, TError>(
+        fn: (x: TInSuccess) => Result<TOutSuccess, TError> | Promise<Result<TOutSuccess, TError>>
+    ): (input: Result<TInSuccess, TError> | Promise<Result<TInSuccess, TError>>) => Promise<Result<TOutSuccess, TError>>;
+
+    export function bind(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            async (
+                fn: (x: unknown) => Result<unknown, unknown> | Promise<Result<unknown, unknown>>,
+                input: Result<unknown, unknown> | Promise<Result<unknown, unknown>>
+            ) => {
+                const awaitedInputRes = await Promise.resolve(input);
+                if (awaitedInputRes.succeeded) {
+                    // Execute the specified fn.
+                    return fn(awaitedInputRes.value);
+                }
+                else {
+                    return awaitedInputRes;
+                }
+            }
+        );
     }
 
 
@@ -503,25 +527,42 @@ export namespace PromiseResult {
       * @param fn - Function that is invoked to determine whether the original
       *  successful input is returned.  If this function returns a failure, that
       *  failed Result is returned.
-      * @param input - The input PromiseResult
-      * @return _input_ is returned if it is a failed Result.  Otherwise, if _fn_
-      * is successful, _input_ is returned.  If _fn_ is a failure, that failed
-      * result is returned.
+    * @param input - The input Result or Promise<Result>
+    * @return _input_ is returned if it is a failed Result.  Otherwise, if _fn_
+    * is successful, the original input is returned.  If _fn_ is a failure,
+    * that failed result is returned.
       */
-    export async function gate<TInSuccess, TInError, TOutSuccess, TOutError>(
+    // Eager form.
+    export function gate<TInSuccess, TInError, TOutSuccess, TOutError>(
         fn: (successVal: TInSuccess) => Result<TOutSuccess, TOutError> | Promise<Result<TOutSuccess, TOutError>>,
         input: Result<TInSuccess, TInError> | Promise<Result<TInSuccess, TInError>>
-    ): Promise<Result<TInSuccess, TInError | TOutError>> {
-        const awaitedInputRes = await Promise.resolve(input);
+    ): Promise<Result<TInSuccess, TInError | TOutError>>;
 
-        if (awaitedInputRes.failed) {
-            return input;
-        }
+    // Curried (point-free) form.
+    export function gate<TInSuccess, TInError, TOutSuccess, TOutError>(
+        fn: (successVal: TInSuccess) => Result<TOutSuccess, TOutError> | Promise<Result<TOutSuccess, TOutError>>
+    ): (input: Result<TInSuccess, TInError> | Promise<Result<TInSuccess, TInError>>) => Promise<Result<TInSuccess, TInError | TOutError>>;
 
-        const resGate = await Promise.resolve(fn(awaitedInputRes.value));
-        return resGate.succeeded ?
-            input :
-            resGate;
+    export function gate(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            async (
+                fn: (successVal: unknown) => Result<unknown, unknown> | Promise<Result<unknown, unknown>>,
+                input: Result<unknown, unknown> | Promise<Result<unknown, unknown>>
+            ) => {
+                const awaitedInputRes = await Promise.resolve(input);
+
+                if (awaitedInputRes.failed) {
+                    return awaitedInputRes;
+                }
+
+                const resGate = await Promise.resolve(fn(awaitedInputRes.value));
+                return resGate.succeeded ?
+                    awaitedInputRes :
+                    resGate;
+            }
+        );
     }
 
 
@@ -534,23 +575,39 @@ export namespace PromiseResult {
      *
      * @param fn - The function to invoke when _input_ is an error.  It is
      * passed the error.
-     * @param input - The input Result.
-     * @return Either the passed-through successful Result or the Result
-     * returned from _fn_.
+    * @param input - The input Result or Promise<Result>
+    * @return Either the passed-through successful Result or the Result returned
+    * from _fn_.
      */
-    export async function bindError<TInSuccess, TInError, TOutSuccess, TOutError>(
+    // Eager form.
+    export function bindError<TInSuccess, TInError, TOutSuccess, TOutError>(
         fn: (err: TInError) => Result<TOutSuccess, TOutError> | Promise<Result<TOutSuccess, TOutError>>,
         input: Result<TInSuccess, TInError> | Promise<Result<TInSuccess, TInError>>
-    ): Promise<Result<TInSuccess | TOutSuccess, TOutError>> {
-        const awaitedInputRes = await Promise.resolve(input);
-        if (awaitedInputRes.succeeded) {
-            return awaitedInputRes;
-        }
-        else {
-            // Execute the specified fn.
-            const output = fn(awaitedInputRes.error);
-            return output;
-        }
+    ): Promise<Result<TInSuccess | TOutSuccess, TOutError>>;
+
+    // Curried (point-free) form.
+    export function bindError<TInSuccess, TInError, TOutSuccess, TOutError>(
+        fn: (err: TInError) => Result<TOutSuccess, TOutError> | Promise<Result<TOutSuccess, TOutError>>
+    ): (input: Result<TInSuccess, TInError> | Promise<Result<TInSuccess, TInError>>) => Promise<Result<TInSuccess | TOutSuccess, TOutError>>;
+
+    export function bindError(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            async (
+                fn: (err: unknown) => Result<unknown, unknown> | Promise<Result<unknown, unknown>>,
+                input: Result<unknown, unknown> | Promise<Result<unknown, unknown>>
+            ) => {
+                const awaitedInputRes = await Promise.resolve(input);
+                if (awaitedInputRes.succeeded) {
+                    return awaitedInputRes;
+                }
+                else {
+                    // Execute the specified fn.
+                    return fn(awaitedInputRes.error);
+                }
+            }
+        );
     }
 
 
@@ -560,21 +617,39 @@ export namespace PromiseResult {
      * Note:  If using pipeAsync(), you can use Result.mapError() instead.
      *
      * @param fn - Error mapping function that is invoked when the input is an error
-     * @param input - The input Result or Promise<Result>
-     * @returns Either the successful Result or the mapped error Result.
+    * @param input - The input Result or Promise<Result>
+    * @returns Either the successful Result or a failure Result containing the
+    * mapped error.
      */
-    export async function mapError<TInSuccess, TInError, TOutError>(
+    // Eager form.
+    export function mapError<TInSuccess, TInError, TOutError>(
         fn: (x: TInError) => TOutError | Promise<TOutError>,
         input: Result<TInSuccess, TInError> | Promise<Result<TInSuccess, TInError>>
-    ): Promise<Result<TInSuccess, TOutError>> {
-        const awaitedInputRes = await Promise.resolve(input);
-        if (awaitedInputRes.failed) {
-            const outErr = await Promise.resolve(fn(awaitedInputRes.error));
-            return new FailedResult(outErr);
-        }
-        else {
-            return awaitedInputRes;
-        }
+    ): Promise<Result<TInSuccess, TOutError>>;
+
+    // Curried (point-free) form.
+    export function mapError<TInSuccess, TInError, TOutError>(
+        fn: (x: TInError) => TOutError | Promise<TOutError>
+    ): (input: Result<TInSuccess, TInError> | Promise<Result<TInSuccess, TInError>>) => Promise<Result<TInSuccess, TOutError>>;
+
+    export function mapError(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            async (
+                fn: (x: unknown) => MaybePromise<unknown>,
+                input: MaybePromise<Result<unknown, unknown>>
+            ) => {
+                const awaitedInputRes = await Promise.resolve(input);
+                if (awaitedInputRes.failed) {
+                    const outErr = await Promise.resolve(fn(awaitedInputRes.error));
+                    return new FailedResult(outErr);
+                }
+                else {
+                    return awaitedInputRes;
+                }
+            }
+        );
     }
 
 
@@ -586,22 +661,39 @@ export namespace PromiseResult {
      *
      * @param fn - Success mapping function that is invoked when the input is
      * successful
-     * @param input - The input Result or Promise<Result>
-     * @returns Either the mapped successful Promise<Result> or the passed-through
-     * failure Result or Promise<Result>.
+    * @param input - The input Result or Promise<Result>
+    * @returns Either a successful Result containing the mapped value or the
+    * passed-through failure Result.
      */
-    export async function mapSuccess<TInSuccess, TOutSuccess, TError>(
+    // Eager form.
+    export function mapSuccess<TInSuccess, TOutSuccess, TError>(
         fn: (x: TInSuccess) => TOutSuccess | Promise<TOutSuccess>,
         input: Result<TInSuccess, TError> | Promise<Result<TInSuccess, TError>>
-    ): Promise<Result<TOutSuccess, TError>> {
-        const awaitedInputRes = await Promise.resolve(input);
-        if (awaitedInputRes.succeeded) {
-            const outVal = await Promise.resolve(fn(awaitedInputRes.value));
-            return new SucceededResult(outVal);
-        }
-        else {
-            return awaitedInputRes;
-        }
+    ): Promise<Result<TOutSuccess, TError>>;
+
+    // Curried (point-free) form.
+    export function mapSuccess<TInSuccess, TOutSuccess, TError>(
+        fn: (x: TInSuccess) => TOutSuccess | Promise<TOutSuccess>
+    ): (input: Result<TInSuccess, TError> | Promise<Result<TInSuccess, TError>>) => Promise<Result<TOutSuccess, TError>>;
+
+    export function mapSuccess(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            async (
+                fn: (x: unknown) => MaybePromise<unknown>,
+                input: MaybePromise<Result<unknown, unknown>>
+            ) => {
+                const awaitedInputRes = await Promise.resolve(input);
+                if (awaitedInputRes.succeeded) {
+                    const outVal = await Promise.resolve(fn(awaitedInputRes.value));
+                    return new SucceededResult(outVal);
+                }
+                else {
+                    return awaitedInputRes;
+                }
+            }
+        );
     }
 
 
@@ -609,17 +701,32 @@ export namespace PromiseResult {
      * Performs side-effects when the specified Result is a failure
      *
      * @param fn - The function to invoke, passing the failed Result's error
-     * @param input - The input Result
+    * @param input - The input Result or Promise<Result>
      * @returns The original input Result
      */
-    export async function tapError<TSuccess, TError>(
+    // Eager form.
+    export function tapError<TSuccess, TError>(
         fn: (val: TError) => unknown,
-        input: Result<TSuccess, TError>
-    ): Promise<Result<TSuccess, TError>> {
-        if (input.failed) {
-            await fn(input.error);
-        }
-        return input;
+        input: Result<TSuccess, TError> | Promise<Result<TSuccess, TError>>
+    ): Promise<Result<TSuccess, TError>>;
+
+    // Curried (point-free) form.
+    export function tapError<TSuccess, TError>(
+        fn: (val: TError) => unknown
+    ): (input: Result<TSuccess, TError> | Promise<Result<TSuccess, TError>>) => Promise<Result<TSuccess, TError>>;
+
+    export function tapError(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            async (fn: (val: unknown) => unknown, input: MaybePromise<Result<unknown, unknown>>) => {
+                const awaitedInput = await Promise.resolve(input);
+                if (awaitedInput.failed) {
+                    await fn(awaitedInput.error);
+                }
+                return awaitedInput;
+            }
+        );
     }
 
 
@@ -627,17 +734,32 @@ export namespace PromiseResult {
      * Performs side-effects when the specified Result is successful
      *
      * @param fn - The function to invoke, passing the successful Result's value
-     * @param input - The input Result
+    * @param input - The input Result or Promise<Result>
      * @returns The original input Result
      */
-    export async function tapSuccess<TSuccess, TError>(
+    // Eager form.
+    export function tapSuccess<TSuccess, TError>(
         fn: (val: TSuccess) => unknown,
-        input: Result<TSuccess, TError>
-    ): Promise<Result<TSuccess, TError>> {
-        if (input.succeeded) {
-            await fn(input.value);
-        }
-        return input;
+        input: Result<TSuccess, TError> | Promise<Result<TSuccess, TError>>
+    ): Promise<Result<TSuccess, TError>>;
+
+    // Curried (point-free) form.
+    export function tapSuccess<TSuccess, TError>(
+        fn: (val: TSuccess) => unknown
+    ): (input: Result<TSuccess, TError> | Promise<Result<TSuccess, TError>>) => Promise<Result<TSuccess, TError>>;
+
+    export function tapSuccess(...args: Array<unknown>): unknown {
+        return dispatchLast(
+            2,
+            args,
+            async (fn: (val: unknown) => unknown, input: MaybePromise<Result<unknown, unknown>>) => {
+                const awaitedInput = await Promise.resolve(input);
+                if (awaitedInput.succeeded) {
+                    await fn(awaitedInput.value);
+                }
+                return awaitedInput;
+            }
+        );
     }
 
 

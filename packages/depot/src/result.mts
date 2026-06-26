@@ -1792,8 +1792,8 @@ export namespace Result {
      * successful Result
      * @param fnError - Function that will be invoked when _input_ is an error
      * Result
-     * @param input - The input Option
-     * @return The value returned by either _fnSome_ or _fnNone_
+    * @param input - The input Result
+    * @return The value returned by either _fnSuccess_ or _fnError_
      */
     // Eager form.
     export function match<TInS, TInE, TOutS, TOutE>(
@@ -1833,7 +1833,7 @@ export namespace Result {
      *
      * @param matcherFns - An object that specifies the success and error
      * functions
-     * @param input - The input Option
+    * @param input - The input Result
      * @return The value returned by the invoked handler function
      */
     // Eager form.
@@ -2008,7 +2008,7 @@ export namespace Result {
      *
      * @param errVal - The error value returned if _arr_ is empty
      * @param arr - The possibly empty array
-     * @return If _arr_ is empty, a failure result containing _emptyErrVal_.
+    * @return If _arr_ is empty, a failure result containing _errVal_.
      * Otherwise, a successful Result containing _arr_.
      */
     // Eager form.

@@ -19,7 +19,7 @@ describe("augment()", () => {
 
         const res = await pipeAsync(
             step1(),
-            (res) => PromiseResult.augment(step2, res)
+            PromiseResult.augment(step2)
         );
 
         expect(res).toEqual(new FailedResult("Step 1 error."));
@@ -40,7 +40,7 @@ describe("augment()", () => {
 
         const __res = await pipeAsync(
             step1(),
-            (res) => PromiseResult.augment(step2, res)
+            PromiseResult.augment(step2)
         );
 
         expect(numStep2Invocations).toEqual(1);
@@ -60,7 +60,7 @@ describe("augment()", () => {
 
         const res = await pipeAsync(
             step1(),
-            (res) => PromiseResult.augment(step2, res)
+            PromiseResult.augment(step2)
         );
 
         expect(numStep2Invocations).toEqual(1);
@@ -81,7 +81,7 @@ describe("augment()", () => {
 
         const res = await pipeAsync(
             step1(),
-            (res) => PromiseResult.augment(step2, res)
+            PromiseResult.augment(step2)
         );
 
         expect(numStep2Invocations).toEqual(1);
@@ -102,11 +102,42 @@ describe("augment()", () => {
 
         const res = await pipeAsync(
             step1(),
-            (res) => PromiseResult.augment(step2, res)
+            PromiseResult.augment(step2)
         );
 
         expect(numStep2Invocations).toEqual(1);
         expect(res).toEqual(new SucceededResult({ a: 1, b: 0 }));
+    });
+
+
+    it("supports the eager overload", async () => {
+        function step1() {
+            return Promise.resolve(new SucceededResult({ a: 1, b: 2 }));
+        }
+
+        function step2(props: { b: number; }) {
+            return Promise.resolve(new SucceededResult({ c: props.b + 1 }));
+        }
+
+        const res = await pipeAsync(
+            step1(),
+            (input) => PromiseResult.augment(step2, input)
+        );
+
+        expect(res).toEqual(new SucceededResult({ a: 1, b: 2, c: 3 }));
+    });
+
+
+    it("supports promised input", async () => {
+        const input: Promise<Result<{ a: number; b: number; }, string>> =
+            Promise.resolve(new SucceededResult({ a: 1, b: 2 }));
+
+        function step2(props: { b: number; }) {
+            return Promise.resolve(new SucceededResult({ c: props.b + 1 }));
+        }
+
+        const res = await PromiseResult.augment(step2, input);
+        expect(res).toEqual(new SucceededResult({ a: 1, b: 2, c: 3 }));
     });
 
 });
@@ -561,9 +592,9 @@ describe("bind()", () => {
         const fn = (x: number) => Promise.resolve(new SucceededResult(x + 1));
         const res = await pipeAsync(
             Promise.resolve(new SucceededResult(5)),
-            (res) => PromiseResult.bind(fn, res),
-            (res) => PromiseResult.bind(fn, res),
-            (res) => PromiseResult.bind(fn, res)
+            PromiseResult.bind(fn),
+            PromiseResult.bind(fn),
+            PromiseResult.bind(fn)
         );
         expect(res.succeeded).toBeTrue();
         expect(res.value).toEqual(8);
@@ -577,7 +608,7 @@ describe("bindError()", () => {
 
     it("allows the input to be a Result<>", async () => {
         const fn = (err: string) => Promise.resolve(new SucceededResult(100));
-        const res = await PromiseResult.bindError(fn, new FailedResult("error"));
+        const res = await PromiseResult.bindError(fn)(new FailedResult("error"));
         expect(res.succeeded).toBeTrue();
         expect(res.value).toEqual(100);
     });
@@ -585,7 +616,7 @@ describe("bindError()", () => {
 
     it("allows the input to be a Promise<Result<>>", async () => {
         const fn = (err: string) => Promise.resolve(new SucceededResult(100));
-        const res = await PromiseResult.bindError(fn, Promise.resolve(new FailedResult("error")));
+        const res = await PromiseResult.bindError(fn)(Promise.resolve(new FailedResult("error")));
         expect(res.succeeded).toBeTrue();
         expect(res.value).toEqual(100);
     });
@@ -598,7 +629,7 @@ describe("bindError()", () => {
             return Promise.resolve(new SucceededResult(100));
         };
 
-        const res = await PromiseResult.bindError(fn, new SucceededResult(1));
+        const res = await PromiseResult.bindError(fn)(new SucceededResult(1));
         expect(res.succeeded).toBeTrue();
         expect(numInvocations).toEqual(0);
     });
@@ -611,7 +642,7 @@ describe("bindError()", () => {
             return Promise.resolve(new SucceededResult(100));
         };
 
-        const res = await PromiseResult.bindError(fn, new FailedResult("error"));
+        const res = await PromiseResult.bindError(fn)(new FailedResult("error"));
         expect(res.succeeded).toBeTrue();
         expect(numInvocations).toEqual(1);
     });
@@ -622,9 +653,9 @@ describe("bindError()", () => {
 
         const res = await pipeAsync(
             Promise.resolve(new FailedResult("error")),
-            (res) => PromiseResult.bindError(fn, res),
-            (res) => PromiseResult.bindError(fn, res),
-            (res) => PromiseResult.bindError(fn, res)
+            PromiseResult.bindError(fn),
+            PromiseResult.bindError(fn),
+            PromiseResult.bindError(fn)
         );
         expect(res.failed).toBeTrue();
         expect(res.error).toEqual("error!!!");
@@ -646,6 +677,24 @@ describe("gate()", () => {
         };
 
         const resInitial = new FailedResult("initial error");
+        const res = await PromiseResult.gate(gateFn)(resInitial);
+        expect(res.failed).toBeTrue();
+        expect(res.error).toEqual("initial error");
+        expect(numInvocations).toEqual(0);
+    });
+
+
+    it("when the input is a failed Promise<Result> it is passed through", async () => {
+        let numInvocations = 0;
+        const gateFn = async (x: number) => {
+            await Promise.resolve(0);
+            numInvocations++;
+            return x % 2 === 0 ?
+                new SucceededResult(x * 10) :
+                new FailedResult("odd");
+        };
+
+        const resInitial = Promise.resolve(new FailedResult("initial error"));
         const res = await PromiseResult.gate(gateFn, resInitial);
         expect(res.failed).toBeTrue();
         expect(res.error).toEqual("initial error");
@@ -664,7 +713,7 @@ describe("gate()", () => {
         };
 
         const resInitial = new SucceededResult(5);
-        const __res = await PromiseResult.gate(gateFn, resInitial);
+        const __res = await PromiseResult.gate(gateFn)(resInitial);
         expect(numInvocations).toEqual(1);
     });
 
@@ -680,7 +729,7 @@ describe("gate()", () => {
         };
 
         const resInitial = new SucceededResult(2);
-        const res = await PromiseResult.gate(gateFn, resInitial);
+        const res = await PromiseResult.gate(gateFn)(resInitial);
         expect(res.succeeded).toBeTrue();
         expect(res.value).toEqual(2);
         expect(numInvocations).toEqual(1);
@@ -698,10 +747,27 @@ describe("gate()", () => {
         };
 
         const resInitial = new SucceededResult(3);
-        const res = await PromiseResult.gate(gateFn, resInitial);
+        const res = await PromiseResult.gate(gateFn)(resInitial);
         expect(res.failed).toBeTrue();
         expect(res.error).toEqual("odd");
         expect(numInvocations).toEqual(1);
+    });
+
+
+    it("when the input is a successful Promise<Result> the function is invoked", async () => {
+        let numInvocations = 0;
+        const gateFn = async (x: number) => {
+            await Promise.resolve(0);
+            numInvocations++;
+            return x % 2 === 0 ?
+                new SucceededResult(x * 10) :
+                new FailedResult("odd");
+        };
+
+        const resInitial = Promise.resolve(new SucceededResult(6));
+        const __res = await PromiseResult.gate(gateFn, resInitial);
+        expect(numInvocations).toEqual(1);
+        expect(__res.succeeded).toBeTrue();
     });
 });
 
@@ -710,7 +776,7 @@ describe("mapError()", () => {
 
     it("allows the input to be a Result<>", async () => {
         const fn = (x: number) => Promise.resolve(x + 1);
-        const res = await PromiseResult.mapError(fn, new FailedResult(6));
+        const res = await PromiseResult.mapError(fn)(new FailedResult(6));
         expect(res.failed).toBeTrue();
         expect(res.error).toEqual(7);
     });
@@ -718,7 +784,7 @@ describe("mapError()", () => {
 
     it("allows the input to be a Promise<Result<>>", async () => {
         const fn = (x: number) => Promise.resolve(x + 1);
-        const res = await PromiseResult.mapError(fn, Promise.resolve(new FailedResult(6)));
+        const res = await PromiseResult.mapError(fn)(Promise.resolve(new FailedResult(6)));
         expect(res.failed).toBeTrue();
         expect(res.error).toEqual(7);
     });
@@ -731,7 +797,7 @@ describe("mapError()", () => {
             return Promise.resolve(x + 1);
         };
 
-        const res = await PromiseResult.mapError(fn, new SucceededResult(3));
+        const res = await PromiseResult.mapError(fn)(new SucceededResult(3));
         expect(res.succeeded).toBeTrue();
         expect(numInvocations).toEqual(0);
     });
@@ -741,9 +807,9 @@ describe("mapError()", () => {
         const fn = (x: number) => Promise.resolve(x + 1);
         const res = await pipeAsync(
             Promise.resolve(new FailedResult(5)),
-            (res) => PromiseResult.mapError(fn, res),
-            (res) => PromiseResult.mapError(fn, res),
-            (res) => PromiseResult.mapError(fn, res)
+            PromiseResult.mapError(fn),
+            PromiseResult.mapError(fn),
+            PromiseResult.mapError(fn)
         );
         expect(res.failed).toBeTrue();
         expect(res.error).toEqual(8);
@@ -756,7 +822,7 @@ describe("mapSuccess()", () => {
 
     it("allows the input to be a Result<>", async () => {
         const fn = (x: number) => Promise.resolve(x + 1);
-        const res = await PromiseResult.mapSuccess(fn, new SucceededResult(6));
+        const res = await PromiseResult.mapSuccess(fn)(new SucceededResult(6));
         expect(res.succeeded).toBeTrue();
         expect(res.value).toEqual(7);
     });
@@ -764,7 +830,7 @@ describe("mapSuccess()", () => {
 
     it("allows the input to be a Promise<Result<>>", async () => {
         const fn = (x: number) => Promise.resolve(x + 1);
-        const res = await PromiseResult.mapSuccess(fn, Promise.resolve(new SucceededResult(6)));
+        const res = await PromiseResult.mapSuccess(fn)(Promise.resolve(new SucceededResult(6)));
         expect(res.succeeded).toBeTrue();
         expect(res.value).toEqual(7);
     });
@@ -777,7 +843,7 @@ describe("mapSuccess()", () => {
             return Promise.resolve(x + 1);
         };
 
-        const res = await PromiseResult.mapSuccess(fn, new FailedResult("error"));
+        const res = await PromiseResult.mapSuccess(fn)(new FailedResult("error"));
         expect(res.failed).toBeTrue();
         expect(numInvocations).toEqual(0);
     });
@@ -787,9 +853,9 @@ describe("mapSuccess()", () => {
         const fn = (x: number) => Promise.resolve(x + 1);
         const res = await pipeAsync(
             Promise.resolve(new SucceededResult(5)),
-            (res) => PromiseResult.mapSuccess(fn, res),
-            (res) => PromiseResult.mapSuccess(fn, res),
-            (res) => PromiseResult.mapSuccess(fn, res)
+            PromiseResult.mapSuccess(fn),
+            PromiseResult.mapSuccess(fn),
+            PromiseResult.mapSuccess(fn)
         );
         expect(res.succeeded).toBeTrue();
         expect(res.value).toEqual(8);
@@ -802,8 +868,17 @@ describe("tapError()", () => {
 
     it("allows the input to be a Result", async () => {
         const fn = async () => Promise.resolve(undefined);
-        const res = await PromiseResult.tapError(fn, new SucceededResult(3));
+        const res = await PromiseResult.tapError(fn)(new SucceededResult(3));
         expect(res.succeeded).toBeTrue();
+    });
+
+
+    it("allows the input to be a Promise<Result>", async () => {
+        const fn = async () => Promise.resolve(undefined);
+        const input = Promise.resolve(new FailedResult("error"));
+        const res = await PromiseResult.tapError(fn)(input);
+        expect(res.failed).toBeTrue();
+        expect(res.error).toEqual("error");
     });
 
 
@@ -816,7 +891,7 @@ describe("tapError()", () => {
 
         await pipeAsync(
             new FailedResult("error message") as Result<number, string>,
-            (res) => PromiseResult.tapError(tapFn, res)
+            PromiseResult.tapError(tapFn)
         );
 
         expect(numInvocations).toEqual(1);
@@ -832,7 +907,7 @@ describe("tapError()", () => {
 
         await pipeAsync(
             new SucceededResult(1) as Result<number, string>,
-            (res) => PromiseResult.tapError(tapFn, res)
+            PromiseResult.tapError(tapFn)
         );
 
         expect(numInvocations).toEqual(0);
@@ -848,7 +923,7 @@ describe("tapError()", () => {
 
         const actual = await pipeAsync(
             new FailedResult("error message") as Result<number, string>,
-            (res) => PromiseResult.tapError(tapFn, res)
+            PromiseResult.tapError(tapFn)
         );
 
         expect(numInvocations).toEqual(1);
@@ -862,8 +937,17 @@ describe("tapSuccess()", () => {
 
     it("allows the input to be a Result", async () => {
         const fn = async () => Promise.resolve(undefined);
-        const res = await PromiseResult.tapSuccess(fn, new SucceededResult(3));
+        const res = await PromiseResult.tapSuccess(fn)(new SucceededResult(3));
         expect(res.succeeded).toBeTrue();
+    });
+
+
+    it("allows the input to be a Promise<Result>", async () => {
+        const fn = async () => Promise.resolve(undefined);
+        const input = Promise.resolve(new SucceededResult(3));
+        const res = await PromiseResult.tapSuccess(fn)(input);
+        expect(res.succeeded).toBeTrue();
+        expect(res.value).toEqual(3);
     });
 
 
@@ -876,7 +960,7 @@ describe("tapSuccess()", () => {
 
         await pipeAsync(
             new FailedResult("error message") as Result<number, string>,
-            (res) => PromiseResult.tapSuccess(tapFn, res)
+            PromiseResult.tapSuccess(tapFn)
         );
 
         expect(numInvocations).toEqual(0);
@@ -892,7 +976,7 @@ describe("tapSuccess()", () => {
 
         await pipeAsync(
             new SucceededResult(3) as Result<number, string>,
-            (res) => PromiseResult.tapSuccess(tapFn, res)
+            PromiseResult.tapSuccess(tapFn)
         );
 
         expect(numInvocations).toEqual(1);
@@ -908,7 +992,7 @@ describe("tapSuccess()", () => {
 
         const actual = await pipeAsync(
             new SucceededResult(3) as Result<number, string>,
-            (res) => PromiseResult.tapSuccess(tapFn, res)
+            PromiseResult.tapSuccess(tapFn)
         );
 
         expect(numInvocations).toEqual(1);
