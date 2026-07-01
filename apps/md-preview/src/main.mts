@@ -65,9 +65,10 @@ async function mainImpl(): Promise<number> {
     }
 
     const interactive = process.stdin.isTTY && process.stdout.isTTY;
-    if (!interactive && parsedArgs.timeoutMs === undefined) {
+    const runModeExitCode = validateRunMode(interactive, parsedArgs.timeoutMs);
+    if (runModeExitCode !== undefined) {
         console.error("Non-interactive mode requires --timeoutMs.");
-        return EXIT_INVALID_NON_INTERACTIVE_CONFIG;
+        return runModeExitCode;
     }
 
     const noOpen = interactive ? parsedArgs.noOpen : true;
@@ -99,12 +100,12 @@ async function mainImpl(): Promise<number> {
         }
 
         const port = addressInfo.port;
-        const localUrl = `http://localhost:${port}/`;
+        const urls = buildPreviewUrls(port, safeGetExternalIpv4Address());
+        const localUrl = urls.localUrl;
         console.log(`Local URL: ${localUrl}`);
 
-        const lanHost = safeGetExternalIpv4Address();
-        if (lanHost) {
-            console.log(`LAN URL: http://${lanHost}:${port}/`);
+        if (urls.lanUrl) {
+            console.log(`LAN URL: ${urls.lanUrl}`);
         }
         else {
             console.warn("LAN URL unavailable: no external IPv4 address found.");
@@ -315,6 +316,35 @@ export function dedupePaths(paths: Array<string>): Array<string> {
 }
 
 
+export function validateRunMode(interactive: boolean, timeoutMs: number | undefined): number | undefined {
+    if (!interactive && timeoutMs === undefined) {
+        return EXIT_INVALID_NON_INTERACTIVE_CONFIG;
+    }
+
+    return undefined;
+}
+
+
+export function buildPreviewUrls(port: number, lanHost: string | undefined):
+{ localUrl: string; lanUrl?: string; } {
+    const localUrl = `http://localhost:${port}/`;
+
+    if (lanHost) {
+        return {
+            localUrl,
+            lanUrl: `http://${lanHost}:${port}/`
+        };
+    }
+
+    return { localUrl };
+}
+
+
+export function getOutputHtmlPath(tempDir: string, baseName: string): string {
+    return path.join(tempDir, `${baseName}.html`);
+}
+
+
 interface IRenderResult {
     renderedCount: number;
 }
@@ -328,11 +358,20 @@ async function renderFilesToTemp(inputs: Array<IValidatedInput>, tempDir: string
         const rewrittenText = await rewriteAndCopyAssets(sourceText, input.absolutePath, tempDir);
         const rendered = renderer.render(rewrittenText);
         const document = wrapHtmlDocument(input.baseName, rendered);
-        const outPath = path.join(tempDir, `${input.baseName}.html`);
+        const outPath = getOutputHtmlPath(tempDir, input.baseName);
         await fs.writeFile(outPath, document, "utf8");
     }
 
     return { renderedCount: inputs.length };
+}
+
+
+export async function renderFilesToTempForTests(
+    inputs: Array<IValidatedInput>,
+    tempDir: string
+): Promise<number> {
+    const result = await renderFilesToTemp(inputs, tempDir);
+    return result.renderedCount;
 }
 
 
@@ -419,7 +458,13 @@ export function composeStylesheet(vscodeCssText: string, highlightCssText: strin
         "  --vscode-textPreformat-foreground: #b42318;",
         "  --vscode-textPreformat-background: rgba(175, 184, 193, 0.2);",
         "  --vscode-textCodeBlock-background: #f6f8fa;",
+        "  --vscode-textBlockQuote-background: #f3f8fd;",
+        "  --vscode-textBlockQuote-border: #75beff;",
         "  --vscode-widget-border: #d0d7de;",
+        "}",
+        ".markdown-body blockquote {",
+        "  background: var(--vscode-textBlockQuote-background, #f3f8fd);",
+        "  border-left-color: var(--vscode-textBlockQuote-border, #75beff);",
         "}",
         ".markdown-body pre {",
         "  background-color: var(--vscode-textCodeBlock-background, #f6f8fa);",
@@ -448,6 +493,15 @@ async function rewriteAndCopyAssets(markdownText: string, sourceFile: string, te
     updated = await rewriteMatches(updated, markdownLinkRegex, sourceDir, tempDir);
     updated = await rewriteMatches(updated, htmlAttrRegex, sourceDir, tempDir);
     return updated;
+}
+
+
+export async function rewriteAndCopyAssetsForTests(
+    markdownText: string,
+    sourceFile: string,
+    tempDir: string
+): Promise<string> {
+    return rewriteAndCopyAssets(markdownText, sourceFile, tempDir);
 }
 
 
