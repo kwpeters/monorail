@@ -1,6 +1,6 @@
 # md-preview
 
-Render one or more Markdown files to HTML, host them from a temporary directory,
+Render one or more Markdown files to HTML, host them from an output directory,
 and open the result in your browser.
 
 ## What it does
@@ -11,7 +11,8 @@ and open the result in your browser.
 - Copies and rewrites relative asset links into the temp output
 - Starts a local HTTP server and prints local and LAN URLs
 - Optionally opens your default browser automatically
-- Cleans up the temporary directory on shutdown
+- Uses a temporary output directory by default and cleans it up on shutdown
+- Supports a named output directory that is preserved on shutdown
 
 ## Quick start
 
@@ -33,6 +34,12 @@ Use timeout-based shutdown (works in interactive and non-interactive runs):
 .\bin\md-preview.cmd C:\path\to\file.md --timeoutMs 5000
 ```
 
+Write output to a named directory and preserve it after exit:
+
+```powershell
+.\bin\md-preview.cmd C:\path\to\file.md --outputDir .\preview-out
+```
+
 Pipe files from another command:
 
 ```powershell
@@ -42,7 +49,7 @@ splat **/*.md | .\bin\md-preview.cmd --timeoutMs 5000 --no-open
 ## CLI
 
 ```text
-md-preview [files...] [--no-open] [--timeoutMs <number>]
+md-preview [files...] [--no-open] [--timeoutMs <number>] [--outputDir <path>]
 ```
 
 ### Options
@@ -52,6 +59,11 @@ md-preview [files...] [--no-open] [--timeoutMs <number>]
 - `--timeoutMs <number>`
 	- Auto-shutdown timeout in milliseconds
 	- If provided, timeout takes precedence over keypress shutdown
+- `--outputDir <path>`
+	- Write generated files to a specific directory instead of a temp directory
+	- If the directory exists and is not empty, md-preview prompts to confirm
+	  deleting its contents (interactive mode)
+	- The specified output directory is not deleted on shutdown
 
 ## Input rules
 
@@ -75,7 +87,7 @@ paths.
 
 On startup it prints:
 
-- temp directory path
+- output directory path
 - rendered file counts
 - local URL
 - LAN URL (if external IPv4 is available)

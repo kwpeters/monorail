@@ -12,8 +12,10 @@ import { full as markdownItEmojiFull } from "markdown-it-emoji";
 import markdownItFootnote from "markdown-it-footnote";
 import markdownItTaskLists from "markdown-it-task-lists";
 import hljs from "highlight.js";
+import { Directory } from "@repo/depot-node/directory";
 import { launch } from "@repo/depot-node/launch";
 import { getFirstExternalIpv4Address } from "@repo/depot-node/networkHelpers";
+import { promptToContinue } from "@repo/depot-node/prompts";
 
 
 const EXIT_SUCCESS = 0;
@@ -24,6 +26,7 @@ const EXIT_INVALID_NON_INTERACTIVE_CONFIG = 3;
 
 export interface IParsedArgs {
     noOpen:          boolean;
+    outputDir:       string | undefined;
     timeoutMs:       number | undefined;
     positionalPaths: Array<string>;
 }
@@ -36,10 +39,11 @@ export interface IValidatedInput {
 
 
 export interface IRuntimeState {
-    tempDir:       string;
-    server?:       http.Server;
-    serverSockets: Set<net.Socket>;
-    shuttingDown:  boolean;
+    outputDir:          string;
+    shouldDeleteOnExit: boolean;
+    server?:            http.Server;
+    serverSockets:      Set<net.Socket>;
+    shuttingDown:       boolean;
 }
 
 
@@ -72,26 +76,27 @@ async function mainImpl(): Promise<number> {
     }
 
     const noOpen = interactive ? parsedArgs.noOpen : true;
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "md-preview-"));
-    console.log(`Temp directory: ${tempDir}`);
+    const outputDirectory = await prepareOutputDirectory(parsedArgs.outputDir, interactive);
+    console.log(`Output directory: ${outputDirectory.outputDir}`);
     console.warn("Warning: raw HTML rendering is enabled. Use only trusted content.");
 
     const runtimeState: IRuntimeState = {
-        tempDir:       tempDir,
-        serverSockets: new Set<net.Socket>(),
-        shuttingDown:  false
+        outputDir:          outputDirectory.outputDir,
+        shouldDeleteOnExit: outputDirectory.shouldDeleteOnExit,
+        serverSockets:      new Set<net.Socket>(),
+        shuttingDown:       false
     };
 
     registerSignalHandlers(runtimeState);
 
     try {
-        const renderResult = await renderFilesToTemp(validation.inputs, tempDir);
-        await writeSharedStylesheet(tempDir);
+        const renderResult = await renderFilesToTemp(validation.inputs, outputDirectory.outputDir);
+        await writeSharedStylesheet(outputDirectory.outputDir);
 
         console.log(`Accepted files: ${validation.inputs.length}`);
         console.log(`Rendered files: ${renderResult.renderedCount}`);
 
-        const server = await startServer(tempDir, runtimeState.serverSockets);
+        const server = await startServer(outputDirectory.outputDir, runtimeState.serverSockets);
         runtimeState.server = server;
 
         const addressInfo = server.address();
@@ -205,11 +210,15 @@ function safeGetExternalIpv4Address(): string | undefined {
 async function parseArgs(): Promise<IParsedArgs> {
     const argv = await yargs(hideBin(process.argv))
     .scriptName("md-preview")
-    .usage("$0 [files...] [--no-open] [--timeoutMs <n>]")
+    .usage("$0 [files...] [--no-open] [--timeoutMs <n>] [--outputDir <path>]")
     .option("open", {
         type:     "boolean",
         default:  true,
         describe: "Launch a browser automatically"
+    })
+    .option("outputDir", {
+        type:     "string",
+        describe: "Write generated files to this directory instead of a temp directory"
     })
     .option("timeoutMs", {
         type:     "number",
@@ -222,6 +231,7 @@ async function parseArgs(): Promise<IParsedArgs> {
     const positionals = argv._.map((cur) => String(cur));
     return {
         noOpen:          !argv.open,
+        outputDir:       argv.outputDir,
         timeoutMs:       argv.timeoutMs,
         positionalPaths: positionals
     };
@@ -294,7 +304,7 @@ export async function validateAndNormalizeInputs(
 
     if (valid.length === 0) {
         console.error("No valid markdown files were provided.");
-        console.error("Usage: md-preview [files...] [--no-open] [--timeoutMs <n>]");
+        console.error("Usage: md-preview [files...] [--no-open] [--timeoutMs <n>] [--outputDir <path>]");
         return { succeeded: false, exitCode: EXIT_INVALID_INPUT };
     }
 
@@ -342,6 +352,95 @@ export function buildPreviewUrls(port: number, lanHost: string | undefined):
 
 export function getOutputHtmlPath(tempDir: string, baseName: string): string {
     return path.join(tempDir, `${baseName}.html`);
+}
+
+
+interface IPreparedOutputDirectory {
+    outputDir:          string;
+    shouldDeleteOnExit: boolean;
+}
+
+
+async function prepareOutputDirectory(
+    outputDirArg: string | undefined,
+    interactive: boolean
+): Promise<IPreparedOutputDirectory> {
+    if (!outputDirArg) {
+        const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "md-preview-"));
+        return { outputDir: tempDir, shouldDeleteOnExit: true };
+    }
+
+    const outputDir = path.resolve(outputDirArg);
+    await prepareNamedOutputDirectory(outputDir, interactive, async () => {
+        return promptToContinue(
+            `The output directory "${outputDir}" is not empty. Delete its contents?`,
+            false
+        );
+    });
+
+    return { outputDir, shouldDeleteOnExit: false };
+}
+
+
+async function prepareNamedOutputDirectory(
+    outputDir: string,
+    interactive: boolean,
+    confirmDeletion: () => Promise<boolean>
+): Promise<void> {
+    const outputDirectory = (new Directory(outputDir)).absolute();
+    const outputDirPath = outputDirectory.toString();
+
+    const stats = await outputDirectory.exists();
+    if (!stats) {
+        const existingPathStats = await tryStat(outputDirPath);
+        if (existingPathStats) {
+            throw new Error(`Output path exists and is not a directory: ${outputDirPath}`);
+        }
+
+        await outputDirectory.ensureExists();
+        return;
+    }
+
+    if (await outputDirectory.isEmpty()) {
+        return;
+    }
+
+    if (!interactive) {
+        throw new Error(
+            `The output directory "${outputDirPath}" is not empty and cannot be confirmed in non-interactive mode.`
+        );
+    }
+
+    const confirmed = await confirmDeletion();
+    if (!confirmed) {
+        throw new Error("Canceled by user because output directory cleanup was not confirmed.");
+    }
+
+    await outputDirectory.empty();
+}
+
+
+async function tryStat(targetPath: string): Promise<Awaited<ReturnType<typeof fs.stat>> | undefined> {
+    try {
+        return await fs.stat(targetPath);
+    }
+    catch (err) {
+        const error = err as NodeJS.ErrnoException;
+        if (error.code === "ENOENT") {
+            return undefined;
+        }
+
+        throw err;
+    }
+}
+
+
+export async function prepareNamedOutputDirectoryForTests(
+    outputDir: string,
+    interactive: boolean,
+    confirmDeletion: () => Promise<boolean>
+): Promise<void> {
+    await prepareNamedOutputDirectory(outputDir, interactive, confirmDeletion);
 }
 
 
@@ -734,9 +833,14 @@ async function cleanupRuntime(runtimeState: IRuntimeState): Promise<void> {
         console.warn(`Cleanup warning while stopping server: ${formatError(err)}`);
     }
 
+    if (!runtimeState.shouldDeleteOnExit) {
+        console.log(`Cleanup: preserved output directory ${runtimeState.outputDir}`);
+        return;
+    }
+
     try {
-        await fs.rm(runtimeState.tempDir, { recursive: true, force: true });
-        console.log(`Cleanup: deleted temp directory ${runtimeState.tempDir}`);
+        await fs.rm(runtimeState.outputDir, { recursive: true, force: true });
+        console.log(`Cleanup: deleted temp directory ${runtimeState.outputDir}`);
     }
     catch (err) {
         console.warn(`Cleanup warning while deleting temp directory: ${formatError(err)}`);

@@ -8,6 +8,7 @@ import {
     dedupePaths,
     getOutputHtmlPath,
     isAbsoluteUrlOrFragment,
+    prepareNamedOutputDirectoryForTests,
     renderFilesToTempForTests,
     rewriteAndCopyAssetsForTests,
     validateAndNormalizeInputs,
@@ -239,6 +240,83 @@ describe("md-preview helpers", () => {
 
         it("accepts interactive mode without timeout", () => {
             expect(validateRunMode(true, undefined)).toBeUndefined();
+        });
+    });
+
+
+    describe("prepareNamedOutputDirectoryForTests()", () => {
+
+        it("creates the output directory when it does not exist", async () => {
+            const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "md-preview-test-"));
+
+            try {
+                const outputDir = path.join(tempDir, "out");
+                await prepareNamedOutputDirectoryForTests(outputDir, true, async () => Promise.resolve(true));
+
+                const stats = await fs.stat(outputDir);
+                expect(stats.isDirectory()).toBeTrue();
+            }
+            finally {
+                await fs.rm(tempDir, { recursive: true, force: true });
+            }
+        });
+
+
+        it("deletes existing contents after interactive confirmation", async () => {
+            const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "md-preview-test-"));
+
+            try {
+                const outputDir = path.join(tempDir, "out");
+                await fs.mkdir(path.join(outputDir, "nested"), { recursive: true });
+                await fs.writeFile(path.join(outputDir, "nested", "keep.txt"), "x", "utf8");
+                await fs.writeFile(path.join(outputDir, "root.txt"), "x", "utf8");
+
+                await prepareNamedOutputDirectoryForTests(outputDir, true, async () => Promise.resolve(true));
+
+                const entries = await fs.readdir(outputDir);
+                expect(entries.length).toBe(0);
+            }
+            finally {
+                await fs.rm(tempDir, { recursive: true, force: true });
+            }
+        });
+
+
+        it("throws when interactive confirmation is declined", async () => {
+            const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "md-preview-test-"));
+
+            try {
+                const outputDir = path.join(tempDir, "out");
+                await fs.mkdir(outputDir, { recursive: true });
+                await fs.writeFile(path.join(outputDir, "root.txt"), "x", "utf8");
+
+                await expectAsync(
+                    prepareNamedOutputDirectoryForTests(outputDir, true, async () => Promise.resolve(false))
+                )
+                .toBeRejected();
+            }
+            finally {
+                await fs.rm(tempDir, { recursive: true, force: true });
+            }
+        });
+
+
+        it("throws in non-interactive mode when directory is not empty", async () => {
+            const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "md-preview-test-"));
+
+            try {
+                const outputDir = path.join(tempDir, "out");
+                await fs.mkdir(outputDir, { recursive: true });
+                await fs.writeFile(path.join(outputDir, "root.txt"), "x", "utf8");
+
+                await expectAsync(
+                    prepareNamedOutputDirectoryForTests(outputDir, false, async () => Promise.resolve(true))
+                )
+                .toBeRejected();
+            }
+            finally {
+                await fs.rm(tempDir, { recursive: true, force: true });
+            }
         });
     });
 
