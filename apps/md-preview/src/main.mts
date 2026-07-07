@@ -12,6 +12,7 @@ import markdownItAnchor from "markdown-it-anchor";
 import { full as markdownItEmojiFull } from "markdown-it-emoji";
 import markdownItFootnote from "markdown-it-footnote";
 import markdownItTaskLists from "markdown-it-task-lists";
+import markdownItDeflist from "markdown-it-deflist";
 import hljs from "highlight.js";
 import { Directory } from "@repo/depot-node/directory";
 import { launch } from "@repo/depot-node/launch";
@@ -713,6 +714,7 @@ function createRenderer(): markdownIt {
     md.use(markdownItEmojiFull);
     md.use(markdownItTaskLists, { enabled: true, label: true, labelAfter: true });
     md.use(markdownItAnchor);
+    md.use(markdownItDeflist);
 
     return md;
 }

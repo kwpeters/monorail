@@ -136,6 +136,17 @@ describe("md-preview helpers", () => {
 
             expect(html).toContain("😄");
         });
+
+
+        it("renders definition lists", () => {
+            const renderer = createRendererForTests();
+
+            const html = renderer.render("Term\n:   Definition of the term.\n");
+
+            expect(html).toContain("<dl>");
+            expect(html).toContain("<dt>Term</dt>");
+            expect(html).toContain("<dd>Definition of the term.</dd>");
+        });
     });
 
 

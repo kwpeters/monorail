@@ -8,3 +8,9 @@ declare module "markdown-it-task-lists" {
     const plugin: import("markdown-it").PluginWithOptions<ITaskListOptions>;
     export default plugin;
 }
+
+
+declare module "markdown-it-deflist" {
+    const plugin: import("markdown-it").PluginSimple;
+    export default plugin;
+}
