@@ -325,7 +325,7 @@ async function parseArgs(): Promise<IParsedArgs> {
     .option("indent-sections", {
         type:     "boolean",
         default:  false,
-        describe: "Indent each section's heading and body proportional to its heading depth"
+        describe: "Indent each section's body one step deeper than its heading, nested by heading depth"
     })
     .help()
     .strictOptions()
@@ -922,21 +922,26 @@ export function composeStylesheet(
 
 
 /**
- * CSS that indents each nested `<section>` (produced by
- * {@link sectionWrappingPlugin}) relative to its parent. Because sections nest
- * by heading depth, the left padding accumulates with depth, stepping each
- * deeper heading and its body further right. Top-level sections stay flush.
+ * CSS that indents each section's content one step deeper than its heading.
+ * Within every `<section>` (produced by {@link sectionWrappingPlugin}) the
+ * heading is the first child and stays put, while every following sibling —
+ * body content and nested subsections alike — is pushed one step to the right.
+ * Because nested sections are themselves indented content, the effect
+ * accumulates with depth: each heading forms a staircase and its body sits one
+ * step below it.
+ *
+ * `margin-inline-start` (not padding) is used so the whole box shifts right,
+ * including the border and background of elements like blockquotes, code
+ * blocks, and tables; padding would only move their inner content, leaving the
+ * decorated box edge unindented.
  *
  * @return The section-indentation stylesheet fragment.
  */
 function sectionIndentCss(): string {
     return [
         "",
-        ".markdown-body .md-section {",
-        "  padding-inline-start: 1.5em;",
-        "}",
-        ".markdown-body > .md-section {",
-        "  padding-inline-start: 0;",
+        ".markdown-body .md-section > :not(:first-child) {",
+        "  margin-inline-start: 1.5em;",
         "}",
         ""
     ].join("\n");

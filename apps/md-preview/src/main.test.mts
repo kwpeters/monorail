@@ -431,9 +431,11 @@ describe("md-preview helpers", () => {
         it("appends section-indent rules when section indentation is enabled", () => {
             const css = composeStylesheet("/* markdown */", "/* highlight */", true);
 
-            expect(css).toContain(".markdown-body .md-section {");
-            expect(css).toContain("padding-inline-start: 1.5em;");
-            expect(css).toContain(".markdown-body > .md-section {");
+            // Indents each section's non-heading children (body + nested
+            // subsections) via margin so bordered/background boxes (blockquotes,
+            // code blocks) shift as a whole, leaving the heading itself in place.
+            expect(css).toContain(".markdown-body .md-section > :not(:first-child) {");
+            expect(css).toContain("margin-inline-start: 1.5em;");
         });
     });
 
