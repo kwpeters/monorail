@@ -1,5 +1,6 @@
 import * as os from "node:os";
 import * as fs from "node:fs/promises";
+import { watch, type FSWatcher } from "node:fs";
 import * as path from "node:path";
 import * as http from "node:http";
 import * as net from "node:net";
@@ -23,11 +24,14 @@ const EXIT_INVALID_INPUT = 1;
 const EXIT_RUNTIME_FAILURE = 2;
 const EXIT_INVALID_NON_INTERACTIVE_CONFIG = 3;
 
+const WATCH_DEBOUNCE_MS = 500;
+
 
 export interface IParsedArgs {
     noOpen:          boolean;
     outputDir:       string | undefined;
     timeoutMs:       number | undefined;
+    watch:           boolean;
     positionalPaths: Array<string>;
 }
 
@@ -38,11 +42,58 @@ export interface IValidatedInput {
 }
 
 
+export interface IDebouncer {
+    /**
+     * (Re)starts the debounce timer. If called again before the timer elapses,
+     * the pending invocation is pushed back so the action runs only once, after
+     * activity has been quiet for the configured delay.
+     */
+    schedule: () => void;
+    /**
+     * Cancels any pending invocation without running the action.
+     */
+    cancel:   () => void;
+}
+
+
+/**
+ * Creates a debouncer that runs `action` once activity has been quiet for
+ * `delayMs`. Extracted as a standalone helper so the timing logic can be unit
+ * tested independently of the file-watching machinery.
+ *
+ * @param delayMs - The quiet period, in milliseconds, before `action` runs.
+ * @param action - The callback to invoke after the debounce period elapses.
+ * @return A debouncer with `schedule()` and `cancel()` controls.
+ */
+export function createDebouncer(delayMs: number, action: () => void): IDebouncer {
+    let timer: NodeJS.Timeout | undefined;
+
+    const cancel = (): void => {
+        if (timer) {
+            clearTimeout(timer);
+            timer = undefined;
+        }
+    };
+
+    const schedule = (): void => {
+        cancel();
+        timer = setTimeout(() => {
+            timer = undefined;
+            action();
+        }, delayMs);
+    };
+
+    return { schedule, cancel };
+}
+
+
 export interface IRuntimeState {
     outputDir:          string;
     shouldDeleteOnExit: boolean;
     server?:            http.Server;
     serverSockets:      Set<net.Socket>;
+    watchers:           Array<FSWatcher>;
+    debouncer?:         IDebouncer | undefined;
     shuttingDown:       boolean;
 }
 
@@ -75,7 +126,25 @@ async function mainImpl(): Promise<number> {
         return runModeExitCode;
     }
 
+    if (parsedArgs.watch && !interactive) {
+        console.error("The --watch option is only supported in interactive mode.");
+        return EXIT_INVALID_NON_INTERACTIVE_CONFIG;
+    }
+
     const noOpen = interactive ? parsedArgs.noOpen : true;
+
+    // Preparing an explicit output directory empties it. Refuse to proceed if
+    // any source file lives at or beneath that directory, since emptying it
+    // would delete the very files we are asked to render.
+    const outputSafetyError = findSourcesInsideOutputDir(validation.inputs, parsedArgs.outputDir);
+    if (outputSafetyError.length > 0) {
+        console.error("Refusing to run: the output directory would contain (and delete) these source files:");
+        for (const cur of outputSafetyError) {
+            console.error(`  - ${cur}`);
+        }
+        return EXIT_INVALID_INPUT;
+    }
+
     const outputDirectory = await prepareOutputDirectory(parsedArgs.outputDir, interactive);
     console.log(`Output directory: ${outputDirectory.outputDir}`);
     console.warn("Warning: raw HTML rendering is enabled. Use only trusted content.");
@@ -84,6 +153,7 @@ async function mainImpl(): Promise<number> {
         outputDir:          outputDirectory.outputDir,
         shouldDeleteOnExit: outputDirectory.shouldDeleteOnExit,
         serverSockets:      new Set<net.Socket>(),
+        watchers:           [],
         shuttingDown:       false
     };
 
@@ -122,6 +192,11 @@ async function mainImpl(): Promise<number> {
         }
         else {
             console.log("Browser launch: skipped");
+        }
+
+        if (parsedArgs.watch) {
+            startWatching(validation.inputs, runtimeState);
+            console.log("Watching source files for changes. Refresh the browser after each re-render.");
         }
 
         if (parsedArgs.timeoutMs !== undefined) {
@@ -210,7 +285,7 @@ function safeGetExternalIpv4Address(): string | undefined {
 async function parseArgs(): Promise<IParsedArgs> {
     const argv = await yargs(hideBin(process.argv))
     .scriptName("md-preview")
-    .usage("$0 [files...] [--no-open] [--timeoutMs <n>] [--outputDir <path>]")
+    .usage("$0 [--no-open] [--timeoutMs <n>] [--outputDir <path>] [--watch] [files...]")
     .option("open", {
         type:     "boolean",
         default:  true,
@@ -224,6 +299,11 @@ async function parseArgs(): Promise<IParsedArgs> {
         type:     "number",
         describe: "In non-interactive mode, automatically stop after this duration"
     })
+    .option("watch", {
+        type:     "boolean",
+        default:  false,
+        describe: "Watch the source markdown files and re-render on change (interactive mode only)"
+    })
     .help()
     .strictOptions()
     .argv;
@@ -233,6 +313,7 @@ async function parseArgs(): Promise<IParsedArgs> {
         noOpen:          !argv.open,
         outputDir:       argv.outputDir,
         timeoutMs:       argv.timeoutMs,
+        watch:           argv.watch,
         positionalPaths: positionals
     };
 }
@@ -471,6 +552,106 @@ export async function renderFilesToTempForTests(
 ): Promise<number> {
     const result = await renderFilesToTemp(inputs, tempDir);
     return result.renderedCount;
+}
+
+
+/**
+ * Determines whether `childPath` is the same as, or located beneath,
+ * `parentPath`. Both paths should already be absolute.
+ *
+ * @param childPath - The path to test.
+ * @param parentPath - The candidate containing directory.
+ * @return `true` when `childPath` equals `parentPath` or is nested within it;
+ * `false` otherwise (including sibling paths that merely share a prefix).
+ */
+export function isPathInside(childPath: string, parentPath: string): boolean {
+    const relative = path.relative(parentPath, childPath);
+    return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
+
+/**
+ * Finds source files that reside at or beneath the given output directory.
+ * Such files would be destroyed when the output directory is emptied during
+ * preparation, so callers should refuse to run when any are returned.
+ *
+ * @param inputs - The validated source files.
+ * @param outputDirArg - The raw `--outputDir` argument, or `undefined` when a
+ * temporary directory will be used (which never overlaps the sources).
+ * @return The absolute paths of source files located inside the output
+ * directory. Empty when the configuration is safe.
+ */
+export function findSourcesInsideOutputDir(
+    inputs: Array<IValidatedInput>,
+    outputDirArg: string | undefined
+): Array<string> {
+    if (outputDirArg === undefined) {
+        return [];
+    }
+
+    const resolvedOutputDir = path.resolve(outputDirArg);
+    return inputs
+    .filter((input) => isPathInside(input.absolutePath, resolvedOutputDir))
+    .map((input) => input.absolutePath);
+}
+
+
+function startWatching(inputs: Array<IValidatedInput>, runtimeState: IRuntimeState): void {
+    const watchedFiles = new Set(inputs.map((input) => input.absolutePath));
+    const watchedDirs = new Set(inputs.map((input) => path.dirname(input.absolutePath)));
+
+    // Serialize re-renders through a promise chain so that a change arriving
+    // while a render is in flight runs after it, never concurrently.
+    let renderChain: Promise<void> = Promise.resolve();
+
+    const rerender = async (): Promise<void> => {
+        try {
+            const result = await renderFilesToTemp(inputs, runtimeState.outputDir);
+            console.log(`Re-rendered files: ${result.renderedCount}`);
+        }
+        catch (err) {
+            console.error(`Re-render failed: ${formatError(err)}`);
+        }
+    };
+
+    const debouncer = createDebouncer(WATCH_DEBOUNCE_MS, () => {
+        renderChain = renderChain.then(rerender);
+    });
+    runtimeState.debouncer = debouncer;
+
+    for (const dir of watchedDirs) {
+        try {
+            const watcher = watch(dir, (_eventType, filename) => {
+                // Some platforms omit the filename; re-render to be safe.
+                if (filename === null) {
+                    debouncer.schedule();
+                    return;
+                }
+
+                const changedPath = path.resolve(dir, filename);
+
+                // Ignore our own output writes (e.g. when the output directory
+                // lives beneath a watched source directory) to avoid a
+                // re-render feedback loop.
+                if (isPathInside(changedPath, runtimeState.outputDir)) {
+                    return;
+                }
+
+                if (watchedFiles.has(changedPath)) {
+                    debouncer.schedule();
+                }
+            });
+
+            watcher.on("error", (err) => {
+                console.warn(`Watch warning for ${dir}: ${formatError(err)}`);
+            });
+
+            runtimeState.watchers.push(watcher);
+        }
+        catch (err) {
+            console.warn(`Unable to watch directory ${dir}: ${formatError(err)}`);
+        }
+    }
 }
 
 
@@ -796,6 +977,22 @@ async function cleanupRuntime(runtimeState: IRuntimeState): Promise<void> {
         return;
     }
     runtimeState.shuttingDown = true;
+
+    // Stop watching before anything else so no re-render is scheduled or runs
+    // against an output directory that may be about to be deleted.
+    if (runtimeState.debouncer) {
+        runtimeState.debouncer.cancel();
+        runtimeState.debouncer = undefined;
+    }
+    for (const watcher of runtimeState.watchers) {
+        try {
+            watcher.close();
+        }
+        catch (err) {
+            console.warn(`Cleanup warning while closing watcher: ${formatError(err)}`);
+        }
+    }
+    runtimeState.watchers = [];
 
     try {
         if (runtimeState.server) {
