@@ -26,6 +26,10 @@ const EXIT_INVALID_NON_INTERACTIVE_CONFIG = 3;
 
 const WATCH_DEBOUNCE_MS = 500;
 
+// Endpoint used by the injected live-reload client (watch mode only) to receive
+// Server-Sent Events telling open browser tabs to reload after a re-render.
+export const LIVE_RELOAD_PATH = "/__md-preview-reload__";
+
 
 export interface IParsedArgs {
     noOpen:          boolean;
@@ -92,6 +96,7 @@ export interface IRuntimeState {
     shouldDeleteOnExit: boolean;
     server?:            http.Server;
     serverSockets:      Set<net.Socket>;
+    reloadClients:      Set<http.ServerResponse>;
     watchers:           Array<FSWatcher>;
     debouncer?:         IDebouncer | undefined;
     shuttingDown:       boolean;
@@ -153,6 +158,7 @@ async function mainImpl(): Promise<number> {
         outputDir:          outputDirectory.outputDir,
         shouldDeleteOnExit: outputDirectory.shouldDeleteOnExit,
         serverSockets:      new Set<net.Socket>(),
+        reloadClients:      new Set<http.ServerResponse>(),
         watchers:           [],
         shuttingDown:       false
     };
@@ -160,13 +166,18 @@ async function mainImpl(): Promise<number> {
     registerSignalHandlers(runtimeState);
 
     try {
-        const renderResult = await renderFilesToTemp(validation.inputs, outputDirectory.outputDir);
+        const renderResult = await renderFilesToTemp(validation.inputs, outputDirectory.outputDir, parsedArgs.watch);
         await writeSharedStylesheet(outputDirectory.outputDir);
 
         console.log(`Accepted files: ${validation.inputs.length}`);
         console.log(`Rendered files: ${renderResult.renderedCount}`);
 
-        const server = await startServer(outputDirectory.outputDir, runtimeState.serverSockets);
+        const server = await startServer(
+            outputDirectory.outputDir,
+            runtimeState.serverSockets,
+            runtimeState.reloadClients,
+            parsedArgs.watch
+        );
         runtimeState.server = server;
 
         const addressInfo = server.address();
@@ -530,14 +541,18 @@ interface IRenderResult {
 }
 
 
-async function renderFilesToTemp(inputs: Array<IValidatedInput>, tempDir: string): Promise<IRenderResult> {
+async function renderFilesToTemp(
+    inputs: Array<IValidatedInput>,
+    tempDir: string,
+    liveReload = false
+): Promise<IRenderResult> {
     const renderer = createRenderer();
 
     for (const input of inputs) {
         const sourceText = await fs.readFile(input.absolutePath, "utf8");
         const rewrittenText = await rewriteAndCopyAssets(sourceText, input.absolutePath, tempDir);
         const rendered = renderer.render(rewrittenText);
-        const document = wrapHtmlDocument(input.baseName, rendered);
+        const document = wrapHtmlDocument(input.baseName, rendered, liveReload);
         const outPath = getOutputHtmlPath(tempDir, input.baseName);
         await fs.writeFile(outPath, document, "utf8");
     }
@@ -548,9 +563,10 @@ async function renderFilesToTemp(inputs: Array<IValidatedInput>, tempDir: string
 
 export async function renderFilesToTempForTests(
     inputs: Array<IValidatedInput>,
-    tempDir: string
+    tempDir: string,
+    liveReload = false
 ): Promise<number> {
-    const result = await renderFilesToTemp(inputs, tempDir);
+    const result = await renderFilesToTemp(inputs, tempDir, liveReload);
     return result.renderedCount;
 }
 
@@ -606,8 +622,10 @@ function startWatching(inputs: Array<IValidatedInput>, runtimeState: IRuntimeSta
 
     const rerender = async (): Promise<void> => {
         try {
-            const result = await renderFilesToTemp(inputs, runtimeState.outputDir);
+            const result = await renderFilesToTemp(inputs, runtimeState.outputDir, true);
             console.log(`Re-rendered files: ${result.renderedCount}`);
+            // Tell every open browser tab to reload the freshly rendered output.
+            notifyReloadClients(runtimeState.reloadClients);
         }
         catch (err) {
             console.error(`Re-render failed: ${formatError(err)}`);
@@ -655,6 +673,29 @@ function startWatching(inputs: Array<IValidatedInput>, runtimeState: IRuntimeSta
 }
 
 
+/**
+ * Pushes a `reload` Server-Sent Event to every connected live-reload client,
+ * prompting each open browser tab to reload the just-rendered output.
+ *
+ * @param reloadClients - The set of open SSE responses to notify.
+ */
+function notifyReloadClients(reloadClients: Set<http.ServerResponse>): void {
+    for (const client of reloadClients) {
+        try {
+            client.write("event: reload\ndata: {}\n\n");
+        }
+        catch (err) {
+            console.warn(`Live-reload notification failed: ${formatError(err)}`);
+        }
+    }
+}
+
+
+export function notifyReloadClientsForTests(reloadClients: Set<http.ServerResponse>): void {
+    notifyReloadClients(reloadClients);
+}
+
+
 function createRenderer(): markdownIt {
     const md = new markdownIt({
         html:        true,
@@ -682,8 +723,8 @@ export function createRendererForTests(): markdownIt {
 }
 
 
-function wrapHtmlDocument(title: string, bodyHtml: string): string {
-    return [
+function wrapHtmlDocument(title: string, bodyHtml: string, liveReload = false): string {
+    const lines = [
         "<!doctype html>",
         "<html lang=\"en\">",
         "<head>",
@@ -695,10 +736,45 @@ function wrapHtmlDocument(title: string, bodyHtml: string): string {
         "<body class=\"vscode-body vscode-light\">",
         "  <main class=\"markdown-body\">",
         bodyHtml,
-        "  </main>",
+        "  </main>"
+    ];
+
+    if (liveReload) {
+        lines.push(liveReloadClientScript());
+    }
+
+    lines.push(
         "</body>",
         "</html>",
         ""
+    );
+
+    return lines.join("\n");
+}
+
+
+export function wrapHtmlDocumentForTests(title: string, bodyHtml: string, liveReload = false): string {
+    return wrapHtmlDocument(title, bodyHtml, liveReload);
+}
+
+
+/**
+ * Builds the `<script>` injected into each rendered page in watch mode. It opens
+ * a Server-Sent Events connection to {@link LIVE_RELOAD_PATH} and reloads the
+ * page whenever the server pushes a `reload` event after a re-render.
+ * `EventSource` reconnects automatically, so the tab recovers if the server is
+ * briefly unavailable.
+ *
+ * @return The HTML `<script>` snippet.
+ */
+function liveReloadClientScript(): string {
+    return [
+        "  <script>",
+        "    (function () {",
+        `      var source = new EventSource(${JSON.stringify(LIVE_RELOAD_PATH)});`,
+        "      source.addEventListener(\"reload\", function () { window.location.reload(); });",
+        "    })();",
+        "  </script>"
     ].join("\n");
 }
 
@@ -869,11 +945,33 @@ function launchBrowser(url: string): void {
 }
 
 
-async function startServer(rootDir: string, serverSockets: Set<net.Socket>): Promise<http.Server> {
+async function startServer(
+    rootDir: string,
+    serverSockets: Set<net.Socket>,
+    reloadClients: Set<http.ServerResponse>,
+    liveReloadEnabled: boolean
+): Promise<http.Server> {
     const server = http.createServer((req, res) => {
         const __dontCare = (async () => {
             try {
                 const requestUrl = new URL(req.url ?? "/", "http://localhost");
+
+                // Live-reload SSE stream (watch mode only). Held open until the
+                // client disconnects; the server pushes `reload` events after
+                // each successful re-render.
+                if (liveReloadEnabled && requestUrl.pathname === LIVE_RELOAD_PATH) {
+                    res.statusCode = 200;
+                    res.setHeader("content-type", "text/event-stream");
+                    res.setHeader("cache-control", "no-cache");
+                    res.setHeader("connection", "keep-alive");
+                    res.write("retry: 1000\n\n");
+                    reloadClients.add(res);
+                    req.on("close", () => {
+                        reloadClients.delete(res);
+                    });
+                    return;
+                }
+
                 const decodedPath = decodeURIComponent(requestUrl.pathname);
                 const fsPath = path.join(rootDir, decodedPath);
 
@@ -948,6 +1046,16 @@ async function startServer(rootDir: string, serverSockets: Set<net.Socket>): Pro
 }
 
 
+export async function startServerForTests(
+    rootDir: string,
+    serverSockets: Set<net.Socket>,
+    reloadClients: Set<http.ServerResponse>,
+    liveReloadEnabled: boolean
+): Promise<http.Server> {
+    return startServer(rootDir, serverSockets, reloadClients, liveReloadEnabled);
+}
+
+
 function getContentType(filePath: string): string {
     const ext = path.extname(filePath).toLowerCase();
     switch (ext) {
@@ -993,6 +1101,17 @@ async function cleanupRuntime(runtimeState: IRuntimeState): Promise<void> {
         }
     }
     runtimeState.watchers = [];
+
+    // End any open live-reload SSE connections so the server can close cleanly.
+    for (const client of runtimeState.reloadClients) {
+        try {
+            client.end();
+        }
+        catch (err) {
+            console.warn(`Cleanup warning while closing live-reload client: ${formatError(err)}`);
+        }
+    }
+    runtimeState.reloadClients.clear();
 
     try {
         if (runtimeState.server) {

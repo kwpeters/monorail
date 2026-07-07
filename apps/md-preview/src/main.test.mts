@@ -1,6 +1,8 @@
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
+import * as http from "node:http";
+import * as net from "node:net";
 import {
     buildPreviewUrls,
     composeStylesheet,
@@ -11,11 +13,15 @@ import {
     isPathInside,
     getOutputHtmlPath,
     isAbsoluteUrlOrFragment,
+    LIVE_RELOAD_PATH,
+    notifyReloadClientsForTests,
     prepareNamedOutputDirectoryForTests,
     renderFilesToTempForTests,
     rewriteAndCopyAssetsForTests,
+    startServerForTests,
     validateAndNormalizeInputs,
-    validateRunMode
+    validateRunMode,
+    wrapHtmlDocumentForTests
 } from "./main.mjs";
 
 
@@ -162,6 +168,29 @@ describe("md-preview helpers", () => {
                 const outPath = getOutputHtmlPath(tempDir, "same");
                 const outHtml = await fs.readFile(outPath, "utf8");
                 expect(outHtml).toContain("<p>second</p>");
+            }
+            finally {
+                await fs.rm(tempDir, { recursive: true, force: true });
+            }
+        });
+
+
+        it("omits the live-reload client by default and includes it when requested", async () => {
+            const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "md-preview-test-"));
+
+            try {
+                const srcPath = path.join(tempDir, "doc.md");
+                await fs.writeFile(srcPath, "# doc", "utf8");
+                const inputs = [{ absolutePath: srcPath, baseName: "doc" }];
+                const outPath = getOutputHtmlPath(tempDir, "doc");
+
+                await renderFilesToTempForTests(inputs, tempDir);
+                const plainHtml = await fs.readFile(outPath, "utf8");
+                expect(plainHtml).not.toContain("EventSource");
+
+                await renderFilesToTempForTests(inputs, tempDir, true);
+                const liveHtml = await fs.readFile(outPath, "utf8");
+                expect(liveHtml).toContain("new EventSource(\"/__md-preview-reload__\")");
             }
             finally {
                 await fs.rm(tempDir, { recursive: true, force: true });
@@ -496,6 +525,148 @@ describe("md-preview helpers", () => {
                 { absolutePath: outside, baseName: "b" }
             ];
             expect(findSourcesInsideOutputDir(inputs, path.resolve("/docs"))).toEqual([inside]);
+        });
+    });
+
+
+    describe("wrapHtmlDocumentForTests()", () => {
+
+        it("does not inject the live-reload client when live reload is disabled", () => {
+            const html = wrapHtmlDocumentForTests("Title", "<p>body</p>", false);
+
+            expect(html).not.toContain("<script>");
+            expect(html).not.toContain("EventSource");
+        });
+
+
+        it("injects the live-reload client, before </body>, when enabled", () => {
+            const html = wrapHtmlDocumentForTests("Title", "<p>body</p>", true);
+
+            expect(html).toContain("new EventSource(\"/__md-preview-reload__\")");
+            expect(html).toContain("window.location.reload()");
+            expect(html.indexOf("EventSource")).toBeLessThan(html.indexOf("</body>"));
+        });
+
+
+        it("adds only the script, leaving the rest of the document identical", () => {
+            const plain = wrapHtmlDocumentForTests("Title", "<p>body</p>", false);
+            const live = wrapHtmlDocumentForTests("Title", "<p>body</p>", true);
+
+            // Stripping the injected <script> block from the live-reload output
+            // must yield byte-for-byte the non-watch output.
+            const stripped = live.replace(/\n {2}<script>[\s\S]*?<\/script>/, "");
+            expect(stripped).toBe(plain);
+        });
+    });
+
+
+    describe("live-reload SSE endpoint (integration)", () => {
+
+        interface IServerHarness {
+            server:        http.Server;
+            serverSockets: Set<net.Socket>;
+            reloadClients: Set<http.ServerResponse>;
+            port:          number;
+            tempDir:       string;
+        }
+
+
+        async function startHarness(liveReloadEnabled: boolean): Promise<IServerHarness> {
+            const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "md-preview-test-"));
+            await fs.writeFile(path.join(tempDir, "index.html"), "<h1>hi</h1>", "utf8");
+
+            const serverSockets = new Set<net.Socket>();
+            const reloadClients = new Set<http.ServerResponse>();
+            const server = await startServerForTests(tempDir, serverSockets, reloadClients, liveReloadEnabled);
+
+            const address = server.address();
+            if (!address || typeof address === "string") {
+                throw new Error("Unable to determine bound test server address.");
+            }
+
+            return { server, serverSockets, reloadClients, port: address.port, tempDir };
+        }
+
+
+        async function stopHarness(harness: IServerHarness): Promise<void> {
+            for (const socket of harness.serverSockets) {
+                socket.destroy();
+            }
+            harness.server.closeAllConnections();
+            await new Promise<void>((resolve) => {
+                harness.server.close(() => {
+                    resolve();
+                });
+            });
+            await fs.rm(harness.tempDir, { recursive: true, force: true });
+        }
+
+
+        it("streams a reload event to connected clients after a re-render", async () => {
+            const harness = await startHarness(true);
+
+            const request = http.get({ host: "localhost", port: harness.port, path: LIVE_RELOAD_PATH });
+
+            try {
+                const streamed = await new Promise<string>((resolve, reject) => {
+                    request.on("error", reject);
+                    request.on("response", (res) => {
+                        expect(res.statusCode).toBe(200);
+                        expect(res.headers["content-type"]).toBe("text/event-stream");
+
+                        let buffer = "";
+                        res.setEncoding("utf8");
+                        res.on("data", (chunk: string) => {
+                            buffer += chunk;
+                            if (buffer.includes("event: reload")) {
+                                resolve(buffer);
+                            }
+                        });
+                        res.on("error", reject);
+
+                        // The connection registers asynchronously; broadcast once
+                        // this client is present in the reload set.
+                        const waitForRegistration = (): void => {
+                            if (harness.reloadClients.size > 0) {
+                                notifyReloadClientsForTests(harness.reloadClients);
+                            }
+                            else {
+                                setTimeout(waitForRegistration, 5);
+                            }
+                        };
+                        waitForRegistration();
+                    });
+                });
+
+                expect(streamed).toContain("event: reload");
+            }
+            finally {
+                request.destroy();
+                await stopHarness(harness);
+            }
+        });
+
+
+        it("does not expose the reload endpoint when live reload is disabled", async () => {
+            const harness = await startHarness(false);
+
+            try {
+                const statusCode = await new Promise<number | undefined>((resolve, reject) => {
+                    const request = http.get(
+                        { host: "localhost", port: harness.port, path: LIVE_RELOAD_PATH },
+                        (res) => {
+                            res.resume();
+                            resolve(res.statusCode);
+                        }
+                    );
+                    request.on("error", reject);
+                });
+
+                expect(statusCode).toBe(404);
+            }
+            finally {
+                await stopHarness(harness);
+            }
         });
     });
 });
