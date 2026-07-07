@@ -147,6 +147,41 @@ describe("md-preview helpers", () => {
             expect(html).toContain("<dt>Term</dt>");
             expect(html).toContain("<dd>Definition of the term.</dd>");
         });
+
+
+        it("does not wrap content in sections by default", () => {
+            const renderer = createRendererForTests();
+
+            const html = renderer.render("# A\n\ntext a\n");
+
+            expect(html).not.toContain("<section");
+        });
+
+
+        it("nests sections by heading depth when section indentation is enabled", () => {
+            const renderer = createRendererForTests(true);
+
+            const html = renderer.render("# A\n\ntext a\n\n## B\n\ntext b\n");
+
+            expect(html).toContain("<section class=\"md-section md-section-h1\">");
+            expect(html).toContain("<section class=\"md-section md-section-h2\">");
+            expect((html.match(/<section /g) ?? []).length).toBe(2);
+            expect((html.match(/<\/section>/g) ?? []).length).toBe(2);
+            // The h2 section opens inside the still-open h1 section (nesting).
+            expect(html.indexOf("md-section-h1")).toBeLessThan(html.indexOf("md-section-h2"));
+            expect(html.indexOf("md-section-h2")).toBeLessThan(html.indexOf("</section>"));
+        });
+
+
+        it("keeps same-level headings as sibling sections, not nested", () => {
+            const renderer = createRendererForTests(true);
+
+            const html = renderer.render("## A\n\na\n\n## B\n\nb\n");
+
+            expect((html.match(/<section /g) ?? []).length).toBe(2);
+            // The first section closes before the second one opens.
+            expect(html.indexOf("</section>")).toBeLessThan(html.lastIndexOf("md-section-h2"));
+        });
     });
 
 
@@ -381,6 +416,24 @@ describe("md-preview helpers", () => {
             expect(css).toContain("--vscode-textPreformat-foreground");
             expect(css).toContain("--vscode-textCodeBlock-background");
             expect(css).toContain("--vscode-textBlockQuote-border");
+        });
+
+
+        it("omits section-indent rules by default and is unchanged from the two-arg form", () => {
+            const css = composeStylesheet("/* markdown */", "/* highlight */");
+            const cssExplicitOff = composeStylesheet("/* markdown */", "/* highlight */", false);
+
+            expect(css).not.toContain(".md-section");
+            expect(cssExplicitOff).toBe(css);
+        });
+
+
+        it("appends section-indent rules when section indentation is enabled", () => {
+            const css = composeStylesheet("/* markdown */", "/* highlight */", true);
+
+            expect(css).toContain(".markdown-body .md-section {");
+            expect(css).toContain("padding-inline-start: 1.5em;");
+            expect(css).toContain(".markdown-body > .md-section {");
         });
     });
 

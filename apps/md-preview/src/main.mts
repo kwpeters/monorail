@@ -37,6 +37,7 @@ export interface IParsedArgs {
     outputDir:       string | undefined;
     timeoutMs:       number | undefined;
     watch:           boolean;
+    indentSections:  boolean;
     positionalPaths: Array<string>;
 }
 
@@ -167,8 +168,13 @@ async function mainImpl(): Promise<number> {
     registerSignalHandlers(runtimeState);
 
     try {
-        const renderResult = await renderFilesToTemp(validation.inputs, outputDirectory.outputDir, parsedArgs.watch);
-        await writeSharedStylesheet(outputDirectory.outputDir);
+        const renderResult = await renderFilesToTemp(
+            validation.inputs,
+            outputDirectory.outputDir,
+            parsedArgs.watch,
+            parsedArgs.indentSections
+        );
+        await writeSharedStylesheet(outputDirectory.outputDir, parsedArgs.indentSections);
 
         console.log(`Accepted files: ${validation.inputs.length}`);
         console.log(`Rendered files: ${renderResult.renderedCount}`);
@@ -207,7 +213,7 @@ async function mainImpl(): Promise<number> {
         }
 
         if (parsedArgs.watch) {
-            startWatching(validation.inputs, runtimeState);
+            startWatching(validation.inputs, runtimeState, parsedArgs.indentSections);
             console.log("Watching source files for changes. Refresh the browser after each re-render.");
         }
 
@@ -297,7 +303,7 @@ function safeGetExternalIpv4Address(): string | undefined {
 async function parseArgs(): Promise<IParsedArgs> {
     const argv = await yargs(hideBin(process.argv))
     .scriptName("md-preview")
-    .usage("$0 [--no-open] [--timeoutMs <n>] [--outputDir <path>] [--watch] [files...]")
+    .usage("$0 [--no-open] [--timeoutMs <n>] [--outputDir <path>] [--watch] [--indent-sections] [files...]")
     .option("open", {
         type:     "boolean",
         default:  true,
@@ -316,6 +322,11 @@ async function parseArgs(): Promise<IParsedArgs> {
         default:  false,
         describe: "Watch the source markdown files and re-render on change (interactive mode only)"
     })
+    .option("indent-sections", {
+        type:     "boolean",
+        default:  false,
+        describe: "Indent each section's heading and body proportional to its heading depth"
+    })
     .help()
     .strictOptions()
     .argv;
@@ -326,6 +337,7 @@ async function parseArgs(): Promise<IParsedArgs> {
         outputDir:       argv.outputDir,
         timeoutMs:       argv.timeoutMs,
         watch:           argv.watch,
+        indentSections:  argv.indentSections,
         positionalPaths: positionals
     };
 }
@@ -545,9 +557,10 @@ interface IRenderResult {
 async function renderFilesToTemp(
     inputs: Array<IValidatedInput>,
     tempDir: string,
-    liveReload = false
+    liveReload = false,
+    indentSections = false
 ): Promise<IRenderResult> {
-    const renderer = createRenderer();
+    const renderer = createRenderer(indentSections);
 
     for (const input of inputs) {
         const sourceText = await fs.readFile(input.absolutePath, "utf8");
@@ -565,9 +578,10 @@ async function renderFilesToTemp(
 export async function renderFilesToTempForTests(
     inputs: Array<IValidatedInput>,
     tempDir: string,
-    liveReload = false
+    liveReload = false,
+    indentSections = false
 ): Promise<number> {
-    const result = await renderFilesToTemp(inputs, tempDir, liveReload);
+    const result = await renderFilesToTemp(inputs, tempDir, liveReload, indentSections);
     return result.renderedCount;
 }
 
@@ -613,7 +627,11 @@ export function findSourcesInsideOutputDir(
 }
 
 
-function startWatching(inputs: Array<IValidatedInput>, runtimeState: IRuntimeState): void {
+function startWatching(
+    inputs: Array<IValidatedInput>,
+    runtimeState: IRuntimeState,
+    indentSections: boolean
+): void {
     const watchedFiles = new Set(inputs.map((input) => input.absolutePath));
     const watchedDirs = new Set(inputs.map((input) => path.dirname(input.absolutePath)));
 
@@ -623,7 +641,7 @@ function startWatching(inputs: Array<IValidatedInput>, runtimeState: IRuntimeSta
 
     const rerender = async (): Promise<void> => {
         try {
-            const result = await renderFilesToTemp(inputs, runtimeState.outputDir, true);
+            const result = await renderFilesToTemp(inputs, runtimeState.outputDir, true, indentSections);
             console.log(`Re-rendered files: ${result.renderedCount}`);
             // Tell every open browser tab to reload the freshly rendered output.
             notifyReloadClients(runtimeState.reloadClients);
@@ -697,7 +715,7 @@ export function notifyReloadClientsForTests(reloadClients: Set<http.ServerRespon
 }
 
 
-function createRenderer(): markdownIt {
+function createRenderer(indentSections = false): markdownIt {
     const md = new markdownIt({
         html:        true,
         linkify:     true,
@@ -716,12 +734,65 @@ function createRenderer(): markdownIt {
     md.use(markdownItAnchor);
     md.use(markdownItDeflist);
 
+    if (indentSections) {
+        md.use(sectionWrappingPlugin);
+    }
+
     return md;
 }
 
 
-export function createRendererForTests(): markdownIt {
-    return createRenderer();
+export function createRendererForTests(indentSections = false): markdownIt {
+    return createRenderer(indentSections);
+}
+
+
+/**
+ * A markdown-it plugin that wraps each heading together with the content that
+ * follows it in a `<section>` element, nesting sections according to heading
+ * depth (an `h2` section nests inside its enclosing `h1` section, and so on).
+ * The resulting DOM mirrors the document's outline, so CSS can indent each
+ * level by its depth. Content preceding the first heading is left unwrapped.
+ *
+ * Each section is tagged with `class="md-section md-section-h<level>"`.
+ *
+ * @param md - The markdown-it instance to extend.
+ */
+function sectionWrappingPlugin(md: markdownIt): void {
+    md.core.ruler.push("wrap_header_sections", (state) => {
+        const result: Array<typeof state.tokens[number]> = [];
+        const openLevels: Array<number> = [];
+
+        const closeSection = (): void => {
+            const close = new state.Token("section_close", "section", -1);
+            close.block = true;
+            result.push(close);
+            openLevels.pop();
+        };
+
+        for (const token of state.tokens) {
+            if (token.type === "heading_open") {
+                const level = Number(token.tag.slice(1));
+                while (openLevels.length > 0 && openLevels[openLevels.length - 1]! >= level) {
+                    closeSection();
+                }
+
+                const open = new state.Token("section_open", "section", 1);
+                open.block = true;
+                open.attrSet("class", `md-section md-section-h${level}`);
+                result.push(open);
+                openLevels.push(level);
+            }
+
+            result.push(token);
+        }
+
+        while (openLevels.length > 0) {
+            closeSection();
+        }
+
+        state.tokens = result;
+    });
 }
 
 
@@ -781,7 +852,7 @@ function liveReloadClientScript(): string {
 }
 
 
-async function writeSharedStylesheet(tempDir: string): Promise<void> {
+async function writeSharedStylesheet(tempDir: string, indentSections = false): Promise<void> {
     const vscodeCssPath = fileURLToPath(new URL("../assets/vscode-markdown.css", import.meta.url));
     const vscodeHighlightCssPath = fileURLToPath(new URL("../assets/vscode-highlight.css", import.meta.url));
 
@@ -802,13 +873,17 @@ async function writeSharedStylesheet(tempDir: string): Promise<void> {
         // Keep rendering functional even if the theme file is not found.
     }
 
-    cssText = composeStylesheet(cssText, highlightCssText);
+    cssText = composeStylesheet(cssText, highlightCssText, indentSections);
 
     await fs.writeFile(path.join(tempDir, "md-preview.css"), cssText, "utf8");
 }
 
 
-export function composeStylesheet(vscodeCssText: string, highlightCssText: string): string {
+export function composeStylesheet(
+    vscodeCssText: string,
+    highlightCssText: string,
+    indentSections = false
+): string {
     const inlineCodeFallbackCss = [
         "",
         ":root {",
@@ -837,7 +912,34 @@ export function composeStylesheet(vscodeCssText: string, highlightCssText: strin
         ""
     ].join("\n");
 
-    return `${vscodeCssText}\n${highlightCssText}\n${inlineCodeFallbackCss}`;
+    const base = `${vscodeCssText}\n${highlightCssText}\n${inlineCodeFallbackCss}`;
+    if (!indentSections) {
+        return base;
+    }
+
+    return `${base}\n${sectionIndentCss()}`;
+}
+
+
+/**
+ * CSS that indents each nested `<section>` (produced by
+ * {@link sectionWrappingPlugin}) relative to its parent. Because sections nest
+ * by heading depth, the left padding accumulates with depth, stepping each
+ * deeper heading and its body further right. Top-level sections stay flush.
+ *
+ * @return The section-indentation stylesheet fragment.
+ */
+function sectionIndentCss(): string {
+    return [
+        "",
+        ".markdown-body .md-section {",
+        "  padding-inline-start: 1.5em;",
+        "}",
+        ".markdown-body > .md-section {",
+        "  padding-inline-start: 0;",
+        "}",
+        ""
+    ].join("\n");
 }
 
 
