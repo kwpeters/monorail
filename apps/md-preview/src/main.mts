@@ -33,12 +33,13 @@ export const LIVE_RELOAD_PATH = "/__md-preview-reload__";
 
 
 export interface IParsedArgs {
-    noOpen:          boolean;
-    outputDir:       string | undefined;
-    timeoutMs:       number | undefined;
-    watch:           boolean;
-    indentSections:  boolean;
-    positionalPaths: Array<string>;
+    noOpen:              boolean;
+    outputDir:           string | undefined;
+    timeoutMs:           number | undefined;
+    watch:               boolean;
+    indentSections:      boolean;
+    collapsibleSections: boolean;
+    positionalPaths:     Array<string>;
 }
 
 
@@ -172,9 +173,14 @@ async function mainImpl(): Promise<number> {
             validation.inputs,
             outputDirectory.outputDir,
             parsedArgs.watch,
-            parsedArgs.indentSections
+            parsedArgs.indentSections,
+            parsedArgs.collapsibleSections
         );
-        await writeSharedStylesheet(outputDirectory.outputDir, parsedArgs.indentSections);
+        await writeSharedStylesheet(
+            outputDirectory.outputDir,
+            parsedArgs.indentSections,
+            parsedArgs.collapsibleSections
+        );
 
         console.log(`Accepted files: ${validation.inputs.length}`);
         console.log(`Rendered files: ${renderResult.renderedCount}`);
@@ -213,7 +219,7 @@ async function mainImpl(): Promise<number> {
         }
 
         if (parsedArgs.watch) {
-            startWatching(validation.inputs, runtimeState, parsedArgs.indentSections);
+            startWatching(validation.inputs, runtimeState, parsedArgs.indentSections, parsedArgs.collapsibleSections);
             console.log("Watching source files for changes. Refresh the browser after each re-render.");
         }
 
@@ -303,7 +309,7 @@ function safeGetExternalIpv4Address(): string | undefined {
 async function parseArgs(): Promise<IParsedArgs> {
     const argv = await yargs(hideBin(process.argv))
     .scriptName("md-preview")
-    .usage("$0 [--no-open] [--timeoutMs <n>] [--outputDir <path>] [--watch] [--indent-sections] [files...]")
+    .usage("$0 [--no-open] [--timeoutMs <n>] [--outputDir <path>] [--watch] [--indent-sections] [--collapsible-sections] [files...]")
     .option("open", {
         type:     "boolean",
         default:  true,
@@ -327,18 +333,24 @@ async function parseArgs(): Promise<IParsedArgs> {
         default:  false,
         describe: "Indent each section's body one step deeper than its heading, nested by heading depth"
     })
+    .option("collapsible-sections", {
+        type:     "boolean",
+        default:  false,
+        describe: "Make each heading a click-to-toggle that shows or hides the section body"
+    })
     .help()
     .strictOptions()
     .argv;
 
     const positionals = argv._.map((cur) => String(cur));
     return {
-        noOpen:          !argv.open,
-        outputDir:       argv.outputDir,
-        timeoutMs:       argv.timeoutMs,
-        watch:           argv.watch,
-        indentSections:  argv.indentSections,
-        positionalPaths: positionals
+        noOpen:              !argv.open,
+        outputDir:           argv.outputDir,
+        timeoutMs:           argv.timeoutMs,
+        watch:               argv.watch,
+        indentSections:      argv.indentSections,
+        collapsibleSections: argv.collapsibleSections,
+        positionalPaths:     positionals
     };
 }
 
@@ -558,15 +570,16 @@ async function renderFilesToTemp(
     inputs: Array<IValidatedInput>,
     tempDir: string,
     liveReload = false,
-    indentSections = false
+    indentSections = false,
+    collapsibleSections = false
 ): Promise<IRenderResult> {
-    const renderer = createRenderer(indentSections);
+    const renderer = createRenderer(indentSections, collapsibleSections);
 
     for (const input of inputs) {
         const sourceText = await fs.readFile(input.absolutePath, "utf8");
         const rewrittenText = await rewriteAndCopyAssets(sourceText, input.absolutePath, tempDir);
         const rendered = renderer.render(rewrittenText);
-        const document = wrapHtmlDocument(input.baseName, rendered, liveReload);
+        const document = wrapHtmlDocument(input.baseName, rendered, liveReload, collapsibleSections);
         const outPath = getOutputHtmlPath(tempDir, input.baseName);
         await fs.writeFile(outPath, document, "utf8");
     }
@@ -579,9 +592,10 @@ export async function renderFilesToTempForTests(
     inputs: Array<IValidatedInput>,
     tempDir: string,
     liveReload = false,
-    indentSections = false
+    indentSections = false,
+    collapsibleSections = false
 ): Promise<number> {
-    const result = await renderFilesToTemp(inputs, tempDir, liveReload, indentSections);
+    const result = await renderFilesToTemp(inputs, tempDir, liveReload, indentSections, collapsibleSections);
     return result.renderedCount;
 }
 
@@ -630,7 +644,8 @@ export function findSourcesInsideOutputDir(
 function startWatching(
     inputs: Array<IValidatedInput>,
     runtimeState: IRuntimeState,
-    indentSections: boolean
+    indentSections: boolean,
+    collapsibleSections: boolean
 ): void {
     const watchedFiles = new Set(inputs.map((input) => input.absolutePath));
     const watchedDirs = new Set(inputs.map((input) => path.dirname(input.absolutePath)));
@@ -641,7 +656,9 @@ function startWatching(
 
     const rerender = async (): Promise<void> => {
         try {
-            const result = await renderFilesToTemp(inputs, runtimeState.outputDir, true, indentSections);
+            const result = await renderFilesToTemp(
+                inputs, runtimeState.outputDir, true, indentSections, collapsibleSections
+            );
             console.log(`Re-rendered files: ${result.renderedCount}`);
             // Tell every open browser tab to reload the freshly rendered output.
             notifyReloadClients(runtimeState.reloadClients);
@@ -715,7 +732,7 @@ export function notifyReloadClientsForTests(reloadClients: Set<http.ServerRespon
 }
 
 
-function createRenderer(indentSections = false): markdownIt {
+function createRenderer(indentSections = false, collapsibleSections = false): markdownIt {
     const md = new markdownIt({
         html:        true,
         linkify:     true,
@@ -734,7 +751,10 @@ function createRenderer(indentSections = false): markdownIt {
     md.use(markdownItAnchor);
     md.use(markdownItDeflist);
 
-    if (indentSections) {
+    if (collapsibleSections) {
+        md.use(jsCollapsibleSectionPlugin);
+    }
+    else if (indentSections) {
         md.use(sectionWrappingPlugin);
     }
 
@@ -742,8 +762,8 @@ function createRenderer(indentSections = false): markdownIt {
 }
 
 
-export function createRendererForTests(indentSections = false): markdownIt {
-    return createRenderer(indentSections);
+export function createRendererForTests(indentSections = false, collapsibleSections = false): markdownIt {
+    return createRenderer(indentSections, collapsibleSections);
 }
 
 
@@ -796,7 +816,82 @@ function sectionWrappingPlugin(md: markdownIt): void {
 }
 
 
-function wrapHtmlDocument(title: string, bodyHtml: string, liveReload = false): string {
+/**
+ * markdown-it plugin that wraps each heading and its following content in a
+ * `<section class="md-section md-section-h<level> md-section--collapsed">`,
+ * with content after the heading placed in a `<div class="md-section-body">`.
+ * A `<script>` injected by {@link collapsibleToggleScript} toggles the
+ * `md-section--collapsed` class on click, showing or hiding the body.
+ *
+ * Nesting works identically to {@link sectionWrappingPlugin}: a deeper heading
+ * opens a child section inside the current body; a same-or-shallower heading
+ * closes the current section first.
+ *
+ * @param md - The markdown-it instance to extend.
+ */
+function jsCollapsibleSectionPlugin(md: markdownIt): void {
+    md.core.ruler.push("wrap_js_collapsible_sections", (state) => {
+        const result: Array<typeof state.tokens[number]> = [];
+        const openLevels: Array<number> = [];
+        let pendingBodyOpen = false;
+
+        const closeTopSection = (): void => {
+            const bodyClose = new state.Token("div_close", "div", -1);
+            bodyClose.block = true;
+            result.push(bodyClose);
+
+            const sectionClose = new state.Token("section_close", "section", -1);
+            sectionClose.block = true;
+            result.push(sectionClose);
+
+            openLevels.pop();
+        };
+
+        for (const token of state.tokens) {
+            if (token.type === "heading_open") {
+                const level = Number(token.tag.slice(1));
+                while (openLevels.length > 0 && openLevels[openLevels.length - 1]! >= level) {
+                    closeTopSection();
+                }
+
+                const sectionOpen = new state.Token("section_open", "section", 1);
+                sectionOpen.block = true;
+                sectionOpen.attrSet("class", `md-section md-section-h${level} md-section--collapsed`);
+                result.push(sectionOpen);
+                openLevels.push(level);
+
+                result.push(token);
+                pendingBodyOpen = true;
+            }
+            else if (token.type === "heading_close" && pendingBodyOpen) {
+                pendingBodyOpen = false;
+                result.push(token);
+
+                const bodyOpen = new state.Token("div_open", "div", 1);
+                bodyOpen.block = true;
+                bodyOpen.attrSet("class", "md-section-body");
+                result.push(bodyOpen);
+            }
+            else {
+                result.push(token);
+            }
+        }
+
+        while (openLevels.length > 0) {
+            closeTopSection();
+        }
+
+        state.tokens = result;
+    });
+}
+
+
+function wrapHtmlDocument(
+    title: string,
+    bodyHtml: string,
+    liveReload = false,
+    collapsibleSections = false
+): string {
     const lines = [
         "<!doctype html>",
         "<html lang=\"en\">",
@@ -816,6 +911,10 @@ function wrapHtmlDocument(title: string, bodyHtml: string, liveReload = false): 
         lines.push(liveReloadClientScript());
     }
 
+    if (collapsibleSections) {
+        lines.push(collapsibleToggleScript());
+    }
+
     lines.push(
         "</body>",
         "</html>",
@@ -826,8 +925,13 @@ function wrapHtmlDocument(title: string, bodyHtml: string, liveReload = false): 
 }
 
 
-export function wrapHtmlDocumentForTests(title: string, bodyHtml: string, liveReload = false): string {
-    return wrapHtmlDocument(title, bodyHtml, liveReload);
+export function wrapHtmlDocumentForTests(
+    title: string,
+    bodyHtml: string,
+    liveReload = false,
+    collapsibleSections = false
+): string {
+    return wrapHtmlDocument(title, bodyHtml, liveReload, collapsibleSections);
 }
 
 
@@ -852,7 +956,26 @@ function liveReloadClientScript(): string {
 }
 
 
-async function writeSharedStylesheet(tempDir: string, indentSections = false): Promise<void> {
+function collapsibleToggleScript(): string {
+    return [
+        "  <script>",
+        "    (function () {",
+        "      document.querySelectorAll('.md-section > :is(h1,h2,h3,h4,h5,h6)').forEach(function (h) {",
+        "        h.addEventListener('click', function () {",
+        "          h.closest('.md-section').classList.toggle('md-section--collapsed');",
+        "        });",
+        "      });",
+        "    })();",
+        "  </script>"
+    ].join("\n");
+}
+
+
+async function writeSharedStylesheet(
+    tempDir: string,
+    indentSections = false,
+    collapsibleSections = false
+): Promise<void> {
     const vscodeCssPath = fileURLToPath(new URL("../assets/vscode-markdown.css", import.meta.url));
     const vscodeHighlightCssPath = fileURLToPath(new URL("../assets/vscode-highlight.css", import.meta.url));
 
@@ -873,7 +996,7 @@ async function writeSharedStylesheet(tempDir: string, indentSections = false): P
         // Keep rendering functional even if the theme file is not found.
     }
 
-    cssText = composeStylesheet(cssText, highlightCssText, indentSections);
+    cssText = composeStylesheet(cssText, highlightCssText, indentSections, collapsibleSections);
 
     await fs.writeFile(path.join(tempDir, "md-preview.css"), cssText, "utf8");
 }
@@ -882,7 +1005,8 @@ async function writeSharedStylesheet(tempDir: string, indentSections = false): P
 export function composeStylesheet(
     vscodeCssText: string,
     highlightCssText: string,
-    indentSections = false
+    indentSections = false,
+    collapsibleSections = false
 ): string {
     const inlineCodeFallbackCss = [
         "",
@@ -912,12 +1036,17 @@ export function composeStylesheet(
         ""
     ].join("\n");
 
-    const base = `${vscodeCssText}\n${highlightCssText}\n${inlineCodeFallbackCss}`;
-    if (!indentSections) {
-        return base;
+    let result = `${vscodeCssText}\n${highlightCssText}\n${inlineCodeFallbackCss}`;
+    if (indentSections && !collapsibleSections) {
+        result = `${result}\n${sectionIndentCss()}`;
     }
-
-    return `${base}\n${sectionIndentCss()}`;
+    if (collapsibleSections) {
+        result = `${result}\n${collapsibleSectionCss()}`;
+        if (indentSections) {
+            result = `${result}\n${sectionIndentCss()}`;
+        }
+    }
+    return result;
 }
 
 
@@ -942,6 +1071,26 @@ function sectionIndentCss(): string {
         "",
         ".markdown-body .md-section > :not(:first-child) {",
         "  margin-inline-start: 1.5em;",
+        "}",
+        ""
+    ].join("\n");
+}
+
+
+function collapsibleSectionCss(): string {
+    return [
+        "",
+        ".md-section--collapsed > .md-section-body {",
+        "  display: none;",
+        "}",
+        ".markdown-body .md-section > h1,",
+        ".markdown-body .md-section > h2,",
+        ".markdown-body .md-section > h3,",
+        ".markdown-body .md-section > h4,",
+        ".markdown-body .md-section > h5,",
+        ".markdown-body .md-section > h6 {",
+        "  cursor: pointer;",
+        "  user-select: none;",
         "}",
         ""
     ].join("\n");
