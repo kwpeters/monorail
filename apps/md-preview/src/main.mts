@@ -732,6 +732,20 @@ export function notifyReloadClientsForTests(reloadClients: Set<http.ServerRespon
 }
 
 
+/**
+ * Slugifies a heading string using the GitHub Flavored Markdown algorithm so
+ * that generated anchor IDs match what editors such as VS Code's
+ * "Markdown All in One" extension produce in their auto-generated TOC links.
+ */
+function gfmSlugify(str: string): string {
+    const lower       = str.toLowerCase();
+    const stripped    = lower.replace(/[^\w\s-]/g, "");
+    const trimmed     = stripped.trim();
+    const hyphenated  = trimmed.replace(/\s+/g, "-");
+    return hyphenated.replace(/-+/g, "-");
+}
+
+
 function createRenderer(indentSections = false, collapsibleSections = false): markdownIt {
     const md = new markdownIt({
         html:        true,
@@ -748,7 +762,7 @@ function createRenderer(indentSections = false, collapsibleSections = false): ma
     md.use(markdownItFootnote);
     md.use(markdownItEmojiFull);
     md.use(markdownItTaskLists, { enabled: true, label: true, labelAfter: true });
-    md.use(markdownItAnchor);
+    md.use(markdownItAnchor, { slugify: gfmSlugify });
     md.use(markdownItDeflist);
 
     if (collapsibleSections) {
