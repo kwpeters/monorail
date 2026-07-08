@@ -856,7 +856,7 @@ function jsCollapsibleSectionPlugin(md: markdownIt): void {
 
                 const sectionOpen = new state.Token("section_open", "section", 1);
                 sectionOpen.block = true;
-                sectionOpen.attrSet("class", `md-section md-section-h${level} md-section--collapsed`);
+                sectionOpen.attrSet("class", `md-section md-section-h${level}`);
                 result.push(sectionOpen);
                 openLevels.push(level);
 
@@ -960,6 +960,27 @@ function collapsibleToggleScript(): string {
     return [
         "  <script>",
         "    (function () {",
+        "      var STORAGE_KEY = 'md-preview-section-states';",
+        "      function getKey(section) {",
+        "        var h = section.querySelector(':scope > :is(h1,h2,h3,h4,h5,h6)');",
+        "        return h ? (h.id || h.textContent.trim()) : null;",
+        "      }",
+        "      var saved = sessionStorage.getItem(STORAGE_KEY);",
+        "      var states = saved ? JSON.parse(saved) : {};",
+        "      document.querySelectorAll('.md-section').forEach(function (section) {",
+        "        var key = getKey(section);",
+        "        if (key && key in states) {",
+        "          section.classList.toggle('md-section--collapsed', states[key]);",
+        "        }",
+        "      });",
+        "      window.addEventListener('beforeunload', function () {",
+        "        var newStates = {};",
+        "        document.querySelectorAll('.md-section').forEach(function (section) {",
+        "          var key = getKey(section);",
+        "          if (key) { newStates[key] = section.classList.contains('md-section--collapsed'); }",
+        "        });",
+        "        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(newStates));",
+        "      });",
         "      document.querySelectorAll('.md-section > :is(h1,h2,h3,h4,h5,h6)').forEach(function (h) {",
         "        h.addEventListener('click', function () {",
         "          h.closest('.md-section').classList.toggle('md-section--collapsed');",
