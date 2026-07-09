@@ -1,6 +1,7 @@
 import { hideBin } from "yargs/helpers";
 import yargs from "yargs/yargs";
 import * as commandPreview from "./commandPreview.mjs";
+import * as commandPrune from "./commandPrune.mjs";
 
 
 export async function main(): Promise<number> {
@@ -8,6 +9,7 @@ export async function main(): Promise<number> {
         await yargs(hideBin(process.argv))
         .scriptName("md-tools")
         .command(commandPreview)
+        .command(commandPrune)
         .demandCommand(1)
         .strict()
         .help()
