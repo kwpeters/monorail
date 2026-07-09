@@ -1,12 +1,12 @@
 {
-    "name": "@repo/md-preview",
+    "name": "@repo/md-tools",
     "version": "0.0.0",
     "private": true,
     "scripts": {
         "dev": "echo 'Add dev script here'",
         "build": "npm run build:ts && npm run build:sea",
         "build:ts": "tsc --build tsconfig.src.json",
-        "build:sea": "tsx ../build-app-assist/src/index.mts cjsToSeaApp --inputCjsFile ./dist/index.cjs --exeBaseName md-preview",
+        "build:sea": "tsx ../build-app-assist/src/index.mts cjsToSeaApp --inputCjsFile ./dist/index.cjs --exeBaseName md-tools",
         "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
         "lint": "eslint .",
         "type-check": "tsc --project tsconfig.json --noEmit",
@@ -14,7 +14,7 @@
         "depcheck": "depcheck"
     },
     "bin": {
-        "md-preview": "./dist/index.cjs"
+        "md-tools": "./dist/index.cjs"
     },
     "dependencies": {
         "@repo/depot-node": "*",

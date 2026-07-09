@@ -22,7 +22,7 @@ import {
     validateAndNormalizeInputs,
     validateRunMode,
     wrapHtmlDocumentForTests
-} from "./main.mjs";
+} from "./commandPreview.mjs";
 
 
 describe("md-preview helpers", () => {
