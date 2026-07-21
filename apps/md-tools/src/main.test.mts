@@ -437,6 +437,15 @@ describe("md-preview helpers", () => {
             expect(css).toContain(".markdown-body .md-section > :not(:first-child) {");
             expect(css).toContain("margin-inline-start: 1.5em;");
         });
+
+
+        it("appends collapsible toolbar and section rules when collapsible sections are enabled", () => {
+            const css = composeStylesheet("/* markdown */", "/* highlight */", false, true);
+
+            expect(css).toContain(".md-preview-toolbar {");
+            expect(css).toContain(".md-preview-toolbar__button {");
+            expect(css).toContain(".md-section--collapsed > .md-section-body {");
+        });
     });
 
 
@@ -622,6 +631,25 @@ describe("md-preview helpers", () => {
             // must yield byte-for-byte the non-watch output.
             const stripped = live.replace(/\n {2}<script>[\s\S]*?<\/script>/, "");
             expect(stripped).toBe(plain);
+        });
+
+
+        it("injects a toolbar and expand/collapse hooks when collapsible sections are enabled", () => {
+            const html = wrapHtmlDocumentForTests("Title", "<p>body</p>", false, true);
+
+            expect(html).toContain("role=\"toolbar\"");
+            expect(html).toContain("data-md-preview-expand-all");
+            expect(html).toContain("data-md-preview-collapse-all");
+            expect(html).toContain("function setAllSections(collapsed)");
+        });
+
+
+        it("omits the toolbar when collapsible sections are disabled", () => {
+            const html = wrapHtmlDocumentForTests("Title", "<p>body</p>", false, false);
+
+            expect(html).not.toContain("data-md-preview-expand-all");
+            expect(html).not.toContain("data-md-preview-collapse-all");
+            expect(html).not.toContain("role=\"toolbar\"");
         });
     });
 

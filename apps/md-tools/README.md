@@ -13,6 +13,7 @@ and open the result in your browser.
 - Optionally opens your default browser automatically
 - Uses a temporary output directory by default and cleans it up on shutdown
 - Supports a named output directory that is preserved on shutdown
+- When collapsible sections are enabled, adds a top toolbar with Expand all and Collapse all controls
 
 ## Quick start
 
@@ -46,6 +47,12 @@ Pipe files from another command:
 splat **/*.md | .\bin\md-preview.cmd --timeoutMs 5000 --no-open
 ```
 
+Preview with collapsible sections and global expand/collapse controls:
+
+```powershell
+.\bin\md-tools.cmd preview C:\path\to\file.md --collapsible-sections
+```
+
 ## CLI
 
 ```text
@@ -55,24 +62,24 @@ md-preview [files...] [--no-open] [--timeoutMs <number>] [--outputDir <path>]
 ### Options
 
 - `--no-open`
-	- Do not launch a browser automatically
+  - Do not launch a browser automatically
 - `--timeoutMs <number>`
-	- Auto-shutdown timeout in milliseconds
-	- If provided, timeout takes precedence over keypress shutdown
+  - Auto-shutdown timeout in milliseconds
+  - If provided, timeout takes precedence over keypress shutdown
 - `--outputDir <path>`
-	- Write generated files to a specific directory instead of a temp directory
-	- If the directory exists and is not empty, md-preview prompts to confirm
-	  deleting its contents (interactive mode)
-	- The specified output directory is not deleted on shutdown
+  - Write generated files to a specific directory instead of a temp directory
+  - If the directory exists and is not empty, md-preview prompts to confirm
+    deleting its contents (interactive mode)
+  - The specified output directory is not deleted on shutdown
 
 ## Input rules
 
 - Inputs are merged from positional args and piped stdin
 - Paths are normalized and deduplicated
 - Valid files must:
-	- exist
-	- be files (not directories)
-	- end in `.md` or `.markdown`
+  - exist
+  - be files (not directories)
+  - end in `.md` or `.markdown`
 
 If any input is invalid, md-preview exits with code `1` and lists all invalid
 paths.
@@ -80,10 +87,10 @@ paths.
 ## Runtime behavior
 
 - Interactive mode:
-	- waits for any keypress to stop unless `--timeoutMs` is set
+  - waits for any keypress to stop unless `--timeoutMs` is set
 - Non-interactive mode:
-	- requires `--timeoutMs`
-	- browser launch is forced off
+  - requires `--timeoutMs`
+  - browser launch is forced off
 
 On startup it prints:
 
@@ -137,9 +144,9 @@ npm --workspace @repo/md-preview run depcheck
 ## Troubleshooting
 
 - Browser does not open on Windows
-	- verify default browser settings
-	- run with `--no-open` and open the printed URL manually
+  - verify default browser settings
+  - run with `--no-open` and open the printed URL manually
 - Process does not stop in CI
-	- make sure `--timeoutMs` is provided
+  - make sure `--timeoutMs` is provided
 - Styling looks outdated
-	- run `npm --workspace @repo/md-preview run sync:vscode-css`
+  - run `npm --workspace @repo/md-preview run sync:vscode-css`
