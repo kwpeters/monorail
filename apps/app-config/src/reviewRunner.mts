@@ -73,24 +73,43 @@ export async function runInteractiveReview(config: IReviewConfig): Promise<Resul
     let itemNumber = 1;
 
     for (const mapping of config.mappings) {
-        console.log(`Reviewing item ${itemNumber}/${totalCount}: ${mapping.repoRelativePath}`);
+        const banner = "=".repeat(60);
+        console.log(`\n${banner}\n  Reviewing item ${itemNumber}/${totalCount}: ${mapping.repoRelativePath}\n${banner}`);
 
         try {
-            const status = await determineFileComparison(mapping.repoFile, mapping.deployedFile);
-            if (status === FileComparisonResult.Identical) {
-                console.log("  same: repository and deployed files match; skipping.");
-                itemNumber += 1;
-                continue;
-            }
+            while (true) {
+                const status = await determineFileComparison(mapping.repoFile, mapping.deployedFile);
+                if (status === FileComparisonResult.Identical) {
+                    console.log("  same: repository and deployed files match; skipping.");
+                    break;
+                }
 
-            console.log("  different: repository and deployed files differ.");
-            const action = await promptForReviewAction();
-            if (action === "show-diff") {
-                await showVsCodeDiff(mapping.repoFile, mapping.deployedFile, false, true);
-                console.log("  diff closed: continuing to next mapping.");
-            }
-            else {
-                console.log("  skipped: continuing to next mapping.");
+                const [repoExists, deployedExists] = (await Promise.all([
+                    mapping.repoFile.exists(),
+                    mapping.deployedFile.exists()
+                ])).map((stats) => stats !== undefined);
+                console.log(
+                    `  different:\n` +
+                    `    repo:     ${mapping.repoFile.absPath()} (${repoExists ? "exists" : "missing"})\n` +
+                    `    deployed: ${mapping.deployedFile.absPath()} (${deployedExists ? "exists" : "missing"})`
+                );
+                const action = await promptForReviewAction();
+                if (action === "show-diff") {
+                    if (!deployedExists) {
+                        await mapping.deployedFile.write("");
+                    }
+                    await showVsCodeDiff(mapping.repoFile, mapping.deployedFile, false, true);
+                    if (!deployedExists) {
+                        const stats = mapping.deployedFile.existsSync();
+                        if (stats?.size === 0) {
+                            await mapping.deployedFile.delete();
+                        }
+                    }
+                }
+                else {
+                    console.log("  skipped: continuing to next mapping.");
+                    break;
+                }
             }
 
             itemNumber += 1;
