@@ -52,7 +52,7 @@ ensure the following still run successfully:
   test files in the compilation and does not write any output files to disk.
 
   ```powershell
-  npx trubo --ui stream type-check
+  npx turbo --ui stream type-check
   ```
 
 All of the above verifications can be run together using the following command line:

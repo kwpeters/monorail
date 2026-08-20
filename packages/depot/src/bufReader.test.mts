@@ -84,6 +84,55 @@ describe("BufReader", () => {
     });
 
 
+    describe("readTo32BitBoundary()", () => {
+
+        it("does nothing when already aligned", () => {
+            const reader = new BufReader(Uint8Array.from([0xAA, 0xBB, 0xCC, 0xDD]));
+
+            const resPad = reader.readTo32BitBoundary();
+
+            expect(resPad.succeeded).toBeTrue();
+            expect(reader.currentOffset).toEqual(0);
+            expect(reader.remainingBytes).toEqual(4);
+        });
+
+
+        it("consumes three bytes when one byte past a boundary", () => {
+            const reader = new BufReader(Uint8Array.from([0xAA, 0xBB, 0xCC, 0xDD, 0xEE]));
+            reader.readUInt8();
+
+            const resPad = reader.readTo32BitBoundary();
+
+            expect(resPad.succeeded).toBeTrue();
+            expect(reader.currentOffset).toEqual(4);
+            expect(reader.remainingBytes).toEqual(1);
+        });
+
+
+        it("consumes one byte when three bytes past a boundary", () => {
+            const reader = new BufReader(Uint8Array.from([0xAA, 0xBB, 0xCC, 0xDD, 0xEE]));
+            reader.readBytes(3);
+
+            const resPad = reader.readTo32BitBoundary();
+
+            expect(resPad.succeeded).toBeTrue();
+            expect(reader.currentOffset).toEqual(4);
+            expect(reader.remainingBytes).toEqual(1);
+        });
+
+
+        it("fails when unaligned and insufficient bytes remain", () => {
+            const reader = new BufReader(Uint8Array.from([0xAA, 0xBB]));
+            reader.readUInt8();
+
+            const resPad = reader.readTo32BitBoundary();
+
+            expect(resPad.failed).toBeTrue();
+        });
+
+    });
+
+
     describe("readUInt8()", () => {
 
         it("reads an unsigned byte", () => {

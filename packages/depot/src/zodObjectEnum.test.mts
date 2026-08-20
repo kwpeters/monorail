@@ -8,7 +8,7 @@ const connectionStateDef = defineObjectEnum({
     open:    2,
     closing: 3
 });
-// eslint-disable-next-line @typescript-eslint/naming-convention
+
 const ConnectionState = connectionStateDef.obj;
 type ConnectionState = ObjectEnumValue<typeof connectionStateDef>;
 type ConnectionStateName = ObjectEnumKey<typeof connectionStateDef>;

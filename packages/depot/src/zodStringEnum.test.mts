@@ -7,7 +7,7 @@ const colorDef = defineStringEnum([
     "green",
     "blue"
 ] as const);
-// eslint-disable-next-line @typescript-eslint/naming-convention
+
 const Color = colorDef.obj;
 type Color = StringEnumValue<typeof colorDef>;
 

@@ -175,6 +175,19 @@ export class BufBuilder {
 
 
     /**
+     * Appends zero-valued pad bytes until the length is a multiple of 4 bytes
+     * (a 32-bit / UDINT boundary).  At most three pad bytes are appended; if the
+     * length is already aligned, nothing is appended.
+     */
+    public padTo32BitBoundary(): this {
+        while (this.length % 4 !== 0) {
+            this.appendUInt8(0x00);
+        }
+        return this;
+    }
+
+
+    /**
      * Returns the contents of this builder as an ArrayBuffer.
      */
     public toArrayBuffer(): ArrayBuffer {

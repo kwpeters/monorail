@@ -213,3 +213,26 @@ export async function promptForFileWithChoices(
 
     return selectedFile.value;
 }
+
+
+/**
+ * Suspends execution until the user presses any key.  When stdin is a TTY the
+ * terminal is placed in raw mode so no Enter key is required; the first byte
+ * received resolves the promise.  When stdin is not a TTY (piped input) the
+ * function still waits for any data without attempting to set raw mode.
+ */
+export function waitForKeypress(): Promise<void> {
+    return new Promise<void>((resolve) => {
+        if (process.stdin.isTTY) {
+            process.stdin.setRawMode(true);
+        }
+        process.stdin.resume();
+        process.stdin.once("data", () => {
+            if (process.stdin.isTTY) {
+                process.stdin.setRawMode(false);
+            }
+            process.stdin.pause();
+            resolve();
+        });
+    });
+}

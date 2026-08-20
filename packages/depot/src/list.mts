@@ -295,7 +295,7 @@ export class List<TValue> implements Iterable<TValue> {
      * cycle starts; otherwise, returns none.
      * @returns An Option containing an iterator to the node where the cycle
      * starts, or none if no cycle exists.
-     * @note The returned iterator is valid only if the list remains unmodified
+    * @remarks The returned iterator is valid only if the list remains unmodified
      * after detection.
      */
     public findCycleStart(): Option<Iterator<TValue>> {

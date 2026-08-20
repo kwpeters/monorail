@@ -94,6 +94,22 @@ export class BufReader {
 
 
     /**
+     * Advances the cursor to the next 32-bit boundary.
+     *
+     * If the cursor is already aligned, no bytes are consumed. Otherwise, one
+     * to three pad bytes are consumed.
+     */
+    public readTo32BitBoundary(): Result<void, string> {
+        const remainder = this._currentOffset % 4;
+        if (remainder === 0) {
+            return new SucceededResult(undefined);
+        }
+
+        return this.skip(4 - remainder);
+    }
+
+
+    /**
      * Reads a signed 8-bit integer.
      */
     public readInt8(): Result<number, string> {

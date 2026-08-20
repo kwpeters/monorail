@@ -204,6 +204,14 @@
             "types": "./src/numericRange.mts",
             "default": "./dist/numericRange.mjs"
         },
+        "./numericTokenRegex": {
+            "types": "./src/numericTokenRegex.mts",
+            "default": "./dist/numericTokenRegex.mjs"
+        },
+        "./numericSeparators": {
+            "types": "./src/numericSeparators.mts",
+            "default": "./dist/numericSeparators.mjs"
+        },
         "./option": {
             "types": "./src/option.mts",
             "default": "./dist/option.mjs"
@@ -284,6 +292,10 @@
             "types": "./src/schemaUtility.mts",
             "default": "./dist/schemaUtility.mjs"
         },
+        "./signedHexParsing": {
+            "types": "./src/signedHexParsing.mts",
+            "default": "./dist/signedHexParsing.mjs"
+        },
         "./serializeInterfaces": {
             "types": "./src/serializeInterfaces.mts",
             "default": "./dist/serializeInterfaces.mjs"
@@ -347,6 +359,10 @@
         "./typeUtils": {
             "types": "./src/typeUtils.mts",
             "default": "./dist/typeUtils.mjs"
+        },
+        "./unsignedHexParsing": {
+            "types": "./src/unsignedHexParsing.mts",
+            "default": "./dist/unsignedHexParsing.mjs"
         },
         "./url": {
             "types": "./src/url.mts",

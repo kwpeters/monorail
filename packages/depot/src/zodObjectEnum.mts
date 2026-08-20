@@ -89,6 +89,19 @@ export interface ObjectEnumDef<TObj extends ObjectEnumSource> {
      * @returns The string key associated with the value
      */
     keyForValue<TValue extends TObj[keyof TObj]>(value: TValue): ObjectEnumKeyForValue<TObj, TValue>;
+
+    /**
+     * Builds a new record with the same keys as this enumeration, deriving each
+     * value by applying the specified function to the original value.  Useful
+     * for building a parallel lookup (e.g. from raw codes to domain objects)
+     * from a single source of truth.
+     *
+     * @param fn - Maps an enumeration value (and its key) to a derived value
+     * @returns A record with this enumeration's keys and the derived values
+     */
+    mapValues<TOut>(
+        fn: (value: TObj[keyof TObj], key: keyof TObj & string) => TOut
+    ): Readonly<Record<keyof TObj & string, TOut>>;
 }
 
 
@@ -174,6 +187,15 @@ export function defineObjectEnum<const TObj extends ObjectEnumSource>(obj: TObj)
         },
         keyForValue<TValue extends Value>(value: TValue): ObjectEnumKeyForValue<TObj, TValue> {
             return valueToKey.get(value)! as ObjectEnumKeyForValue<TObj, TValue>;
+        },
+        mapValues<TOut>(
+            fn: (value: Value, key: Key) => TOut
+        ): Readonly<Record<Key, TOut>> {
+            const result = {} as Record<Key, TOut>;
+            for (const key of keys) {
+                result[key] = fn(obj[key], key);
+            }
+            return result;
         }
     };
 }

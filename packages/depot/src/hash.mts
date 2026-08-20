@@ -77,8 +77,11 @@ export function hashSync(
     const encoder = new TextEncoder();
     const strBuf = encoder.encode(str);
     const hashUInt8Arr = nacl.hash(strBuf);
-    const hashBuf = Buffer.from(hashUInt8Arr);
-    const hashStr = hashBuf.toString(encoding);
+    if (encoding === "base64") {
+        const binary = String.fromCharCode(...hashUInt8Arr);
+        return btoa(binary) as HashString;
+    }
+    const hashStr = Array.from(hashUInt8Arr).map((b) => b.toString(16).padStart(2, "0")).join("");
     return hashStr as HashString;
 }
 

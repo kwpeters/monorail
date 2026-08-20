@@ -71,6 +71,7 @@ export function getJsConfig(browserGlobals: boolean, nodeGlobals: boolean): Conf
                 ],
                 "@stylistic/comma-spacing": "error",
                 "@stylistic/function-call-spacing": ["error"],
+
                 "@stylistic/key-spacing": [
                     "error",
                     {
@@ -85,6 +86,7 @@ export function getJsConfig(browserGlobals: boolean, nodeGlobals: boolean): Conf
                         }
                     }
                 ],
+                "@stylistic/implicit-arrow-linebreak": ["error", "beside"],
                 "@stylistic/keyword-spacing": [
                     "error",
                     {
@@ -194,10 +196,11 @@ export function getJsConfig(browserGlobals: boolean, nodeGlobals: boolean): Conf
                     "getBeforeSet"
                 ],
                 "guard-for-in": "error",
-                "implicit-arrow-linebreak": [
-                    "error",
-                    "beside"
-                ],
+                // The core "implicit-arrow-linebreak" rule is deprecated in
+                // ESLint in favor of the @stylistic equivalent, so the core
+                // rule is disabled and the @stylistic version is used instead.
+                // See https://eslint.org/docs/latest/rules/implicit-arrow-linebreak
+                "implicit-arrow-linebreak": "off",
                 "linebreak-style": "off",
                 "indent": ["off"],
                 "@stylistic/indent": [
@@ -522,7 +525,8 @@ export function getTsConfig(projDir: string): ConfigWithExtendsArray {
                         "trailingUnderscore": "allow",
                         "format": [
                             "camelCase",
-                            "UPPER_CASE"
+                            "UPPER_CASE",
+                            "PascalCase"
                         ]
                     },
                     {
@@ -716,7 +720,8 @@ export function getTsConfig(projDir: string): ConfigWithExtendsArray {
                         "trailingUnderscore": "allow",
                         "format": [
                             "camelCase",
-                            "UPPER_CASE"
+                            "UPPER_CASE",
+                            "PascalCase"
                         ]
                     },
                     {

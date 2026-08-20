@@ -194,3 +194,36 @@ export function fromNullable<T>(nullableArr: T[] | null | undefined): T[] {
     }
     return nullableArr;
 }
+
+
+/**
+ * Finds items that occur more than once within _items_, treating two items as
+ * the same when they produce equal keys.  Runs in O(n) by hashing each item's
+ * key.
+ *
+ * @param items - The items to inspect.
+ * @param keyFn - Projects each item to a primitive key that defines equality.
+ * For example, pass (s) => s.toLowerCase() to find duplicate strings
+ * case-insensitively.
+ * @returns The duplicated items, using each one's first-seen representative and
+ * reporting each duplicate only once.  Empty when all items are unique.
+ */
+export function findDuplicates<T>(
+    items: ReadonlyArray<T>,
+    keyFn: (item: T) => unknown
+): Array<T> {
+    const firstSeen = new Map<unknown, T>();
+    const duplicates = new Map<unknown, T>();
+
+    for (const item of items) {
+        const key = keyFn(item);
+        if (!firstSeen.has(key)) {
+            firstSeen.set(key, item);
+        }
+        else {
+            duplicates.set(key, firstSeen.get(key)!);
+        }
+    }
+
+    return Array.from(duplicates.values());
+}

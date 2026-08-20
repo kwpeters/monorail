@@ -182,6 +182,28 @@ export class DirectedGraph<TVertex, TEdge> {
     public depthFirstSearch(): IDfsResult<TVertex> {
         return dfs(this._adjMap);
     }
+
+
+    /**
+     * Finds the vertices that a cycle passes back through.  A directed graph is
+     * acyclic if and only if a depth-first search discovers no back edges (an
+     * edge to an ancestor in the depth-first forest, including self-loops), so
+     * the returned set is empty exactly when this graph contains no cycles.
+     * @returns The ancestor endpoint of every back edge - i.e. each vertex a
+     * cycle re-enters.  Empty when this graph is acyclic.
+     */
+    public findCycleVertices(): Set<TVertex> {
+        const dfsResult = dfs(this._adjMap);
+        const cycleVertices = new Set<TVertex>();
+        for (const adjList of dfsResult.edgeClassification.values()) {
+            for (const adjInfo of adjList) {
+                if (adjInfo.edgeAttr === EdgeClassification.Back) {
+                    cycleVertices.add(adjInfo.toVertex);
+                }
+            }
+        }
+        return cycleVertices;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -1,6 +1,25 @@
 import { DirectedGraph, EdgeClassification, type IEdge } from "./directedGraph.mjs";
 
 
+/**
+ * Creates the vertices and edges for the following directed graph.  It is
+ * acyclic.
+ *
+ * ```
+ * s ──▶ r ──▶ v
+ * │
+ * ▼
+ * w ──▶ t ──▶ u
+ * │     ▲     │
+ * ▼     │     │
+ * x ────┘     │
+ * │           │
+ * ▼           │
+ * y ◀─────────┘
+ * ```
+ *
+ * @returns A tuple containing the graph's vertices and edges.
+ */
 function getGraph1(): [Set<string>, Array<IEdge<string, string>>] {
     const vertices = new Set(["r", "s", "t", "u", "v", "w", "x", "y"]);
     const edges = [
@@ -18,6 +37,23 @@ function getGraph1(): [Set<string>, Array<IEdge<string, string>>] {
 }
 
 
+/**
+ * Creates the vertices and edges for the following directed graph.  It contains
+ * a cycle (v → y → x → v) and a self-loop (z → z).
+ *
+ * ```
+ *             w ──▶ z ──┐
+ *             │     ▲   │
+ *             │     └───┘
+ *             ▼
+ * u ──▶ v ──▶ y
+ * │     ▲     │
+ * │     │     │
+ * └───▶ x ◀───┘
+ * ```
+ *
+ * @returns A tuple containing the graph's vertices and edges.
+ */
 function getGraph2(): [Set<string>, Array<IEdge<string, string>>] {
     const vertices = new Set<string>(["u", "v", "w", "x", "y", "z"]);
     const edges: Array<IEdge<string, string>> = [
@@ -161,6 +197,23 @@ describe("DirectedGraph()", () => {
                     ["y", [{toVertex: "x", edgeAttr: EdgeClassification.Tree}]],
                     ["z", [{toVertex: "z", edgeAttr: EdgeClassification.Back}]]
                 ]));
+            });
+        });
+
+
+        describe("findCycleVertices()", () => {
+
+            it("returns an empty set for an acyclic graph", () => {
+                const digraph = DirectedGraph.create(...getGraph1()).value!;
+                expect(digraph.findCycleVertices()).toEqual(new Set<string>());
+            });
+
+
+            it("returns the ancestor endpoint of every back edge for a cyclic graph", () => {
+                // getGraph2 contains the back edges x -> v and z -> z (a
+                // self-loop), so the cycles re-enter vertices "v" and "z".
+                const digraph = DirectedGraph.create(...getGraph2()).value!;
+                expect(digraph.findCycleVertices()).toEqual(new Set(["v", "z"]));
             });
         });
     });

@@ -438,6 +438,83 @@ describe("BufBuilder", () => {
     });
 
 
+    describe("padTo32BitBoundary()", () => {
+
+        it("appends three zero bytes when one byte past a boundary", () => {
+            const bb = new BufBuilder();
+            bb.appendUInt8(0x11);
+
+            bb.padTo32BitBoundary();
+
+            const bytes = new Uint8Array(bb.toArrayBuffer());
+            expect(bytes.length).toEqual(4);
+            expect(bytes[0]).toEqual(0x11);
+            expect(bytes[1]).toEqual(0x00);
+            expect(bytes[2]).toEqual(0x00);
+            expect(bytes[3]).toEqual(0x00);
+        });
+
+
+        it("appends two zero bytes when two bytes past a boundary", () => {
+            const bb = new BufBuilder();
+            bb.appendUInt16(0x1122);
+
+            bb.padTo32BitBoundary();
+
+            expect(bb.length).toEqual(4);
+        });
+
+
+        it("appends one zero byte when three bytes past a boundary", () => {
+            const bb = new BufBuilder();
+            bb.appendBytes(Uint8Array.from([0x11, 0x22, 0x33]));
+
+            bb.padTo32BitBoundary();
+
+            expect(bb.length).toEqual(4);
+        });
+
+
+        it("does nothing when the length is already a multiple of 4", () => {
+            const bb = new BufBuilder();
+            bb.appendUInt32(0x11223344);
+
+            bb.padTo32BitBoundary();
+
+            expect(bb.length).toEqual(4);
+        });
+
+
+        it("does nothing when the builder is empty", () => {
+            const bb = new BufBuilder();
+
+            bb.padTo32BitBoundary();
+
+            expect(bb.length).toEqual(0);
+        });
+
+
+        it("is idempotent once aligned", () => {
+            const bb = new BufBuilder();
+            bb.appendUInt8(0x11);
+
+            bb.padTo32BitBoundary();
+            bb.padTo32BitBoundary();
+
+            expect(bb.length).toEqual(4);
+        });
+
+
+        it("returns this for method chaining", () => {
+            const bb = new BufBuilder();
+            const result = bb.padTo32BitBoundary();
+
+            expect(result).toBe(bb);
+        });
+
+    });
+
+
     describe("appendBool()", () => {
 
         it("encodes false as 0x00", () => {

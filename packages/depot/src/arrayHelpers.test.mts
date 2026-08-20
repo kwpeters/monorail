@@ -5,7 +5,8 @@ import {
     atOrDefault,
     lastIndex,
     fromNullable,
-    insertIfWith
+    insertIfWith,
+    findDuplicates
 } from "./arrayHelpers.mjs";
 import { NoneOption, SomeOption, Option } from "./option.mjs";
 
@@ -237,5 +238,31 @@ describe("fromNullable()", () => {
     it("returns the original array for non-nullable input", () => {
         const result = fromNullable([1, 2, 3]);
         expect(result).toEqual([1, 2, 3]);
+    });
+});
+
+
+describe("findDuplicates()", () => {
+
+    it("returns an empty array when all items are unique", () => {
+        expect(findDuplicates(["a", "b", "c"], (s) => s.toLowerCase())).toEqual([]);
+    });
+
+
+    it("uses the supplied key function to decide equality", () => {
+        // Keying on the lowercased string, "Foo" and "foo" are duplicates.
+        expect(findDuplicates(["Foo", "bar", "foo"], (s) => s.toLowerCase())).toEqual(["Foo"]);
+        // Keying on the string itself (case-sensitive), they are distinct.
+        expect(findDuplicates(["Foo", "bar", "foo"], (s) => s)).toEqual([]);
+    });
+
+
+    it("reports each duplicated item only once, using its first-seen representative", () => {
+        expect(findDuplicates(["x", "X", "x"], (s) => s.toLowerCase())).toEqual(["x"]);
+    });
+
+
+    it("works for non-string items via a custom key function", () => {
+        expect(findDuplicates([1, 3, 2], (n) => n % 2)).toEqual([1]);
     });
 });

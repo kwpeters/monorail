@@ -330,7 +330,7 @@ async function resolveSymlinkFileTarget(file: File): Promise<File | undefined> {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
+
 export const DiffDirFileStatus = {
     neitherExist: "neitherExist",
     leftOnly:     "leftOnly",

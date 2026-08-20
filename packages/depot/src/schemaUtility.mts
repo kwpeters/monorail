@@ -6,59 +6,92 @@ import { Option, NoneOption, SomeOption } from "./option.mjs";
 // Integer Data Types
 ////////////////////////////////////////////////////////////////////////////////
 
-// Signed 8-bit integer
+// Signed 8-bit integer bounds
+export const INT8_MIN = Math.pow(-2, 7);        // -128
+export const INT8_MAX = Math.pow(2, 7) - 1;    // 127
+
 export const int8Schema =
     z.number().int()
-    .min(-128)
-    .max(127);
+    .min(INT8_MIN)
+    .max(INT8_MAX);
 
-// Unsigned 8-bit integer
+// Unsigned 8-bit integer bounds
+export const UINT8_MIN = 0x00;
+export const UINT8_MAX = 0xFF;                          // 255
+
 export const uint8Schema =
     z.number().int()
-    .min(0)
-    .max(0xff);                     // 255
+    .min(UINT8_MIN)
+    .max(UINT8_MAX);
 
-// Signed 16-bit integer
+// Signed 16-bit integer bounds
+export const INT16_MIN = Math.pow(-2, 15);      // -32_768
+export const INT16_MAX = Math.pow(2, 15) - 1;   // 32_767
+
 export const int16Schema =
     z.number().int()
-    .min(-32768)
-    .max(32767);
+    .min(INT16_MIN)
+    .max(INT16_MAX);
 
-// Unsigned 16–bit integer
+// Unsigned 16–bit integer bounds
+export const UINT16_MIN = 0x00;
+export const UINT16_MAX = 0xFF_FF;                      // 65_535
+
 export const uint16Schema =
     z.number().int()
-    .min(0)
-    .max(0xffff);                   // 65_535
+    .min(UINT16_MIN)
+    .max(UINT16_MAX);
 
-// Signed 32-bit integer
+// Signed 32-bit integer bounds
+export const INT32_MIN = Math.pow(-2, 31);           // -2_147_483_648
+export const INT32_MAX = Math.pow(2, 31) - 1;       //  2_147_483_647
+
 export const int32Schema =
     z.number().int()
-    .min(Math.pow(-2, 31))           // -2_147_483_648
-    .max(Math.pow(2, 31) - 1);       //  2_147_483_647
+    .min(INT32_MIN)
+    .max(INT32_MAX);
 
-// Unsigned 32-bit integer
+// Unsigned 32-bit integer bounds
+export const UINT32_MIN = 0x00;
+export const UINT32_MAX = 0xFF_FF_FF_FF;                // 4_294_967_295
+
 export const uint32Schema =
     z.number().int()
-    .min(0)
-    .max(Math.pow(2, 32) - 1);       // 4_294_967_295
+    .min(UINT32_MIN)
+    .max(UINT32_MAX);
 
-// Signed 64-bit integer
+// Signed 64-bit integer bounds
+export const INT64_MIN = -(2n ** 63n);       // -9_223_372_036_854_775_808
+export const INT64_MAX = (2n ** 63n) - 1n;  //  9_223_372_036_854_775_807
+
 export const int64Schema =
     z.bigint()
-    .min(-(2n ** 63n))       // -9_223_372_036_854_775_808
-    .max((2n ** 63n) - 1n);  //  9_223_372_036_854_775_807
+    .min(INT64_MIN)
+    .max(INT64_MAX);
+
+// Unsigned 64-bit integer bounds
+export const UINT64_MIN = 0x00n;
+export const UINT64_MAX = 0xFF_FF_FF_FF_FF_FF_FF_FFn;  // 18_446_744_073_709_551_615
 
 export const uint64Schema =
     z.bigint()
-    .min(0n)
-    .max((2n ** 64n) - 1n);  // 18_446_744_073_709_551_615
+    .min(UINT64_MIN)
+    .max(UINT64_MAX);
+
+// Signed 32-bit floating point bounds
+export const FLOAT32_MIN = -3.4028235e+38;
+export const FLOAT32_MAX = 3.4028235e+38;
 
 export const float32Schema =
-    z.number().min(-3.4028235e+38).max(3.4028235e+38);
+    z.number().min(FLOAT32_MIN).max(FLOAT32_MAX);
+
+// Signed 64-bit floating point bounds
+export const FLOAT64_MIN = -Number.MAX_VALUE;
+export const FLOAT64_MAX = Number.MAX_VALUE;
 
 export const float64Schema =
     // This range will need to be removed when support for INFINITY, etc. are added.
-    z.number().min(-1.7976931348623157e+308).max(1.7976931348623157e+308);
+    z.number().min(FLOAT64_MIN).max(FLOAT64_MAX);
 
 
 ////////////////////////////////////////////////////////////////////////////////

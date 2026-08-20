@@ -18,7 +18,7 @@ import { optionsNoLines } from "./cli-table3.mjs";
  * for (const curVal of Object.values(TreeGlyph)) {...}
  */
 // Allow PascalCase so this object can look like its corresponding type.
-// eslint-disable-next-line @typescript-eslint/naming-convention
+
 export const TreeGlyph = {
     nonLastSibling:    "├─ ",
     lastSibling:       "└─ ",

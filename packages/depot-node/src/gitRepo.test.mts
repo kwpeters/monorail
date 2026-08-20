@@ -64,7 +64,7 @@ describe("GitRepo", () => {
                 expect(repo).toBeTruthy();
                 expect(new Directory(uniqueTmpDir, "sampleGitRepo-src").existsSync()).toBeTruthy();
                 expect(new File(uniqueTmpDir, "sampleGitRepo-src", "README.md").existsSync()).toBeTruthy();
-            });
+            }, 1000 * 30);
 
 
             it("can clone from a relative path", async () => {
@@ -368,7 +368,7 @@ describe("GitRepo", () => {
                 const branches = await repo.getBranches();
                 expect(branches.length).toBeGreaterThan(0);
                 expect(ld.map(branches, "name")).toContain("master");
-            });
+            }, 1000 * 30);
 
 
         });

@@ -460,6 +460,82 @@ export function getBoolAttr(elem: Element, attrName: string): boolean {
 
 
 /**
+ * Serializes an XML Document to a well-formatted UTF-8 string.  Whitespace-only
+ * text nodes are discarded, and each level of nesting is indented.  The output
+ * always carries an `<?xml version="1.0" encoding="UTF-8"?>` declaration so the
+ * result can be written directly to a UTF-8 file.
+ *
+ * @param doc - The document to serialize
+ * @param indent - The string to use for one level of indentation (default: 4 spaces)
+ * @returns The formatted XML string
+ */
+export function formatXmlDoc(doc: Document, indent = "    "): string {
+    const parts: string[] = [];
+    parts.push('<?xml version="1.0" encoding="UTF-8"?>\n');
+    formatXmlElem(doc.documentElement, 0, indent, parts);
+    return parts.join("");
+}
+
+
+function formatXmlElem(elem: Element, depth: number, indent: string, parts: string[]): void {
+    const pfx      = indent.repeat(depth);
+    const attrList = Array.from(elem.attributes).map((a) => ` ${a.name}="${xmlFormatEscapeAttr(a.value)}"`);
+    const attrs    = attrList.join("");
+
+    const children = Array.from(elem.childNodes).filter((n) => {
+        if (n.nodeType === n.TEXT_NODE) { return (n as Text).data.trim().length > 0; }
+        return n.nodeType === n.ELEMENT_NODE     ||
+               n.nodeType === n.CDATA_SECTION_NODE ||
+               n.nodeType === n.COMMENT_NODE;
+    });
+
+    if (children.length === 0) {
+        parts.push(`${pfx}<${elem.tagName}${attrs}/>\n`);
+        return;
+    }
+
+    if (children.length === 1) {
+        const only = children[0]!;
+        if (only.nodeType === only.TEXT_NODE) {
+            parts.push(`${pfx}<${elem.tagName}${attrs}>${xmlFormatEscapeText((only as Text).data.trim())}</${elem.tagName}>\n`);
+            return;
+        }
+        if (only.nodeType === only.CDATA_SECTION_NODE) {
+            parts.push(`${pfx}<${elem.tagName}${attrs}><![CDATA[${(only as CDATASection).data}]]></${elem.tagName}>\n`);
+            return;
+        }
+    }
+
+    parts.push(`${pfx}<${elem.tagName}${attrs}>\n`);
+    for (const child of children) {
+        if (child.nodeType === child.ELEMENT_NODE) {
+            formatXmlElem(child as Element, depth + 1, indent, parts);
+        }
+        else if (child.nodeType === child.TEXT_NODE) {
+            parts.push(`${pfx}${indent}${xmlFormatEscapeText((child as Text).data.trim())}\n`);
+        }
+        else if (child.nodeType === child.CDATA_SECTION_NODE) {
+            parts.push(`${pfx}${indent}<![CDATA[${(child as CDATASection).data}]]>\n`);
+        }
+        else if (child.nodeType === child.COMMENT_NODE) {
+            parts.push(`${pfx}${indent}<!--${(child as Comment).data}-->\n`);
+        }
+    }
+    parts.push(`${pfx}</${elem.tagName}>\n`);
+}
+
+
+function xmlFormatEscapeAttr(v: string): string {
+    return v.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+
+function xmlFormatEscapeText(v: string): string {
+    return v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+
+/**
  * Gets the preceding XML comment for the specified element by traversing
  * backwards through siblings until a Comment node is found.
  * @param element - The element to find the preceding comment for
