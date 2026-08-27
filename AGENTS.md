@@ -1,6 +1,6 @@
-# Custom instructions for GitHub Copilot
+# Custom instructions for Agents
 
-## Copilot Demeanor
+## Agent Demeanor
 
 - Be concise and accurate.
 - Use real, working examples and online documentation.
