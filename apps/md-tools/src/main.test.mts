@@ -3,45 +3,29 @@ import * as os from "node:os";
 import * as path from "node:path";
 import * as http from "node:http";
 import * as net from "node:net";
+import { File } from "@repo/depot-node/file";
+import { Directory } from "@repo/depot-node/directory";
+import { createDebouncer } from "@repo/depot/debounce";
+import { SomeOption, NoneOption } from "@repo/depot/option";
 import {
     buildPreviewUrls,
     composeStylesheet,
-    createDebouncer,
-    createRendererForTests,
-    dedupePaths,
+    createRenderer,
     findSourcesInsideOutputDir,
-    isPathInside,
     getOutputHtmlPath,
     isAbsoluteUrlOrFragment,
     LIVE_RELOAD_PATH,
-    notifyReloadClientsForTests,
-    prepareNamedOutputDirectoryForTests,
-    renderFilesToTempForTests,
-    rewriteAndCopyAssetsForTests,
-    startServerForTests,
+    notifyReloadClients,
+    prepareNamedOutputDirectory,
+    renderFilesToDir,
+    rewriteAndCopyAssets,
+    startServer,
     validateAndNormalizeInputs,
-    validateRunMode,
-    wrapHtmlDocumentForTests
+    wrapHtmlDocument
 } from "./commandPreview.mjs";
 
 
 describe("md-preview helpers", () => {
-
-    describe("dedupePaths()", () => {
-
-        it("deduplicates equivalent paths after normalization", () => {
-            const input = [
-                "./README.md",
-                path.join(".", "README.md"),
-                "./src/../README.md"
-            ];
-
-            const actual = dedupePaths(input);
-            expect(actual.length).toBe(1);
-            expect(actual[0]).toBe("./README.md");
-        });
-    });
-
 
     describe("isAbsoluteUrlOrFragment()", () => {
 
@@ -61,6 +45,7 @@ describe("md-preview helpers", () => {
             expect(isAbsoluteUrlOrFragment("../docs/file.md"))
             .toBeFalse();
         });
+
     });
 
 
@@ -75,11 +60,11 @@ describe("md-preview helpers", () => {
                 await fs.writeFile(aPath, "# a", "utf8");
                 await fs.writeFile(bPath, "# b", "utf8");
 
-                const result = await validateAndNormalizeInputs([aPath, aPath], [bPath]);
+                const result = await validateAndNormalizeInputs([aPath, aPath, bPath]);
 
                 expect(result.succeeded).toBeTrue();
                 if (result.succeeded) {
-                    expect(result.inputs.length).toBe(2);
+                    expect(result.value.length).toBe(2);
                 }
             }
             finally {
@@ -88,31 +73,29 @@ describe("md-preview helpers", () => {
         });
 
 
-        it("returns exit code 1 when an invalid input exists", async () => {
+        it("returns a failure when an invalid input exists", async () => {
             const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "md-preview-test-"));
 
             try {
                 const badPath = path.join(tempDir, "bad.txt");
                 await fs.writeFile(badPath, "x", "utf8");
 
-                const result = await validateAndNormalizeInputs([badPath], []);
+                const result = await validateAndNormalizeInputs([badPath]);
 
-                expect(result.succeeded).toBeFalse();
-                if (!result.succeeded) {
-                    expect(result.exitCode).toBe(1);
-                }
+                expect(result.failed).toBeTrue();
             }
             finally {
                 await fs.rm(tempDir, { recursive: true, force: true });
             }
         });
+
     });
 
 
-    describe("createRendererForTests()", () => {
+    describe("createRenderer()", () => {
 
         it("renders inline code spans", () => {
-            const renderer = createRendererForTests();
+            const renderer = createRenderer();
 
             const html = renderer.render("Use `assertNever` in default cases.");
 
@@ -121,7 +104,7 @@ describe("md-preview helpers", () => {
 
 
         it("renders fenced code blocks with highlight classes", () => {
-            const renderer = createRendererForTests();
+            const renderer = createRenderer();
 
             const html = renderer.render("```ts\nconst value = 1;\n```");
 
@@ -130,7 +113,7 @@ describe("md-preview helpers", () => {
 
 
         it("renders markdown emoji shortcodes", () => {
-            const renderer = createRendererForTests();
+            const renderer = createRenderer();
 
             const html = renderer.render("Looks good :smile:");
 
@@ -139,7 +122,7 @@ describe("md-preview helpers", () => {
 
 
         it("renders definition lists", () => {
-            const renderer = createRendererForTests();
+            const renderer = createRenderer();
 
             const html = renderer.render("Term\n:   Definition of the term.\n");
 
@@ -150,7 +133,7 @@ describe("md-preview helpers", () => {
 
 
         it("does not wrap content in sections by default", () => {
-            const renderer = createRendererForTests();
+            const renderer = createRenderer();
 
             const html = renderer.render("# A\n\ntext a\n");
 
@@ -159,7 +142,7 @@ describe("md-preview helpers", () => {
 
 
         it("nests sections by heading depth when section indentation is enabled", () => {
-            const renderer = createRendererForTests(true);
+            const renderer = createRenderer(true);
 
             const html = renderer.render("# A\n\ntext a\n\n## B\n\ntext b\n");
 
@@ -174,7 +157,7 @@ describe("md-preview helpers", () => {
 
 
         it("keeps same-level headings as sibling sections, not nested", () => {
-            const renderer = createRendererForTests(true);
+            const renderer = createRenderer(true);
 
             const html = renderer.render("## A\n\na\n\n## B\n\nb\n");
 
@@ -182,82 +165,85 @@ describe("md-preview helpers", () => {
             // The first section closes before the second one opens.
             expect(html.indexOf("</section>")).toBeLessThan(html.lastIndexOf("md-section-h2"));
         });
+
     });
 
 
-    describe("renderFilesToTempForTests()", () => {
+    describe("renderFilesToDir()", () => {
 
         it("writes output using foo.md -> foo.html mapping and later wins on basename collisions", async () => {
-            const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "md-preview-test-"));
+            const tempDirStr = await fs.mkdtemp(path.join(os.tmpdir(), "md-preview-test-"));
 
             try {
-                const firstDir = path.join(tempDir, "first");
-                const secondDir = path.join(tempDir, "second");
+                const firstDir  = path.join(tempDirStr, "first");
+                const secondDir = path.join(tempDirStr, "second");
                 await fs.mkdir(firstDir, { recursive: true });
                 await fs.mkdir(secondDir, { recursive: true });
 
-                const firstPath = path.join(firstDir, "same.md");
+                const firstPath  = path.join(firstDir, "same.md");
                 const secondPath = path.join(secondDir, "same.md");
                 await fs.writeFile(firstPath, "first", "utf8");
                 await fs.writeFile(secondPath, "second", "utf8");
 
-                const renderedCount = await renderFilesToTempForTests(
-                    [
-                        { absolutePath: firstPath, baseName: "same" },
-                        { absolutePath: secondPath, baseName: "same" }
-                    ],
+                const tempDir = new Directory(tempDirStr);
+
+                const result = await renderFilesToDir(
+                    [new File(firstPath), new File(secondPath)],
                     tempDir
                 );
 
-                expect(renderedCount).toBe(2);
+                expect(result.renderedCount).toBe(2);
 
-                const outPath = getOutputHtmlPath(tempDir, "same");
-                const outHtml = await fs.readFile(outPath, "utf8");
+                const outFile = getOutputHtmlPath(tempDir, "same");
+                const outHtml = await outFile.read();
                 expect(outHtml).toContain("<p>second</p>");
             }
             finally {
-                await fs.rm(tempDir, { recursive: true, force: true });
+                await fs.rm(tempDirStr, { recursive: true, force: true });
             }
         });
 
 
         it("omits the live-reload client by default and includes it when requested", async () => {
-            const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "md-preview-test-"));
+            const tempDirStr = await fs.mkdtemp(path.join(os.tmpdir(), "md-preview-test-"));
 
             try {
-                const srcPath = path.join(tempDir, "doc.md");
+                const srcPath = path.join(tempDirStr, "doc.md");
                 await fs.writeFile(srcPath, "# doc", "utf8");
-                const inputs = [{ absolutePath: srcPath, baseName: "doc" }];
-                const outPath = getOutputHtmlPath(tempDir, "doc");
 
-                await renderFilesToTempForTests(inputs, tempDir);
-                const plainHtml = await fs.readFile(outPath, "utf8");
+                const tempDir = new Directory(tempDirStr);
+                const inputs  = [new File(srcPath)];
+                const outFile = getOutputHtmlPath(tempDir, "doc");
+
+                await renderFilesToDir(inputs, tempDir);
+                const plainHtml = await outFile.read();
                 expect(plainHtml).not.toContain("EventSource");
 
-                await renderFilesToTempForTests(inputs, tempDir, true);
-                const liveHtml = await fs.readFile(outPath, "utf8");
+                await renderFilesToDir(inputs, tempDir, true);
+                const liveHtml = await outFile.read();
                 expect(liveHtml).toContain("new EventSource(\"/__md-preview-reload__\")");
             }
             finally {
-                await fs.rm(tempDir, { recursive: true, force: true });
+                await fs.rm(tempDirStr, { recursive: true, force: true });
             }
         });
+
     });
 
 
-    describe("rewriteAndCopyAssetsForTests()", () => {
+    describe("rewriteAndCopyAssets()", () => {
 
         it("copies relative assets and leaves absolute or fragment links unchanged", async () => {
             const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "md-preview-test-"));
 
             try {
                 const sourceDir = path.join(tempDir, "src");
-                const outDir = path.join(tempDir, "out");
+                const outDir    = path.join(tempDir, "out");
                 await fs.mkdir(sourceDir, { recursive: true });
                 await fs.mkdir(outDir, { recursive: true });
 
                 const sourceFile = path.join(sourceDir, "doc.md");
-                const imagePath = path.join(sourceDir, "img.png");
+                const imagePath  = path.join(sourceDir, "img.png");
                 await fs.writeFile(sourceFile, "# doc", "utf8");
                 await fs.writeFile(imagePath, "png", "utf8");
 
@@ -268,7 +254,7 @@ describe("md-preview helpers", () => {
                     "<img src=\"img.png\">"
                 ].join("\n");
 
-                const rewritten = await rewriteAndCopyAssetsForTests(sourceText, sourceFile, outDir);
+                const rewritten = await rewriteAndCopyAssets(sourceText, sourceFile, outDir);
 
                 expect(rewritten).toContain("![img](img.png)");
                 expect(rewritten).toContain("[site](https://example.com)");
@@ -282,54 +268,43 @@ describe("md-preview helpers", () => {
                 await fs.rm(tempDir, { recursive: true, force: true });
             }
         });
+
     });
 
 
     describe("buildPreviewUrls()", () => {
 
         it("returns both local and LAN URLs when LAN host exists", () => {
-            const urls = buildPreviewUrls(8080, "10.0.0.5");
+            const urls = buildPreviewUrls(8080, new SomeOption("10.0.0.5"));
 
             expect(urls.localUrl).toBe("http://localhost:8080/");
-            expect(urls.lanUrl).toBe("http://10.0.0.5:8080/");
+            expect(urls.lanUrl.isSome).toBeTrue();
+            if (urls.lanUrl.isSome) {
+                expect(urls.lanUrl.value).toBe("http://10.0.0.5:8080/");
+            }
         });
 
 
         it("returns only local URL when LAN host is unavailable", () => {
-            const urls = buildPreviewUrls(8080, undefined);
+            const urls = buildPreviewUrls(8080, NoneOption.get());
 
             expect(urls.localUrl).toBe("http://localhost:8080/");
-            expect(urls.lanUrl).toBeUndefined();
+            expect(urls.lanUrl.isNone).toBeTrue();
         });
+
     });
 
 
-    describe("validateRunMode()", () => {
-
-        it("returns exit code 3 for non-interactive mode without timeout", () => {
-            expect(validateRunMode(false, undefined)).toBe(3);
-        });
-
-
-        it("accepts non-interactive mode with timeout", () => {
-            expect(validateRunMode(false, 1000)).toBeUndefined();
-        });
-
-
-        it("accepts interactive mode without timeout", () => {
-            expect(validateRunMode(true, undefined)).toBeUndefined();
-        });
-    });
-
-
-    describe("prepareNamedOutputDirectoryForTests()", () => {
+    describe("prepareNamedOutputDirectory()", () => {
 
         it("creates the output directory when it does not exist", async () => {
             const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "md-preview-test-"));
 
             try {
                 const outputDir = path.join(tempDir, "out");
-                await prepareNamedOutputDirectoryForTests(outputDir, true, async () => Promise.resolve(true));
+                await prepareNamedOutputDirectory(
+                    new Directory(outputDir), true, async () => Promise.resolve(true)
+                );
 
                 const stats = await fs.stat(outputDir);
                 expect(stats.isDirectory()).toBeTrue();
@@ -349,7 +324,9 @@ describe("md-preview helpers", () => {
                 await fs.writeFile(path.join(outputDir, "nested", "keep.txt"), "x", "utf8");
                 await fs.writeFile(path.join(outputDir, "root.txt"), "x", "utf8");
 
-                await prepareNamedOutputDirectoryForTests(outputDir, true, async () => Promise.resolve(true));
+                await prepareNamedOutputDirectory(
+                    new Directory(outputDir), true, async () => Promise.resolve(true)
+                );
 
                 const entries = await fs.readdir(outputDir);
                 expect(entries.length).toBe(0);
@@ -369,7 +346,9 @@ describe("md-preview helpers", () => {
                 await fs.writeFile(path.join(outputDir, "root.txt"), "x", "utf8");
 
                 await expectAsync(
-                    prepareNamedOutputDirectoryForTests(outputDir, true, async () => Promise.resolve(false))
+                    prepareNamedOutputDirectory(
+                        new Directory(outputDir), true, async () => Promise.resolve(false)
+                    )
                 )
                 .toBeRejected();
             }
@@ -388,7 +367,9 @@ describe("md-preview helpers", () => {
                 await fs.writeFile(path.join(outputDir, "root.txt"), "x", "utf8");
 
                 await expectAsync(
-                    prepareNamedOutputDirectoryForTests(outputDir, false, async () => Promise.resolve(true))
+                    prepareNamedOutputDirectory(
+                        new Directory(outputDir), false, async () => Promise.resolve(true)
+                    )
                 )
                 .toBeRejected();
             }
@@ -396,6 +377,7 @@ describe("md-preview helpers", () => {
                 await fs.rm(tempDir, { recursive: true, force: true });
             }
         });
+
     });
 
 
@@ -420,7 +402,7 @@ describe("md-preview helpers", () => {
 
 
         it("omits section-indent rules by default and is unchanged from the two-arg form", () => {
-            const css = composeStylesheet("/* markdown */", "/* highlight */");
+            const css           = composeStylesheet("/* markdown */", "/* highlight */");
             const cssExplicitOff = composeStylesheet("/* markdown */", "/* highlight */", false);
 
             expect(css).not.toContain(".md-section");
@@ -431,9 +413,6 @@ describe("md-preview helpers", () => {
         it("appends section-indent rules when section indentation is enabled", () => {
             const css = composeStylesheet("/* markdown */", "/* highlight */", true);
 
-            // Indents each section's non-heading children (body + nested
-            // subsections) via margin so bordered/background boxes (blockquotes,
-            // code blocks) shift as a whole, leaving the heading itself in place.
             expect(css).toContain(".markdown-body .md-section > :not(:first-child) {");
             expect(css).toContain("margin-inline-start: 1.5em;");
         });
@@ -446,6 +425,7 @@ describe("md-preview helpers", () => {
             expect(css).toContain(".md-preview-toolbar__button {");
             expect(css).toContain(".md-section--collapsed > .md-section-body {");
         });
+
     });
 
 
@@ -524,90 +504,53 @@ describe("md-preview helpers", () => {
 
             expect(() => { debouncer.cancel(); }).not.toThrow();
         });
-    });
 
-
-    describe("isPathInside()", () => {
-
-        it("returns true when the child equals the parent", () => {
-            const dir = path.resolve("/docs");
-            expect(isPathInside(dir, dir)).toBeTrue();
-        });
-
-
-        it("returns true when the child is nested within the parent", () => {
-            const parent = path.resolve("/docs");
-            const child = path.resolve("/docs/out/a.html");
-            expect(isPathInside(child, parent)).toBeTrue();
-        });
-
-
-        it("returns false when the child is outside the parent", () => {
-            const parent = path.resolve("/docs");
-            const child = path.resolve("/other/a.md");
-            expect(isPathInside(child, parent)).toBeFalse();
-        });
-
-
-        it("returns false for siblings that merely share a name prefix", () => {
-            const parent = path.resolve("/docs");
-            const sibling = path.resolve("/docs-output/a.html");
-            expect(isPathInside(sibling, parent)).toBeFalse();
-        });
-
-
-        it("returns false when the parent is nested within the child", () => {
-            const parent = path.resolve("/docs/out");
-            const child = path.resolve("/docs");
-            expect(isPathInside(child, parent)).toBeFalse();
-        });
     });
 
 
     describe("findSourcesInsideOutputDir()", () => {
 
-        it("returns an empty array when no output directory is given", () => {
-            const inputs = [{ absolutePath: path.resolve("/docs/a.md"), baseName: "a" }];
-            expect(findSourcesInsideOutputDir(inputs, undefined)).toEqual([]);
-        });
-
-
         it("returns an empty array when the output directory is a subdirectory of the sources", () => {
-            const inputs = [{ absolutePath: path.resolve("/docs/a.md"), baseName: "a" }];
-            expect(findSourcesInsideOutputDir(inputs, path.resolve("/docs/out"))).toEqual([]);
+            const inputs  = [new File(path.resolve("/docs/a.md"))];
+            const outDir  = new Directory(path.resolve("/docs/out"));
+            expect(findSourcesInsideOutputDir(inputs, outDir)).toEqual([]);
         });
 
 
         it("flags a source file whose directory equals the output directory", () => {
-            const aPath = path.resolve("/docs/a.md");
-            const inputs = [{ absolutePath: aPath, baseName: "a" }];
-            expect(findSourcesInsideOutputDir(inputs, path.resolve("/docs"))).toEqual([aPath]);
+            const aFile  = new File(path.resolve("/docs/a.md"));
+            const outDir = new Directory(path.resolve("/docs"));
+            const result = findSourcesInsideOutputDir([aFile], outDir);
+            expect(result.length).toBe(1);
+            expect(result[0]!.absPath()).toBe(aFile.absPath());
         });
 
 
         it("flags a source file nested beneath the output directory", () => {
-            const aPath = path.resolve("/out/nested/a.md");
-            const inputs = [{ absolutePath: aPath, baseName: "a" }];
-            expect(findSourcesInsideOutputDir(inputs, path.resolve("/out"))).toEqual([aPath]);
+            const aFile  = new File(path.resolve("/out/nested/a.md"));
+            const outDir = new Directory(path.resolve("/out"));
+            const result = findSourcesInsideOutputDir([aFile], outDir);
+            expect(result.length).toBe(1);
+            expect(result[0]!.absPath()).toBe(aFile.absPath());
         });
 
 
         it("returns only the sources that are inside the output directory", () => {
-            const inside = path.resolve("/docs/a.md");
-            const outside = path.resolve("/elsewhere/b.md");
-            const inputs = [
-                { absolutePath: inside, baseName: "a" },
-                { absolutePath: outside, baseName: "b" }
-            ];
-            expect(findSourcesInsideOutputDir(inputs, path.resolve("/docs"))).toEqual([inside]);
+            const inside  = new File(path.resolve("/docs/a.md"));
+            const outside = new File(path.resolve("/elsewhere/b.md"));
+            const outDir  = new Directory(path.resolve("/docs"));
+            const result  = findSourcesInsideOutputDir([inside, outside], outDir);
+            expect(result.length).toBe(1);
+            expect(result[0]!.absPath()).toBe(inside.absPath());
         });
+
     });
 
 
-    describe("wrapHtmlDocumentForTests()", () => {
+    describe("wrapHtmlDocument()", () => {
 
         it("does not inject the live-reload client when live reload is disabled", () => {
-            const html = wrapHtmlDocumentForTests("Title", "<p>body</p>", false);
+            const html = wrapHtmlDocument("Title", "<p>body</p>", false);
 
             expect(html).not.toContain("<script>");
             expect(html).not.toContain("EventSource");
@@ -615,7 +558,7 @@ describe("md-preview helpers", () => {
 
 
         it("injects the live-reload client, before </body>, when enabled", () => {
-            const html = wrapHtmlDocumentForTests("Title", "<p>body</p>", true);
+            const html = wrapHtmlDocument("Title", "<p>body</p>", true);
 
             expect(html).toContain("new EventSource(\"/__md-preview-reload__\")");
             expect(html).toContain("window.location.reload()");
@@ -624,8 +567,8 @@ describe("md-preview helpers", () => {
 
 
         it("adds only the script, leaving the rest of the document identical", () => {
-            const plain = wrapHtmlDocumentForTests("Title", "<p>body</p>", false);
-            const live = wrapHtmlDocumentForTests("Title", "<p>body</p>", true);
+            const plain = wrapHtmlDocument("Title", "<p>body</p>", false);
+            const live  = wrapHtmlDocument("Title", "<p>body</p>", true);
 
             // Stripping the injected <script> block from the live-reload output
             // must yield byte-for-byte the non-watch output.
@@ -635,7 +578,7 @@ describe("md-preview helpers", () => {
 
 
         it("injects a toolbar and expand/collapse hooks when collapsible sections are enabled", () => {
-            const html = wrapHtmlDocumentForTests("Title", "<p>body</p>", false, true);
+            const html = wrapHtmlDocument("Title", "<p>body</p>", false, true);
 
             expect(html).toContain("role=\"toolbar\"");
             expect(html).toContain("data-md-preview-expand-all");
@@ -645,12 +588,13 @@ describe("md-preview helpers", () => {
 
 
         it("omits the toolbar when collapsible sections are disabled", () => {
-            const html = wrapHtmlDocumentForTests("Title", "<p>body</p>", false, false);
+            const html = wrapHtmlDocument("Title", "<p>body</p>", false, false);
 
             expect(html).not.toContain("data-md-preview-expand-all");
             expect(html).not.toContain("data-md-preview-collapse-all");
             expect(html).not.toContain("role=\"toolbar\"");
         });
+
     });
 
 
@@ -666,19 +610,21 @@ describe("md-preview helpers", () => {
 
 
         async function startHarness(liveReloadEnabled: boolean): Promise<IServerHarness> {
-            const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "md-preview-test-"));
-            await fs.writeFile(path.join(tempDir, "index.html"), "<h1>hi</h1>", "utf8");
+            const tempDirStr = await fs.mkdtemp(path.join(os.tmpdir(), "md-preview-test-"));
+            await fs.writeFile(path.join(tempDirStr, "index.html"), "<h1>hi</h1>", "utf8");
 
             const serverSockets = new Set<net.Socket>();
             const reloadClients = new Set<http.ServerResponse>();
-            const server = await startServerForTests(tempDir, serverSockets, reloadClients, liveReloadEnabled);
+            const server = await startServer(
+                new Directory(tempDirStr), serverSockets, reloadClients, liveReloadEnabled
+            );
 
             const address = server.address();
             if (!address || typeof address === "string") {
                 throw new Error("Unable to determine bound test server address.");
             }
 
-            return { server, serverSockets, reloadClients, port: address.port, tempDir };
+            return { server, serverSockets, reloadClients, port: address.port, tempDir: tempDirStr };
         }
 
 
@@ -722,7 +668,7 @@ describe("md-preview helpers", () => {
                         // this client is present in the reload set.
                         const waitForRegistration = (): void => {
                             if (harness.reloadClients.size > 0) {
-                                notifyReloadClientsForTests(harness.reloadClients);
+                                notifyReloadClients(harness.reloadClients);
                             }
                             else {
                                 setTimeout(waitForRegistration, 5);
@@ -762,5 +708,6 @@ describe("md-preview helpers", () => {
                 await stopHarness(harness);
             }
         });
+
     });
 });

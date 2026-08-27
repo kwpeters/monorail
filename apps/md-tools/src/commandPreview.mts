@@ -1,4 +1,3 @@
-import * as os from "node:os";
 import * as fs from "node:fs/promises";
 import { watch, type FSWatcher } from "node:fs";
 import * as path from "node:path";
@@ -13,62 +12,46 @@ import markdownItFootnote from "markdown-it-footnote";
 import markdownItTaskLists from "markdown-it-task-lists";
 import markdownItDeflist from "markdown-it-deflist";
 import hljs from "highlight.js";
+import { Result, SucceededResult, FailedResult } from "@repo/depot/result";
+import { Option, SomeOption, NoneOption } from "@repo/depot/option";
+import { createDebouncer, type IDebouncer } from "@repo/depot/debounce";
+import { File } from "@repo/depot-node/file";
 import { Directory } from "@repo/depot-node/directory";
 import { launch } from "@repo/depot-node/launch";
 import { getFirstExternalIpv4Address } from "@repo/depot-node/networkHelpers";
 import { promptToContinue } from "@repo/depot-node/prompts";
+import { getStdinPipedLines } from "@repo/depot-node/ttyHelpers";
+import { createTempDir } from "@repo/depot-node/tempDir";
 
 
-const EXIT_SUCCESS                    = 0;
-const EXIT_INVALID_INPUT              = 1;
-const EXIT_RUNTIME_FAILURE            = 2;
-const EXIT_INVALID_NON_INTERACTIVE_CONFIG = 3;
+const EXIT_SUCCESS        = 0;
+const EXIT_INVALID_INPUT  = 1;
+const EXIT_RUNTIME_FAILURE = 2;
 
 const WATCH_DEBOUNCE_MS = 500;
 
-// Endpoint used by the injected live-reload client (watch mode only) to receive
-// Server-Sent Events telling open browser tabs to reload after a re-render.
+/** SSE endpoint path injected into each preview page for watch-mode live reload. */
 export const LIVE_RELOAD_PATH = "/__md-preview-reload__";
 
 export const command  = "preview [files...]";
 export const describe = "Render markdown files and preview them in a browser";
 
 
-export interface IValidatedInput {
-    absolutePath: string;
-    baseName:     string;
-}
-
-
-export interface IDebouncer {
-    schedule: () => void;
-    cancel:   () => void;
-}
-
-
+/**
+ * Registers yargs options and positional arguments for the `preview` sub-command.
+ *
+ * @param argv - The yargs instance provided by the parent command.
+ * @returns The yargs instance with preview-specific options attached.
+ */
 export function builder(argv: Argv): Argv {
     return argv
     .positional("files", {
         type:     "string",
         describe: "Markdown files to preview"
     })
-    .option("open", {
-        type:     "boolean",
-        default:  true,
-        describe: "Launch a browser automatically"
-    })
     .option("outputDir", {
         type:     "string",
-        describe: "Write generated files to this directory instead of a temp directory"
-    })
-    .option("timeoutMs", {
-        type:     "number",
-        describe: "In non-interactive mode, automatically stop after this duration"
-    })
-    .option("watch", {
-        type:     "boolean",
-        default:  false,
-        describe: "Watch the source markdown files and re-render on change (interactive mode only)"
+        describe: "Write generated files here; required in non-interactive mode, optional (defaults to temp dir) in interactive mode"
     })
     .option("indent-sections", {
         type:     "boolean",
@@ -83,22 +66,125 @@ export function builder(argv: Argv): Argv {
 }
 
 
-export async function handler(args: Arguments): Promise<void> {
-    const noOpen            = !(args.open as boolean);
-    const outputDir         = args.outputDir as string | undefined;
-    const timeoutMs         = args.timeoutMs as number | undefined;
-    const watchMode         = args.watch as boolean;
-    const indentSections    = args.indentSections as boolean;
-    const collapsibleSecs   = args.collapsibleSections as boolean;
-    const rawFiles          = args.files as Array<string> | string | undefined;
-    const positionalPaths   = Array.isArray(rawFiles) ? rawFiles :
-        typeof rawFiles === "string"                   ? [rawFiles] :
+/**
+ * Fields shared by both interactive and non-interactive preview configurations.
+ */
+interface IPreviewConfigBase {
+    inputFiles:          Array<File>;
+    indentSections:      boolean;
+    collapsibleSections: boolean;
+}
+
+/**
+ * Configuration for an interactive preview session: serves files over HTTP,
+ * opens a browser, and watches for changes until the user presses a key.
+ * `outputDir` is optional; when absent a managed temp directory is used.
+ */
+interface IInteractiveConfig extends IPreviewConfigBase {
+    interactive: true;
+    outputDir:   Option<Directory>;
+}
+
+/**
+ * Configuration for a non-interactive (headless) preview session: renders
+ * markdown to HTML in the named output directory and exits immediately.
+ * `outputDir` is required because there is no server and no temp-dir cleanup.
+ */
+interface INonInteractiveConfig extends IPreviewConfigBase {
+    interactive: false;
+    outputDir:   Directory;
+}
+
+/** Discriminated union of the two mutually exclusive preview configurations. */
+type IPreviewConfig = IInteractiveConfig | INonInteractiveConfig;
+
+
+/**
+ * Validates and normalizes all CLI arguments into a typed {@link IPreviewConfig}.
+ *
+ * Merges positional file paths with any lines piped through stdin and validates
+ * each file. In non-interactive mode, `--outputDir` is required.
+ *
+ * @param args - Raw yargs argument map from the `preview` handler.
+ * @returns A succeeded result containing the config, or a failed result with an
+ *          error message.
+ */
+async function getConfiguration(args: Arguments): Promise<Result<IPreviewConfig, string>> {
+    const rawFiles = args.files as Array<string> | string | undefined;
+    const positionalPaths =
+        Array.isArray(rawFiles)      ? rawFiles :
+        typeof rawFiles === "string" ? [rawFiles] :
         [];
 
+    const stdinLines = await getStdinPipedLines();
+    const mergedPaths = [...positionalPaths, ...stdinLines];
+
+    const filesRes = await validateAndNormalizeInputs(mergedPaths);
+    if (filesRes.failed) {
+        return filesRes;
+    }
+    const inputFiles = filesRes.value;
+
+    const interactive  = process.stdin.isTTY && process.stdout.isTTY;
+    const rawOutputDir = args.outputDir as string | undefined;
+    const base = {
+        inputFiles,
+        indentSections:      args.indentSections as boolean,
+        collapsibleSections: args.collapsibleSections as boolean
+    };
+
+    if (!interactive) {
+        if (rawOutputDir === undefined) {
+            console.error("Non-interactive mode requires --outputDir.");
+            return new FailedResult("Non-interactive mode requires --outputDir.");
+        }
+        const outputDir   = new Directory(rawOutputDir);
+        const conflicting = findSourcesInsideOutputDir(inputFiles, outputDir);
+        if (conflicting.length > 0) {
+            console.error("Refusing to run: the output directory would contain (and delete) these source files:");
+            for (const f of conflicting) {
+                console.error(`  - ${f.absPath()}`);
+            }
+            return new FailedResult("Source files conflict with the output directory.");
+        }
+        return new SucceededResult({ ...base, interactive: false, outputDir });
+    }
+
+    const outputDir: Option<Directory> = rawOutputDir !== undefined ?
+        new SomeOption(new Directory(rawOutputDir)) :
+        NoneOption.get();
+
+    if (outputDir.isSome) {
+        const conflicting = findSourcesInsideOutputDir(inputFiles, outputDir.value);
+        if (conflicting.length > 0) {
+            console.error("Refusing to run: the output directory would contain (and delete) these source files:");
+            for (const f of conflicting) {
+                console.error(`  - ${f.absPath()}`);
+            }
+            return new FailedResult("Source files conflict with the output directory.");
+        }
+    }
+
+    return new SucceededResult({ ...base, interactive: true, outputDir });
+}
+
+
+/**
+ * Yargs command handler for the `preview` sub-command.
+ *
+ * Calls {@link getConfiguration}, then delegates to {@link previewImpl}. Exits
+ * the process with a non-zero code on validation or runtime failure.
+ *
+ * @param args - Raw yargs argument map.
+ */
+export async function handler(args: Arguments): Promise<void> {
     try {
-        const exitCode = await previewImpl(
-            noOpen, outputDir, timeoutMs, watchMode, indentSections, collapsibleSecs, positionalPaths
-        );
+        const configRes = await getConfiguration(args);
+        if (configRes.failed) {
+            process.exit(EXIT_INVALID_INPUT);
+        }
+
+        const exitCode = await previewImpl(configRes.value);
         if (exitCode !== EXIT_SUCCESS) {
             process.exit(exitCode);
         }
@@ -112,125 +198,73 @@ export async function handler(args: Arguments): Promise<void> {
 
 
 /**
- * Creates a debouncer that runs `action` once activity has been quiet for
- * `delayMs`. Extracted as a standalone helper so the timing logic can be unit
- * tested independently of the file-watching machinery.
+ * Mutable state shared between all live components during a preview session:
+ * the HTTP server, file watchers, live-reload SSE clients, and shutdown flag.
  */
-export function createDebouncer(delayMs: number, action: () => void): IDebouncer {
-    let timer: NodeJS.Timeout | undefined;
-
-    const cancel = (): void => {
-        if (timer) {
-            clearTimeout(timer);
-            timer = undefined;
-        }
-    };
-
-    const schedule = (): void => {
-        cancel();
-        timer = setTimeout(() => {
-            timer = undefined;
-            action();
-        }, delayMs);
-    };
-
-    return { schedule, cancel };
-}
-
-
 export interface IRuntimeState {
-    outputDir:          string;
+    outputDir:          Directory;
     shouldDeleteOnExit: boolean;
-    server?:            http.Server;
+    server:             Option<http.Server>;
     serverSockets:      Set<net.Socket>;
     reloadClients:      Set<http.ServerResponse>;
     watchers:           Array<FSWatcher>;
-    debouncer?:         IDebouncer | undefined;
+    debouncer:          Option<IDebouncer>;
     shuttingDown:       boolean;
 }
 
 
-async function previewImpl(
-    noOpen: boolean,
-    outputDir: string | undefined,
-    timeoutMs: number | undefined,
-    watchMode: boolean,
-    indentSections: boolean,
-    collapsibleSections: boolean,
-    positionalPaths: Array<string>
-): Promise<number> {
-    const pipedInput = await readPipedPaths();
-
-    const validation = await validateAndNormalizeInputs(positionalPaths, pipedInput);
-    if (!validation.succeeded) {
-        return validation.exitCode;
+/**
+ * Core preview implementation. Dispatches to {@link nonInteractiveImpl} for
+ * non-interactive sessions; runs the full interactive loop (HTTP server, browser
+ * launch, file watching, keypress-to-exit) for interactive sessions.
+ *
+ * @param config - Validated preview configuration.
+ * @returns Process exit code (`EXIT_SUCCESS` or `EXIT_RUNTIME_FAILURE`).
+ */
+async function previewImpl(config: IPreviewConfig): Promise<number> {
+    if (!config.interactive) {
+        return nonInteractiveImpl(config);
     }
 
-    const interactive = process.stdin.isTTY && process.stdout.isTTY;
-    const runModeExitCode = validateRunMode(interactive, timeoutMs);
-    if (runModeExitCode !== undefined) {
-        console.error("Non-interactive mode requires --timeoutMs.");
-        return runModeExitCode;
-    }
+    const { indentSections, collapsibleSections } = config;
 
-    if (watchMode && !interactive) {
-        console.error("The --watch option is only supported in interactive mode.");
-        return EXIT_INVALID_NON_INTERACTIVE_CONFIG;
-    }
-
-    const effectiveNoOpen = interactive ? noOpen : true;
-
-    // Preparing an explicit output directory empties it. Refuse to proceed if
-    // any source file lives at or beneath that directory, since emptying it
-    // would delete the very files we are asked to render.
-    const outputSafetyError = findSourcesInsideOutputDir(validation.inputs, outputDir);
-    if (outputSafetyError.length > 0) {
-        console.error("Refusing to run: the output directory would contain (and delete) these source files:");
-        for (const cur of outputSafetyError) {
-            console.error(`  - ${cur}`);
-        }
-        return EXIT_INVALID_INPUT;
-    }
-
-    const outputDirectory = await prepareOutputDirectory(outputDir, interactive);
-    console.log(`Output directory: ${outputDirectory.outputDir}`);
+    const outputDirectory = await prepareOutputDirectory(config.outputDir);
+    console.log(`Output directory: ${outputDirectory.dir.toString()}`);
     console.warn("Warning: raw HTML rendering is enabled. Use only trusted content.");
 
     const runtimeState: IRuntimeState = {
-        outputDir:          outputDirectory.outputDir,
+        outputDir:          outputDirectory.dir,
         shouldDeleteOnExit: outputDirectory.shouldDeleteOnExit,
+        server:             NoneOption.get(),
         serverSockets:      new Set<net.Socket>(),
         reloadClients:      new Set<http.ServerResponse>(),
         watchers:           [],
+        debouncer:          NoneOption.get(),
         shuttingDown:       false
     };
 
     registerSignalHandlers(runtimeState);
 
     try {
-        const renderResult = await renderFilesToTemp(
-            validation.inputs,
-            outputDirectory.outputDir,
-            watchMode,
+        const renderResult = await renderFilesToDir(
+            config.inputFiles,
+            outputDirectory.dir,
+            true,   // always enable live-reload in interactive mode
             indentSections,
             collapsibleSections
         );
-        await writeSharedStylesheet(
-            outputDirectory.outputDir,
-            indentSections,
-            collapsibleSections
-        );
+        await writeSharedStylesheet(outputDirectory.dir, indentSections, collapsibleSections);
 
-        console.log(`Accepted files: ${validation.inputs.length}`);
+        console.log(`Accepted files: ${config.inputFiles.length}`);
         console.log(`Rendered files: ${renderResult.renderedCount}`);
 
         const server = await startServer(
-            outputDirectory.outputDir,
+            outputDirectory.dir,
             runtimeState.serverSockets,
             runtimeState.reloadClients,
-            watchMode
+            true    // always enable live-reload in interactive mode
         );
-        runtimeState.server = server;
+        runtimeState.server = new SomeOption(server);
 
         const addressInfo = server.address();
         if (!addressInfo || typeof addressInfo === "string") {
@@ -242,39 +276,21 @@ async function previewImpl(
         const localUrl = urls.localUrl;
         console.log(`Local URL: ${localUrl}`);
 
-        if (urls.lanUrl) {
-            console.log(`LAN URL: ${urls.lanUrl}`);
+        if (urls.lanUrl.isSome) {
+            console.log(`LAN URL: ${urls.lanUrl.value}`);
         }
         else {
             console.warn("LAN URL unavailable: no external IPv4 address found.");
         }
 
-        if (!effectiveNoOpen) {
-            launchBrowser(localUrl);
-            console.log("Browser launch: attempted");
-        }
-        else {
-            console.log("Browser launch: skipped");
-        }
+        launchBrowser(localUrl);
+        console.log("Browser launch: attempted");
 
-        if (watchMode) {
-            startWatching(validation.inputs, runtimeState, indentSections, collapsibleSections);
-            console.log("Watching source files for changes. Refresh the browser after each re-render.");
-        }
+        startWatching(config.inputFiles, runtimeState, indentSections, collapsibleSections);
+        console.log("Watching source files for changes. Refresh the browser after each re-render.");
 
-        if (timeoutMs !== undefined) {
-            await new Promise<void>((resolve) => {
-                setTimeout(resolve, timeoutMs);
-            });
-            console.log(`Shutdown reason: timeout (${timeoutMs} ms)`);
-        }
-        else if (interactive) {
-            await waitForAnyKeypress();
-            console.log("Shutdown reason: keypress");
-        }
-        else {
-            throw new Error("Non-interactive mode requires --timeoutMs.");
-        }
+        await waitForAnyKeypress();
+        console.log("Shutdown reason: keypress");
 
         await cleanupRuntime(runtimeState);
         return EXIT_SUCCESS;
@@ -288,6 +304,41 @@ async function previewImpl(
 }
 
 
+/**
+ * Non-interactive implementation: renders all input files to HTML in the named
+ * output directory and exits immediately without starting an HTTP server.
+ *
+ * @param config - Validated non-interactive preview configuration.
+ * @returns Process exit code (`EXIT_SUCCESS` or `EXIT_RUNTIME_FAILURE`).
+ */
+async function nonInteractiveImpl(config: INonInteractiveConfig): Promise<number> {
+    try {
+        await config.outputDir.ensureExists();
+        await renderFilesToDir(
+            config.inputFiles,
+            config.outputDir,
+            false,  // no live-reload in non-interactive mode
+            config.indentSections,
+            config.collapsibleSections
+        );
+        await writeSharedStylesheet(config.outputDir, config.indentSections, config.collapsibleSections);
+        console.log(`Rendered ${config.inputFiles.length} file(s) to: ${config.outputDir.absPath()}`);
+        return EXIT_SUCCESS;
+    }
+    catch (err) {
+        console.error("Runtime failure.");
+        console.error(formatError(err));
+        return EXIT_RUNTIME_FAILURE;
+    }
+}
+
+
+/**
+ * Pauses execution until the user presses any key on stdin.
+ *
+ * Puts stdin into raw mode while waiting so that the keypress is captured
+ * without requiring Enter.
+ */
 async function waitForAnyKeypress(): Promise<void> {
     process.stdout.write("Press any key to stop md-tools preview.\n");
 
@@ -318,6 +369,12 @@ async function waitForAnyKeypress(): Promise<void> {
 }
 
 
+/**
+ * Registers SIGINT and SIGTERM handlers so that Ctrl-C and process termination
+ * both trigger a graceful {@link cleanupRuntime} before exiting.
+ *
+ * @param runtimeState - Live state to clean up on signal.
+ */
 function registerSignalHandlers(runtimeState: IRuntimeState): void {
     const signalHandler = async (signal: NodeJS.Signals): Promise<void> => {
         console.log(`Shutdown reason: ${signal}`);
@@ -334,71 +391,59 @@ function registerSignalHandlers(runtimeState: IRuntimeState): void {
 }
 
 
-function safeGetExternalIpv4Address(): string | undefined {
+/**
+ * Returns the machine's first external IPv4 address, or `NoneOption` if none
+ * can be determined. Swallows errors so callers do not need to handle the case
+ * where network introspection fails.
+ */
+function safeGetExternalIpv4Address(): Option<string> {
     try {
         const value = getFirstExternalIpv4Address();
-        return value || undefined;
+        return value ? new SomeOption(value) : NoneOption.get();
     }
     catch {
-        return undefined;
+        return NoneOption.get();
     }
 }
 
 
-async function readPipedPaths(): Promise<Array<string>> {
-    if (process.stdin.isTTY) {
-        return [];
-    }
-
-    const chunks: Array<Uint8Array> = [];
-    for await (const chunk of process.stdin) {
-        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-    }
-
-    const text = Buffer.concat(chunks).toString("utf8");
-    return text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
-}
-
-
+/**
+ * Deduplicates, validates extension, and checks file existence for a list of
+ * candidate markdown paths.
+ *
+ * @param paths - Absolute or relative path strings to evaluate.
+ * @returns A succeeded result with the unique, existing `File` objects, or a
+ *          failed result if any path is invalid or no markdown files were given.
+ */
 export async function validateAndNormalizeInputs(
-    positional: Array<string>,
-    piped: Array<string>
-): Promise<
-    | { succeeded: true; inputs: Array<IValidatedInput>; }
-    | { succeeded: false; exitCode: number; }
-> {
-    const merged = dedupePaths([...positional, ...piped]);
+    paths: Array<string>
+): Promise<Result<Array<File>, string>> {
+    const seen    = new Set<string>();
     const invalid: Array<string> = [];
-    const valid: Array<IValidatedInput> = [];
+    const valid:   Array<File>   = [];
 
-    for (const candidate of merged) {
-        const absolutePath = path.resolve(candidate);
-        const ext = path.extname(absolutePath).toLowerCase();
+    for (const candidate of paths) {
+        const file = new File(candidate);
+        const key  = file.absPath();
 
+        if (seen.has(key)) {
+            continue;
+        }
+        seen.add(key);
+
+        const ext = file.extName.toLowerCase();
         if (ext !== ".md" && ext !== ".markdown") {
             invalid.push(candidate);
             continue;
         }
 
-        try {
-            const stats = await fs.stat(absolutePath);
-            if (!stats.isFile()) {
-                invalid.push(candidate);
-                continue;
-            }
-        }
-        catch {
+        const stats = await file.exists();
+        if (!stats?.isFile()) {
             invalid.push(candidate);
             continue;
         }
 
-        valid.push({
-            absolutePath,
-            baseName: path.basename(absolutePath, path.extname(absolutePath))
-        });
+        valid.push(file);
     }
 
     if (invalid.length > 0) {
@@ -406,102 +451,134 @@ export async function validateAndNormalizeInputs(
         for (const cur of invalid) {
             console.error(`  - ${cur}`);
         }
-        return { succeeded: false, exitCode: EXIT_INVALID_INPUT };
+        return new FailedResult("One or more input paths are invalid.");
     }
 
     if (valid.length === 0) {
         console.error("No valid markdown files were provided.");
-        console.error("Usage: md-tools preview [files...] [--no-open] [--timeoutMs <n>] [--outputDir <path>]");
-        return { succeeded: false, exitCode: EXIT_INVALID_INPUT };
+        console.error("Usage: md-tools preview [files...] [--outputDir <path>]");
+        return new FailedResult("No valid markdown files were provided.");
     }
 
-    return { succeeded: true, inputs: valid };
+    return new SucceededResult(valid);
 }
 
 
-export function dedupePaths(paths: Array<string>): Array<string> {
-    const seen = new Set<string>();
-    const result: Array<string> = [];
-    for (const curPath of paths) {
-        const key = path.resolve(curPath);
-        if (!seen.has(key)) {
-            seen.add(key);
-            result.push(curPath);
-        }
-    }
-    return result;
-}
-
-
-export function validateRunMode(interactive: boolean, timeoutMs: number | undefined): number | undefined {
-    if (!interactive && timeoutMs === undefined) {
-        return EXIT_INVALID_NON_INTERACTIVE_CONFIG;
-    }
-
-    return undefined;
-}
-
-
-export function buildPreviewUrls(port: number, lanHost: string | undefined):
-{ localUrl: string; lanUrl?: string; } {
+/**
+ * Builds the local and LAN preview URLs from the server port and an optional
+ * external IP address.
+ *
+ * @param port    - The TCP port the HTTP server is listening on.
+ * @param lanHost - External IPv4 address option; `NoneOption` if unavailable.
+ * @returns An object with `localUrl` (always present) and `lanUrl` as an
+ *          `Option<string>`.
+ */
+export function buildPreviewUrls(port: number, lanHost: Option<string>):
+{ localUrl: string; lanUrl: Option<string>; } {
     const localUrl = `http://localhost:${port}/`;
 
-    if (lanHost) {
+    if (lanHost.isSome) {
         return {
             localUrl,
-            lanUrl: `http://${lanHost}:${port}/`
+            lanUrl: new SomeOption(`http://${lanHost.value}:${port}/`)
         };
     }
 
-    return { localUrl };
+    return { localUrl, lanUrl: NoneOption.get() };
 }
 
 
-export function getOutputHtmlPath(tempDir: string, baseName: string): string {
-    return path.join(tempDir, `${baseName}.html`);
+/**
+ * Returns the `File` path where the rendered HTML for a given markdown source
+ * should be written.
+ *
+ * @param dir      - Directory to write into.
+ * @param baseName - The markdown file's base name without extension.
+ * @returns The corresponding `.html` output `File`.
+ */
+export function getOutputHtmlPath(dir: Directory, baseName: string): File {
+    return new File(dir, `${baseName}.html`);
 }
 
 
+/**
+ * Describes the output directory ready to receive rendered files, along with a
+ * flag indicating whether it should be deleted when the preview session ends.
+ */
 interface IPreparedOutputDirectory {
-    outputDir:          string;
+    dir:                Directory;
     shouldDeleteOnExit: boolean;
 }
 
 
+/**
+ * Resolves or creates the output directory for an interactive preview session.
+ *
+ * If no explicit `outputDir` was requested, a managed temp directory with a
+ * 7-day lifetime is created (explicit cleanup on normal exit; expiry-based
+ * cleanup handles orphaned directories from killed sessions). If a named
+ * directory was requested, it is created or (if non-empty) emptied after user
+ * confirmation.
+ *
+ * @param outputDirOpt - The caller-supplied output directory, if any.
+ * @returns A {@link IPreparedOutputDirectory} with the resolved directory and a
+ *          deletion-on-exit flag.
+ */
 async function prepareOutputDirectory(
-    outputDirArg: string | undefined,
-    interactive: boolean
+    outputDirOpt: Option<Directory>
 ): Promise<IPreparedOutputDirectory> {
-    if (!outputDirArg) {
-        const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "md-tools-"));
-        return { outputDir: tempDir, shouldDeleteOnExit: true };
+    if (outputDirOpt.isNone) {
+        const res = await createTempDir("md-preview", 7 * 24 * 60 * 60 * 1000);
+        if (res.failed) {
+            throw new Error(`Failed to create temp directory: ${res.error}`);
+        }
+        return { dir: res.value, shouldDeleteOnExit: true };
     }
 
-    const outputDir = path.resolve(outputDirArg);
-    await prepareNamedOutputDirectory(outputDir, interactive, async () => {
+    const outputDir = outputDirOpt.value;
+    await prepareNamedOutputDirectory(outputDir, true, async () => {
         return promptToContinue(
-            `The output directory "${outputDir}" is not empty. Delete its contents?`,
+            `The output directory "${outputDir.toString()}" is not empty. Delete its contents?`,
             false
         );
     });
 
-    return { outputDir, shouldDeleteOnExit: false };
+    return { dir: outputDir, shouldDeleteOnExit: false };
 }
 
 
-async function prepareNamedOutputDirectory(
-    outputDir: string,
-    interactive: boolean,
+/**
+ * Ensures a named output directory is ready to receive rendered files.
+ *
+ * - Creates the directory if it does not exist.
+ * - Returns immediately if it already exists and is empty.
+ * - In interactive mode, prompts the user to confirm emptying a non-empty directory.
+ * - In non-interactive mode, throws if the directory is non-empty.
+ *
+ * @param outputDir       - Target output directory.
+ * @param interactive     - Whether the process is running in interactive (TTY) mode.
+ * @param confirmDeletion - Callback that asks the user for confirmation before
+ *                          emptying the directory.
+ */
+export async function prepareNamedOutputDirectory(
+    outputDir:       Directory,
+    interactive:     boolean,
     confirmDeletion: () => Promise<boolean>
 ): Promise<void> {
-    const outputDirectory = (new Directory(outputDir)).absolute();
-    const outputDirPath = outputDirectory.toString();
+    const outputDirectory = outputDir.absolute();
 
     const stats = await outputDirectory.exists();
     if (!stats) {
-        const existingPathStats = await tryStat(outputDirPath);
-        if (existingPathStats) {
-            throw new Error(`Output path exists and is not a directory: ${outputDirPath}`);
+        // Path doesn't exist as a directory; check for a non-directory at the same path.
+        try {
+            await fs.stat(outputDirectory.absPath());
+            throw new Error(`Output path exists and is not a directory: ${outputDirectory.absPath()}`);
+        }
+        catch (err) {
+            const error = err as NodeJS.ErrnoException;
+            if (error.code !== "ENOENT") {
+                throw err;
+            }
         }
 
         await outputDirectory.ensureExists();
@@ -514,7 +591,7 @@ async function prepareNamedOutputDirectory(
 
     if (!interactive) {
         throw new Error(
-            `The output directory "${outputDirPath}" is not empty and cannot be confirmed in non-interactive mode.`
+            `The output directory "${outputDirectory.absPath()}" is not empty and cannot be confirmed in non-interactive mode.`
         );
     }
 
@@ -527,104 +604,89 @@ async function prepareNamedOutputDirectory(
 }
 
 
-async function tryStat(targetPath: string): Promise<Awaited<ReturnType<typeof fs.stat>> | undefined> {
-    try {
-        return await fs.stat(targetPath);
-    }
-    catch (err) {
-        const error = err as NodeJS.ErrnoException;
-        if (error.code === "ENOENT") {
-            return undefined;
-        }
-
-        throw err;
-    }
-}
-
-
-export async function prepareNamedOutputDirectoryForTests(
-    outputDir: string,
-    interactive: boolean,
-    confirmDeletion: () => Promise<boolean>
-): Promise<void> {
-    await prepareNamedOutputDirectory(outputDir, interactive, confirmDeletion);
-}
-
-
+/** Summary of a completed render pass. */
 interface IRenderResult {
     renderedCount: number;
 }
 
 
-async function renderFilesToTemp(
-    inputs: Array<IValidatedInput>,
-    tempDir: string,
-    liveReload = false,
-    indentSections = false,
-    collapsibleSections = false
+/**
+ * Renders all markdown input files to HTML and writes them into `outputDir`.
+ *
+ * @param inputs             - Source markdown files to render.
+ * @param outputDir          - Directory to write rendered HTML into.
+ * @param liveReload         - Whether to inject the live-reload SSE client script.
+ * @param indentSections     - Whether to apply section indentation CSS/markup.
+ * @param collapsibleSections - Whether to make sections collapse/expand on click.
+ * @returns A result object with the count of successfully rendered files.
+ */
+export async function renderFilesToDir(
+    inputs:              Array<File>,
+    outputDir:           Directory,
+    liveReload           = false,
+    indentSections       = false,
+    collapsibleSections  = false
 ): Promise<IRenderResult> {
     const renderer = createRenderer(indentSections, collapsibleSections);
 
     for (const input of inputs) {
-        const sourceText = await fs.readFile(input.absolutePath, "utf8");
-        const rewrittenText = await rewriteAndCopyAssets(sourceText, input.absolutePath, tempDir);
-        const rendered = renderer.render(rewrittenText);
-        const document = wrapHtmlDocument(input.baseName, rendered, liveReload, collapsibleSections);
-        const outPath = getOutputHtmlPath(tempDir, input.baseName);
-        await fs.writeFile(outPath, document, "utf8");
+        const sourceText    = await input.read();
+        const rewrittenText = await rewriteAndCopyAssets(sourceText, input.absPath(), outputDir.absPath());
+        const rendered      = renderer.render(rewrittenText);
+        const document      = wrapHtmlDocument(input.baseName, rendered, liveReload, collapsibleSections);
+        const outFile       = getOutputHtmlPath(outputDir, input.baseName);
+        await outFile.write(document);
     }
 
     return { renderedCount: inputs.length };
 }
 
 
-export async function renderFilesToTempForTests(
-    inputs: Array<IValidatedInput>,
-    tempDir: string,
-    liveReload = false,
-    indentSections = false,
-    collapsibleSections = false
-): Promise<number> {
-    const result = await renderFilesToTemp(inputs, tempDir, liveReload, indentSections, collapsibleSections);
-    return result.renderedCount;
-}
-
-
-export function isPathInside(childPath: string, parentPath: string): boolean {
-    const relative = path.relative(parentPath, childPath);
-    return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
-}
-
-
+/**
+ * Identifies input files whose absolute paths fall inside the output directory.
+ *
+ * Used as a safety check: if the user specifies an output directory that
+ * overlaps with a source file, continuing would delete that source file.
+ *
+ * @param inputs    - Array of source markdown files.
+ * @param outputDir - The requested output directory.
+ * @returns The subset of `inputs` that are located inside `outputDir`.
+ */
 export function findSourcesInsideOutputDir(
-    inputs: Array<IValidatedInput>,
-    outputDirArg: string | undefined
-): Array<string> {
-    if (outputDirArg === undefined) {
-        return [];
-    }
-
-    const resolvedOutputDir = path.resolve(outputDirArg);
-    return inputs
-    .filter((input) => isPathInside(input.absolutePath, resolvedOutputDir))
-    .map((input) => input.absolutePath);
+    inputs:    Array<File>,
+    outputDir: Directory
+): Array<File> {
+    return inputs.filter((file) => file.isWithin(outputDir, true));
 }
 
 
+/**
+ * Registers `node:fs` watchers on each directory that contains an input file.
+ *
+ * File-change events are debounced to avoid triggering a re-render for every
+ * rapid-fire event. Changes to files inside the output directory are ignored
+ * to prevent re-render loops caused by the render writing new files.
+ *
+ * @param inputs             - Source files to watch.
+ * @param runtimeState       - Mutable runtime state; receives watcher handles and
+ *                             the debouncer.
+ * @param indentSections     - Forwarded to {@link renderFilesToDir}.
+ * @param collapsibleSections - Forwarded to {@link renderFilesToDir}.
+ */
 function startWatching(
-    inputs: Array<IValidatedInput>,
-    runtimeState: IRuntimeState,
-    indentSections: boolean,
+    inputs:             Array<File>,
+    runtimeState:       IRuntimeState,
+    indentSections:     boolean,
     collapsibleSections: boolean
 ): void {
-    const watchedFiles = new Set(inputs.map((input) => input.absolutePath));
-    const watchedDirs = new Set(inputs.map((input) => path.dirname(input.absolutePath)));
+    const watchedFiles = new Set(inputs.map((f) => f.absPath()));
+    const watchedDirs  = new Set(inputs.map((f) => f.directory.absPath()));
 
     let renderChain: Promise<void> = Promise.resolve();
 
     const rerender = async (): Promise<void> => {
         try {
-            const result = await renderFilesToTemp(
+            const result = await renderFilesToDir(
                 inputs, runtimeState.outputDir, true, indentSections, collapsibleSections
             );
             console.log(`Re-rendered files: ${result.renderedCount}`);
@@ -638,7 +700,7 @@ function startWatching(
     const debouncer = createDebouncer(WATCH_DEBOUNCE_MS, () => {
         renderChain = renderChain.then(rerender);
     });
-    runtimeState.debouncer = debouncer;
+    runtimeState.debouncer = new SomeOption(debouncer);
 
     for (const dir of watchedDirs) {
         try {
@@ -648,13 +710,13 @@ function startWatching(
                     return;
                 }
 
-                const changedPath = path.resolve(dir, filename);
+                const changedFile = new File(path.resolve(dir, filename));
 
-                if (isPathInside(changedPath, runtimeState.outputDir)) {
+                if (changedFile.isWithin(runtimeState.outputDir, true)) {
                     return;
                 }
 
-                if (watchedFiles.has(changedPath)) {
+                if (watchedFiles.has(changedFile.absPath())) {
                     debouncer.schedule();
                 }
             });
@@ -672,7 +734,12 @@ function startWatching(
 }
 
 
-function notifyReloadClients(reloadClients: Set<http.ServerResponse>): void {
+/**
+ * Sends a `reload` SSE event to every connected live-reload client.
+ *
+ * @param reloadClients - Set of open SSE response streams.
+ */
+export function notifyReloadClients(reloadClients: Set<http.ServerResponse>): void {
     for (const client of reloadClients) {
         try {
             client.write("event: reload\ndata: {}\n\n");
@@ -684,21 +751,35 @@ function notifyReloadClients(reloadClients: Set<http.ServerResponse>): void {
 }
 
 
-export function notifyReloadClientsForTests(reloadClients: Set<http.ServerResponse>): void {
-    notifyReloadClients(reloadClients);
-}
-
-
+/**
+ * Converts a heading string to a GitHub-Flavored Markdown anchor slug.
+ *
+ * Mirrors GitHub's behaviour: lower-case, strip non-word/non-space/non-hyphen
+ * characters, trim, then replace whitespace runs with a single `-`.
+ *
+ * @param str - Heading text.
+ * @returns URL-safe anchor slug.
+ */
 function gfmSlugify(str: string): string {
-    const lower       = str.toLowerCase();
-    const stripped    = lower.replace(/[^\w\s-]/g, "");
-    const trimmed     = stripped.trim();
-    const hyphenated  = trimmed.replace(/\s+/g, "-");
+    const lower      = str.toLowerCase();
+    const stripped   = lower.replace(/[^\w\s-]/g, "");
+    const trimmed    = stripped.trim();
+    const hyphenated = trimmed.replace(/\s+/g, "-");
     return hyphenated.replace(/-+/g, "-");
 }
 
 
-function createRenderer(indentSections = false, collapsibleSections = false): markdownIt {
+/**
+ * Constructs a configured `markdown-it` instance with all required plugins
+ * (footnotes, emoji, task lists, anchors, definition lists, code highlighting)
+ * and optional section-structure plugins.
+ *
+ * @param indentSections     - Apply {@link sectionWrappingPlugin} for CSS indentation.
+ * @param collapsibleSections - Apply {@link jsCollapsibleSectionPlugin} for
+ *                             click-to-collapse behaviour.
+ * @returns Configured `markdown-it` renderer.
+ */
+export function createRenderer(indentSections = false, collapsibleSections = false): markdownIt {
     const md = new markdownIt({
         html:        true,
         linkify:     true,
@@ -728,11 +809,16 @@ function createRenderer(indentSections = false, collapsibleSections = false): ma
 }
 
 
-export function createRendererForTests(indentSections = false, collapsibleSections = false): markdownIt {
-    return createRenderer(indentSections, collapsibleSections);
-}
-
-
+/**
+ * `markdown-it` core rule plugin that wraps each heading and its following
+ * content in a `<section>` element.
+ *
+ * Enables CSS indentation of section bodies via `.md-section` class. A new
+ * section is opened at each heading and closed when a heading of equal or
+ * higher level is encountered.
+ *
+ * @param md - The `markdown-it` instance to register the rule on.
+ */
 function sectionWrappingPlugin(md: markdownIt): void {
     md.core.ruler.push("wrap_header_sections", (state) => {
         const result: Array<typeof state.tokens[number]> = [];
@@ -771,6 +857,13 @@ function sectionWrappingPlugin(md: markdownIt): void {
 }
 
 
+/**
+ * `markdown-it` core rule plugin that wraps each section in a `<section>` +
+ * `<div class="md-section-body">` structure, allowing JavaScript to collapse
+ * and expand sections by toggling a CSS class.
+ *
+ * @param md - The `markdown-it` instance to register the rule on.
+ */
 function jsCollapsibleSectionPlugin(md: markdownIt): void {
     md.core.ruler.push("wrap_js_collapsible_sections", (state) => {
         const result: Array<typeof state.tokens[number]> = [];
@@ -828,10 +921,22 @@ function jsCollapsibleSectionPlugin(md: markdownIt): void {
 }
 
 
-function wrapHtmlDocument(
-    title: string,
-    bodyHtml: string,
-    liveReload = false,
+/**
+ * Wraps rendered HTML body content in a full HTML document, adding the shared
+ * stylesheet link, optional live-reload script, and optional collapsible-section
+ * toolbar and script.
+ *
+ * @param title              - Document `<title>` text.
+ * @param bodyHtml           - Rendered markdown body HTML.
+ * @param liveReload         - Whether to inject the live-reload SSE client.
+ * @param collapsibleSections - Whether to inject the collapsible-section toolbar
+ *                             and JavaScript.
+ * @returns A complete HTML document string.
+ */
+export function wrapHtmlDocument(
+    title:              string,
+    bodyHtml:           string,
+    liveReload          = false,
     collapsibleSections = false
 ): string {
     const lines = [
@@ -868,16 +973,11 @@ function wrapHtmlDocument(
 }
 
 
-export function wrapHtmlDocumentForTests(
-    title: string,
-    bodyHtml: string,
-    liveReload = false,
-    collapsibleSections = false
-): string {
-    return wrapHtmlDocument(title, bodyHtml, liveReload, collapsibleSections);
-}
-
-
+/**
+ * Returns an inline `<script>` block that connects to the live-reload SSE
+ * endpoint and triggers `window.location.reload()` when a `reload` event
+ * arrives.
+ */
 function liveReloadClientScript(): string {
     return [
         "  <script>",
@@ -890,6 +990,13 @@ function liveReloadClientScript(): string {
 }
 
 
+/**
+ * Returns an inline `<script>` block that makes each `.md-section` heading a
+ * click-to-toggle that shows or hides its section body.
+ *
+ * Persists expand/collapse state across navigations using `sessionStorage`. Also
+ * wires up "Expand all" and "Collapse all" toolbar buttons.
+ */
 function collapsibleToggleScript(): string {
     return [
         "  <script>",
@@ -945,6 +1052,10 @@ function collapsibleToggleScript(): string {
 }
 
 
+/**
+ * Returns the HTML lines for the "Expand all / Collapse all" toolbar, rendered
+ * as a sticky bar above the markdown body when collapsible sections are active.
+ */
 function toolbarHtmlLines(): Array<string> {
     return [
         "  <div class=\"md-preview-toolbar\" role=\"toolbar\" aria-label=\"Section controls\">",
@@ -955,12 +1066,24 @@ function toolbarHtmlLines(): Array<string> {
 }
 
 
+/**
+ * Composes the preview stylesheet from the bundled VS Code CSS files and any
+ * active section-layout options, then writes it as `md-preview.css` into the
+ * output directory.
+ *
+ * Falls back to a minimal inline stylesheet if the bundled CSS assets are not
+ * found (e.g. during tests run against the TypeScript source tree).
+ *
+ * @param outputDir          - Output directory to write the stylesheet into.
+ * @param indentSections     - Whether to include section-indent CSS.
+ * @param collapsibleSections - Whether to include collapsible-section CSS.
+ */
 async function writeSharedStylesheet(
-    tempDir: string,
-    indentSections = false,
+    outputDir:          Directory,
+    indentSections      = false,
     collapsibleSections = false
 ): Promise<void> {
-    const vscodeCssPath = fileURLToPath(new URL("../assets/vscode-markdown.css", import.meta.url));
+    const vscodeCssPath          = fileURLToPath(new URL("../assets/vscode-markdown.css", import.meta.url));
     const vscodeHighlightCssPath = fileURLToPath(new URL("../assets/vscode-highlight.css", import.meta.url));
 
     let cssText: string;
@@ -981,14 +1104,23 @@ async function writeSharedStylesheet(
 
     cssText = composeStylesheet(cssText, highlightCssText, indentSections, collapsibleSections);
 
-    await fs.writeFile(path.join(tempDir, "md-preview.css"), cssText, "utf8");
+    await new File(outputDir, "md-preview.css").write(cssText);
 }
 
 
+/**
+ * Assembles the final stylesheet string from constituent CSS blocks.
+ *
+ * @param vscodeCssText      - VS Code markdown theme CSS.
+ * @param highlightCssText   - Syntax-highlighting theme CSS.
+ * @param indentSections     - Whether to append {@link sectionIndentCss}.
+ * @param collapsibleSections - Whether to append {@link collapsibleSectionCss}.
+ * @returns The concatenated stylesheet string.
+ */
 export function composeStylesheet(
-    vscodeCssText: string,
-    highlightCssText: string,
-    indentSections = false,
+    vscodeCssText:      string,
+    highlightCssText:   string,
+    indentSections      = false,
     collapsibleSections = false
 ): string {
     const inlineCodeFallbackCss = [
@@ -1033,6 +1165,10 @@ export function composeStylesheet(
 }
 
 
+/**
+ * Returns the CSS rule that indents each `.md-section`'s non-heading children,
+ * creating a visual nesting hierarchy that mirrors heading depth.
+ */
 function sectionIndentCss(): string {
     return [
         "",
@@ -1044,6 +1180,11 @@ function sectionIndentCss(): string {
 }
 
 
+/**
+ * Returns the CSS rules for the sticky toolbar, collapsible-section toggle
+ * behaviour (hiding `.md-section-body` when collapsed), and heading cursor
+ * affordance.
+ */
 function collapsibleSectionCss(): string {
     return [
         "",
@@ -1093,39 +1234,60 @@ function collapsibleSectionCss(): string {
 }
 
 
-async function rewriteAndCopyAssets(markdownText: string, sourceFile: string, tempDir: string): Promise<string> {
+/**
+ * Rewrites relative asset URLs in markdown text so they point to copies inside
+ * the output directory, then copies each referenced file there.
+ *
+ * Only rewrites local, relative paths — absolute URLs, data URIs, and
+ * fragment-only references are left unchanged.
+ *
+ * @param markdownText - Raw markdown source.
+ * @param sourceFile   - Absolute path of the markdown file (used to resolve
+ *                       relative asset references).
+ * @param outputDir    - Absolute path of the output directory to copy assets into.
+ * @returns The markdown text with asset URLs rewritten to relative paths under
+ *          `outputDir`.
+ */
+export async function rewriteAndCopyAssets(
+    markdownText: string,
+    sourceFile:   string,
+    outputDir:    string
+): Promise<string> {
     const sourceDir = path.dirname(sourceFile);
 
     const markdownLinkRegex = /(?<prefix>!?\[[^\]]*\]\()(?<target>[^)]+)(?<suffix>\))/g;
     const htmlAttrRegex = /(?<prefix><(?:img|a)\b[^>]*?\s(?:src|href)=")(?<target>[^"]+)(?<suffix>"[^>]*>)/g;
 
     let updated = markdownText;
-    updated = await rewriteMatches(updated, markdownLinkRegex, sourceDir, tempDir);
-    updated = await rewriteMatches(updated, htmlAttrRegex, sourceDir, tempDir);
+    updated = await rewriteMatches(updated, markdownLinkRegex, sourceDir, outputDir);
+    updated = await rewriteMatches(updated, htmlAttrRegex, sourceDir, outputDir);
     return updated;
 }
 
 
-export async function rewriteAndCopyAssetsForTests(
-    markdownText: string,
-    sourceFile: string,
-    tempDir: string
-): Promise<string> {
-    return rewriteAndCopyAssets(markdownText, sourceFile, tempDir);
-}
-
-
+/**
+ * Applies {@link resolveRewrittenTarget} to every match of `regex` in `text`,
+ * replacing each matched target URL in place.
+ *
+ * The regex must contain named capture groups `prefix`, `target`, and `suffix`.
+ *
+ * @param text      - Source text to process.
+ * @param regex     - A global regex with `prefix`/`target`/`suffix` groups.
+ * @param sourceDir - Directory of the source markdown file.
+ * @param outputDir - Destination directory for copied assets.
+ * @returns The text with all rewritten target URLs substituted.
+ */
 async function rewriteMatches(
-    text: string,
-    regex: RegExp,
+    text:      string,
+    regex:     RegExp,
     sourceDir: string,
-    tempDir: string
+    outputDir: string
 ): Promise<string> {
     const matches = Array.from(text.matchAll(regex));
     let result = text;
 
     for (const match of matches) {
-        const full = match[0];
+        const full   = match[0];
         const prefix = match.groups?.prefix;
         const target = match.groups?.target;
         const suffix = match.groups?.suffix;
@@ -1134,7 +1296,7 @@ async function rewriteMatches(
             continue;
         }
 
-        const replacementTarget = await resolveRewrittenTarget(target, sourceDir, tempDir);
+        const replacementTarget = await resolveRewrittenTarget(target, sourceDir, outputDir);
         const replacement = `${prefix}${replacementTarget}${suffix}`;
         result = result.replace(full, replacement);
     }
@@ -1143,14 +1305,26 @@ async function rewriteMatches(
 }
 
 
-async function resolveRewrittenTarget(target: string, sourceDir: string, tempDir: string): Promise<string> {
+/**
+ * Resolves a single asset reference from the markdown source, copies the file
+ * into `outputDir`, and returns the rewritten relative path.
+ *
+ * Returns the original `target` unchanged when it is an absolute URL, fragment,
+ * or when the referenced file cannot be found.
+ *
+ * @param target    - The original URL/path as it appears in the markdown.
+ * @param sourceDir - Directory of the markdown source file.
+ * @param outputDir - Destination directory for the copied asset.
+ * @returns The path the browser should use to load the asset.
+ */
+async function resolveRewrittenTarget(target: string, sourceDir: string, outputDir: string): Promise<string> {
     if (isAbsoluteUrlOrFragment(target)) {
         return target;
     }
 
-    const sourceAssetPath = path.resolve(sourceDir, target);
+    const sourceAssetPath   = path.resolve(sourceDir, target);
     const normalizedRelative = target.replaceAll("\\", "/").replace(/^\/+/, "");
-    const destinationPath = path.join(tempDir, normalizedRelative);
+    const destinationPath   = path.join(outputDir, normalizedRelative);
 
     try {
         const stats = await fs.stat(sourceAssetPath);
@@ -1170,6 +1344,14 @@ async function resolveRewrittenTarget(target: string, sourceDir: string, tempDir
 }
 
 
+/**
+ * Returns `true` when `target` is an absolute URL, a protocol-relative URL, a
+ * data URI, a mailto link, a file URI, or a fragment-only reference (`#…`).
+ *
+ * Used to skip rewriting asset references that are not local relative paths.
+ *
+ * @param target - URL string to test.
+ */
 export function isAbsoluteUrlOrFragment(target: string): boolean {
     if (target.startsWith("#")) {
         return true;
@@ -1183,6 +1365,14 @@ export function isAbsoluteUrlOrFragment(target: string): boolean {
 }
 
 
+/**
+ * Launches the default browser to open `url` using the platform-appropriate
+ * shell command (`start` on Windows, `open` on macOS, `xdg-open` on Linux).
+ *
+ * Fire-and-forget: errors are silently ignored.
+ *
+ * @param url - URL to open.
+ */
 function launchBrowser(url: string): void {
     const escapedUrl = `"${url}"`;
     if (process.platform.startsWith("win")) {
@@ -1197,12 +1387,32 @@ function launchBrowser(url: string): void {
 }
 
 
-async function startServer(
-    rootDir: string,
-    serverSockets: Set<net.Socket>,
-    reloadClients: Set<http.ServerResponse>,
+/**
+ * Starts an HTTP file server that serves static files from `rootDir`.
+ *
+ * Features:
+ * - Directory listing for paths that resolve to a directory.
+ * - Content-type detection by file extension.
+ * - Path traversal protection (requests outside `rootDir` receive 403).
+ * - If `liveReloadEnabled`, requests to `LIVE_RELOAD_PATH` are handled as
+ *   Server-Sent Event streams.
+ *
+ * Binds to a random available port on all interfaces (`0.0.0.0`).
+ *
+ * @param rootDir           - Directory to serve files from.
+ * @param serverSockets     - Set to track open sockets for graceful shutdown.
+ * @param reloadClients     - Set to track open SSE response streams.
+ * @param liveReloadEnabled - Whether to handle SSE live-reload requests.
+ * @returns The bound `http.Server` instance.
+ */
+export async function startServer(
+    rootDir:           Directory,
+    serverSockets:     Set<net.Socket>,
+    reloadClients:     Set<http.ServerResponse>,
     liveReloadEnabled: boolean
 ): Promise<http.Server> {
+    const rootDirPath = rootDir.absPath();
+
     const server = http.createServer((req, res) => {
         const __dontCare = (async () => {
             try {
@@ -1222,10 +1432,10 @@ async function startServer(
                 }
 
                 const decodedPath = decodeURIComponent(requestUrl.pathname);
-                const fsPath = path.join(rootDir, decodedPath);
+                const fsPath      = path.join(rootDirPath, decodedPath);
 
                 const normalized = path.normalize(fsPath);
-                if (!normalized.startsWith(path.normalize(rootDir))) {
+                if (!normalized.startsWith(path.normalize(rootDirPath))) {
                     res.statusCode = 403;
                     res.setHeader("content-type", "text/plain; charset=utf-8");
                     res.end("Forbidden");
@@ -1239,7 +1449,7 @@ async function startServer(
                     .sort((a, b) => a.name.localeCompare(b.name))
                     .map((entry) => {
                         const suffix = entry.isDirectory() ? "/" : "";
-                        const href = path.posix.join(decodedPath.replaceAll("\\", "/"), entry.name) + suffix;
+                        const href   = path.posix.join(decodedPath.replaceAll("\\", "/"), entry.name) + suffix;
                         return `<li><a href="${escapeHtml(href)}">${escapeHtml(entry.name)}${suffix}</a></li>`;
                     })
                     .join("\n");
@@ -1262,7 +1472,7 @@ async function startServer(
                     return;
                 }
 
-                const fileBuffer = await fs.readFile(normalized);
+                const fileBuffer  = await fs.readFile(normalized);
                 const contentType = getContentType(normalized);
                 res.statusCode = 200;
                 res.setHeader("content-type", contentType);
@@ -1295,16 +1505,12 @@ async function startServer(
 }
 
 
-export async function startServerForTests(
-    rootDir: string,
-    serverSockets: Set<net.Socket>,
-    reloadClients: Set<http.ServerResponse>,
-    liveReloadEnabled: boolean
-): Promise<http.Server> {
-    return startServer(rootDir, serverSockets, reloadClients, liveReloadEnabled);
-}
-
-
+/**
+ * Maps a file extension to an HTTP `Content-Type` header value.
+ *
+ * @param filePath - Absolute or relative file path; only the extension is used.
+ * @returns MIME type string, defaulting to `application/octet-stream`.
+ */
 function getContentType(filePath: string): string {
     const ext = path.extname(filePath).toLowerCase();
     switch (ext) {
@@ -1329,15 +1535,24 @@ function getContentType(filePath: string): string {
 }
 
 
+/**
+ * Gracefully tears down all live components: debouncer, file watchers, SSE
+ * clients, HTTP server (with socket drain), and (if applicable) the temp output
+ * directory.
+ *
+ * Idempotent — a second call while cleanup is in progress returns immediately.
+ *
+ * @param runtimeState - The runtime state to clean up.
+ */
 async function cleanupRuntime(runtimeState: IRuntimeState): Promise<void> {
     if (runtimeState.shuttingDown) {
         return;
     }
     runtimeState.shuttingDown = true;
 
-    if (runtimeState.debouncer) {
-        runtimeState.debouncer.cancel();
-        runtimeState.debouncer = undefined;
+    if (runtimeState.debouncer.isSome) {
+        runtimeState.debouncer.value.cancel();
+        runtimeState.debouncer = NoneOption.get();
     }
     for (const watcher of runtimeState.watchers) {
         try {
@@ -1360,7 +1575,8 @@ async function cleanupRuntime(runtimeState: IRuntimeState): Promise<void> {
     runtimeState.reloadClients.clear();
 
     try {
-        if (runtimeState.server) {
+        if (runtimeState.server.isSome) {
+            const server = runtimeState.server.value;
             await new Promise<void>((resolve) => {
                 let resolved = false;
                 const finish = (): void => {
@@ -1370,12 +1586,12 @@ async function cleanupRuntime(runtimeState: IRuntimeState): Promise<void> {
                     }
                 };
 
-                runtimeState.server!.close(() => {
+                server.close(() => {
                     finish();
                 });
 
-                if (typeof runtimeState.server!.closeAllConnections === "function") {
-                    runtimeState.server!.closeAllConnections();
+                if (typeof server.closeAllConnections === "function") {
+                    server.closeAllConnections();
                 }
 
                 for (const socket of runtimeState.serverSockets) {
@@ -1394,13 +1610,13 @@ async function cleanupRuntime(runtimeState: IRuntimeState): Promise<void> {
     }
 
     if (!runtimeState.shouldDeleteOnExit) {
-        console.log(`Cleanup: preserved output directory ${runtimeState.outputDir}`);
+        console.log(`Cleanup: preserved output directory ${runtimeState.outputDir.toString()}`);
         return;
     }
 
     try {
-        await fs.rm(runtimeState.outputDir, { recursive: true, force: true });
-        console.log(`Cleanup: deleted temp directory ${runtimeState.outputDir}`);
+        await runtimeState.outputDir.delete();
+        console.log(`Cleanup: deleted temp directory ${runtimeState.outputDir.toString()}`);
     }
     catch (err) {
         console.warn(`Cleanup warning while deleting temp directory: ${formatError(err)}`);
@@ -1408,6 +1624,13 @@ async function cleanupRuntime(runtimeState: IRuntimeState): Promise<void> {
 }
 
 
+/**
+ * Escapes the five HTML special characters (`&`, `<`, `>`, `"`, `'`) so that a
+ * string can be safely embedded in an HTML attribute or text node.
+ *
+ * @param value - Plain-text string to escape.
+ * @returns HTML-escaped string.
+ */
 function escapeHtml(value: string): string {
     return value
     .replaceAll("&", "&amp;")
@@ -1418,6 +1641,12 @@ function escapeHtml(value: string): string {
 }
 
 
+/**
+ * Converts an unknown thrown value to a human-readable string.
+ *
+ * @param err - Any thrown value.
+ * @returns `"<name>: <message>"` for `Error` instances, or `String(err)` otherwise.
+ */
 function formatError(err: unknown): string {
     if (err instanceof Error) {
         return `${err.name}: ${err.message}`;

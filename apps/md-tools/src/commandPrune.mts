@@ -1,16 +1,25 @@
-import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import type { Argv, Arguments } from "yargs";
+import { Result, SucceededResult, FailedResult } from "@repo/depot/result";
+import { File } from "@repo/depot-node/file";
+import { Directory } from "@repo/depot-node/directory";
 import { promptToContinue } from "@repo/depot-node/prompts";
 import { isAbsoluteUrlOrFragment } from "./commandPreview.mjs";
 
 
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".bmp", ".ico"]);
 
+
 export const command  = "prune <directory>";
 export const describe = "List image files not referenced by any markdown document, with option to delete them";
 
 
+/**
+ * Registers yargs positional arguments for the `prune` sub-command.
+ *
+ * @param argv - The yargs instance provided by the parent command.
+ * @returns The yargs instance with prune-specific arguments attached.
+ */
 export function builder(argv: Argv): Argv {
     return argv
     .positional("directory", {
@@ -20,29 +29,50 @@ export function builder(argv: Argv): Argv {
 }
 
 
-export async function handler(args: Arguments): Promise<void> {
-    const dirArg  = args.directory as string;
-    const dirPath = path.resolve(dirArg);
+interface IPruneConfig {
+    targetDir: Directory;
+}
 
-    try {
-        const stats = await fs.stat(dirPath);
-        if (!stats.isDirectory()) {
-            console.error(`Error: not a directory: ${dirPath}`);
-            process.exit(1);
-        }
+
+async function getConfiguration(args: Arguments): Promise<Result<IPruneConfig, string>> {
+    const dirArg = args.directory as string;
+    const dir    = new Directory(dirArg);
+
+    const stats = await dir.exists();
+    if (!stats) {
+        console.error(`Error: directory not found: ${dir.absPath()}`);
+        return new FailedResult(`Directory not found: ${dir.absPath()}`);
     }
-    catch {
-        console.error(`Error: directory not found: ${dirPath}`);
+
+    return new SucceededResult({ targetDir: dir.absolute() });
+}
+
+
+/**
+ * Yargs command handler for the `prune` sub-command.
+ *
+ * Scans `targetDir` for image files not referenced by any markdown document.
+ * In interactive mode, prompts the user before deleting. Exits with a non-zero
+ * code on validation failure.
+ *
+ * @param args - Raw yargs argument map.
+ */
+export async function handler(args: Arguments): Promise<void> {
+    const configRes = await getConfiguration(args);
+    if (configRes.failed) {
         process.exit(1);
     }
 
-    console.log(`Scanning: ${dirPath}`);
+    const { targetDir } = configRes.value;
+    console.log(`Scanning: ${targetDir.absPath()}`);
 
-    const markdownFiles: Array<string> = [];
-    const imageFiles: Array<string>    = [];
-    await walkDirectory(dirPath, markdownFiles, imageFiles);
+    const markdownFiles: Array<File> = [];
+    const imageFiles:    Array<File> = [];
+    await collectFiles(targetDir, markdownFiles, imageFiles);
 
-    console.log(`Found ${markdownFiles.length} markdown file(s) and ${imageFiles.length} image file(s).`);
+    console.log(
+        `Found ${markdownFiles.length} markdown file(s) and ${imageFiles.length} image file(s).`
+    );
 
     if (imageFiles.length === 0) {
         console.log("No image files found.");
@@ -51,15 +81,15 @@ export async function handler(args: Arguments): Promise<void> {
 
     const referencedPaths = new Set<string>();
     for (const mdFile of markdownFiles) {
-        const content = await fs.readFile(mdFile, "utf8");
+        const content = await mdFile.read();
         for (const ref of extractReferencedPaths(content, mdFile)) {
             referencedPaths.add(ref);
         }
     }
 
     const orphans = imageFiles
-    .filter((imgFile) => !referencedPaths.has(imgFile))
-    .sort();
+    .filter((imgFile) => !referencedPaths.has(imgFile.absPath()))
+    .sort((a, b) => a.absPath().localeCompare(b.absPath()));
 
     if (orphans.length === 0) {
         console.log("All image files are referenced. Nothing to prune.");
@@ -68,7 +98,7 @@ export async function handler(args: Arguments): Promise<void> {
 
     console.log(`\nUnreferenced image files (${orphans.length}):`);
     for (const orphan of orphans) {
-        console.log(`  ${path.relative(dirPath, orphan)}`);
+        console.log(`  ${path.relative(targetDir.absPath(), orphan.absPath())}`);
     }
 
     const interactive = process.stdin.isTTY && process.stdout.isTTY;
@@ -91,12 +121,14 @@ export async function handler(args: Arguments): Promise<void> {
     let deletedCount = 0;
     for (const orphan of orphans) {
         try {
-            await fs.unlink(orphan);
-            console.log(`Deleted: ${path.relative(dirPath, orphan)}`);
+            await orphan.delete();
+            console.log(`Deleted: ${path.relative(targetDir.absPath(), orphan.absPath())}`);
             deletedCount++;
         }
         catch (err) {
-            console.error(`Failed to delete ${path.relative(dirPath, orphan)}: ${formatError(err)}`);
+            console.error(
+                `Failed to delete ${path.relative(targetDir.absPath(), orphan.absPath())}: ${formatError(err)}`
+            );
         }
     }
 
@@ -104,34 +136,34 @@ export async function handler(args: Arguments): Promise<void> {
 }
 
 
-async function walkDirectory(
-    dir: string,
-    markdownFiles: Array<string>,
-    imageFiles: Array<string>
+async function collectFiles(
+    dir:           Directory,
+    markdownFiles: Array<File>,
+    imageFiles:    Array<File>
 ): Promise<void> {
-    const entries = await fs.readdir(dir, { withFileTypes: true });
-    for (const entry of entries) {
-        const fullPath = path.join(dir, entry.name);
-        if (entry.isDirectory()) {
-            if (!entry.name.startsWith(".") && entry.name !== "node_modules") {
-                await walkDirectory(fullPath, markdownFiles, imageFiles);
-            }
+    const contents = await dir.contents(false);
+
+    for (const subdir of contents.subdirs) {
+        const name = subdir.dirName;
+        if (!name.startsWith(".") && name !== "node_modules") {
+            await collectFiles(subdir, markdownFiles, imageFiles);
         }
-        else if (entry.isFile()) {
-            const ext = path.extname(entry.name).toLowerCase();
-            if (ext === ".md" || ext === ".markdown") {
-                markdownFiles.push(fullPath);
-            }
-            else if (IMAGE_EXTENSIONS.has(ext)) {
-                imageFiles.push(fullPath);
-            }
+    }
+
+    for (const file of contents.files) {
+        const ext = file.extName.toLowerCase();
+        if (ext === ".md" || ext === ".markdown") {
+            markdownFiles.push(file);
+        }
+        else if (IMAGE_EXTENSIONS.has(ext)) {
+            imageFiles.push(file);
         }
     }
 }
 
 
-function extractReferencedPaths(markdownText: string, sourceFile: string): Array<string> {
-    const sourceDir = path.dirname(sourceFile);
+function extractReferencedPaths(markdownText: string, sourceFile: File): Array<string> {
+    const sourceDir = sourceFile.directory.absPath();
     const result: Array<string> = [];
 
     const markdownLinkRegex = /!?\[[^\]]*\]\((?<target>[^)]+)\)/g;
@@ -145,7 +177,6 @@ function extractReferencedPaths(markdownText: string, sourceFile: string): Array
             if (!rawTarget) {
                 continue;
             }
-            // Strip query string and fragment before resolving to a filesystem path.
             const cleanTarget = rawTarget.split("?")[0]?.split("#")[0] ?? "";
             if (cleanTarget && !isAbsoluteUrlOrFragment(cleanTarget)) {
                 result.push(path.resolve(sourceDir, cleanTarget));

@@ -60,10 +60,8 @@ For consistency, when multiple projects use an npm package, they should use the 
 ## Unit Tests
 
 - Name test files `baseName.test.mts`.
-- Leave two blank lines between adjacent `describe()` blocks.
-- Leave two blank lines between adjacent `it()` or `test()` blocks.
-- Leave one blank line before the first `it()` or `test()` in a `describe()` block.
-- Leave one blank line after the last `it()` or `test()` in a `describe()` block.
+- Leave two blank lines between any two adjacent lifecycle blocks within a `describe()`.  This rule applies uniformly to `describe`, `beforeAll`, `afterAll`, `beforeEach`, `afterEach`, `it`, and `test` blocks.
+- Leave one blank line immediately after the opening of a `describe()` callback, and one blank line immediately before its closing brace.
 - Unit test organization:
   - Name test files `<base_name>.test.mts`.
   - All unit tests for a class should be in a single `describe()` block named for the class.

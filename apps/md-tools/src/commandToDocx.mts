@@ -1,18 +1,27 @@
-import * as fs from "node:fs/promises";
-import * as path from "node:path";
 import * as cp from "node:child_process";
 import type { Argv, Arguments } from "yargs";
+import { Result, SucceededResult, FailedResult } from "@repo/depot/result";
+import { Option, SomeOption, NoneOption } from "@repo/depot/option";
+import { File } from "@repo/depot-node/file";
+import { Directory } from "@repo/depot-node/directory";
+import { getStdinPipedLines } from "@repo/depot-node/ttyHelpers";
 import { validateAndNormalizeInputs } from "./commandPreview.mjs";
 
 
-const EXIT_SUCCESS        = 0;
-const EXIT_INVALID_INPUT  = 1;
+const EXIT_SUCCESS         = 0;
 const EXIT_RUNTIME_FAILURE = 2;
+
 
 export const command  = "to-docx [files...]";
 export const describe = "Convert markdown files to Microsoft Word (.docx) format using pandoc";
 
 
+/**
+ * Registers yargs positional arguments and options for the `to-docx` sub-command.
+ *
+ * @param argv - The yargs instance provided by the parent command.
+ * @returns The yargs instance with to-docx-specific options attached.
+ */
 export function builder(argv: Argv): Argv {
     return argv
     .positional("files", {
@@ -30,16 +39,73 @@ export function builder(argv: Argv): Argv {
 }
 
 
-export async function handler(args: Arguments): Promise<void> {
-    const outputDir    = args.outputDir as string | undefined;
-    const referenceDoc = args["reference-doc"] as string | undefined;
+interface IToDocxConfig {
+    inputFiles:   Array<File>;
+    outputDir:    Option<Directory>;
+    referenceDoc: Option<File>;
+}
+
+
+async function getConfiguration(args: Arguments): Promise<Result<IToDocxConfig, string>> {
     const rawFiles     = args.files as Array<string> | string | undefined;
     const positional   = Array.isArray(rawFiles) ? rawFiles :
         typeof rawFiles === "string"             ? [rawFiles] :
         [];
 
+    const stdinLines  = await getStdinPipedLines();
+    const mergedPaths = [...positional, ...stdinLines];
+
+    const filesRes = await validateAndNormalizeInputs(mergedPaths);
+    if (filesRes.failed) {
+        return filesRes;
+    }
+
+    const rawOutputDir = args.outputDir as string | undefined;
+    const outputDir: Option<Directory> = rawOutputDir !== undefined ?
+        new SomeOption(new Directory(rawOutputDir)) :
+        NoneOption.get();
+
+    const rawReferenceDoc = args["reference-doc"] as string | undefined;
+    if (rawReferenceDoc !== undefined) {
+        const refDocFile = new File(rawReferenceDoc);
+        const stats = await refDocFile.exists();
+        if (!stats?.isFile()) {
+            console.error(
+                `Error: --reference-doc file not found or is not a file: ${refDocFile.absPath()}`
+            );
+            return new FailedResult(`--reference-doc file not found: ${refDocFile.absPath()}`);
+        }
+        return new SucceededResult({
+            inputFiles:   filesRes.value,
+            outputDir,
+            referenceDoc: new SomeOption(refDocFile)
+        });
+    }
+
+    return new SucceededResult({
+        inputFiles:   filesRes.value,
+        outputDir,
+        referenceDoc: NoneOption.get()
+    });
+}
+
+
+/**
+ * Yargs command handler for the `to-docx` sub-command.
+ *
+ * Calls {@link getConfiguration}, then delegates to {@link toDocxImpl}. Exits
+ * the process with a non-zero code on validation or runtime failure.
+ *
+ * @param args - Raw yargs argument map.
+ */
+export async function handler(args: Arguments): Promise<void> {
     try {
-        const exitCode = await toDocxImpl(positional, outputDir, referenceDoc);
+        const configRes = await getConfiguration(args);
+        if (configRes.failed) {
+            process.exit(EXIT_RUNTIME_FAILURE);
+        }
+
+        const exitCode = await toDocxImpl(configRes.value);
         if (exitCode !== EXIT_SUCCESS) {
             process.exit(exitCode);
         }
@@ -52,20 +118,7 @@ export async function handler(args: Arguments): Promise<void> {
 }
 
 
-async function toDocxImpl(
-    positionalPaths: Array<string>,
-    outputDir: string | undefined,
-    referenceDoc: string | undefined
-): Promise<number> {
-    const pipedPaths = await readPipedPaths();
-
-    const validation = await validateAndNormalizeInputs(positionalPaths, pipedPaths);
-    if (!validation.succeeded) {
-        return validation.exitCode;
-    }
-    const inputs = validation.inputs;
-
-    // Verify pandoc is available before doing any work.
+async function toDocxImpl(config: IToDocxConfig): Promise<number> {
     const pandocAvailable = await isPandocAvailable();
     if (!pandocAvailable) {
         console.error("Error: pandoc is not installed or not on PATH.");
@@ -73,57 +126,30 @@ async function toDocxImpl(
         return EXIT_RUNTIME_FAILURE;
     }
 
-    // Validate reference-doc if provided.
-    if (referenceDoc !== undefined) {
-        const refDocPath = path.resolve(referenceDoc);
-        try {
-            const stats = await fs.stat(refDocPath);
-            if (!stats.isFile()) {
-                console.error(`Error: --reference-doc is not a file: ${refDocPath}`);
-                return EXIT_INVALID_INPUT;
-            }
-        }
-        catch {
-            console.error(`Error: --reference-doc file not found: ${refDocPath}`);
-            return EXIT_INVALID_INPUT;
-        }
-    }
-
-    // Prepare output directory if specified.
-    if (outputDir !== undefined) {
-        const resolvedOutputDir = path.resolve(outputDir);
-        try {
-            await fs.mkdir(resolvedOutputDir, { recursive: true });
-        }
-        catch (err) {
-            console.error(`Error: could not create output directory: ${resolvedOutputDir}`);
-            console.error(formatError(err));
-            return EXIT_RUNTIME_FAILURE;
-        }
+    if (config.outputDir.isSome) {
+        await config.outputDir.value.ensureExists();
     }
 
     let failureCount = 0;
-    for (const input of inputs) {
-        const destDir = outputDir !== undefined
-            ? path.resolve(outputDir)
-            : path.dirname(input.absolutePath);
-
-        const outputPath = path.join(destDir, `${input.baseName}.docx`);
-        const resourcePath = path.dirname(input.absolutePath);
+    for (const input of config.inputFiles) {
+        const destDir  = config.outputDir.isSome ?
+            config.outputDir.value :
+            input.directory;
+        const outFile  = new File(destDir, `${input.baseName}.docx`);
 
         const pandocArgs = [
-            input.absolutePath,
-            "-o", outputPath,
+            input.absPath(),
+            "-o", outFile.absPath(),
             "--from", "markdown",
             "--to", "docx",
-            "--resource-path", resourcePath
+            "--resource-path", input.directory.absPath()
         ];
 
-        if (referenceDoc !== undefined) {
-            pandocArgs.push("--reference-doc", path.resolve(referenceDoc));
+        if (config.referenceDoc.isSome) {
+            pandocArgs.push("--reference-doc", config.referenceDoc.value.absPath());
         }
 
-        console.log(`Converting: ${input.absolutePath}`);
+        console.log(`Converting: ${input.absPath()}`);
         const result = await runPandoc(pandocArgs);
 
         if (result.exitCode === 0) {
@@ -132,10 +158,10 @@ async function toDocxImpl(
                     console.warn(`  [pandoc] ${line}`);
                 }
             }
-            console.log(`  -> ${outputPath}`);
+            console.log(`  -> ${outFile.absPath()}`);
         }
         else {
-            console.error(`  Error converting ${input.absolutePath}:`);
+            console.error(`  Error converting ${input.absPath()}:`);
             for (const line of result.stderr.split(/\r?\n/).filter((l) => l.length > 0)) {
                 console.error(`  [pandoc] ${line}`);
             }
@@ -144,11 +170,11 @@ async function toDocxImpl(
     }
 
     if (failureCount > 0) {
-        console.error(`\n${failureCount} of ${inputs.length} file(s) failed to convert.`);
+        console.error(`\n${failureCount} of ${config.inputFiles.length} file(s) failed to convert.`);
         return EXIT_RUNTIME_FAILURE;
     }
 
-    console.log(`\nConverted ${inputs.length} file(s) successfully.`);
+    console.log(`\nConverted ${config.inputFiles.length} file(s) successfully.`);
     return EXIT_SUCCESS;
 }
 
@@ -164,6 +190,7 @@ interface IPandocResult {
     exitCode: number;
     stderr:   string;
 }
+
 
 function runPandoc(args: Array<string>): Promise<IPandocResult> {
     return new Promise((resolve) => {
@@ -183,24 +210,6 @@ function runPandoc(args: Array<string>): Promise<IPandocResult> {
             });
         });
     });
-}
-
-
-async function readPipedPaths(): Promise<Array<string>> {
-    if (process.stdin.isTTY) {
-        return [];
-    }
-
-    const chunks: Array<Uint8Array> = [];
-    for await (const chunk of process.stdin) {
-        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-    }
-
-    const text = Buffer.concat(chunks).toString("utf8");
-    return text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
 }
 
 
