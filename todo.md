@@ -7,4 +7,4 @@
 
 - Pull in depot QuickServer
 
-- [ ] Upgrade to TS 6
+- [ ] Upgrade to TS 7
