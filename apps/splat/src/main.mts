@@ -26,7 +26,9 @@ async function mainImpl(): Promise<Result<number, string>> {
             [
                 "Finds filesystem items matching glob patterns.",
                 "",
-                "splat <glob_patterns>"
+                "splat <glob_patterns>",
+                "",
+                'Note: Use "!<pattern>" to ignore matches for a given pattern.',
             ].join(os.EOL)
         )
         .option(
