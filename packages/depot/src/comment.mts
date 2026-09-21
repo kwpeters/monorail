@@ -150,11 +150,9 @@ export function uncomment(linesToUncomment: string): string | undefined {
  * replaced.
  */
 export function toggleComment(linesToToggle: string, precedingLine?: string): string | undefined {
-    // TODO: Convert the following regex to use named capture groups.
-    // eslint-disable-next-line prefer-named-capture-group
-    const firstNonWhitespace = /\s*(\S\S)/m;
+    const firstNonWhitespace = /\s*(?<two_chars>\S\S)/m;
     const match = firstNonWhitespace.exec(linesToToggle);
-    if (match?.[1] === "//") {
+    if (match?.groups!.two_chars === "//") {
         return uncomment(linesToToggle);
     }
     else {
