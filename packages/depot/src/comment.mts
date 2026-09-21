@@ -22,9 +22,7 @@ export function comment(
     linesToComment: string,
     precedingLine?: string
 ): string | undefined {
-    // TODO: Convert the regex to used named captures.
-    // eslint-disable-next-line prefer-named-capture-group
-    const commentedLineRegex = /^(?<begin_ws>\s*)(?<comment_token>(\/\/)|(#))(?<post_comment_ws>\s*)(?<text>.*)/;
+    const commentedLineRegex = /^(?<begin_ws>\s*)(?<comment_token>(?:\/\/)|(?:#))(?<post_comment_ws>\s*)(?<text>.*)/;
 
     if (linesToComment.length === 0 || /^\s*$/.test(linesToComment)) {
         if (precedingLine) {
