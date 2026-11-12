@@ -4,7 +4,7 @@ import * as ld from "lodash-es";
 import {Url} from "@repo/depot/url";
 import {CommitHash} from "@repo/depot/commitHash";
 import {generateUuid, UuidFormat} from "@repo/depot/uuid";
-import {GitRepo} from "./gitRepo.mjs";
+import {GitRepo, isGitRepoDir, findGitRepoRootDir} from "./gitRepo.mjs";
 import {GitBranch} from "./gitBranch.mjs";
 import {Directory} from "./directory.mjs";
 import {File} from "./file.mjs";
@@ -1005,5 +1005,91 @@ describe("GitRepo", () => {
 
     });
 
+
+});
+
+
+describe("isGitRepoDir()", () => {
+
+    let tmp: Directory;
+
+    beforeEach(() => {
+        tmp = getUniqueTmpDir();
+    });
+
+
+    afterEach(async () => {
+        await tmp.delete();
+    });
+
+
+    it("returns false when the directory does not exist", async () => {
+        expect(await isGitRepoDir(new Directory(tmp, "nonexistent"))).toBeFalse();
+    });
+
+
+    it("returns false when the directory has no .git entry", async () => {
+        expect(await isGitRepoDir(tmp)).toBeFalse();
+    });
+
+
+    it("returns true when the directory contains a .git directory", async () => {
+        new Directory(tmp, ".git").ensureExistsSync();
+        expect(await isGitRepoDir(tmp)).toBeTrue();
+    });
+
+
+    it("returns true when .git is a file pointing at a gitdir (worktree/submodule)", async () => {
+        await new File(tmp, ".git").write("gitdir: ../main/.git/worktrees/wt\n");
+        expect(await isGitRepoDir(tmp)).toBeTrue();
+    });
+
+
+    it("returns false when .git is a file that is not a gitdir pointer", async () => {
+        await new File(tmp, ".git").write("something else");
+        expect(await isGitRepoDir(tmp)).toBeFalse();
+    });
+
+});
+
+
+describe("findGitRepoRootDir()", () => {
+
+    let tmp: Directory;
+
+    beforeEach(() => {
+        tmp = getUniqueTmpDir();
+    });
+
+
+    afterEach(async () => {
+        await tmp.delete();
+    });
+
+
+    it("returns the start directory when it is the repo root", async () => {
+        new Directory(tmp, ".git").ensureExistsSync();
+        const found = await findGitRepoRootDir(tmp);
+        expect(found?.absPath()).toEqual(tmp.absPath());
+    });
+
+
+    it("returns the nearest ancestor that is a repo root", async () => {
+        new Directory(tmp, ".git").ensureExistsSync();
+        const deep = new Directory(tmp, "a", "b");
+        deep.ensureExistsSync();
+        const found = await findGitRepoRootDir(deep);
+        expect(found?.absPath()).toEqual(tmp.absPath());
+    });
+
+
+    it("stops at the nearest root when repos are nested (worktree/submodule)", async () => {
+        new Directory(tmp, ".git").ensureExistsSync();
+        const inner = new Directory(tmp, "sub");
+        inner.ensureExistsSync();
+        await new File(inner, ".git").write("gitdir: ../.git/modules/sub");
+        const found = await findGitRepoRootDir(new Directory(inner, "src"));
+        expect(found?.absPath()).toEqual(inner.absPath());
+    });
 
 });

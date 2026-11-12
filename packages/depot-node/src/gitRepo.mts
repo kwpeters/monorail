@@ -48,19 +48,57 @@ function getLogEntryRegex(): RegExp {
 
 
 /**
- * Determines whether _dir_ is a directory containing a Git repository.
+ * Determines whether _dir_ is the root directory of a Git working tree.
+ *
+ * A regular repository has a `.git` directory.  Linked worktrees and
+ * submodules instead have a `.git` _file_ whose content starts with
+ * `gitdir:`; both forms are recognized.
+ *
  * @param dir - The directory to inspect
- * @returns A promise for a boolean indicating whether _dir_ contains a Git
- * repository.  This promise will never reject.
+ * @returns A promise for a boolean indicating whether _dir_ is the root of a
+ * Git working tree.  This promise will never reject.
  */
-export function isGitRepoDir(dir: Directory): Promise<boolean> {
-    return Promise.all([
-        dir.exists(),                        // The directory exists
-        new Directory(dir, ".git").exists()  // The directory contains a .git directory
-    ])
-    .then(([dirExists, dotGitExists]) => {
-        return Boolean(dirExists && dotGitExists);
-    });
+export async function isGitRepoDir(dir: Directory): Promise<boolean> {
+    if (!await dir.exists()) {
+        return false;
+    }
+
+    if (await new Directory(dir, ".git").exists()) {
+        return true;
+    }
+
+    const dotGitFile = new File(dir, ".git");
+    if (!await dotGitFile.exists()) {
+        return false;
+    }
+
+    try {
+        const content = await dotGitFile.read();
+        return content.trimStart().startsWith("gitdir:");
+    }
+    catch {
+        return false;
+    }
+}
+
+
+/**
+ * Finds the root of the Git working tree that contains _startDir_ by examining
+ * _startDir_ and then each of its ancestors, nearest first.
+ *
+ * @param startDir - The directory at which to begin searching
+ * @returns A promise for the nearest directory that is a Git working tree
+ * root, or `undefined` if there is none.  This promise will never reject.
+ */
+export async function findGitRepoRootDir(startDir: Directory): Promise<Directory | undefined> {
+    let cur: Directory | undefined = startDir.absolute();
+    while (cur !== undefined) {
+        if (await isGitRepoDir(cur)) {
+            return cur;
+        }
+        cur = cur.parentDir();
+    }
+    return undefined;
 }
 
 

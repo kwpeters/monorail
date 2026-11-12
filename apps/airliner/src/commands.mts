@@ -5,6 +5,7 @@ import * as _ from "lodash-es";
 import { toggleComment } from "@repo/depot/comment";
 import { Timeout } from "@repo/depot-node/timers";
 import { File } from "@repo/depot-node/file";
+import { findGitRepoRootDir } from "@repo/depot-node/gitRepo";
 
 
 interface ICommandDefinition {
@@ -417,6 +418,7 @@ const associatedFilesCommand = {
 
         if (activeEditor.document.uri.scheme !== "file") {
             vscode.window.showInformationMessage("Current editor has no associated file.");
+            return;
         }
 
         const activeFile = new File(activeEditor.document.uri.fsPath);
@@ -451,6 +453,41 @@ const associatedFilesCommand = {
     }
 };
 
+
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Opens a new terminal whose working directory is the root of the Git
+// repository containing the active editor's file.
+//
+////////////////////////////////////////////////////////////////////////////////
+const openTerminalInRepoRootCommand = {
+    name: "extension.airlinerOpenTerminalInRepoRoot",
+    fn:   async (): Promise<void> => {
+        const activeEditor = vscode.window.activeTextEditor;
+        if (!activeEditor) {
+            vscode.window.showErrorMessage("There is no active editor.");
+            return;
+        }
+
+        if (activeEditor.document.uri.scheme !== "file") {
+            vscode.window.showErrorMessage("Current editor has no associated file.");
+            return;
+        }
+
+        const activeFile = new File(activeEditor.document.uri.fsPath);
+        const repoRoot = await findGitRepoRootDir(activeFile.directory);
+        if (!repoRoot) {
+            vscode.window.showErrorMessage(
+                `Could not find a Git repository containing ${activeFile.absPath()}.`
+            );
+            return;
+        }
+
+        const terminal = vscode.window.createTerminal({ cwd: repoRoot.absPath() });
+        terminal.show();
+    }
+};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -508,5 +545,6 @@ export const commands: Array<ICommandDefinition> = [
     hungryDeleteRightCommand,
     splitTopCommand,
     splitEditorDownCommand,
-    associatedFilesCommand
+    associatedFilesCommand,
+    openTerminalInRepoRootCommand
 ];

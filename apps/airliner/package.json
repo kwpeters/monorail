@@ -52,6 +52,10 @@
             {
                 "command": "extension.airlinerAssociatedFiles",
                 "title": "Airliner associated files"
+            },
+            {
+                "command": "extension.airlinerOpenTerminalInRepoRoot",
+                "title": "Airliner open terminal in repo root"
             }
         ]
     },
