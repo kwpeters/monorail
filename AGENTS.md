@@ -67,3 +67,54 @@ For consistency, when multiple projects use an npm package, they should use the 
   - All unit tests for a class should be in a single `describe()` block named for the class.
   - Within the class's `describe()` there should be a `describe("static")` block for static members and a `describe("instance")` block for instance members.
   - Each property and method should have its own `describe()` block nested within the appropriate static or instance `describe()`. Within that `describe()` should be the individual unit test cases with clear names describing the expected behavior.
+
+## Markdown Guidelines
+
+### Markdown: semantic line breaks
+
+Write Markdown prose with [semantic line breaks](https://sembr.org).
+Line breaks follow the structure of the sentence,
+not a column width.
+
+- Start every sentence on a new line.
+- Break a long sentence at its clause boundaries:
+  after a comma, semicolon, colon, or dash that ends a clause,
+  and before a conjunction or relative clause that starts a new idea.
+- Keep each line a complete unit of thought;
+  short clauses can share a line with the clause they belong to.
+- Keep inline code spans, links, and emphasized phrases whole on one line.
+- In list items, indent continuation lines to align with the item's text.
+- When you edit a paragraph, reflow the whole paragraph to semantic line breaks.
+
+These breaks leave the rendered output unchanged,
+because Markdown renders a single newline inside a paragraph as a space.
+They keep diffs small, since changing one clause changes one line.
+
+Example:
+
+```markdown
+The cache is shared by every worker process,
+so a stale entry written by one worker is visible to all of them.
+If the entry has expired,
+the next read misses the cache
+and the value is loaded from the database.
+```
+
+### Markdown: aligned tables
+
+Pad table cells with spaces so the columns line up when the file is viewed as plain text.
+Every `|` in a column sits at the same character position on every row,
+including the header and the delimiter row.
+
+- When you add, remove, or edit a cell, re-pad the whole table to the new widest cell in each column.
+- A table row stays on one line.
+  Semantic line breaks apply to prose, not to table rows.
+
+Example:
+
+```markdown
+| Name   | Role                  |
+| ------ | --------------------- |
+| Parser | Reads the input file  |
+| Cache  | Stores recent results |
+```
