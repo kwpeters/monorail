@@ -102,6 +102,11 @@ and the value is loaded from the database.
 
 ### Markdown: aligned tables
 
+Use a table only for short, enumerable data such as names, types, and flags.
+If any row would exceed about 120 characters
+(prose sentences, long URLs),
+use a list or one heading per row instead.
+
 Pad table cells with spaces so the columns line up when the file is viewed as plain text.
 Every `|` in a column sits at the same character position on every row,
 including the header and the delimiter row.
