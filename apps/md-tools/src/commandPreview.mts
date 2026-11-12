@@ -20,7 +20,9 @@ import { Directory } from "@repo/depot-node/directory";
 import { launch } from "@repo/depot-node/launch";
 import { getFirstExternalIpv4Address } from "@repo/depot-node/networkHelpers";
 import { promptToContinue } from "@repo/depot-node/prompts";
-import { getStdinPipedLines } from "@repo/depot-node/ttyHelpers";
+import {
+    getStdinPipedLines, openControllingTerminal, canOpenControllingTerminal
+} from "@repo/depot-node/ttyHelpers";
 import { createTempDir } from "@repo/depot-node/tempDir";
 
 
@@ -125,7 +127,10 @@ async function getConfiguration(args: Arguments): Promise<Result<IPreviewConfig,
     }
     const inputFiles = filesRes.value;
 
-    const interactive  = process.stdin.isTTY && process.stdout.isTTY;
+    // Piped stdin (e.g. `splat ... | md-tools preview`) only supplies the file
+    // list; the session is still interactive when output goes to a terminal
+    // and a controlling terminal is available for the keypress.
+    const interactive  = process.stdout.isTTY && canOpenControllingTerminal();
     const rawOutputDir = args.outputDir as string | undefined;
     const base = {
         inputFiles,
@@ -340,31 +345,34 @@ async function nonInteractiveImpl(config: INonInteractiveConfig): Promise<number
  * without requiring Enter.
  */
 async function waitForAnyKeypress(): Promise<void> {
+    const input = openControllingTerminal();
+    if (input === undefined) {
+        throw new Error("No terminal is available to read a keypress from.");
+    }
+
     process.stdout.write("Press any key to stop md-tools preview.\n");
 
     return new Promise<void>((resolve) => {
-        const stdin = process.stdin;
-        const canSetRawMode = stdin.isTTY && typeof stdin.setRawMode === "function";
-        const originalRawMode = canSetRawMode ? stdin.isRaw : undefined;
+        const isStdin = input === process.stdin;
+        const originalRawMode = input.isRaw;
 
-        stdin.resume();
-
-        if (canSetRawMode) {
-            stdin.setRawMode(true);
-        }
+        input.setRawMode(true);
+        input.resume();
 
         const onData = (): void => {
-            stdin.off("data", onData);
+            input.off("data", onData);
+            input.setRawMode(originalRawMode);
 
-            if (canSetRawMode) {
-                stdin.setRawMode(originalRawMode ?? false);
+            if (isStdin) {
+                input.pause();
             }
-
-            stdin.pause();
+            else {
+                input.destroy();
+            }
             resolve();
         };
 
-        stdin.on("data", onData);
+        input.on("data", onData);
     });
 }
 
