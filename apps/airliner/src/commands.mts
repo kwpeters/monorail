@@ -4,8 +4,17 @@ import * as vscode from "vscode";
 import * as _ from "lodash-es";
 import { toggleComment } from "@repo/depot/comment";
 import { Timeout } from "@repo/depot-node/timers";
+import { Directory } from "@repo/depot-node/directory";
 import { File } from "@repo/depot-node/file";
 import { findGitRepoRootDir } from "@repo/depot-node/gitRepo";
+import {
+    enumerateDirectories,
+    enumerateFiles,
+    enumerateProjects,
+    formatPath,
+    type PathBase,
+    type SlashStyle
+} from "@repo/depot-node/repoEnumeration";
 
 
 interface ICommandDefinition {
@@ -491,8 +500,208 @@ const openTerminalInRepoRootCommand = {
 
 
 ////////////////////////////////////////////////////////////////////////////////
+//
+// Lets the user pick a project in the repo (or, when there is no repo, in the
+// workspace folder) and copies the project's name to the clipboard.
+//
+////////////////////////////////////////////////////////////////////////////////
+const copyRepoProjectNameCommand = {
+    name: "extension.airlinerCopyRepoProjectName",
+    fn:   async (): Promise<void> => {
+        const chosen = await chooseWorkspaceFolder();
+        if (!chosen) {
+            return;
+        }
+
+        const enumerationRoot = chosen.repoRoot ?? chosen.folder;
+        let projects: Awaited<ReturnType<typeof enumerateProjects>>;
+        try {
+            projects = await enumerateProjects(enumerationRoot);
+        }
+        catch (err) {
+            vscode.window.showErrorMessage(
+                `Could not enumerate projects in ${enumerationRoot.absPath()}: ${String(err)}`
+            );
+            return;
+        }
+
+        if (projects.length === 0) {
+            vscode.window.showInformationMessage("No projects found in this repo.");
+            return;
+        }
+
+        const items = projects.map((curProject) => ({
+            label:       curProject.name,
+            description: curProject.relDir === "" ? "." : curProject.relDir
+        }));
+        const picked = await vscode.window.showQuickPick(items, {
+            title:              "Copy repo project name",
+            placeHolder:        "Select a project",
+            matchOnDescription: true
+        });
+        if (!picked) {
+            return;
+        }
+
+        await vscode.env.clipboard.writeText(picked.label);
+        vscode.window.setStatusBarMessage(`Copied: ${picked.label}`, 3000);
+    }
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Lets the user pick a file in the repo (or, when there is no repo, in the
+// workspace folder) and copies the file's path to the clipboard.
+//
+////////////////////////////////////////////////////////////////////////////////
+const copyRepoFilePathCommand = {
+    name: "extension.airlinerCopyRepoFilePath",
+    fn:   (): Promise<void> => copyPathOfChosenItem("file", enumerateFiles)
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Lets the user pick a directory in the repo (or, when there is no repo, in
+// the workspace folder) and copies the directory's path to the clipboard.
+//
+////////////////////////////////////////////////////////////////////////////////
+const copyRepoDirectoryPathCommand = {
+    name: "extension.airlinerCopyRepoDirectoryPath",
+    fn:   (): Promise<void> => copyPathOfChosenItem("directory", enumerateDirectories)
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
 // Helper Functions
 ////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Has the user choose an item (such as a file) from the repo, and how its path
+ * should be formatted, and then copies that path to the clipboard.  Does
+ * nothing when the user cancels any prompt.
+ *
+ * @param itemNoun - Describes the kind of item, in messages ("file")
+ * @param enumerate - Lists the items under a directory as paths relative to it
+ * @returns A promise that resolves when the command is finished
+ */
+async function copyPathOfChosenItem(
+    itemNoun:  string,
+    enumerate: (root: Directory) => Promise<Array<string>>
+): Promise<void> {
+    const chosen = await chooseWorkspaceFolder();
+    if (!chosen) {
+        return;
+    }
+
+    // Relative paths are relative to the repo root, when there is one.
+    const baseDir = chosen.repoRoot ?? chosen.folder;
+    let relPaths: Array<string>;
+    try {
+        relPaths = await enumerate(baseDir);
+    }
+    catch (err) {
+        vscode.window.showErrorMessage(
+            `Could not enumerate ${itemNoun}s in ${baseDir.absPath()}: ${String(err)}`
+        );
+        return;
+    }
+
+    if (relPaths.length === 0) {
+        vscode.window.showInformationMessage(`No ${itemNoun}s found in ${baseDir.absPath()}.`);
+        return;
+    }
+
+    const pickedPath = await vscode.window.showQuickPick(relPaths, {
+        title:       `Copy repo ${itemNoun} path`,
+        placeHolder: `Select a ${itemNoun}`
+    });
+    if (pickedPath === undefined) {
+        return;
+    }
+
+    // Relative paths only make sense when there is a repo root.
+    let base: PathBase = "absolute";
+    if (chosen.repoRoot) {
+        const pickedBase = await vscode.window.showQuickPick(
+            [
+                { label: "Repo-relative path", value: "relative" as const },
+                { label: "Absolute path",      value: "absolute" as const }
+            ],
+            { title: "Path to copy", placeHolder: "Relative to the repo root, or absolute?" }
+        );
+        if (!pickedBase) {
+            return;
+        }
+        base = pickedBase.value;
+    }
+
+    // Other platforms have only one separator.
+    let slashStyle: SlashStyle = "forward";
+    if (process.platform === "win32") {
+        const pickedSlash = await vscode.window.showQuickPick(
+            [
+                { label: "Use forward slashes", value: "forward" as const },
+                { label: "Use backslashes",      value: "backward" as const }
+            ],
+            { title: "Path separator", placeHolder: "Which path separator?" }
+        );
+        if (!pickedSlash) {
+            return;
+        }
+        slashStyle = pickedSlash.value;
+    }
+
+    const text = formatPath(baseDir.absPath(), pickedPath, base, slashStyle);
+    await vscode.env.clipboard.writeText(text);
+    vscode.window.setStatusBarMessage(`Copied: ${text}`, 3000);
+}
+
+
+
+/**
+ * Has the user choose a workspace folder and finds the Git repository root
+ * containing it.  Shows an error message when no workspace folder is open.
+ * Prompts only when more than one workspace folder is open.
+ *
+ * @returns A promise for the chosen folder and the root of the repo that
+ * contains it (`undefined` when it is not in a repo), or `undefined` when there
+ * is no workspace folder or the user cancelled.
+ */
+async function chooseWorkspaceFolder(): Promise<
+    { folder: Directory; repoRoot: Directory | undefined } | undefined
+> {
+    const workspaceFolders = vscode.workspace.workspaceFolders ?? [];
+    if (workspaceFolders.length === 0) {
+        vscode.window.showErrorMessage("There is no open workspace folder.");
+        return undefined;
+    }
+
+    let chosenFolder: vscode.WorkspaceFolder | undefined = workspaceFolders[0];
+    if (workspaceFolders.length > 1) {
+        const items = workspaceFolders.map((curFolder) => ({
+            label:       curFolder.name,
+            description: curFolder.uri.fsPath,
+            folder:      curFolder
+        }));
+        const picked = await vscode.window.showQuickPick(items, {
+            title:              "Select a workspace folder",
+            placeHolder:        "Select a workspace folder",
+            matchOnDescription: true
+        });
+        chosenFolder = picked?.folder;
+    }
+
+    if (!chosenFolder) {
+        return undefined;
+    }
+
+    const folder = new Directory(chosenFolder.uri.fsPath);
+    const repoRoot = await findGitRepoRootDir(folder);
+    return { folder, repoRoot };
+}
+
 
 /**
  * Helper function that determines whether `position` is at the end of its line
@@ -546,5 +755,8 @@ export const commands: Array<ICommandDefinition> = [
     splitTopCommand,
     splitEditorDownCommand,
     associatedFilesCommand,
-    openTerminalInRepoRootCommand
+    openTerminalInRepoRootCommand,
+    copyRepoProjectNameCommand,
+    copyRepoFilePathCommand,
+    copyRepoDirectoryPathCommand
 ];

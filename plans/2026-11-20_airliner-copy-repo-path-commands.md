@@ -194,73 +194,124 @@ Done when: the new unit tests pass and show that `node_modules` contents are ski
 
 ### Task 4: Implement the copy repo project name command
 
-Status: Not started
+Status: Done
 
 #### Task Description
 
 Add the command in `apps/airliner/src/commands.mts`, register it in the `commands` array and in `contributes.commands` in `apps/airliner/package.json`:
 
-- [ ] Choose the workspace root folder and find the repo root from it, handling the edge cases as decided in Tasks 1 and 2.
-- [ ] Enumerate projects using the Task 3 helper, from the repo root, or from the chosen folder when no repo root is found.
-- [ ] List them and allow the user to select one using the Quick Input API.
-- [ ] Put the chosen project name into the clipboard.
+- [x] Choose the workspace root folder and find the repo root from it, handling the edge cases as decided in Tasks 1 and 2.
+- [x] Enumerate projects using the Task 3 helper, from the repo root, or from the chosen folder when no repo root is found.
+- [x] List them and allow the user to select one using the Quick Input API.
+- [x] Put the chosen project name into the clipboard.
 
-Done when: running the command in a repo containing both kinds of project lists them, and the chosen name is on the clipboard.
+Done when: `npm run type-check` and eslint pass for `apps/airliner`, the extension bundles with the command in it, and `enumerateProjects` run on this repo lists its projects.
+The hand test of the command in the Extension Development Host is part of Task 7.
 
 #### Outcomes
 
-None yet.
+- Added `copyRepoProjectNameCommand` (`extension.airlinerCopyRepoProjectName`, "Airliner copy repo project name")
+  to `apps/airliner/src/commands.mts`, in the `commands` array, and in `contributes.commands` in `apps/airliner/package.json`.
+- Added the helper `chooseWorkspaceFolder()` to `apps/airliner/src/commands.mts`, for Tasks 5 and 6 to reuse.
+  It shows "There is no open workspace folder." and returns `undefined` when none is open,
+  prompts only when more than one is open (Escape returns `undefined`),
+  and otherwise resolves `{ folder: Directory, repoRoot: Directory | undefined }`,
+  where `repoRoot` comes from `findGitRepoRootDir` and is `undefined` when the folder is not in a repo.
+- The command enumerates from `repoRoot ?? folder`,
+  shows "No projects found in this repo." when there are none, and shows an error message when enumeration rejects.
+  Quick Pick items use the project name as the label and its directory (`.` for the root) as the description,
+  with `matchOnDescription` on.
+  The status bar message `Copied: <name>` is shown for 3 seconds.
+- Checked: `npm run type-check` and `npx eslint src/commands.mts` are clean for `apps/airliner`,
+  `npm run esbuild-dev` bundles the command,
+  and `enumerateProjects` on this repo returns 47 projects in 66 ms, for example `{ name: "airliner", kind: "node", relDir: "apps/airliner" }`.
+- Not checked: the command itself in the Extension Development Host, including the `.csproj` case; this repo has no `.csproj` file.
+  The `.csproj` naming is covered by `repoEnumeration.test.mts`.
+- Fact: `apps/airliner` resolves `@repo/depot-node/repoEnumeration` through `depot-node`'s built `dist`,
+  so `npm run build` in `packages/depot-node` must run first.
+  Until it did, the IDE reported the new import as unresolved.
 
 ### Task 5: Implement the copy repo file path command
 
-Status: Not started
+Status: Done
 
 #### Task Description
 
 Add the command in `apps/airliner/src/commands.mts`, register it in the `commands` array and in `contributes.commands` in `apps/airliner/package.json`:
 
-- [ ] Choose the workspace root folder and find the repo root from it, handling the edge cases as decided in Tasks 1 and 2.
-- [ ] Enumerate all files using the Task 3 helper, from the repo root, or from the chosen folder when no repo root is found.
-- [ ] List them and allow the user to select one using the Quick Input API.
-- [ ] When a repo root was found, ask the user if they want an absolute or repo-relative path, using a second Quick Pick with the labels "Repo-relative path" and "Absolute path", repo-relative first.
+- [x] Choose the workspace root folder and find the repo root from it, handling the edge cases as decided in Tasks 1 and 2.
+- [x] Enumerate all files using the Task 3 helper, from the repo root, or from the chosen folder when no repo root is found.
+- [x] List them and allow the user to select one using the Quick Input API.
+- [x] When a repo root was found, ask the user if they want an absolute or repo-relative path, using a second Quick Pick with the labels "Repo-relative path" and "Absolute path", repo-relative first.
   When no repo root was found, skip this Quick Pick and use the absolute path.
-- [ ] On Windows only, ask a third Quick Pick with the labels "Use forward slashes" and "Use backslashes", so all four combinations are possible.
-- [ ] Format the path with the Task 3 path-formatting function and put it on the clipboard.
-- [ ] Show a status bar message such as `Copied: <path>`.
+- [x] On Windows only, ask a third Quick Pick with the labels "Use forward slashes" and "Use backslashes", so all four combinations are possible.
+- [x] Format the path with the Task 3 path-formatting function and put it on the clipboard.
+- [x] Show a status bar message such as `Copied: <path>`.
 
-Done when: running the command copies the absolute path or the repo-relative path of the chosen file, with the chosen slash style, and pressing Escape on any Quick Pick copies nothing.
+Done when: `npm run type-check` and eslint pass for `apps/airliner`, the extension bundles with the command in it, and `enumerateFiles` run on this repo lists its files without any `node_modules` entries.
+The hand test of the command in the Extension Development Host, including Escape on each Quick Pick, is part of Task 7.
 
 #### Outcomes
 
-None yet.
+- Added `copyRepoFilePathCommand` (`extension.airlinerCopyRepoFilePath`, "Airliner copy repo file path")
+  to `apps/airliner/src/commands.mts`, in the `commands` array, and in `contributes.commands` in `apps/airliner/package.json`.
+- The flow is in a shared helper, `copyPathOfChosenItem(itemNoun: string, enumerate: (root: Directory) => Promise<Array<string>>)`,
+  so Task 6 only needs `extension.airlinerCopyRepoDirectoryPath` to call `copyPathOfChosenItem("directory", enumerateDirectories)`,
+  plus its registrations; it needs no new prompt or clipboard code.
+  The helper:
+  - uses `chooseWorkspaceFolder()` from Task 4, then enumerates from `repoRoot ?? folder`;
+  - lists items in a Quick Pick whose labels are the relative paths;
+  - asks "Repo-relative path" / "Absolute path" only when a repo root was found, else uses the absolute path;
+  - asks "Use forward slashes" / "Use backslashes" only when `process.platform === "win32"`, else uses forward slashes;
+  - formats with `formatPath(baseDir.absPath(), picked, base, slashStyle)`, writes the clipboard, and shows `Copied: <path>` for 3 seconds;
+  - copies nothing when any Quick Pick is cancelled with Escape.
+- Not covered by the plan, so added by this task: when enumeration finds no items,
+  the helper shows `No <noun>s found in <dir>.`, and when enumeration rejects it shows an error message.
+- Checked: `npm run type-check` and `npx eslint src/commands.mts` are clean for `apps/airliner`,
+  `npm run esbuild-dev` bundles the command,
+  and `enumerateFiles` on this repo returns 1791 files in 308 ms with no `node_modules` entries.
+- Not checked: the command in the Extension Development Host, so no Quick Pick, clipboard or status bar behavior has been seen.
+- Fact: the IDE showed stale "unresolved import" diagnostics on the new code until the TypeScript server caught up with the rebuilt `depot-node`;
+  `tsc` and eslint themselves were clean.
 
 ### Task 6: Implement the copy repo directory path command
 
-Status: Not started
+Status: Done
 
 #### Task Description
 
 Add the command in `apps/airliner/src/commands.mts`, register it in the `commands` array and in `contributes.commands` in `apps/airliner/package.json`.
 Reuse the path-style prompt and clipboard code from Task 5.
 
-- [ ] Choose the workspace root folder and find the repo root from it, handling the edge cases as decided in Tasks 1 and 2.
-- [ ] Enumerate all directories using the Task 3 helper, from the repo root, or from the chosen folder when no repo root is found.
-- [ ] List them and allow the user to select one using the Quick Input API.
-- [ ] When a repo root was found, ask the user if they want an absolute or repo-relative path, using a second Quick Pick with the labels "Repo-relative path" and "Absolute path", repo-relative first.
+- [x] Choose the workspace root folder and find the repo root from it, handling the edge cases as decided in Tasks 1 and 2.
+- [x] Enumerate all directories using the Task 3 helper, from the repo root, or from the chosen folder when no repo root is found.
+- [x] List them and allow the user to select one using the Quick Input API.
+- [x] When a repo root was found, ask the user if they want an absolute or repo-relative path, using a second Quick Pick with the labels "Repo-relative path" and "Absolute path", repo-relative first.
   When no repo root was found, skip this Quick Pick and use the absolute path.
-- [ ] On Windows only, ask a third Quick Pick with the labels "Use forward slashes" and "Use backslashes", so all four combinations are possible.
-- [ ] Format the path with the Task 3 path-formatting function and put it on the clipboard.
-- [ ] Show a status bar message such as `Copied: <path>`.
+- [x] On Windows only, ask a third Quick Pick with the labels "Use forward slashes" and "Use backslashes", so all four combinations are possible.
+- [x] Format the path with the Task 3 path-formatting function and put it on the clipboard.
+- [x] Show a status bar message such as `Copied: <path>`.
 
-Done when: running the command copies the absolute path or the repo-relative path of the chosen directory, with the chosen slash style, and pressing Escape on any Quick Pick copies nothing.
+Done when: `npm run type-check` and eslint pass for `apps/airliner`, the extension bundles with the command in it, and `enumerateDirectories` run on this repo lists its directories without any `node_modules` or `.git` entries.
+The hand test of the command in the Extension Development Host, including Escape on each Quick Pick, is part of Task 7.
 
 #### Outcomes
 
-None yet.
+- Added `copyRepoDirectoryPathCommand` (`extension.airlinerCopyRepoDirectoryPath`, "Airliner copy repo directory path")
+  to `apps/airliner/src/commands.mts`, in the `commands` array, and in `contributes.commands` in `apps/airliner/package.json`.
+  It is `copyPathOfChosenItem("directory", enumerateDirectories)`, so all prompts, formatting, clipboard and status bar behavior
+  are the shared code described in Task 5's Outcomes.
+- Checked: `npm run type-check` and `npx eslint src/commands.mts` are clean for `apps/airliner`,
+  `npm run esbuild-dev` bundles the command,
+  and `enumerateDirectories` on this repo returns 166 directories in 64 ms,
+  including `apps/airliner/src`, with no `node_modules` or `.git` entries.
+- Not checked: the command in the Extension Development Host; Task 7 covers it.
+- Fact: the IDE again showed a stale "unsafe argument" diagnostic on the new import until its TypeScript server caught up;
+  `tsc` and eslint were clean.
 
 ### Task 7: Verify the build
 
-Status: Not started
+Status: Done
 
 #### Task Description
 
@@ -277,4 +328,10 @@ Done when: the command exits with code 0, and the user confirms the hand test.
 
 #### Outcomes
 
-None yet.
+- `npm run all && npm run type-check` exited with code 0 from the repo root.
+  Almost every Turborepo task was replayed from its cache (44 of 45 for the build, 45 of 45 for the rest),
+  so I also ran `npx turbo run build lint test type-check depcheck --filter=airliner --filter=@repo/depot-node --force`.
+  That uncached run succeeded for all 14 tasks, and `depot-node` ran 662 specs with 0 failures.
+- The hand test passed: the user ran the three commands in the Extension Development Host and reported "Everything worked perfectly!"
+  That covers the hand test deferred from Tasks 4, 5 and 6.
+  The report did not itemize the `.csproj` case, Escape on each Quick Pick or the multi-root folder Quick Pick.

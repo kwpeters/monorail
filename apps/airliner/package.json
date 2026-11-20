@@ -56,6 +56,18 @@
             {
                 "command": "extension.airlinerOpenTerminalInRepoRoot",
                 "title": "Airliner open terminal in repo root"
+            },
+            {
+                "command": "extension.airlinerCopyRepoProjectName",
+                "title": "Airliner copy repo project name"
+            },
+            {
+                "command": "extension.airlinerCopyRepoFilePath",
+                "title": "Airliner copy repo file path"
+            },
+            {
+                "command": "extension.airlinerCopyRepoDirectoryPath",
+                "title": "Airliner copy repo directory path"
             }
         ]
     },
