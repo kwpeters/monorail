@@ -155,23 +155,42 @@ Done when: the Outcomes record an answer to each open question above.
 
 ### Task 3: Add repo enumeration helpers to depot-node
 
-Status: Not started
+Status: Done
 
 #### Task Description
 
 Add reusable helpers to `packages/depot-node`, built on its existing `glob` dependency,
 so that the three commands share them:
 
-- [ ] Enumerate the files and the directories under a given root, skipping the Task 2 ignore list at any depth, with `dot: true` so dot-directories such as `.github` are listed.
-- [ ] Enumerate projects under a given root: the `package.json` and `*.csproj` matches, skipping the same ignore list, each with its name as decided in Task 2 (scope removed from a `package.json` name; directory name when `name` is missing).
-- [ ] Add a pure path-formatting function that takes the item path, the base, absolute or repo-relative, and the slash style (forward or backslashes), and returns the string to copy.
-- [ ] Add unit tests, using a temporary directory tree that includes an ignored directory and a `bin` directory, and covering all four path-format combinations.
+- [x] Enumerate the files and the directories under a given root, skipping the Task 2 ignore list at any depth, with `dot: true` so dot-directories such as `.github` are listed.
+- [x] Enumerate projects under a given root: the `package.json` and `*.csproj` matches, skipping the same ignore list, each with its name as decided in Task 2 (scope removed from a `package.json` name; directory name when `name` is missing).
+- [x] Add a pure path-formatting function that takes the item path, the base, absolute or repo-relative, and the slash style (forward or backslashes), and returns the string to copy.
+- [x] Add unit tests, using a temporary directory tree that includes an ignored directory and a `bin` directory, and covering all four path-format combinations.
 
 Done when: the new unit tests pass and show that `node_modules` contents are skipped, `bin/*.exe` is listed, and the path-formatting function returns the right string for all four combinations.
 
 #### Outcomes
 
-None yet.
+- New module `packages/depot-node/src/repoEnumeration.mts`, exported as `@repo/depot-node/repoEnumeration`
+  (export added to `packages/depot-node/package.json`), with 15 passing unit tests in `repoEnumeration.test.mts`.
+  `npm run type-check` and eslint on the two files are clean.
+- API, for Tasks 4 to 6:
+  - `defaultIgnoredDirNames`: the Task 2 ignore list.
+  - `enumerateFiles(root: Directory, ignoredDirNames?)` and `enumerateDirectories(root, ignoredDirNames?)`:
+    resolve with paths relative to `root`, forward slashes, sorted;
+    directories exclude `root` itself.
+  - `enumerateProjects(root, ignoredDirNames?)`:
+    resolves with `{ name, kind: "node" | "dotnet", relDir }`, sorted by name then directory;
+    `relDir` is relative to `root`, forward slashes, and `""` when the project is `root` itself.
+  - `nodeProjectName(packageJson: File, removeScope: boolean, fallbackName: string)`:
+    reads the `name` of a `package.json`, removing the `@scope/` prefix only when `removeScope` is true;
+    resolves with `fallbackName` when there is no usable `name`; never rejects.
+    `enumerateProjects` calls it with `removeScope` true.
+  - `formatPath(baseDir, relPath, base: "absolute" | "relative", slashStyle: "forward" | "backward")`:
+    pure string function; `baseDir` is the absolute path of the directory the relative path is relative to.
+  - Each enumerate function rejects if `root` cannot be read, so the commands should catch that.
+- Detail: `glob` matches the root itself as `.` for directories, which `enumerateDirectories` filters out.
+  A malformed or unreadable `package.json` still counts as a project, named by its directory.
 
 ### Task 4: Implement the copy repo project name command
 
