@@ -168,6 +168,10 @@
             "types": "./src/promptAutocomplete.mts",
             "default": "./dist/promptAutocomplete.mjs"
         },
+        "./repoEnumeration": {
+            "types": "./src/repoEnumeration.mts",
+            "default": "./dist/repoEnumeration.mjs"
+        },
         "./selfSignedCertificate": {
             "types": "./src/selfSignedCertificate.mts",
             "default": "./dist/selfSignedCertificate.mjs"
