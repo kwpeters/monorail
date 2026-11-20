@@ -551,114 +551,106 @@ const copyRepoProjectNameCommand = {
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Lets the user pick a file in the repo (or, when there is no repo, in the
-// workspace folder) and copies the file's path to the clipboard.
+// Lets the user pick a file or directory in the repo (or, when there is no
+// repo, in the workspace folder) and copies its path to the clipboard.
 //
 ////////////////////////////////////////////////////////////////////////////////
-const copyRepoFilePathCommand = {
-    name: "extension.airlinerCopyRepoFilePath",
-    fn:   (): Promise<void> => copyPathOfChosenItem("file", enumerateFiles)
-};
+const copyRepoPathCommand = {
+    name: "extension.airlinerCopyRepoPath",
+    fn:   async (): Promise<void> => {
+        const chosen = await chooseWorkspaceFolder();
+        if (!chosen) {
+            return;
+        }
 
+        // Relative paths are relative to the repo root, when there is one.
+        const baseDir = chosen.repoRoot ?? chosen.folder;
+        let items: Array<vscode.QuickPickItem & { relPath: string }>;
+        try {
+            const [files, directories] = await Promise.all([
+                enumerateFiles(baseDir),
+                enumerateDirectories(baseDir)
+            ]);
+            items = [
+                ...files.map((relPath) => ({
+                    label:    relPath,
+                    iconPath: new vscode.ThemeIcon("file"),
+                    relPath
+                })),
+                ...directories.map((relPath) => ({
+                    label:    `${relPath}/`,
+                    iconPath: new vscode.ThemeIcon("folder"),
+                    relPath
+                }))
+            ];
+        }
+        catch (err) {
+            vscode.window.showErrorMessage(
+                `Could not enumerate files and directories in ${baseDir.absPath()}: ${String(err)}`
+            );
+            return;
+        }
 
-////////////////////////////////////////////////////////////////////////////////
-//
-// Lets the user pick a directory in the repo (or, when there is no repo, in
-// the workspace folder) and copies the directory's path to the clipboard.
-//
-////////////////////////////////////////////////////////////////////////////////
-const copyRepoDirectoryPathCommand = {
-    name: "extension.airlinerCopyRepoDirectoryPath",
-    fn:   (): Promise<void> => copyPathOfChosenItem("directory", enumerateDirectories)
+        if (items.length === 0) {
+            vscode.window.showInformationMessage(
+                `No files or directories found in ${baseDir.absPath()}.`
+            );
+            return;
+        }
+
+        // Sorting by label puts each directory right before its contents.
+        items.sort((a, b) => (a.label < b.label ? -1 : (a.label > b.label ? 1 : 0)));
+
+        const picked = await vscode.window.showQuickPick(items, {
+            title:       "Copy repo path",
+            placeHolder: "Select a file or directory"
+        });
+        if (!picked) {
+            return;
+        }
+
+        // Relative paths only make sense when there is a repo root.
+        let base: PathBase = "absolute";
+        if (chosen.repoRoot) {
+            const pickedBase = await vscode.window.showQuickPick(
+                [
+                    { label: "Repo-relative path", value: "relative" as const },
+                    { label: "Absolute path",      value: "absolute" as const }
+                ],
+                { title: "Path to copy", placeHolder: "Relative to the repo root, or absolute?" }
+            );
+            if (!pickedBase) {
+                return;
+            }
+            base = pickedBase.value;
+        }
+
+        // Other platforms have only one separator.
+        let slashStyle: SlashStyle = "forward";
+        if (process.platform === "win32") {
+            const pickedSlash = await vscode.window.showQuickPick(
+                [
+                    { label: "Use forward slashes", value: "forward" as const },
+                    { label: "Use backslashes",      value: "backward" as const }
+                ],
+                { title: "Path separator", placeHolder: "Which path separator?" }
+            );
+            if (!pickedSlash) {
+                return;
+            }
+            slashStyle = pickedSlash.value;
+        }
+
+        const text = formatPath(baseDir.absPath(), picked.relPath, base, slashStyle);
+        await vscode.env.clipboard.writeText(text);
+        vscode.window.setStatusBarMessage(`Copied: ${text}`, 3000);
+    }
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Helper Functions
 ////////////////////////////////////////////////////////////////////////////////
-
-/**
- * Has the user choose an item (such as a file) from the repo, and how its path
- * should be formatted, and then copies that path to the clipboard.  Does
- * nothing when the user cancels any prompt.
- *
- * @param itemNoun - Describes the kind of item, in messages ("file")
- * @param enumerate - Lists the items under a directory as paths relative to it
- * @returns A promise that resolves when the command is finished
- */
-async function copyPathOfChosenItem(
-    itemNoun:  string,
-    enumerate: (root: Directory) => Promise<Array<string>>
-): Promise<void> {
-    const chosen = await chooseWorkspaceFolder();
-    if (!chosen) {
-        return;
-    }
-
-    // Relative paths are relative to the repo root, when there is one.
-    const baseDir = chosen.repoRoot ?? chosen.folder;
-    let relPaths: Array<string>;
-    try {
-        relPaths = await enumerate(baseDir);
-    }
-    catch (err) {
-        vscode.window.showErrorMessage(
-            `Could not enumerate ${itemNoun}s in ${baseDir.absPath()}: ${String(err)}`
-        );
-        return;
-    }
-
-    if (relPaths.length === 0) {
-        vscode.window.showInformationMessage(`No ${itemNoun}s found in ${baseDir.absPath()}.`);
-        return;
-    }
-
-    const pickedPath = await vscode.window.showQuickPick(relPaths, {
-        title:       `Copy repo ${itemNoun} path`,
-        placeHolder: `Select a ${itemNoun}`
-    });
-    if (pickedPath === undefined) {
-        return;
-    }
-
-    // Relative paths only make sense when there is a repo root.
-    let base: PathBase = "absolute";
-    if (chosen.repoRoot) {
-        const pickedBase = await vscode.window.showQuickPick(
-            [
-                { label: "Repo-relative path", value: "relative" as const },
-                { label: "Absolute path",      value: "absolute" as const }
-            ],
-            { title: "Path to copy", placeHolder: "Relative to the repo root, or absolute?" }
-        );
-        if (!pickedBase) {
-            return;
-        }
-        base = pickedBase.value;
-    }
-
-    // Other platforms have only one separator.
-    let slashStyle: SlashStyle = "forward";
-    if (process.platform === "win32") {
-        const pickedSlash = await vscode.window.showQuickPick(
-            [
-                { label: "Use forward slashes", value: "forward" as const },
-                { label: "Use backslashes",      value: "backward" as const }
-            ],
-            { title: "Path separator", placeHolder: "Which path separator?" }
-        );
-        if (!pickedSlash) {
-            return;
-        }
-        slashStyle = pickedSlash.value;
-    }
-
-    const text = formatPath(baseDir.absPath(), pickedPath, base, slashStyle);
-    await vscode.env.clipboard.writeText(text);
-    vscode.window.setStatusBarMessage(`Copied: ${text}`, 3000);
-}
-
-
 
 /**
  * Has the user choose a workspace folder and finds the Git repository root
@@ -757,6 +749,5 @@ export const commands: Array<ICommandDefinition> = [
     associatedFilesCommand,
     openTerminalInRepoRootCommand,
     copyRepoProjectNameCommand,
-    copyRepoFilePathCommand,
-    copyRepoDirectoryPathCommand
+    copyRepoPathCommand
 ];

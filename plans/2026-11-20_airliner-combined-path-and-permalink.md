@@ -202,20 +202,20 @@ and `npm run type-check` and eslint pass for `packages/depot` and `packages/depo
 
 ### Task 4: Combine the two commands into copyRepoPathCommand
 
-Status: Not started
+Status: Done
 
 #### Task Description
 
 Implement Task 1's decisions in `apps/airliner/src/commands.mts` and `apps/airliner/package.json`:
 
-- [ ] Add `copyRepoPathCommand` (`extension.airlinerCopyRepoPath`, "Airliner copy repo path") to `commands.mts`.
+- [x] Add `copyRepoPathCommand` (`extension.airlinerCopyRepoPath`, "Airliner copy repo path") to `commands.mts`.
   Its Quick Pick lists the results of `enumerateFiles` and `enumerateDirectories` together, sorted by path.
   A directory's label ends in `/` and has a `folder` icon, a file has a `file` icon, and the copied path has no trailing `/`.
-- [ ] Move the behavior of `copyPathOfChosenItem` into it, and remove `copyPathOfChosenItem`.
-- [ ] Remove `copyRepoFilePathCommand` and `copyRepoDirectoryPathCommand`
+- [x] Move the behavior of `copyPathOfChosenItem` into it, and remove `copyPathOfChosenItem`.
+- [x] Remove `copyRepoFilePathCommand` and `copyRepoDirectoryPathCommand`
   from `commands.mts` (the definitions and their entries in the `commands` array)
   and `extension.airlinerCopyRepoFilePath` and `extension.airlinerCopyRepoDirectoryPath` from `contributes.commands` in `package.json`.
-- [ ] Register `copyRepoPathCommand` in the `commands` array and `extension.airlinerCopyRepoPath` in `contributes.commands`.
+- [x] Register `copyRepoPathCommand` in the `commands` array and `extension.airlinerCopyRepoPath` in `contributes.commands`.
 
 Done when: `npm run type-check` and eslint pass for `apps/airliner`, the extension bundles with the new command and without the old two,
 and no source file refers to the old command IDs.
@@ -223,7 +223,23 @@ The hand test is part of Task 6.
 
 #### Outcomes
 
-None yet.
+- `copyRepoPathCommand` (`extension.airlinerCopyRepoPath`, "Airliner copy repo path") is in `apps/airliner/src/commands.mts`,
+  in the `commands` array, and in `contributes.commands` in `apps/airliner/package.json`.
+  `copyRepoFilePathCommand`, `copyRepoDirectoryPathCommand` and `copyPathOfChosenItem` are gone,
+  and no source or JSON file refers to the old command IDs or names.
+- The command enumerates with `enumerateFiles` and `enumerateDirectories` in parallel from `repoRoot ?? folder`,
+  and builds one Quick Pick list sorted by label, so each directory sits right before its contents.
+  A file item's label is its relative path with a `file` icon (`iconPath`),
+  and a directory item's label is its relative path plus `/` with a `folder` icon.
+  Each item also carries `relPath`, the path without the trailing `/`, which is what is passed to `formatPath`.
+  The rest of the flow is unchanged: the "Repo-relative path" / "Absolute path" Quick Pick only when a repo root was found,
+  the slash Quick Pick only on Windows, `Copied: <path>` in the status bar, and Escape on any Quick Pick copies nothing.
+- Input for Task 5: the list items do not yet record whether they are a file or a directory.
+  Task 5 needs that to build a `File` or a `Directory` for `makeGitPermalink`, so it must add a `kind` to the items.
+  The flow currently ends at the `formatPath` call near the end of `fn`, which is where the "Path" / "Permalink" prompt goes, before it.
+- Checked: `npm run type-check` and `npx eslint src/commands.mts` are clean for `apps/airliner`,
+  and `npm run esbuild-dev` bundles `extension.airlinerCopyRepoPath` and neither old ID.
+- Not checked: the command in the Extension Development Host; Task 6 covers it.
 
 ### Task 5: Add the path or permalink prompt
 
