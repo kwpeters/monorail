@@ -137,7 +137,6 @@ Done when: the Outcomes record an answer to each open question above.
   a permalink never includes a line number or range, so it points at the whole file or directory.
   The skill's `?plain=1` rule, which applies only with a line anchor, is therefore not needed.
 
-
 ### Task 3: Add permalink helpers to depot and depot-node
 
 Status: Done
@@ -219,7 +218,7 @@ Implement Task 1's decisions in `apps/airliner/src/commands.mts` and `apps/airli
 
 Done when: `npm run type-check` and eslint pass for `apps/airliner`, the extension bundles with the new command and without the old two,
 and no source file refers to the old command IDs.
-The hand test is part of Task 6.
+The hand test is part of Task 8.
 
 #### Outcomes
 
@@ -239,35 +238,106 @@ The hand test is part of Task 6.
   The flow currently ends at the `formatPath` call near the end of `fn`, which is where the "Path" / "Permalink" prompt goes, before it.
 - Checked: `npm run type-check` and `npx eslint src/commands.mts` are clean for `apps/airliner`,
   and `npm run esbuild-dev` bundles `extension.airlinerCopyRepoPath` and neither old ID.
-- Not checked: the command in the Extension Development Host; Task 6 covers it.
+- Not checked: the command in the Extension Development Host; Task 8 covers it.
 
 ### Task 5: Add the path or permalink prompt
 
-Status: Not started
+Status: Done
 
 #### Task Description
 
 Add the prompt to `copyRepoPathCommand` and generate permalinks using the Task 3 helpers,
 following the prompt order in Task 2's Outcomes:
 
-- [ ] After an item is picked, ask a Quick Pick with the labels "Path" and "Permalink", path first.
+- [x] After an item is picked, ask a Quick Pick with the labels "Path" and "Permalink", path first.
   Escape copies nothing.
-- [ ] For "Path", continue with the existing "Repo-relative path" / "Absolute path" prompt (only when a repo root was found)
+- [x] For "Path", continue with the existing "Repo-relative path" / "Absolute path" prompt (only when a repo root was found)
   and the Windows-only slash prompt.
-- [ ] For "Permalink", skip those prompts and call `makeGitPermalink` with the picked item as a `File` or a `Directory`.
-- [ ] When `makeGitPermalink` fails, show one error message that describes every problem it reports, copy nothing, and end.
-- [ ] When it succeeds, copy the URL and show `Copied: <url>` in the status bar.
+- [x] For "Permalink", skip those prompts and call `makeGitPermalink` with the picked item as a `File` or a `Directory`.
+- [x] When `makeGitPermalink` fails, show one error message that describes every problem it reports, copy nothing, and end.
+- [x] When it succeeds, copy the URL and show `Copied: <url>` in the status bar.
 
 Done when: `npm run type-check` and eslint pass for `apps/airliner`, and the extension bundles.
-The hand test is part of Task 6.
+The hand test is part of Task 8.
 
 #### Outcomes
 
-None yet.
+- `copyRepoPathCommand` in `apps/airliner/src/commands.mts` now asks a "Path" / "Permalink" Quick Pick (path first, title "Copy as")
+  right after an item is picked.
+  Escape copies nothing.
+  "Path" continues with the unchanged relative/absolute and slash prompts and `formatPath`.
+  "Permalink" builds a `File` or a `Directory` from `baseDir` and the item's `relPath`,
+  calls `makeGitPermalink`, and on success copies the URL and shows `Copied: <url>` for 3 seconds.
+  On failure it shows one error message, `Could not make a permalink for <relPath>: <problems>`,
+  with the problems joined by two spaces, copies nothing, and ends.
+  With no repo root the prompt still appears, and "Permalink" then ends in that error message (Task 2's decision).
+- The list items carry `itemKind: "file" | "directory"` for this.
+  It is not named `kind`, because `vscode.QuickPickItem` already has a `kind` property and the clash collapses the item type to `never`.
+- Checked: `npm run type-check` and `npx eslint src/commands.mts` are clean for `apps/airliner`,
+  and `npm run esbuild-dev` bundles the command with `makeGitPermalink`.
+  `makeGitPermalink` also ran against real items in this repo and failed as designed:
+  the current commit is not on any `origin` branch, and the directory and the plan file have uncommitted changes.
+  Each call took about 1.7 seconds, including the one `git fetch origin`.
+- Not checked: the prompt in the Extension Development Host, and a permalink that succeeds in a real repo; Task 8 covers both.
+  The success path is covered by the `depot-node` unit tests.
 
-### Task 6: Verify the build
+### Task 6: Show progress while a permalink is being made
 
-Status: Not started
+Status: Done
+
+#### Task Description
+
+The `git fetch origin` makes a permalink take a second or two, and `copyRepoPathCommand` shows nothing meanwhile.
+In `apps/airliner/src/commands.mts`:
+
+- [x] Wrap the `makeGitPermalink` call in `vscode.window.withProgress` with `location: vscode.ProgressLocation.Notification`
+  and the title "Making permalink...", so the progress shows as a toast and not in the status bar.
+
+Done when: `npm run type-check` and eslint pass for `apps/airliner`, the extension bundles,
+and the `makeGitPermalink` call is wrapped by `withProgress`.
+The hand test is part of Task 8.
+
+#### Outcomes
+
+- In `copyRepoPathCommand` in `apps/airliner/src/commands.mts`, the `makeGitPermalink(item)` call is now
+  `vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: "Making permalink..." }, () => makeGitPermalink(item))`.
+  The progress toast disappears when `makeGitPermalink` resolves, and the success and error handling after it are unchanged.
+- Checked: `npm run type-check` and `npx eslint src/commands.mts` are clean for `apps/airliner`,
+  and `npm run esbuild-dev` bundles the command with "Making permalink...".
+- Not checked: the progress toast in the Extension Development Host; Task 8 covers it.
+
+### Task 7: Show copy confirmations as toasts
+
+Status: Done
+
+#### Task Description
+
+Messages in the status bar are extremely easy to overlook.
+In `apps/airliner/src/commands.mts`:
+
+- [x] Replace the three `vscode.window.setStatusBarMessage("Copied: ...", 3000)` calls
+  (one in `copyRepoProjectNameCommand`, and two in `copyRepoPathCommand`, for a path and for a permalink)
+  with `vscode.window.showInformationMessage("Copied: ...")`.
+  Every other informational message in `apps/airliner/src` is already a toast.
+
+Done when: `npm run type-check` and eslint pass for `apps/airliner`, the extension bundles,
+and no `setStatusBarMessage` call remains in `apps/airliner/src`.
+The hand test is part of Task 8.
+
+#### Outcomes
+
+- The three `Copied: ...` confirmations in `apps/airliner/src/commands.mts`
+  (`copyRepoProjectNameCommand`, and the path and permalink branches of `copyRepoPathCommand`)
+  now use `vscode.window.showInformationMessage`, so they are toasts with no 3-second timeout.
+  No `setStatusBarMessage` call remains in `apps/airliner/src`, or in the bundled `dist/extension.js`.
+- Checked: `npm run type-check` and `npx eslint src/commands.mts` are clean for `apps/airliner`, and `npm run esbuild-dev` bundles.
+- Not checked: the toasts in the Extension Development Host; Task 8 covers it.
+- The Outcomes of Tasks 4 and 5, and of the earlier plan, still say "status bar" for `Copied:`;
+  they describe what was done at the time and are not changed.
+
+### Task 8: Verify the build
+
+Status: Done
 
 #### Task Description
 
@@ -280,9 +350,66 @@ npm run all && npm run type-check
 Then the user tries `copyRepoPathCommand` by hand in the Extension Development Host:
 a file and a directory, as a path and as a permalink, in a repo and in a folder that is not in a repo,
 and a permalink for an item with uncommitted changes, which should show the error message and copy nothing.
+Also check that each `Copied:` confirmation appears as a toast, and that making a permalink shows a "Making permalink..." progress toast.
 
 Done when: the command exits with code 0, and the user confirms the hand test.
 
 #### Outcomes
 
-None yet.
+- `npm run all && npm run type-check` exited with code 0 from the repo root.
+  Each Turborepo phase reported 45 of 45 tasks successful,
+  with 44 of 45 replayed from the cache in the phases whose summary I read, so the one changed package, `airliner`, was run for real.
+  The new code in `depot` and `depot-node` was already checked by a forced, uncached run in Task 3:
+  1588 `depot` specs and 678 `depot-node` specs pass, and they passed again here.
+- The hand test passed: the user ran the checks listed for this task in the Extension Development Host and reported "All the test work great."
+  The report did not itemize the individual checks.
+
+### Task 9: Add a command that copies the path or permalink of the current file
+
+Status: Done
+
+#### Task Description
+
+Add a command that does essentially what `copyRepoPathCommand` does,
+except that the active editor's file is the target, instead of prompting the user to pick an item.
+In `apps/airliner/src/commands.mts` and `apps/airliner/package.json`:
+
+- [x] Add the command, with no item Quick Pick; its target is the active editor's file.
+- [x] Move the steps that follow picking an item out of `copyRepoPathCommand` into a helper shared by both commands:
+  the "Path" / "Permalink" Quick Pick, the relative/absolute and slash prompts, `formatPath`,
+  `makeGitPermalink` with its progress toast, the clipboard, and the `Copied:` toast.
+  Neither command copies that code.
+- [x] Register the command in the `commands` array and in `contributes.commands`.
+- [x] Have the user try both `copyRepoPathCommand` and the new command by hand in the Extension Development Host,
+  since the shared helper changes `copyRepoPathCommand` too.
+
+The new command's ID is `extension.airlinerCopyCurrentFilePath`, its title is "Airliner copy current file path",
+and its constant is `copyCurrentFilePathCommand` ("Yes, use that.").
+
+When there is no active editor, the command shows the error message "There is no active editor." and stops.
+When the editor has no file (not a `file:` document, such as an untitled document), it shows "Current editor has no associated file." and stops.
+Otherwise the repo root comes from the file's own directory, using `findGitRepoRootDir`, as `openTerminalInRepoRootCommand` does, with no workspace folder prompt.
+When the file is not in a repo, the "Repo-relative path" prompt is skipped and "Path" copies the absolute path
+("Yes, copy that behavior.").
+
+Done when: `npm run type-check` and eslint pass for `apps/airliner`, the extension bundles,
+and the user confirms the hand test.
+
+#### Outcomes
+
+- `copyCurrentFilePathCommand` (`extension.airlinerCopyCurrentFilePath`, "Airliner copy current file path") is in
+  `apps/airliner/src/commands.mts`, in the `commands` array, and in `contributes.commands` in `apps/airliner/package.json`.
+  It shows "There is no active editor." or "Current editor has no associated file." and stops, as decided above.
+  Otherwise it finds the repo root with `findGitRepoRootDir` from the file's directory,
+  uses `repoRoot ?? <the file's directory>` as the base,
+  computes the file's path relative to that base with `path.relative` (forward slashes),
+  and calls the shared helper.
+- The shared helper is `copyPathOrPermalink(baseDir, repoRoot, relPath, itemKind)` in the Helper Functions section of `commands.mts`.
+  It holds, unchanged, everything that used to follow picking an item in `copyRepoPathCommand`:
+  the "Path" / "Permalink" Quick Pick, the permalink branch with its progress toast and error message,
+  the relative/absolute prompt (only with a repo root), the Windows slash prompt, `formatPath`, the clipboard and the `Copied:` toast.
+  `copyRepoPathCommand` now ends with a call to it.
+- Checked: `npm run type-check` and `npx eslint src/commands.mts` are clean for `apps/airliner`,
+  and `npm run esbuild-dev` bundles `extension.airlinerCopyCurrentFilePath`.
+- The hand test passed: the user tried both commands in the Extension Development Host and reported "all tests pass".
+  The report did not itemize the individual checks.

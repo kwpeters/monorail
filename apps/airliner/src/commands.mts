@@ -1,11 +1,13 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
+import * as path from "node:path";
 import * as _ from "lodash-es";
 import { toggleComment } from "@repo/depot/comment";
 import { Timeout } from "@repo/depot-node/timers";
 import { Directory } from "@repo/depot-node/directory";
 import { File } from "@repo/depot-node/file";
+import { makeGitPermalink } from "@repo/depot-node/gitPermalink";
 import { findGitRepoRootDir } from "@repo/depot-node/gitRepo";
 import {
     enumerateDirectories,
@@ -544,7 +546,7 @@ const copyRepoProjectNameCommand = {
         }
 
         await vscode.env.clipboard.writeText(picked.label);
-        vscode.window.setStatusBarMessage(`Copied: ${picked.label}`, 3000);
+        vscode.window.showInformationMessage(`Copied: ${picked.label}`);
     }
 };
 
@@ -565,7 +567,7 @@ const copyRepoPathCommand = {
 
         // Relative paths are relative to the repo root, when there is one.
         const baseDir = chosen.repoRoot ?? chosen.folder;
-        let items: Array<vscode.QuickPickItem & { relPath: string }>;
+        let items: Array<vscode.QuickPickItem & { relPath: string; itemKind: "file" | "directory" }>;
         try {
             const [files, directories] = await Promise.all([
                 enumerateFiles(baseDir),
@@ -575,12 +577,14 @@ const copyRepoPathCommand = {
                 ...files.map((relPath) => ({
                     label:    relPath,
                     iconPath: new vscode.ThemeIcon("file"),
-                    relPath
+                    relPath,
+                    itemKind: "file" as const
                 })),
                 ...directories.map((relPath) => ({
                     label:    `${relPath}/`,
                     iconPath: new vscode.ThemeIcon("folder"),
-                    relPath
+                    relPath,
+                    itemKind: "directory" as const
                 }))
             ];
         }
@@ -609,41 +613,36 @@ const copyRepoPathCommand = {
             return;
         }
 
-        // Relative paths only make sense when there is a repo root.
-        let base: PathBase = "absolute";
-        if (chosen.repoRoot) {
-            const pickedBase = await vscode.window.showQuickPick(
-                [
-                    { label: "Repo-relative path", value: "relative" as const },
-                    { label: "Absolute path",      value: "absolute" as const }
-                ],
-                { title: "Path to copy", placeHolder: "Relative to the repo root, or absolute?" }
-            );
-            if (!pickedBase) {
-                return;
-            }
-            base = pickedBase.value;
+        await copyPathOrPermalink(baseDir, chosen.repoRoot, picked.relPath, picked.itemKind);
+    }
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Copies the path or a permalink of the active editor's file to the clipboard.
+//
+////////////////////////////////////////////////////////////////////////////////
+const copyCurrentFilePathCommand = {
+    name: "extension.airlinerCopyCurrentFilePath",
+    fn:   async (): Promise<void> => {
+        const activeEditor = vscode.window.activeTextEditor;
+        if (!activeEditor) {
+            vscode.window.showErrorMessage("There is no active editor.");
+            return;
         }
 
-        // Other platforms have only one separator.
-        let slashStyle: SlashStyle = "forward";
-        if (process.platform === "win32") {
-            const pickedSlash = await vscode.window.showQuickPick(
-                [
-                    { label: "Use forward slashes", value: "forward" as const },
-                    { label: "Use backslashes",      value: "backward" as const }
-                ],
-                { title: "Path separator", placeHolder: "Which path separator?" }
-            );
-            if (!pickedSlash) {
-                return;
-            }
-            slashStyle = pickedSlash.value;
+        if (activeEditor.document.uri.scheme !== "file") {
+            vscode.window.showErrorMessage("Current editor has no associated file.");
+            return;
         }
 
-        const text = formatPath(baseDir.absPath(), picked.relPath, base, slashStyle);
-        await vscode.env.clipboard.writeText(text);
-        vscode.window.setStatusBarMessage(`Copied: ${text}`, 3000);
+        const file = new File(activeEditor.document.uri.fsPath);
+        const repoRoot = await findGitRepoRootDir(file.directory);
+        // Relative paths are relative to the repo root, when there is one.
+        const baseDir = repoRoot ?? file.directory;
+        const relPath = path.relative(baseDir.absPath(), file.absPath()).replaceAll("\\", "/");
+        await copyPathOrPermalink(baseDir, repoRoot, relPath, "file");
     }
 };
 
@@ -651,6 +650,94 @@ const copyRepoPathCommand = {
 ////////////////////////////////////////////////////////////////////////////////
 // Helper Functions
 ////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Has the user choose whether to copy a path or a permalink of an item, and how
+ * a path should be formatted, and then copies the result to the clipboard.
+ * Does nothing when the user cancels any prompt.
+ *
+ * @param baseDir - The directory that _relPath_ is relative to: the repo root,
+ * or when there is none, the directory the item was found in
+ * @param repoRoot - The root of the repo containing the item, or `undefined`
+ * when the item is not in a repo
+ * @param relPath - The item's path relative to _baseDir_, with forward slashes
+ * @param itemKind - Whether the item is a file or a directory
+ * @returns A promise that resolves when the command is finished
+ */
+async function copyPathOrPermalink(
+    baseDir:  Directory,
+    repoRoot: Directory | undefined,
+    relPath:  string,
+    itemKind: "file" | "directory"
+): Promise<void> {
+    const pickedForm = await vscode.window.showQuickPick(
+        [
+            { label: "Path",      value: "path" as const },
+            { label: "Permalink", value: "permalink" as const }
+        ],
+        { title: "Copy as", placeHolder: "Copy a path or a permalink?" }
+    );
+    if (!pickedForm) {
+        return;
+    }
+
+    if (pickedForm.value === "permalink") {
+        const item = itemKind === "file" ?
+                     new File(baseDir, relPath) :
+                     new Directory(baseDir, relPath);
+        const permalinkRes = await vscode.window.withProgress(
+            { location: vscode.ProgressLocation.Notification, title: "Making permalink..." },
+            () => makeGitPermalink(item)
+        );
+        if (!permalinkRes.succeeded) {
+            vscode.window.showErrorMessage(
+                `Could not make a permalink for ${relPath}: ${permalinkRes.error.join("  ")}`
+            );
+            return;
+        }
+
+        await vscode.env.clipboard.writeText(permalinkRes.value);
+        vscode.window.showInformationMessage(`Copied: ${permalinkRes.value}`);
+        return;
+    }
+
+    // Relative paths only make sense when there is a repo root.
+    let base: PathBase = "absolute";
+    if (repoRoot) {
+        const pickedBase = await vscode.window.showQuickPick(
+            [
+                { label: "Repo-relative path", value: "relative" as const },
+                { label: "Absolute path",      value: "absolute" as const }
+            ],
+            { title: "Path to copy", placeHolder: "Relative to the repo root, or absolute?" }
+        );
+        if (!pickedBase) {
+            return;
+        }
+        base = pickedBase.value;
+    }
+
+    // Other platforms have only one separator.
+    let slashStyle: SlashStyle = "forward";
+    if (process.platform === "win32") {
+        const pickedSlash = await vscode.window.showQuickPick(
+            [
+                { label: "Use forward slashes", value: "forward" as const },
+                { label: "Use backslashes",      value: "backward" as const }
+            ],
+            { title: "Path separator", placeHolder: "Which path separator?" }
+        );
+        if (!pickedSlash) {
+            return;
+        }
+        slashStyle = pickedSlash.value;
+    }
+
+    const text = formatPath(baseDir.absPath(), relPath, base, slashStyle);
+    await vscode.env.clipboard.writeText(text);
+    vscode.window.showInformationMessage(`Copied: ${text}`);
+}
+
 
 /**
  * Has the user choose a workspace folder and finds the Git repository root
@@ -749,5 +836,6 @@ export const commands: Array<ICommandDefinition> = [
     associatedFilesCommand,
     openTerminalInRepoRootCommand,
     copyRepoProjectNameCommand,
-    copyRepoPathCommand
+    copyRepoPathCommand,
+    copyCurrentFilePathCommand
 ];

@@ -64,6 +64,10 @@
             {
                 "command": "extension.airlinerCopyRepoPath",
                 "title": "Airliner copy repo path"
+            },
+            {
+                "command": "extension.airlinerCopyCurrentFilePath",
+                "title": "Airliner copy current file path"
             }
         ]
     },
