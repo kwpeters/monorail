@@ -427,13 +427,13 @@ describe("allM()", () => {
     it("when one result fails, the returned promise resolves *immediately* with the failure", async () => {
         const op1 = () => getTimerPromise(25, new SucceededResult(25));
         const op2 = () => getTimerPromise(50, new FailedResult("Error 1"));
-        const op3 = () => getTimerPromise(75, new SucceededResult(75));
+        const op3 = () => getTimerPromise(150, new SucceededResult(75));
 
         const startTime = Date.now();
         const __result = await PromiseResult.allM(op1(), op2(), op3());
         const resolveTime = Date.now();
         expect(resolveTime - startTime).toBeGreaterThanOrEqual(50);
-        expect(resolveTime - startTime).toBeLessThanOrEqual(70);
+        expect(resolveTime - startTime).toBeLessThanOrEqual(100);
     });
 });
 
