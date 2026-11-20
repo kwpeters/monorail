@@ -3,7 +3,8 @@ import {
     buildPermalinkUrl,
     gitHostKind,
     remoteUrlToWebInfo,
-    type GitItemKind
+    type GitItemKind,
+    type ILineRange
 } from "@repo/depot/gitPermalink";
 import { Directory } from "./directory.mjs";
 import { File } from "./file.mjs";
@@ -17,6 +18,12 @@ export interface IMakeGitPermalinkOptions {
      * true.
      */
     fetchOrigin?: boolean;
+
+    /**
+     * The lines of a file to link to.  A file with no lines is linked as a
+     * whole, and a directory is always linked as a whole.
+     */
+    lines?: ILineRange;
 }
 
 
@@ -159,6 +166,6 @@ export async function makeGitPermalink(
     }
 
     return new SucceededResult(
-        buildPermalinkUrl(permalinkParts.webAddress, permalinkParts.host, hashRes.value, repoPath, kind)
+        buildPermalinkUrl(permalinkParts.webAddress, permalinkParts.host, hashRes.value, repoPath, kind, options?.lines)
     );
 }

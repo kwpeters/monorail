@@ -1,4 +1,4 @@
-import { buildPermalinkUrl, gitHostKind, remoteUrlToWebInfo } from "./gitPermalink.mjs";
+import { buildPermalinkUrl, gitHostKind, remoteUrlToWebInfo, selectionToLineRange } from "./gitPermalink.mjs";
 
 
 describe("remoteUrlToWebInfo()", () => {
@@ -121,6 +121,80 @@ describe("buildPermalinkUrl()", () => {
     it("links the repository root directory without a trailing slash", () => {
         expect(buildPermalinkUrl("https://github.com/a/b", "github", hash, "", "directory"))
         .toEqual(`https://github.com/a/b/tree/${hash}`);
+    });
+
+
+    describe("with lines", () => {
+
+        const github = "https://github.com/a/b";
+        const gitlab = "https://gitlab.com/g/p";
+
+
+        it("anchors a single line the same way on GitHub and GitLab", () => {
+            expect(buildPermalinkUrl(github, "github", hash, "src/a.ts", "file", { start: 10, end: 10 }))
+            .toEqual(`${github}/blob/${hash}/src/a.ts#L10`);
+            expect(buildPermalinkUrl(gitlab, "gitlab", hash, "src/a.ts", "file", { start: 10, end: 10 }))
+            .toEqual(`${gitlab}/-/blob/${hash}/src/a.ts#L10`);
+        });
+
+
+        it("anchors a range as #L10-L20 on GitHub and #L10-20 on GitLab", () => {
+            expect(buildPermalinkUrl(github, "github", hash, "src/a.ts", "file", { start: 10, end: 20 }))
+            .toEqual(`${github}/blob/${hash}/src/a.ts#L10-L20`);
+            expect(buildPermalinkUrl(gitlab, "gitlab", hash, "src/a.ts", "file", { start: 10, end: 20 }))
+            .toEqual(`${gitlab}/-/blob/${hash}/src/a.ts#L10-20`);
+        });
+
+
+        it("puts ?plain=1 before the anchor for rendered file types, in either case", () => {
+            for (const name of ["a.md", "a.rst", "a.adoc", "A.MD", "docs/Readme.Adoc"]) {
+                expect(buildPermalinkUrl(github, "github", hash, name, "file", { start: 3, end: 4 }))
+                .toEqual(`${github}/blob/${hash}/${name.split("/").map(encodeURIComponent).join("/")}?plain=1#L3-L4`);
+            }
+        });
+
+
+        it("does not add ?plain=1 for other file types or when there are no lines", () => {
+            expect(buildPermalinkUrl(github, "github", hash, "a.ts", "file", { start: 3, end: 3 }))
+            .not.toContain("plain");
+            expect(buildPermalinkUrl(github, "github", hash, "a.md", "file"))
+            .toEqual(`${github}/blob/${hash}/a.md`);
+        });
+
+
+        it("never anchors a directory", () => {
+            expect(buildPermalinkUrl(github, "github", hash, "src", "directory", { start: 3, end: 9 }))
+            .toEqual(`${github}/tree/${hash}/src`);
+        });
+
+    });
+
+});
+
+
+describe("selectionToLineRange()", () => {
+
+    it("gives a cursor its own line", () => {
+        expect(selectionToLineRange({ line: 11, character: 4 }, { line: 11, character: 4 }))
+        .toEqual({ start: 12, end: 12 });
+    });
+
+
+    it("gives a selection within one line that line", () => {
+        expect(selectionToLineRange({ line: 11, character: 2 }, { line: 11, character: 9 }))
+        .toEqual({ start: 12, end: 12 });
+    });
+
+
+    it("covers the lines of a multi-line selection", () => {
+        expect(selectionToLineRange({ line: 11, character: 2 }, { line: 17, character: 5 }))
+        .toEqual({ start: 12, end: 18 });
+    });
+
+
+    it("leaves out the line after a selection of whole lines that ends at column 0", () => {
+        expect(selectionToLineRange({ line: 11, character: 0 }, { line: 17, character: 0 }))
+        .toEqual({ start: 12, end: 17 });
     });
 
 });

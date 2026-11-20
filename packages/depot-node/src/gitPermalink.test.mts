@@ -128,6 +128,35 @@ describe("makeGitPermalink()", () => {
         });
 
 
+        it("links a line of a file", async () => {
+            const res = await makeGitPermalink(new File(repoDir, "src", "a.ts"), { lines: { start: 7, end: 7 } });
+            expect(res.value).toEqual(`https://github.com/acme/tools/blob/${hash}/src/a.ts#L7`);
+        });
+
+
+        it("links a range of lines of a file", async () => {
+            const res = await makeGitPermalink(new File(repoDir, "src", "a.ts"), { lines: { start: 7, end: 12 } });
+            expect(res.value).toEqual(`https://github.com/acme/tools/blob/${hash}/src/a.ts#L7-L12`);
+        });
+
+
+        it("adds ?plain=1 for a line of a rendered file", async () => {
+            writeFile(repoDir, "README.md", "# Title");
+            runGit(repoDir, "add", ".");
+            runGit(repoDir, "commit", "-m", "readme");
+            runGit(repoDir, "-c", `url.${path.join(base, "origin.git").replaceAll("\\", "/")}.pushInsteadOf=${githubUrl}`, "push", "origin", "main");
+            const newHash = runGit(repoDir, "rev-parse", "HEAD");
+            const res = await makeGitPermalink(new File(repoDir, "README.md"), { lines: { start: 1, end: 3 } });
+            expect(res.value).toEqual(`https://github.com/acme/tools/blob/${newHash}/README.md?plain=1#L1-L3`);
+        });
+
+
+        it("ignores lines for a directory", async () => {
+            const res = await makeGitPermalink(new Directory(repoDir, "src"), { lines: { start: 7, end: 12 } });
+            expect(res.value).toEqual(`https://github.com/acme/tools/tree/${hash}/src`);
+        });
+
+
         it("uses /-/ for a GitLab remote", async () => {
             runGit(repoDir, "remote", "set-url", "origin", "git@gitlab.example.com:group/sub/project.git");
             const res = await makeGitPermalink(new File(repoDir, "src", "a.ts"));

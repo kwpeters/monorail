@@ -6,6 +6,23 @@ export type GitItemKind = "file" | "directory";
 
 
 /**
+ * A range of lines in a file.  Line numbers are 1-based, and `start` is not
+ * greater than `end`.  A single line has `start` equal to `end`.
+ */
+export interface ILineRange {
+    start: number;
+    end:   number;
+}
+
+
+/**
+ * Extensions of files that GitHub and GitLab show rendered, where line anchors
+ * do nothing.  Compared case-insensitively.
+ */
+export const renderedFileExtensions: ReadonlyArray<string> = [".md", ".rst", ".adoc"];
+
+
+/**
  * The parts of a Git remote URL that a permalink needs.
  */
 export interface IRemoteWebInfo {
@@ -106,8 +123,7 @@ export function gitHostKind(host: string): Result<GitHost, string> {
 
 
 /**
- * Builds a permalink to a file or directory at a commit.  The link has no line
- * anchor.
+ * Builds a permalink to a file or directory at a commit.
  *
  * @param webAddress - The project's web address, such as from
  * {@link remoteUrlToWebInfo}
@@ -116,14 +132,19 @@ export function gitHostKind(host: string): Result<GitHost, string> {
  * @param repoPath - The item's path from the repository root, with forward
  * slashes.  Empty for the repository root directory.
  * @param kind - Whether the item is a file or a directory
- * @returns The permalink, with each path segment percent-encoded
+ * @param lines - The lines to link to.  Ignored for a directory.  A file with
+ * no lines is linked as a whole.
+ * @returns The permalink, with each path segment percent-encoded.  A file with
+ * lines gets a line anchor, preceded by `?plain=1` when the file is of a type
+ * that the host renders.
  */
 export function buildPermalinkUrl(
     webAddress: string,
     host:       GitHost,
     hash:       string,
     repoPath:   string,
-    kind:       GitItemKind
+    kind:       GitItemKind,
+    lines?:     ILineRange
 ): string {
     const view = kind === "file" ? "blob" : "tree";
     const prefix = host === "gitlab" ? `${webAddress}/-/${view}` : `${webAddress}/${view}`;
@@ -131,5 +152,46 @@ export function buildPermalinkUrl(
     .split("/")
     .filter((segment) => segment !== "")
     .map((segment) => encodeURIComponent(segment));
-    return [prefix, hash, ...segments].join("/");
+    const url = [prefix, hash, ...segments].join("/");
+
+    if (kind === "directory" || !lines) {
+        return url;
+    }
+
+    let anchor = `#L${lines.start}`;
+    if (lines.end !== lines.start) {
+        anchor += host === "gitlab" ? `-${lines.end}` : `-L${lines.end}`;
+    }
+
+    const lowerPath = repoPath.toLowerCase();
+    const isRendered = renderedFileExtensions.some((ext) => lowerPath.endsWith(ext));
+    return `${url}${isRendered ? "?plain=1" : ""}${anchor}`;
+}
+
+
+/**
+ * A position in a text document.  Both numbers are 0-based, as in VS Code.
+ */
+export interface ITextPosition {
+    line:      number;
+    character: number;
+}
+
+
+/**
+ * Converts the start and end of a selection into the lines it covers.  A
+ * selection that ends at the start of a later line, as one of whole lines
+ * usually does, does not cover that last line.
+ *
+ * @param start - The start of the selection
+ * @param end - The end of the selection.  Equal to _start_ for a cursor with
+ * no selection.
+ * @returns The covered lines, 1-based.  A cursor covers its own line.
+ */
+export function selectionToLineRange(start: ITextPosition, end: ITextPosition): ILineRange {
+    const endsAtLineStart = end.character === 0 && end.line > start.line;
+    return {
+        start: start.line + 1,
+        end:   endsAtLineStart ? end.line : end.line + 1
+    };
 }

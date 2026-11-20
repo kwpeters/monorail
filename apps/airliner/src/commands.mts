@@ -4,6 +4,7 @@ import * as vscode from "vscode";
 import * as path from "node:path";
 import * as _ from "lodash-es";
 import { toggleComment } from "@repo/depot/comment";
+import { type ILineRange, selectionToLineRange } from "@repo/depot/gitPermalink";
 import { Timeout } from "@repo/depot-node/timers";
 import { Directory } from "@repo/depot-node/directory";
 import { File } from "@repo/depot-node/file";
@@ -642,7 +643,13 @@ const copyCurrentFilePathCommand = {
         // Relative paths are relative to the repo root, when there is one.
         const baseDir = repoRoot ?? file.directory;
         const relPath = path.relative(baseDir.absPath(), file.absPath()).replaceAll("\\", "/");
-        await copyPathOrPermalink(baseDir, repoRoot, relPath, "file");
+        // Only the primary selection is used.  With no selection, the range is the cursor's line.
+        const selection = activeEditor.selection;
+        const lineChoice = {
+            lines:   selectionToLineRange(selection.start, selection.end),
+            isDirty: activeEditor.document.isDirty
+        };
+        await copyPathOrPermalink(baseDir, repoRoot, relPath, "file", lineChoice);
     }
 };
 
@@ -662,13 +669,18 @@ const copyCurrentFilePathCommand = {
  * when the item is not in a repo
  * @param relPath - The item's path relative to _baseDir_, with forward slashes
  * @param itemKind - Whether the item is a file or a directory
+ * @param lineChoice - When present, the user may link a permalink to these lines
+ * of the file instead of to the whole file.  `isDirty` says whether the file
+ * has unsaved changes, in which case its line numbers may not match the
+ * committed file.
  * @returns A promise that resolves when the command is finished
  */
 async function copyPathOrPermalink(
-    baseDir:  Directory,
-    repoRoot: Directory | undefined,
-    relPath:  string,
-    itemKind: "file" | "directory"
+    baseDir:     Directory,
+    repoRoot:    Directory | undefined,
+    relPath:     string,
+    itemKind:    "file" | "directory",
+    lineChoice?: { lines: ILineRange; isDirty: boolean }
 ): Promise<void> {
     const pickedForm = await vscode.window.showQuickPick(
         [
@@ -685,9 +697,36 @@ async function copyPathOrPermalink(
         const item = itemKind === "file" ?
                      new File(baseDir, relPath) :
                      new Directory(baseDir, relPath);
+
+        let lines: ILineRange | undefined;
+        if (lineChoice) {
+            const { start, end } = lineChoice.lines;
+            const linesLabel = start === end ? `Line ${start}` : `Lines ${start}-${end}`;
+            const pickedTarget = await vscode.window.showQuickPick(
+                [
+                    { label: "File",      value: "file" as const },
+                    { label: linesLabel, value: "lines" as const }
+                ],
+                { title: "Link to", placeHolder: "Link to the file or to the lines?" }
+            );
+            if (!pickedTarget) {
+                return;
+            }
+
+            if (pickedTarget.value === "lines") {
+                if (lineChoice.isDirty) {
+                    vscode.window.showErrorMessage(
+                        "The file has unsaved changes, so its line numbers may not match the committed file."
+                    );
+                    return;
+                }
+                lines = lineChoice.lines;
+            }
+        }
+
         const permalinkRes = await vscode.window.withProgress(
             { location: vscode.ProgressLocation.Notification, title: "Making permalink..." },
-            () => makeGitPermalink(item)
+            () => makeGitPermalink(item, lines ? { lines } : undefined)
         );
         if (!permalinkRes.succeeded) {
             vscode.window.showErrorMessage(
