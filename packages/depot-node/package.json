@@ -84,6 +84,10 @@
             "types": "./src/gitBranch.mts",
             "default": "./dist/gitBranch.mjs"
         },
+        "./gitPermalink": {
+            "types": "./src/gitPermalink.mts",
+            "default": "./dist/gitPermalink.mjs"
+        },
         "./gitHelpers": {
             "types": "./src/gitHelpers.mts",
             "default": "./dist/gitHelpers.mjs"

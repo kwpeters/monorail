@@ -132,6 +132,10 @@
             "types": "./src/functional.mts",
             "default": "./dist/functional.mjs"
         },
+        "./gitPermalink": {
+            "types": "./src/gitPermalink.mts",
+            "default": "./dist/gitPermalink.mjs"
+        },
         "./hash": {
             "types": "./src/hash.mts",
             "default": "./dist/hash.mjs"
