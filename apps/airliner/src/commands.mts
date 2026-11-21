@@ -15,7 +15,6 @@ import {
     enumerateFiles,
     enumerateProjects,
     formatPath,
-    type PathBase,
     type SlashStyle
 } from "@repo/depot-node/repoEnumeration";
 
@@ -740,15 +739,29 @@ async function copyPathOrPermalink(
         return;
     }
 
-    // Relative paths only make sense when there is a repo root.
-    let base: PathBase = "absolute";
+    // Offer only the choices that apply.  A repo-relative path needs a repo root,
+    // and a path relative to the active document needs an active file document.
+    const fromDocument = pathRelativeToActiveDocument(baseDir, relPath, itemKind);
+    type BaseChoice = "relative" | "absolute" | "document";
+    const baseItems: Array<{ label: string; value: BaseChoice }> = [];
     if (repoRoot) {
+        baseItems.push({ label: "Repo-relative path", value: "relative" });
+    }
+    baseItems.push({ label: "Absolute path", value: "absolute" });
+    if (fromDocument) {
+        baseItems.push({ label: "Path relative to active document", value: "document" });
+    }
+
+    let base: BaseChoice = "absolute";
+    if (baseItems.length > 1) {
         const pickedBase = await vscode.window.showQuickPick(
-            [
-                { label: "Repo-relative path", value: "relative" as const },
-                { label: "Absolute path",      value: "absolute" as const }
-            ],
-            { title: "Path to copy", placeHolder: "Relative to the repo root, or absolute?" }
+            baseItems,
+            {
+                title:       "Path to copy",
+                placeHolder: fromDocument ?
+                             "Relative to the repo root, absolute, or relative to the active document?" :
+                             "Relative to the repo root, or absolute?"
+            }
         );
         if (!pickedBase) {
             return;
@@ -772,9 +785,61 @@ async function copyPathOrPermalink(
         slashStyle = pickedSlash.value;
     }
 
-    const text = formatPath(baseDir.absPath(), relPath, base, slashStyle);
+    const text = base === "document" && fromDocument ?
+                 formatPath(
+                     fromDocument.documentDir.absPath(),
+                     fromDocument.relativePath,
+                     "relative",
+                     slashStyle
+                 ) :
+                 formatPath(
+                     baseDir.absPath(),
+                     relPath,
+                     base === "relative" ? "relative" : "absolute",
+                     slashStyle
+                 );
     await vscode.env.clipboard.writeText(text);
     vscode.window.showInformationMessage(`Copied: ${text}`);
+}
+
+
+/**
+ * Finds the path of an item relative to the directory that holds the active
+ * editor's document.
+ *
+ * @param baseDir - The directory that _relPath_ is relative to
+ * @param relPath - The item's path relative to _baseDir_
+ * @param itemKind - Whether the item is a file or a directory
+ * @returns The active document's directory and the item's path relative to it,
+ * or `undefined` when there is no relative path to offer: the active editor's
+ * document is not a file on disk, the item is the active document itself, or no
+ * relative path exists (on Windows, when the two are on different drives).
+ */
+function pathRelativeToActiveDocument(
+    baseDir:  Directory,
+    relPath:  string,
+    itemKind: "file" | "directory"
+): { documentDir: Directory; relativePath: string } | undefined {
+    const document = vscode.window.activeTextEditor?.document;
+    if (document?.uri.scheme !== "file") {
+        return undefined;
+    }
+
+    const documentFile = new File(document.uri.fsPath);
+    const documentDir = documentFile.directory;
+    let relativePath: string;
+    if (itemKind === "file") {
+        const item = new File(baseDir, relPath);
+        if (item.equals(documentFile)) {
+            return undefined;
+        }
+        relativePath = File.relative(documentDir, item).toString();
+    }
+    else {
+        relativePath = Directory.relative(documentDir, new Directory(baseDir, relPath)).toString();
+    }
+
+    return path.isAbsolute(relativePath) ? undefined : { documentDir, relativePath };
 }
 
 
