@@ -182,3 +182,32 @@ export function formatPath(
                    [forward(baseDir).replace(/\/+$/u, ""), rel].filter((s) => s !== "").join("/");
     return slashStyle === "forward" ? joined : joined.replaceAll("/", "\\");
 }
+
+
+/**
+ * Formats a Markdown link, `[text](target)`.  Special characters are escaped so
+ * that the link is valid:
+ *
+ * - In the link text, a backslash is put before each `\`, `[` and `]`.
+ * - In the link target, every `\` is doubled.  The target is wrapped in `<...>`
+ *   when it contains whitespace, `(`, `)`, `<` or `>`, and then a backslash is
+ *   put before each `<` and `>` inside the brackets.
+ *
+ * A Markdown link target is a URL reference, so callers should pass a path that
+ * uses forward slashes.
+ *
+ * @param text - The link text.  When _target_ is not given, this is also the
+ * link target, as in `[path](path)`.
+ * @param target - The link target, such as a URL.  Defaults to _text_.
+ * @returns The Markdown link text
+ */
+export function formatMarkdownLink(text: string, target: string = text): string {
+    const escapedText = text.replaceAll(/[\\[\]]/gu, "\\$&");
+
+    const doubled = target.replaceAll("\\", "\\\\");
+    const escapedTarget = /[\s()<>]/u.test(doubled) ?
+                          `<${doubled.replaceAll(/[<>]/gu, "\\$&")}>` :
+                          doubled;
+
+    return `[${escapedText}](${escapedTarget})`;
+}

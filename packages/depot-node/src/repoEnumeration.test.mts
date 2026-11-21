@@ -6,6 +6,7 @@ import {
     enumerateDirectories,
     enumerateFiles,
     enumerateProjects,
+    formatMarkdownLink,
     formatPath,
     nodeProjectName
 } from "./repoEnumeration.mjs";
@@ -180,6 +181,77 @@ describe("repoEnumeration", () => {
 
         it("handles a POSIX base directory with a trailing slash", () => {
             expect(formatPath("/home/me/repo/", "a/b", "absolute", "forward")).toEqual("/home/me/repo/a/b");
+        });
+
+    });
+
+
+    describe("formatMarkdownLink()", () => {
+
+        it("uses the same plain relative path as the text and the target", () => {
+            expect(formatMarkdownLink("src/b/bar.ts")).toEqual("[src/b/bar.ts](src/b/bar.ts)");
+        });
+
+
+        it("uses the same plain absolute path as the text and the target", () => {
+            expect(formatMarkdownLink("C:/dev/a.ts")).toEqual("[C:/dev/a.ts](C:/dev/a.ts)");
+            expect(formatMarkdownLink("/home/me/a.ts")).toEqual("[/home/me/a.ts](/home/me/a.ts)");
+        });
+
+
+        it("wraps the target in angle brackets when the path contains a space", () => {
+            expect(formatMarkdownLink("src/my file.ts")).toEqual("[src/my file.ts](<src/my file.ts>)");
+        });
+
+
+        it("wraps the target in angle brackets when the path contains parentheses", () => {
+            expect(formatMarkdownLink("src/a(1).ts")).toEqual("[src/a(1).ts](<src/a(1).ts>)");
+        });
+
+
+        it("escapes square brackets in the text and leaves them in the target", () => {
+            expect(formatMarkdownLink("src/[id].ts")).toEqual("[src/\\[id\\].ts](src/[id].ts)");
+        });
+
+
+        it("escapes a literal backslash in the text and doubles it in the target", () => {
+            expect(formatMarkdownLink("a\\b.ts")).toEqual("[a\\\\b.ts](a\\\\b.ts)");
+        });
+
+
+        it("doubles every backslash in a path with backslash separators", () => {
+            expect(formatMarkdownLink("C:\\dev\\_x\\.git")).toEqual(
+                "[C:\\\\dev\\\\_x\\\\.git](C:\\\\dev\\\\_x\\\\.git)"
+            );
+        });
+
+
+        it("escapes angle brackets inside the wrapped target and leaves them in the text", () => {
+            expect(formatMarkdownLink("a<b>.ts")).toEqual("[a<b>.ts](<a\\<b\\>.ts>)");
+        });
+
+
+        it("uses a different target when one is given", () => {
+            expect(
+                formatMarkdownLink(
+                    "src/b/bar.ts",
+                    "https://github.com/org/repo/blob/0123abc/src/b/bar.ts#L10-L20"
+                )
+            ).toEqual("[src/b/bar.ts](https://github.com/org/repo/blob/0123abc/src/b/bar.ts#L10-L20)");
+        });
+
+
+        it("escapes the text but not a plain target when they differ", () => {
+            expect(formatMarkdownLink("src/[id].ts", "https://example.com/x")).toEqual(
+                "[src/\\[id\\].ts](https://example.com/x)"
+            );
+        });
+
+
+        it("wraps a different target in angle brackets when it needs it", () => {
+            expect(formatMarkdownLink("a.ts", "https://example.com/a b")).toEqual(
+                "[a.ts](<https://example.com/a b>)"
+            );
         });
 
     });

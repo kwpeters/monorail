@@ -14,6 +14,7 @@ import {
     enumerateDirectories,
     enumerateFiles,
     enumerateProjects,
+    formatMarkdownLink,
     formatPath,
     type SlashStyle
 } from "@repo/depot-node/repoEnumeration";
@@ -659,8 +660,11 @@ const copyCurrentFilePathCommand = {
 
 /**
  * Has the user choose whether to copy a path or a permalink of an item, and how
- * a path should be formatted, and then copies the result to the clipboard.
- * Does nothing when the user cancels any prompt.
+ * a path should be formatted, and whether to wrap the result in a Markdown
+ * link, and then copies the result to the clipboard.  A Markdown link has the
+ * form `[path](path)` for a path (always with forward slashes) and
+ * `[path](permalink)` for a permalink.  Does nothing when the user cancels any
+ * prompt.
  *
  * @param baseDir - The directory that _relPath_ is relative to: the repo root,
  * or when there is none, the directory the item was found in
@@ -734,8 +738,14 @@ async function copyPathOrPermalink(
             return;
         }
 
-        await vscode.env.clipboard.writeText(permalinkRes.value);
-        vscode.window.showInformationMessage(`Copied: ${permalinkRes.value}`);
+        const wrapPermalink = await askWrapInMarkdownLink("permalink");
+        if (wrapPermalink === undefined) {
+            return;
+        }
+
+        await copyAndConfirm(
+            wrapPermalink ? formatMarkdownLink(relPath, permalinkRes.value) : permalinkRes.value
+        );
         return;
     }
 
@@ -785,19 +795,64 @@ async function copyPathOrPermalink(
         slashStyle = pickedSlash.value;
     }
 
-    const text = base === "document" && fromDocument ?
-                 formatPath(
-                     fromDocument.documentDir.absPath(),
-                     fromDocument.relativePath,
-                     "relative",
-                     slashStyle
-                 ) :
-                 formatPath(
-                     baseDir.absPath(),
-                     relPath,
-                     base === "relative" ? "relative" : "absolute",
-                     slashStyle
-                 );
+    const formatChosenPath = (style: SlashStyle): string => {
+        return base === "document" && fromDocument ?
+               formatPath(
+                   fromDocument.documentDir.absPath(),
+                   fromDocument.relativePath,
+                   "relative",
+                   style
+               ) :
+               formatPath(
+                   baseDir.absPath(),
+                   relPath,
+                   base === "relative" ? "relative" : "absolute",
+                   style
+               );
+    };
+
+    const wrap = await askWrapInMarkdownLink("path");
+    if (wrap === undefined) {
+        return;
+    }
+
+    // A Markdown link target is a URL reference, so a link always uses forward
+    // slashes, whatever separator the user chose.
+    const text = wrap ?
+                 formatMarkdownLink(formatChosenPath("forward")) :
+                 formatChosenPath(slashStyle);
+    await copyAndConfirm(text);
+}
+
+
+/**
+ * Asks the user whether to wrap what is about to be copied in a Markdown link.
+ *
+ * @param noun - What is about to be copied, for the question: "path" or
+ * "permalink"
+ * @returns A promise for `true` when the user chose to wrap it, `false` when the
+ * user chose not to, or `undefined` when the user cancelled
+ */
+async function askWrapInMarkdownLink(noun: "path" | "permalink"): Promise<boolean | undefined> {
+    const question = `Wrap this ${noun}?`;
+    const picked = await vscode.window.showQuickPick(
+        [
+            { label: "No wrapping",           value: false },
+            { label: "Wrap in Markdown link", value: true }
+        ],
+        { title: question, placeHolder: question }
+    );
+    return picked?.value;
+}
+
+
+/**
+ * Copies text to the clipboard and tells the user what was copied.
+ *
+ * @param text - The text to copy
+ * @returns A promise that resolves when the text has been copied
+ */
+async function copyAndConfirm(text: string): Promise<void> {
     await vscode.env.clipboard.writeText(text);
     vscode.window.showInformationMessage(`Copied: ${text}`);
 }
