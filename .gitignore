@@ -64,3 +64,6 @@ Thumbs.db
 
 # Copilot
 .copilot-tracking/
+
+# Files created by the Superpowers plugin.
+.superpowers/
