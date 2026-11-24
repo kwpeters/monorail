@@ -53,6 +53,10 @@
             "types": "./src/miles.mts",
             "default": "./dist/miles.mjs"
         },
+        "./pendingGame": {
+            "types": "./src/pendingGame.mts",
+            "default": "./dist/pendingGame.mjs"
+        },
         "./playerName": {
             "types": "./src/playerName.mts",
             "default": "./dist/playerName.mjs"
@@ -76,6 +80,10 @@
         "./variant": {
             "types": "./src/variant.mts",
             "default": "./dist/variant.mjs"
+        },
+        "./whimsicalNames": {
+            "types": "./src/whimsicalNames.mts",
+            "default": "./dist/whimsicalNames.mjs"
         },
         "./view": {
             "types": "./src/view.mts",

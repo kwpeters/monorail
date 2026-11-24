@@ -64,6 +64,12 @@ describe("rejection", () => {
                 { reason: "MalformedCommand" },
                 ...[0, 1, 5, 7, 12].map((count): Rejection => ({ reason: "UnsupportedPlayerCount", count })),
                 { reason: "WrongDeck" },
+                { reason: "NameTaken", name: ann },
+                { reason: "TooManyPlayers" },
+                { reason: "NotOrganizer" },
+                { reason: "NoSuchSeat" },
+                { reason: "SeatAlreadyJoined" },
+                { reason: "OrganizerCannotLeave" },
             ];
             for (const rejection of rejections) {
                 const text = describeRejection(rejection);
@@ -93,6 +99,22 @@ describe("rejection", () => {
             .toBe("Mille Bornes needs 2, 3, 4, or 6 players. You have 7, so remove someone.");
             expect(describeRejection({ reason: "UnsupportedPlayerCount", count: 0 }))
             .toBe("Mille Bornes needs 2, 3, 4, or 6 players. You have 0, so add players.");
+        });
+
+
+        it("explains the lobby rejections", () => {
+            expect(describeRejection({ reason: "NameTaken", name: ann }))
+            .toBe("Someone is already using the name \"Ann\". Pick another name, or choose a silly one.");
+            expect(describeRejection({ reason: "TooManyPlayers" }))
+            .toBe("A game can have at most 6 players. Remove someone to make room.");
+            expect(describeRejection({ reason: "NotOrganizer" }))
+            .toBe("Only the person who started this game can do that.");
+            expect(describeRejection({ reason: "NoSuchSeat" }))
+            .toBe("That player isn't in this game.");
+            expect(describeRejection({ reason: "SeatAlreadyJoined" }))
+            .toBe("You have already joined this game.");
+            expect(describeRejection({ reason: "OrganizerCannotLeave" }))
+            .toBe("You started this game, so you can't leave it.");
         });
 
 

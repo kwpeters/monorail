@@ -34,7 +34,13 @@ export type Rejection =
     | { reason: "NotTheCaller"; decider: PlayerName }
     | { reason: "MalformedCommand" }
     | { reason: "UnsupportedPlayerCount"; count: number }
-    | { reason: "WrongDeck" };
+    | { reason: "WrongDeck" }
+    | { reason: "NameTaken"; name: PlayerName }
+    | { reason: "TooManyPlayers" }
+    | { reason: "NotOrganizer" }
+    | { reason: "NoSuchSeat" }
+    | { reason: "SeatAlreadyJoined" }
+    | { reason: "OrganizerCannotLeave" };
 
 
 function formatMiles(miles: Miles): string {
@@ -112,5 +118,17 @@ export function describeRejection(r: Rejection): string {
             return `Mille Bornes needs 2, 3, 4, or 6 players. You have ${r.count}, so ${playerCountAdvice(r.count)}.`;
         case "WrongDeck":
             return "That deck doesn't match the number of players in this game.";
+        case "NameTaken":
+            return `Someone is already using the name "${r.name}". Pick another name, or choose a silly one.`;
+        case "TooManyPlayers":
+            return "A game can have at most 6 players. Remove someone to make room.";
+        case "NotOrganizer":
+            return "Only the person who started this game can do that.";
+        case "NoSuchSeat":
+            return "That player isn't in this game.";
+        case "SeatAlreadyJoined":
+            return "You have already joined this game.";
+        case "OrganizerCannotLeave":
+            return "You started this game, so you can't leave it.";
     }
 }
