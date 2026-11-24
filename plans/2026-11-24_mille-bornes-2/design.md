@@ -25,9 +25,10 @@ The old projects are deleted at the end.
 - Phone-first browser play: each player opens the server URL, usually by scanning a QR code the server displays.
 - A lobby listing pending games; any player can create one and becomes its organizer (and a participant).
 - The organizer can add and remove robot players, arrange teams, choose the game length, and start the game.
-- A game can start with 1 to 6 humans plus robots, as long as teams are equal in size and there are at least 2 seats.
+- A game can start with 2, 3, 4, or 6 seats in total (the rulebook's player counts), counting robots, so 1 to 6 humans plus robots; the teams follow from the seat count.
 - Each player sees the shared table (every team's miles, status, and safeties), whose turn it is, and their own hand.
-- Official Mille Bornes rules (see "Rules baseline"), including Coup Fourre, with the Coup Fourre window described below.
+- Official Mille Bornes rules (see "Rules baseline" and `rules.md`), including Coup Fourre, with the Coup Fourre window described below.
+- An end-of-race scoreboard shown to every player: for each team, the total brought forward, miles, safeties, coup-fourrés, trip completed and the other bonuses, the total for the race, and the combined total (modeled on the rulebook score sheet).
 - Beginner-friendly: it is always obvious whose turn it is and what to do, and every rejected play is explained in plain English.
 - Animations that show each play, and funny sound effects, with a mute control.
 - Whimsical robot names, which humans may also choose, with a reveal at the end of the game.
@@ -103,7 +104,7 @@ Crash recovery options:
   The Speed Limit pill states the limit ("Speed Limit: 50 max").
 - Lobby flow: name entry, a list of pending games with Join, "Start a new game", an organizer waiting room, and a joiner waiting room (the mockups were reviewed and approved).
 - Game lengths, chosen by the organizer in the waiting room; the default is Quick.
-  - Quick: one hand, first team to exactly 1,000 miles.
+  - Quick: one race, first team to exactly 1,000 miles.
   - Short: play hands until a team reaches 2,000 points.
   - Full: play hands until a team reaches 5,000 points.
 - Players have unique names within a game (case-insensitive, trimmed; duplicates are refused with a plain message).
@@ -131,9 +132,10 @@ Crash recovery options:
 - Automatic draw at the start of a turn, with a visible draw animation.
 - Tap a card, then tap a target, as a two-step play to prevent accidental plays.
   Long-pressing any card shows a one-sentence explanation.
-- Teams are assigned automatically in join order, alternating between teams; the organizer can move players.
-  With 6 players the organizer chooses 2 teams of 3 or 3 teams of 2.
-  Start is disabled with an explanation when teams cannot be equal.
+- Teams follow from the seat count (2 seats: 2 teams of 1; 3: 3 teams of 1; 4: 2 teams of 2; 6: 3 teams of 2).
+  Turn order is seat order, and a seat's team is its position modulo the number of teams, so teams re-form as people join.
+  The organizer rearranges teams by swapping two seats.
+  Start is disabled with an explanation unless there are exactly 2, 3, 4, or 6 seats (for example, "Mille Bornes needs 2, 3, 4, or 6 players: add a robot").
 - The lobby (pending game) is its own pure model in core, with its own commands and rejections.
 - The server host page (`/host`) shows the QR code, the URL as text, and a list of games with an "End game" escape hatch.
 - A disconnected player's turn simply waits, and their seat shows a disconnected indicator (robots always appear connected).
@@ -148,10 +150,10 @@ The engine is a set of pure functions over immutable values.
 
 - `applyCommand(state, command)` returns `Result<{ state, events }, Rejection>`.
   The engine never reads a clock and never generates randomness.
-  A shuffled deck is supplied by the caller (a command carries it, or the caller passes a provider) when a hand is dealt.
+  A shuffled deck is supplied by the caller (a command carries it, or the caller passes a provider) when a race is dealt.
 - `Rejection` is a typed discriminated union (for example `ThirdTwoHundred`, `NotRolling`, `SpeedLimitActive`, `NotYourTurn`, `HazardAlreadyActive`), never a bare string.
   A core function renders each rejection as a plain-English sentence for new players.
-- `events` is a list of typed, public facts about what just happened (for example "Ann played Flat Tire on Team 2", "Bob played Puncture Proof as a Coup Fourre", "hand over").
+- `events` is a list of typed, public facts about what just happened (for example "Ann played Flat Tire on Team 2", "Bob played Puncture Proof as a Coup Fourre", "race over").
   Animations, sounds, and the "last move" line are driven from events, not from diffing states.
 - `viewFor(state, player)` returns the per-player view: the viewer's own hand, other players' names, teams, turns and card counts, each team's public driving zone, the draw pile count, the discard pile top, and phase-specific prompts.
   It never contains other hands, the draw pile order, or any other player's credential.
@@ -159,7 +161,7 @@ The engine is a set of pure functions over immutable values.
 - The domain makes illegal states unrepresentable and avoids primitive obsession:
   branded types (for example `PlayerId`, `GameId`, `Miles` as a multiple of 25, `Points`, `PlayerName`), discriminated unions for a driving zone's status (a zone cannot be both rolling and hazarded) and for the game phase, and no parallel arrays whose lengths must agree.
   Zod schemas exist at the boundaries (commands in, views and snapshots out) and for enums; they are not the only line of defense inside the engine.
-- A game phase is a union such as: a player's turn, a Coup Fourre window, hand over, game over.
+- A game phase is a union such as: a player's turn, a Coup Fourre window, an Extension offer, race over, game over.
 
 ### Coup Fourre window
 
@@ -180,25 +182,35 @@ The server owns the timer (default 5 seconds, configurable) and sends the engine
   If the window closes with no Coup Fourre, the hazard lands.
 - The window state must survive a snapshot and restart (the server restarts the window rather than resolving it silently).
 
+### Extension offer
+
+In 2-, 3-, and 6-player games the trip is 700 miles until someone calls Extension (see `rules.md`).
+When a team first reaches exactly 700 miles, the engine enters an "Extension offer" phase for the player whose card reached 700.
+Everyone can see who is deciding, so there is no hidden information here.
+
+- The deciding player sees a clear prompt: stop and win the race now with the trip bonus, or call Extension and race on to 1,000.
+  The prompt explains the risk in one sentence: if anyone else reaches 1,000 first, every other team scores 200.
+- The player answers with a "call Extension" or "decline" command.
+  The server owns the timer (default 30 seconds, configurable) and sends the engine a "close offer" command when it expires, which counts as declining.
+- Robots decide with a simple rule: call Extension only when the robot's team leads every other team by at least 100 miles.
+- Declining ends the race with the trip completed at 700.
+  Calling raises every team's limit to 1,000 and the race continues.
+- The offer state must survive a snapshot and restart (the server restarts the timer).
+
 ### Rules baseline
 
-Use the official Mille Bornes rules, including Coup Fourre, the 200-mile cards (at most two per team per hand), exact-distance finish, delayed action, Safe Trip, Shutout, and the published scoring bonuses.
-The author wrote these summaries from memory.
-The builder must take exact rules and scoring from an authoritative source (the published rulebook) and record the source in the code or docs.
+The rules are in `rules.md` in this folder.
+It is taken from the owner's rulebook (Winning Moves / Hasbro) and is the authority for game rules.
+It replaces the earlier summary that stood here, which was written from memory and was wrong in places
+(for example, a Safety card that cancels an active hazard leaves the team rolling, and the trip distance varies with the number of players).
 
-Author's calls on points the rulebook may leave open (verify against the rulebook; the rulebook wins if it disagrees):
+The owner decided to follow the rulebook's player-count variants in full: the trip distance (700 or 1,000 miles), the deck (101 or 106 cards), the team structure, and the Extension rule all follow from the number of seats (2, 3, 4, or 6).
+If a team calls Extension and does not complete the 1,000 miles first, every other team scores the 200-point Extension bonus.
+The owner also decided that Speed Limits cannot be stacked and that Safe Trip is worth 300 and Shutout 500 (the printed rulebook has the two values reversed).
 
-- The trip is 1,000 miles in every game length.
-  There is no extension rule and no extension decision or bonus, because the extension rule exists only when the base trip is shorter (700 miles).
-- A hand ends when a team completes exactly 1,000 miles, or when the draw pile is exhausted and play can continue no further under the official rules.
-  The team with the most miles wins a hand that ends by exhaustion.
-- In Quick mode (one hand), a hand that ends by exhaustion is won by the team with the most miles.
-  If teams are tied on miles, deal another hand; keep dealing until there is a winner.
-- In Short and Full modes, play hands until a team reaches the points goal; if teams tie at or above the goal, play another hand.
-The deck is the standard 106 cards.
-The old project's `standardCardCountFn` has the correct counts and can be reused.
-A hand is 6 cards plus the card drawn at the start of a turn.
-There are 2 or 3 teams of equal size.
+Terminology: a **race** is one contest to complete the trip distance (the rulebook says "hand" or "deal"); "hand" means only the cards a player holds.
+After every race all players see a score sheet for every team,
+with one row per line of the rulebook's score sheet (total brought forward, miles, safeties, coup-fourrés, trip completed, delayed action, safe trip, shutout, total for the race, combined total).
 
 ### Server
 
@@ -221,7 +233,7 @@ There are 2 or 3 teams of equal size.
 ### Web client
 
 - React and Vite, portrait phone layout, tap targets large enough for any hand, no hover-only interactions.
-- Screens: name entry, lobby, organizer and joiner waiting rooms, game table, round and game summary, reveal.
+- Screens: name entry, lobby, organizer and joiner waiting rooms, game table, race and game summary, reveal.
 - Game table: the approved "scoreboard rows" layout.
   A top bar says exactly what to do ("Your turn: play or discard a card") and turns green on your turn; for everyone else it says who is playing.
   Your phone plays a sound and a short vibration (where supported) on your turn.
@@ -233,7 +245,7 @@ There are 2 or 3 teams of equal size.
 
 - Core: example-based unit tests for every rule and every rejection, scoring tables, pending-game rules, view redaction (no hand or deck leakage), and legality previews matching validation.
 - Core: property-based tests with `fast-check`.
-  Play thousands of random legal games to completion with invariants: the card count is conserved, miles never go negative or overshoot, no input makes the engine throw, a hand always ends, and views never contain hidden cards.
+  Play thousands of random legal games to completion with invariants: the card count is conserved, miles never go negative or overshoot, no input makes the engine throw, a race always ends, and views never contain hidden cards.
 - A soak script plays many bot-only games and reports any failure.
 - Server: tests through an in-process tRPC caller covering the lobby flow, per-player view streaming, the Coup Fourre timer (using an injected clock), snapshot save and reload (including a corrupt file), and reconnection.
 - Web: component tests for each screen and for the turn and rejection prompts.
