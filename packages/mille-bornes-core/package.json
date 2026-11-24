@@ -44,6 +44,10 @@
         "./rejection": {
             "types": "./src/rejection.mts",
             "default": "./dist/rejection.mjs"
+        },
+        "./scoring": {
+            "types": "./src/scoring.mts",
+            "default": "./dist/scoring.mjs"
         }
     },
     "devDependencies": {
