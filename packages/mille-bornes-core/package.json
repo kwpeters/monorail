@@ -65,6 +65,10 @@
             "types": "./src/rejection.mts",
             "default": "./dist/rejection.mjs"
         },
+        "./rules": {
+            "types": "./src/rules.mts",
+            "default": "./dist/rules.mjs"
+        },
         "./scoring": {
             "types": "./src/scoring.mts",
             "default": "./dist/scoring.mjs"
