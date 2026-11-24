@@ -5,7 +5,6 @@
     "ignores": [
         "@types/jasmine",
         "fast-check",
-        "jasmine",
-        "zod"
+        "jasmine"
     ]
 }
