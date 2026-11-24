@@ -1,11 +1,12 @@
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import {
     cardSchema, distanceCardSchema, hazardCardSchema, remedyCardSchema, safetyCardSchema,
-    type Card, type HazardCard
+    safetyFor, type Card, type HazardCard, type SafetyCard
 } from "./card.mjs";
 import { type PlayerCommand } from "./commands.mjs";
 import {
-    playDistance, playRemedy, playSafety, type DrivingZone, type ZoneChange
+    canAttack, playCoupFourre, playDistance, playRemedy, playSafety, type DrivingZone,
+    type ZoneChange
 } from "./drivingZone.mjs";
 import { type Game } from "./game.mjs";
 import { type PlayerId, type TeamIndex } from "./ids.mjs";
@@ -136,8 +137,11 @@ function checkPhaseAndTurn(ctx: PlayContext, cmd: PlayerCommand): Rejection | nu
                 null :
                 { reason: "NotYourTurn", current: phase.playerName };
         case "HazardIncoming":
-            // shortcut: Task 7 replaces this WrongPhase with the Coup Fourre checks.
-            return cmd.type === "CoupFourre" ? { reason: "WrongPhase" } : { reason: "WindowOpen" };
+            // Any member of the target team may answer, whoever's turn it was.
+            if (cmd.type !== "CoupFourre") {
+                return { reason: "WindowOpen" };
+            }
+            return ctx.myTeam === phase.target ? null : { reason: "NotOnTargetTeam" };
         case "ExtensionOffer":
             if (!isExtensionDecision(cmd)) {
                 return { reason: "ExtensionOfferOpen", decider: phase.deciderName };
@@ -158,6 +162,29 @@ function checkHand(ctx: PlayContext, cmd: PlayerCommand): Rejection | null {
 }
 
 
+function checkAttack(
+    ctx: PlayContext,
+    hazard: HazardCard,
+    target: TeamIndex
+): Result<null, Rejection> {
+    if (target === ctx.myTeam) {
+        return new FailedResult({ reason: "CannotAttackOwnTeam" });
+    }
+    return canAttack(ctx.zones[target]!, hazard).mapSuccess(() => null);
+}
+
+
+function checkCoupFourre(ctx: PlayContext, card: SafetyCard): Result<ZoneChange, Rejection> {
+    if (ctx.phase.kind !== "HazardIncoming") {
+        return new FailedResult({ reason: "NoWindowOpen" });
+    }
+    const hazard = ctx.phase.hazard;
+    return safetyFor(hazard) === card ?
+        new SucceededResult(playCoupFourre(ctx.zones[ctx.myTeam]!, card)) :
+        new FailedResult({ reason: "WrongSafetyForHazard", hazard, card });
+}
+
+
 function checkZone(ctx: PlayContext, cmd: PlayerCommand): Result<ZoneChange | null, Rejection> {
     const zone = ctx.zones[ctx.myTeam]!;
     switch (cmd.type) {
@@ -172,9 +199,9 @@ function checkZone(ctx: PlayContext, cmd: PlayerCommand): Result<ZoneChange | nu
         case "DeclineExtension":
             return new SucceededResult(null);
         case "Attack":
+            return checkAttack(ctx, cmd.card, cmd.targetTeam);
         case "CoupFourre":
-            // shortcut: Task 7 replaces this WrongPhase with the attack checks.
-            return new FailedResult({ reason: "WrongPhase" });
+            return checkCoupFourre(ctx, cmd.card);
     }
 }
 
@@ -182,11 +209,13 @@ function checkZone(ctx: PlayContext, cmd: PlayerCommand): Result<ZoneChange | nu
 /**
  * Checks a command like `checkCommand()` and also works out the change it
  * makes to the player's own zone.  Shared by the engine, which applies the
- * change.
+ * change.  For a Coup Fourre the change is `playCoupFourre()`'s: the hazard in
+ * flight is not part of it.
  * @param ctx - The player's context
  * @param cmd - The command
  * @returns The change to the player's zone, null for a command that changes
- * no zone (Discard, CallExtension, DeclineExtension), or the rejection
+ * no zone now (Attack, Discard, CallExtension, DeclineExtension), or the
+ * rejection
  */
 export function checkPlay(
     ctx: PlayContext,
@@ -204,7 +233,11 @@ export function checkPlay(
  * Determines whether a player may issue a command.  Checks, in order: that
  * the command is well formed (it may come from an untrusted client), the
  * phase, the turn, that the card is in the player's hand, and the zone rules.
- * Any card in hand may be discarded.
+ * Any card in hand may be discarded.  An Attack is refused on the player's own
+ * team, then by `canAttack()` on the target's zone.  While a hazard is
+ * incoming only a Coup Fourre is allowed, from any member of the target team
+ * (whoever's turn it was); it is checked for the team, then the hand, then
+ * that the safety counters the hazard.
  * @param ctx - The player's context
  * @param cmd - The command
  * @returns A successful void result, or the reason the command is refused

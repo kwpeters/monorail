@@ -1,7 +1,8 @@
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
-import { type Applied, type PlayerCommand } from "./commands.mjs";
+import { type Card, type SafetyCard } from "./card.mjs";
+import { type Applied, type PlayerCommand, type SystemCommand } from "./commands.mjs";
 import { ShuffledDeck } from "./deck.mjs";
-import { newZone, zoneMiles, type ZoneChange } from "./drivingZone.mjs";
+import { landHazard, newZone, zoneMiles, type ZoneChange } from "./drivingZone.mjs";
 import { type GameEvent } from "./events.mjs";
 import {
     seatOrder, validateGameConfig, type Game, type GameConfig, type PlayerState, type TeamState
@@ -19,6 +20,24 @@ import {
 const handSize = 6;
 
 
+// The player draws the top card of the draw pile, unless it is empty.
+function drawCard(g: Game, index: number, events: ReadonlyArray<GameEvent>): Applied {
+    const player = g.players[index]!.seat.id;
+    const [drawn, ...drawPile] = g.drawPile;
+    if (drawn === undefined) {
+        return { game: g, events };
+    }
+    return {
+        game: {
+            ...g,
+            players: g.players.map((p, i) => i === index ? { ...p, hand: [...p.hand, drawn] } : p),
+            drawPile,
+        },
+        events: [...events, { type: "CardDrawn", player, card: drawn }],
+    };
+}
+
+
 /**
  * Starts a player's turn: the player draws the top card of the draw pile,
  * unless it is empty.
@@ -29,20 +48,21 @@ const handSize = 6;
  */
 function startTurn(g: Game, index: number, events: ReadonlyArray<GameEvent>): Applied {
     const player = g.players[index]!.seat.id;
-    const game: Game = { ...g, phase: { kind: "Turn", player } };
     const started: GameEvent = { type: "TurnStarted", player };
-    const [drawn, ...drawPile] = g.drawPile;
-    if (drawn === undefined) {
-        return { game, events: [...events, started] };
-    }
-    return {
-        game: {
-            ...game,
-            players: g.players.map((p, i) => i === index ? { ...p, hand: [...p.hand, drawn] } : p),
-            drawPile,
-        },
-        events: [...events, started, { type: "CardDrawn", player, card: drawn }],
-    };
+    return drawCard({ ...g, phase: { kind: "Turn", player } }, index, [...events, started]);
+}
+
+
+// Removes one copy of `card` from the hand of `g.players[index]`.
+function withoutCard(g: Game, index: number, card: Card): ReadonlyArray<PlayerState> {
+    return g.players.map((p, i) => {
+        if (i !== index) {
+            return p;
+        }
+        const hand = [...p.hand];
+        hand.splice(hand.indexOf(card), 1);
+        return { ...p, hand };
+    });
 }
 
 
@@ -141,12 +161,10 @@ function playedEvent(by: PlayerId, team: TeamIndex, cmd: CardPlay): GameEvent {
 
 // `change` is null for a Discard, which sends the card to the discard pile.
 function playCard(g: Game, index: number, cmd: CardPlay, change: ZoneChange | null): Applied {
-    const { seat, team, hand } = g.players[index]!;
-    const rest = [...hand];
-    rest.splice(rest.indexOf(cmd.card), 1);
+    const { seat, team } = g.players[index]!;
     const game: Game = {
         ...g,
-        players:     g.players.map((p, i) => i === index ? { ...p, hand: rest } : p),
+        players:     withoutCard(g, index, cmd.card),
         teams:       g.teams.map((t, i) => change && i === team ? { ...t, zone: change.zone } : t),
         discardPile: [...g.discardPile, ...(change ? change.discarded : [cmd.card])],
     };
@@ -174,10 +192,62 @@ function playCard(g: Game, index: number, cmd: CardPlay, change: ZoneChange | nu
 }
 
 
+type AttackCommand = Extract<PlayerCommand, { type: "Attack" }>;
+
+
+// The hazard stays in flight (in the phase) until the window closes.
+function attack(g: Game, index: number, cmd: AttackCommand): Applied {
+    const attacker = g.players[index]!.seat.id;
+    return {
+        game: {
+            ...g,
+            players: withoutCard(g, index, cmd.card),
+            phase:   {
+                kind:   "HazardIncoming",
+                attacker,
+                hazard: cmd.card,
+                target: cmd.targetTeam,
+            },
+        },
+        events: [{ type: "HazardPlayed", player: attacker, card: cmd.card, targetTeam: cmd.targetTeam }],
+    };
+}
+
+
+// `change` is `playCoupFourre()`'s change to the zone, which never held the
+// hazard in flight; both the hazard and `change.discarded` are discarded.
+function coupFourre(
+    g: Game,
+    index: number,
+    card: SafetyCard,
+    change: ZoneChange
+): Result<Applied, Rejection> {
+    // checkPlay() has already checked this; it narrows the phase.
+    if (g.phase.kind !== "HazardIncoming") {
+        return new FailedResult({ reason: "NoWindowOpen" });
+    }
+    const { seat, team } = g.players[index]!;
+    const hazard = g.phase.hazard;
+    const game: Game = {
+        ...g,
+        players:     withoutCard(g, index, card),
+        teams:       g.teams.map((t, i) => i === team ? { ...t, zone: change.zone } : t),
+        discardPile: [...g.discardPile, hazard, ...change.discarded],
+        phase:       { kind: "Turn", player: seat.id },
+    };
+    const played: GameEvent = { type: "CoupFourrePlayed", player: seat.id, card, team, hazard };
+    // The replacement draw; the extra turn (with its own draw) follows, like
+    // any safety, unless the player has no cards left.
+    const drawn = drawCard(game, index, [played]);
+    return new SucceededResult(nextTurn(drawn.game, index, drawn.events));
+}
+
+
 /**
  * Applies a player's command: checks it with `checkCommand()`, plays the
  * card, and moves the game on (the next turn, an Extension offer, or the end
- * of the race).
+ * of the race).  An Attack opens the hazard window (`HazardIncoming`) and
+ * changes no zone; a Coup Fourre answers it and starts the player's turn.
  * @param g - The game
  * @param by - The player issuing the command
  * @param cmd - The command
@@ -198,12 +268,56 @@ export function applyPlayerCommand(
             case "PlaySafety":
             case "Discard":
                 return new SucceededResult(playCard(g, index, cmd, change));
+            case "Attack":
+                return new SucceededResult(attack(g, index, cmd));
+            case "CoupFourre":
+                return coupFourre(g, index, cmd.card, change!);
             default:
-                // shortcut: Tasks 7 and 8 implement Attack, CoupFourre and the
-                // Extension decisions.
+                // shortcut: Task 8 implements the Extension decisions.
                 return new FailedResult({ reason: "WrongPhase" });
         }
     });
+}
+
+
+// Lands the hazard in flight, then play passes to the player after the
+// attacker, skipping anyone between the attacker and a Coup Fourre.
+function closeHazardWindow(g: Game): Result<Applied, Rejection> {
+    const phase = g.phase;
+    if (phase.kind !== "HazardIncoming") {
+        return new FailedResult({ reason: "NoWindowOpen" });
+    }
+    const target = g.teams[phase.target]!;
+    // Nothing changes a zone while the window is open, so this re-check holds.
+    return landHazard(target.zone, phase.hazard).mapSuccess((change) => {
+        const attacker = g.players.findIndex((p) => p.seat.id === phase.attacker);
+        const game: Game = {
+            ...g,
+            teams: g.teams.map((t, i) => i === phase.target ? { ...t, zone: change.zone } : t),
+        };
+        const landed: GameEvent = { type: "HazardLanded", card: phase.hazard, targetTeam: phase.target };
+        // nextTurn() replaces the phase, so the hazard is not counted twice.
+        return nextTurn(game, attacker + 1, [landed]);
+    });
+}
+
+
+/**
+ * Applies a command issued by the server.
+ * @param g - The game
+ * @param cmd - The command
+ * @returns The new game and its events, or the reason the command is refused:
+ * NoWindowOpen for a CloseHazardWindow with no hazard in flight
+ */
+export function applySystemCommand(g: Game, cmd: SystemCommand): Result<Applied, Rejection> {
+    switch (cmd.type) {
+        case "CloseHazardWindow":
+            return closeHazardWindow(g);
+        case "CloseExtensionOffer":
+        case "StartNextRace":
+            // shortcut: Tasks 8 and 9 implement these; refused until then.
+            return new FailedResult({ reason: "WrongPhase" });
+    }
 }
 
 

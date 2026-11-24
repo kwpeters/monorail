@@ -1,8 +1,9 @@
-import { Card, type DistanceCard } from "./card.mjs";
-import { type Applied, type PlayerCommand } from "./commands.mjs";
+import { type Result } from "@repo/depot/result";
+import { Card, type DistanceCard, type HazardCard } from "./card.mjs";
+import { type Applied, type PlayerCommand, type SystemCommand } from "./commands.mjs";
 import { createDeck, type DeckKind } from "./deck.mjs";
 import { newZone, type DrivingZone } from "./drivingZone.mjs";
-import { applyPlayerCommand, createGame, dealRace } from "./engine.mjs";
+import { applyPlayerCommand, applySystemCommand, createGame, dealRace } from "./engine.mjs";
 import { type Game, type GameConfig, type RaceResult } from "./game.mjs";
 import { type PlayerId, type TeamIndex } from "./ids.mjs";
 import { checkInvariants } from "./invariants.mjs";
@@ -24,6 +25,7 @@ const configs: ReadonlyArray<[number, () => GameConfig, DeckKind, number]> = [
 const ann = seatFor("Ann").id;
 const bob = seatFor("Bob").id;
 const cy = seatFor("Cy").id;
+const di = seatFor("Di").id;
 const team0 = 0 as TeamIndex;
 const team1 = 1 as TeamIndex;
 
@@ -37,18 +39,33 @@ function deepFreeze<T>(value: T): T {
 }
 
 
-/** Applies a command that must be accepted, checking the invariants after it. */
-function play(g: Game, by: PlayerId, cmd: PlayerCommand): Applied {
-    const applied = applyPlayerCommand(deepFreeze(g), by, cmd).throwIfFailed();
+/** Unwraps an accepted command, checking the invariants after it. */
+function checked(result: Result<Applied, Rejection>): Applied {
+    const applied = result.throwIfFailed();
     const valid = checkInvariants(applied.game);
     expect(valid.succeeded).withContext(valid.error ?? "").toBeTrue();
     return applied;
 }
 
 
+/** Applies a command that must be accepted, checking the invariants after it. */
+function play(g: Game, by: PlayerId, cmd: PlayerCommand): Applied {
+    return checked(applyPlayerCommand(deepFreeze(g), by, cmd));
+}
+
+
 /** Applies a command that must be refused. */
 function refuse(g: Game, by: PlayerId, cmd: PlayerCommand): Rejection {
     return applyPlayerCommand(deepFreeze(g), by, cmd).throwIfSucceeded();
+}
+
+
+const closeWindow: SystemCommand = { type: "CloseHazardWindow" };
+
+
+/** Closes the hazard window, which must be open. */
+function close(g: Game): Applied {
+    return checked(applySystemCommand(deepFreeze(g), closeWindow));
 }
 
 
@@ -111,6 +128,37 @@ function annAt650(parts: Partial<GameParts> = {}): Game {
         drawPile: [Card.spareTire],
         ...parts,
     });
+}
+
+
+/**
+ * A 4-seat game on Ann's turn with both teams rolling.  Ann holds hazards;
+ * Bob (Team 1) holds Puncture Proof and Right of Way; Di (Team 1) holds
+ * Driving Ace.
+ */
+function attackGame(parts: Partial<GameParts> = {}): Game {
+    const rolls = (n: number): Array<Card> => Array.from({ length: n }, () => Card.roll);
+    return buildGame({
+        config: twoByTwo(),
+        hands:  [
+            [
+                Card.accident, Card.flatTire, Card.stop, Card.speedLimit, Card.outOfGas, Card.dist25,
+                Card.roll,
+            ],
+            [Card.punctureProof, Card.rightOfWay, ...rolls(4)],
+            six(Card.dist50),
+            [Card.drivingAce, ...rolls(5)],
+        ],
+        zones:    [rollingAt(), rollingAt()],
+        drawPile: [Card.dist200, Card.spareTire],
+        ...parts,
+    });
+}
+
+
+/** Ann attacks Team 1 with a hazard in `attackGame()`, opening the window. */
+function annAttacks(hazard: HazardCard, parts: Partial<GameParts> = {}): Game {
+    return play(attackGame(parts), ann, { type: "Attack", card: hazard, targetTeam: team1 }).game;
 }
 
 
@@ -561,6 +609,219 @@ describe("engine", () => {
                 expect(resultOf(game).outcome).toEqual({ kind: "Exhausted", winner: team0, extensionCaller: team1 });
             });
 
+        });
+
+
+        describe("attacks and Coup Fourré", () => {
+
+            it("opens the hazard window without changing any zone", () => {
+                const before = attackGame();
+                const { game, events } = play(before, ann, {
+                    type:       "Attack",
+                    card:       Card.accident,
+                    targetTeam: team1,
+                });
+                expect(game.phase).toEqual({
+                    kind:     "HazardIncoming",
+                    attacker: ann,
+                    hazard:   Card.accident,
+                    target:   team1,
+                });
+                expect(game.players[0]!.hand.length).toBe(6);
+                expect(game.teams).toEqual(before.teams);
+                expect(events).toEqual([
+                    { type: "HazardPlayed", player: ann, card: Card.accident, targetTeam: team1 },
+                ]);
+            });
+
+
+            it("refuses every other player command while the window is open", () => {
+                const g = annAttacks(Card.accident);
+                for (const by of [ann, bob, cy, di]) {
+                    expect(refuse(g, by, { type: "Drive", card: Card.dist25 })).withContext(by)
+                    .toEqual({ reason: "WindowOpen" });
+                }
+            });
+
+
+            it("refuses an attack on the attacker's own team", () => {
+                expect(refuse(attackGame(), ann, { type: "Attack", card: Card.accident, targetTeam: team0 }))
+                .toEqual({ reason: "CannotAttackOwnTeam" });
+            });
+
+
+            it("refuses an attack on a protected team", () => {
+                const safeties = [{ card: Card.extraTank, coupFourre: false }];
+                const g = attackGame({ zones: [rollingAt(), { ...rollingAt(), safeties }] });
+                expect(refuse(g, ann, { type: "Attack", card: Card.outOfGas, targetTeam: team1 }))
+                .toEqual({ reason: "TargetProtected", safety: Card.extraTank });
+            });
+
+
+            it("lets the victim answer with a Coup Fourré and take the turn", () => {
+                const g = annAttacks(Card.flatTire);
+                const { game, events } = play(g, bob, { type: "CoupFourre", card: Card.punctureProof });
+                expect(game.teams[1]!.zone.status).toEqual({ kind: "Rolling" });
+                expect(game.teams[1]!.zone.safeties).toEqual([{ card: Card.punctureProof, coupFourre: true }]);
+                expect(game.discardPile.at(-1)).toBe(Card.flatTire);
+                expect(game.players[1]!.hand.length).toBe(7);
+                expect(game.phase).toEqual({ kind: "Turn", player: bob });
+                expect(events).toEqual([
+                    {
+                        type:   "CoupFourrePlayed",
+                        player: bob,
+                        card:   Card.punctureProof,
+                        team:   team1,
+                        hazard: Card.flatTire,
+                    },
+                    { type: "CardDrawn", player: bob, card: Card.dist200 },
+                    { type: "TurnStarted", player: bob },
+                    { type: "CardDrawn", player: bob, card: Card.spareTire },
+                ]);
+                expect(play(game, bob, { type: "Discard", card: Card.roll }).game.phase)
+                .toEqual({ kind: "Turn", player: cy });
+            });
+
+
+            it("lets the victim's teammate answer, skipping the players between", () => {
+                const g = annAttacks(Card.accident);
+                const { game } = play(g, di, { type: "CoupFourre", card: Card.drivingAce });
+                expect(game.teams[1]!.zone.safeties).toEqual([{ card: Card.drivingAce, coupFourre: true }]);
+                expect(game.players[3]!.hand.length).toBe(7);
+                expect(game.phase).toEqual({ kind: "Turn", player: di });
+                expect(play(game, di, { type: "Discard", card: Card.roll }).game.phase)
+                .toEqual({ kind: "Turn", player: ann });
+            });
+
+
+            it("refuses a Coup Fourré from the other team", () => {
+                const g = annAttacks(Card.accident);
+                for (const by of [ann, cy]) {
+                    expect(refuse(g, by, { type: "CoupFourre", card: Card.drivingAce })).withContext(by)
+                    .toEqual({ reason: "NotOnTargetTeam" });
+                }
+            });
+
+
+            it("refuses a Coup Fourré with a card not in hand", () => {
+                expect(refuse(annAttacks(Card.accident), bob, { type: "CoupFourre", card: Card.drivingAce }))
+                .toEqual({ reason: "CardNotInHand", card: Card.drivingAce });
+            });
+
+
+            it("refuses a Coup Fourré with the wrong safety", () => {
+                expect(refuse(annAttacks(Card.flatTire), bob, { type: "CoupFourre", card: Card.rightOfWay }))
+                .toEqual({ reason: "WrongSafetyForHazard", hazard: Card.flatTire, card: Card.rightOfWay });
+            });
+
+
+            it("lets Right of Way answer a Stop and a Speed Limit", () => {
+                for (const hazard of [Card.stop, Card.speedLimit]) {
+                    const { game } = play(annAttacks(hazard), bob, { type: "CoupFourre", card: Card.rightOfWay });
+                    expect(game.teams[1]!.zone).withContext(hazard)
+                    .toEqual({ ...rollingAt(), safeties: [{ card: Card.rightOfWay, coupFourre: true }] });
+                    expect(game.discardPile.at(-1)).withContext(hazard).toBe(hazard);
+                }
+            });
+
+
+            it("discards a Speed Limit showing when Right of Way answers a Stop", () => {
+                const g = annAttacks(Card.stop, { zones: [rollingAt(), { ...rollingAt(), speedLimit: true }] });
+                const { game } = play(g, bob, { type: "CoupFourre", card: Card.rightOfWay });
+                expect(game.teams[1]!.zone.speedLimit).toBeFalse();
+                expect(game.discardPile.slice(-2)).toEqual([Card.stop, Card.speedLimit]);
+            });
+
+
+            it("discards a Stop showing when Right of Way answers a Speed Limit", () => {
+                const stopped: DrivingZone = { ...newZone(), status: { kind: "Hazard", hazard: Card.stop } };
+                const g = annAttacks(Card.speedLimit, { zones: [rollingAt(), stopped] });
+                const { game } = play(g, bob, { type: "CoupFourre", card: Card.rightOfWay });
+                expect(game.teams[1]!.zone.status).toEqual({ kind: "Rolling" });
+                expect(game.teams[1]!.zone.speedLimit).toBeFalse();
+                expect(game.discardPile.slice(-2)).toEqual([Card.speedLimit, Card.stop]);
+            });
+
+
+            it("refuses a second Coup Fourré after the first", () => {
+                const answered = play(annAttacks(Card.accident), di, { type: "CoupFourre", card: Card.drivingAce });
+                expect(refuse(answered.game, bob, { type: "CoupFourre", card: Card.punctureProof }))
+                .toEqual({ reason: "NoWindowOpen" });
+            });
+
+
+            it("does not draw for a Coup Fourré when the draw pile is empty", () => {
+                const g = annAttacks(Card.flatTire, { drawPile: [] });
+                const { game, events } = play(g, bob, { type: "CoupFourre", card: Card.punctureProof });
+                expect(events.map((e) => e.type)).toEqual(["CoupFourrePlayed", "TurnStarted"]);
+                expect(game.players[1]!.hand.length).toBe(5);
+                expect(game.phase).toEqual({ kind: "Turn", player: bob });
+            });
+
+
+            it("passes the turn on when a Coup Fourré empties the player's hand", () => {
+                const g = exhaustedGame(
+                    [[Card.flatTire], [Card.punctureProof], [Card.dist50], []],
+                    [rollingAt(), rollingAt()]
+                );
+                const opened = play(g, ann, { type: "Attack", card: Card.flatTire, targetTeam: team1 });
+                const { game, events } = play(opened.game, bob, { type: "CoupFourre", card: Card.punctureProof });
+                expect(events.map((e) => e.type)).toEqual(["CoupFourrePlayed", "TurnStarted"]);
+                expect(game.phase).toEqual({ kind: "Turn", player: cy });
+            });
+
+        });
+
+    });
+
+
+    describe("applySystemCommand()", () => {
+
+        it("CloseHazardWindow lands the hazard and starts the next player's turn", () => {
+            const { game, events } = close(annAttacks(Card.accident));
+            expect(game.teams[1]!.zone.status).toEqual({ kind: "Hazard", hazard: Card.accident });
+            expect(game.phase).toEqual({ kind: "Turn", player: bob });
+            expect(events).toEqual([
+                { type: "HazardLanded", card: Card.accident, targetTeam: team1 },
+                { type: "TurnStarted", player: bob },
+                { type: "CardDrawn", player: bob, card: Card.dist200 },
+            ]);
+        });
+
+
+        it("CloseHazardWindow is refused after a Coup Fourré", () => {
+            const answered = play(annAttacks(Card.accident), di, { type: "CoupFourre", card: Card.drivingAce });
+            expect(applySystemCommand(deepFreeze(answered.game), closeWindow).throwIfSucceeded())
+            .toEqual({ reason: "NoWindowOpen" });
+        });
+
+
+        it("CloseHazardWindow is refused during a turn", () => {
+            expect(applySystemCommand(deepFreeze(attackGame()), closeWindow).throwIfSucceeded())
+            .toEqual({ reason: "NoWindowOpen" });
+        });
+
+
+        it("ends the race Exhausted when the attack was the last card", () => {
+            const g = exhaustedGame([[Card.accident], [], [], []], [newZone(), rollingAt(Card.dist100)]);
+            const opened = play(g, ann, { type: "Attack", card: Card.accident, targetTeam: team1 });
+            expect(opened.game.phase.kind).toBe("HazardIncoming");
+            const { game, events } = close(opened.game);
+            expect(events.map((e) => e.type)).toEqual(["HazardLanded", "RaceEnded"]);
+            expect(resultOf(game).outcome).toEqual({ kind: "Exhausted", winner: team1, extensionCaller: null });
+        });
+
+
+        it("refuses the Extension and next-race commands until they are implemented", () => {
+            const g = deepFreeze(attackGame());
+            const cmds: ReadonlyArray<SystemCommand> = [
+                { type: "CloseExtensionOffer" },
+                { type: "StartNextRace", deck: createDeck() },
+            ];
+            for (const cmd of cmds) {
+                expect(applySystemCommand(g, cmd).throwIfSucceeded()).withContext(cmd.type)
+                .toEqual({ reason: "WrongPhase" });
+            }
         });
 
     });

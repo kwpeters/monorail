@@ -39,6 +39,11 @@ const annDeciding: PlayContext["phase"] = {
 };
 
 
+function accidentOn(target: TeamIndex): PlayContext["phase"] {
+    return { kind: "HazardIncoming", attacker: bob.id, hazard: Card.accident, target };
+}
+
+
 /** Ann's context, holding a Roll, a 100, Driving Ace and an Accident. */
 function annsContext(phase: PlayContext["phase"]): PlayContext {
     return {
@@ -169,6 +174,33 @@ describe("rules", () => {
                 expect(refusal(annsContext(phase), cmd)).withContext(cmd.type)
                 .toEqual({ reason: "WindowOpen" });
             }
+        });
+
+
+        it("checks a Coup Fourre's team, then the hand, then the safety", () => {
+            const ctx = annsContext(accidentOn(team0));
+            const bobsContext = { ...annsContext(accidentOn(team0)), me: bob.id, myTeam: team1 };
+            expect(refusal(bobsContext, { type: "CoupFourre", card: Card.rightOfWay }))
+            .toEqual({ reason: "NotOnTargetTeam" });
+            expect(refusal(ctx, { type: "CoupFourre", card: Card.rightOfWay }))
+            .toEqual({ reason: "CardNotInHand", card: Card.rightOfWay });
+            const wrongSafety = { ...ctx, hand: [...ctx.hand, Card.rightOfWay] };
+            expect(refusal(wrongSafety, { type: "CoupFourre", card: Card.rightOfWay }))
+            .toEqual({ reason: "WrongSafetyForHazard", hazard: Card.accident, card: Card.rightOfWay });
+            expect(checkCommand(ctx, { type: "CoupFourre", card: Card.drivingAce }).succeeded)
+            .toBeTrue();
+        });
+
+
+        it("checks an attack's target team and zone", () => {
+            const ctx = annsContext(annsTurn);
+            const accident = { type: "Attack", card: Card.accident } as const;
+            expect(refusal(ctx, { ...accident, targetTeam: team0 }))
+            .toEqual({ reason: "CannotAttackOwnTeam" });
+            expect(refusal(ctx, { ...accident, targetTeam: team1 }))
+            .toEqual({ reason: "TargetNotMoving", hazard: Card.accident });
+            const rolling = { ...ctx, zones: [newZone(), { ...newZone(), status: { kind: "Rolling" } as const }] };
+            expect(checkCommand(rolling, { ...accident, targetTeam: team1 }).succeeded).toBeTrue();
         });
 
 
