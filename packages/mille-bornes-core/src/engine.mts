@@ -181,14 +181,43 @@ function playCard(g: Game, index: number, cmd: CardPlay, change: ZoneChange | nu
                 events: [...events, { type: "ExtensionOffered", player: seat.id, team }],
             };
         }
-        return finishRace(game, {
-            kind:            "TripCompleted",
-            team,
-            delayedAction:   g.drawPile.length === 0,
-            extensionCaller: extensionCaller(g.extension),
-        }, events);
+        return completeTrip(game, team, events);
     }
     return nextTurn(game, index + 1, events);
+}
+
+
+// Ends the race with `team`'s trip completed.
+function completeTrip(g: Game, team: TeamIndex, events: ReadonlyArray<GameEvent>): Applied {
+    return finishRace(g, {
+        kind:            "TripCompleted",
+        team,
+        delayedAction:   g.drawPile.length === 0,
+        extensionCaller: extensionCaller(g.extension),
+    }, events);
+}
+
+
+/**
+ * Resolves the open Extension offer.  Calling makes the trip 1,000 miles and
+ * play continues with the player after the decider; declining (or the offer
+ * timing out) completes the decider's team's trip at 700.
+ * @param g - The game
+ * @param call - Whether Extension is called
+ * @returns The game and its events, or NoExtensionOffer when no offer is open
+ */
+function decideExtension(g: Game, call: boolean): Result<Applied, Rejection> {
+    const phase = g.phase;
+    if (phase.kind !== "ExtensionOffer") {
+        return new FailedResult({ reason: "NoExtensionOffer" });
+    }
+    const { decider: player, team } = phase;
+    if (!call) {
+        return new SucceededResult(completeTrip(g, team, [{ type: "ExtensionDeclined", player, team }]));
+    }
+    const decider = g.players.findIndex((p) => p.seat.id === player);
+    const game: Game = { ...g, extension: { kind: "Called", caller: team } };
+    return new SucceededResult(nextTurn(game, decider + 1, [{ type: "ExtensionCalled", player, team }]));
 }
 
 
@@ -248,6 +277,7 @@ function coupFourre(
  * card, and moves the game on (the next turn, an Extension offer, or the end
  * of the race).  An Attack opens the hazard window (`HazardIncoming`) and
  * changes no zone; a Coup Fourre answers it and starts the player's turn.
+ * CallExtension and DeclineExtension resolve an Extension offer.
  * @param g - The game
  * @param by - The player issuing the command
  * @param cmd - The command
@@ -272,16 +302,16 @@ export function applyPlayerCommand(
                 return new SucceededResult(attack(g, index, cmd));
             case "CoupFourre":
                 return coupFourre(g, index, cmd.card, change!);
-            default:
-                // shortcut: Task 8 implements the Extension decisions.
-                return new FailedResult({ reason: "WrongPhase" });
+            case "CallExtension":
+            case "DeclineExtension":
+                return decideExtension(g, cmd.type === "CallExtension");
         }
     });
 }
 
 
 // Lands the hazard in flight, then play passes to the player after the
-// attacker, skipping anyone between the attacker and a Coup Fourre.
+// attacker.
 function closeHazardWindow(g: Game): Result<Applied, Rejection> {
     const phase = g.phase;
     if (phase.kind !== "HazardIncoming") {
@@ -302,20 +332,34 @@ function closeHazardWindow(g: Game): Result<Applied, Rejection> {
 }
 
 
+// The static type is not trusted, so a bad command is refused, never thrown on.
+function isSystemCommand(cmd: unknown): boolean {
+    const types: ReadonlyArray<unknown> = ["CloseHazardWindow", "CloseExtensionOffer", "StartNextRace"];
+    return typeof cmd === "object" && cmd !== null && "type" in cmd && types.includes(cmd.type);
+}
+
+
 /**
- * Applies a command issued by the server.
+ * Applies a command issued by the server.  CloseExtensionOffer (the timeout)
+ * declines Extension.
  * @param g - The game
  * @param cmd - The command
  * @returns The new game and its events, or the reason the command is refused:
- * NoWindowOpen for a CloseHazardWindow with no hazard in flight
+ * MalformedCommand for anything that is not a system command, NoWindowOpen for
+ * a CloseHazardWindow with no hazard in flight, NoExtensionOffer for a
+ * CloseExtensionOffer with no offer open
  */
 export function applySystemCommand(g: Game, cmd: SystemCommand): Result<Applied, Rejection> {
+    if (!isSystemCommand(cmd)) {
+        return new FailedResult({ reason: "MalformedCommand" });
+    }
     switch (cmd.type) {
         case "CloseHazardWindow":
             return closeHazardWindow(g);
         case "CloseExtensionOffer":
+            return decideExtension(g, false);
         case "StartNextRace":
-            // shortcut: Tasks 8 and 9 implement these; refused until then.
+            // shortcut: Task 9 implements the next race; refused until then.
             return new FailedResult({ reason: "WrongPhase" });
     }
 }

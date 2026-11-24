@@ -2,13 +2,15 @@ import { type Result } from "@repo/depot/result";
 import { Card, type DistanceCard, type HazardCard } from "./card.mjs";
 import { type Applied, type PlayerCommand, type SystemCommand } from "./commands.mjs";
 import { createDeck, type DeckKind } from "./deck.mjs";
-import { newZone, type DrivingZone } from "./drivingZone.mjs";
+import { newZone, zoneMiles, type DrivingZone } from "./drivingZone.mjs";
 import { applyPlayerCommand, applySystemCommand, createGame, dealRace } from "./engine.mjs";
 import { type Game, type GameConfig, type RaceResult } from "./game.mjs";
 import { type PlayerId, type TeamIndex } from "./ids.mjs";
 import { checkInvariants } from "./invariants.mjs";
+import { type Miles } from "./miles.mjs";
 import { type Points } from "./points.mjs";
 import { describeRejection, type Rejection } from "./rejection.mjs";
+import { contextFromGame } from "./rules.mjs";
 import {
     buildGame, deckFor, oneOnOne, seatFor, threeByTwo, threeSolo, twoByTwo, type GameParts
 } from "./testHelpers.mjs";
@@ -61,11 +63,21 @@ function refuse(g: Game, by: PlayerId, cmd: PlayerCommand): Rejection {
 
 
 const closeWindow: SystemCommand = { type: "CloseHazardWindow" };
+const closeOffer: SystemCommand = { type: "CloseExtensionOffer" };
+const callExtension: PlayerCommand = { type: "CallExtension" };
+const declineExtension: PlayerCommand = { type: "DeclineExtension" };
+const discardRoll: PlayerCommand = { type: "Discard", card: Card.roll };
 
 
-/** Closes the hazard window, which must be open. */
-function close(g: Game): Applied {
-    return checked(applySystemCommand(deepFreeze(g), closeWindow));
+/** Applies a system command (by default CloseHazardWindow) that must be accepted. */
+function close(g: Game, cmd: SystemCommand = closeWindow): Applied {
+    return checked(applySystemCommand(deepFreeze(g), cmd));
+}
+
+
+/** Applies a system command that must be refused. */
+function refuseSystem(g: Game, cmd: SystemCommand): Rejection {
+    return applySystemCommand(deepFreeze(g), cmd).throwIfSucceeded();
 }
 
 
@@ -128,6 +140,35 @@ function annAt650(parts: Partial<GameParts> = {}): Game {
         drawPile: [Card.spareTire],
         ...parts,
     });
+}
+
+
+/** Ann plays a 50 in `annAt650()`, reaching exactly 700 and opening the offer. */
+function annReaches700(parts: Partial<GameParts> = {}): Game {
+    return play(annAt650(parts), ann, { type: "Drive", card: Card.dist50 }).game;
+}
+
+
+/**
+ * A 3-seat game where Ann (650 miles) has just played a 50 to reach 700 and
+ * holds the Extension offer.  Bob is at 600 and holds two 200s; Cy holds Rolls.
+ */
+function threeSeatOffer(parts: Partial<GameParts> = {}): Game {
+    const g = buildGame({
+        config: threeSolo(),
+        hands:  [
+            [Card.dist50, Card.roll, Card.dist25, Card.dist75, Card.repairs, Card.stop, Card.gasoline],
+            [Card.dist200, Card.dist200, Card.roll, Card.roll, Card.roll, Card.roll],
+            six(Card.roll),
+        ],
+        zones: [
+            rollingAt(Card.dist200, Card.dist200, Card.dist100, Card.dist75, Card.dist75),
+            rollingAt(...Array.from({ length: 6 }, () => Card.dist100)),
+            newZone(),
+        ],
+        ...parts,
+    });
+    return play(g, ann, { type: "Drive", card: Card.dist50 }).game;
 }
 
 
@@ -772,6 +813,150 @@ describe("engine", () => {
 
         });
 
+
+        describe("the Extension offer", () => {
+
+            it("declining Extension at 700 completes the trip and ends the race", () => {
+                const offered = annReaches700();
+                const { game } = checked(applyPlayerCommand(deepFreeze(offered), ann, { type: "DeclineExtension" }));
+                expect(game.phase).toEqual(jasmine.objectContaining({ kind: "RaceOver" }));
+                const result = (game.phase as { result: RaceResult }).result;
+                expect(result.outcome).toEqual({ kind: "TripCompleted", team: team0, delayedAction: false, extensionCaller: null });
+                expect(result.scores[0]!.tripCompleted).toBe(400 as Points);
+                expect(result.scores.every((s) => s.extension === 0)).toBeTrue();
+            });
+
+
+            it("CloseExtensionOffer (the timeout) gives the same result as DeclineExtension", () => {
+                const offered = annReaches700();
+                const closed = close(offered, closeOffer);
+                expect(closed).toEqual(play(offered, ann, declineExtension));
+                expect(closed.events.map((e) => e.type)).toEqual(["ExtensionDeclined", "RaceEnded"]);
+                expect(closed.events[0]).toEqual({ type: "ExtensionDeclined", player: ann, team: team0 });
+            });
+
+
+            it("scores Delayed Action when Extension is declined with an empty draw pile", () => {
+                const { game } = play(annReaches700({ drawPile: [] }), ann, declineExtension);
+                expect(resultOf(game).outcome)
+                .toEqual({ kind: "TripCompleted", team: team0, delayedAction: true, extensionCaller: null });
+            });
+
+
+            it("CallExtension makes the trip 1,000 miles for every team and passes the turn", () => {
+                const { game, events } = play(annReaches700(), ann, callExtension);
+                expect(game.extension).toEqual({ kind: "Called", caller: team0 });
+                expect(game.phase).toEqual({ kind: "Turn", player: bob });
+                expect(events).toEqual([
+                    { type: "ExtensionCalled", player: ann, team: team0 },
+                    { type: "TurnStarted", player: bob },
+                    { type: "CardDrawn", player: bob, card: Card.spareTire },
+                ]);
+                const annsTurn = play(game, bob, discardRoll).game;
+                const { game: at800 } = play(annsTurn, ann, { type: "Drive", card: Card.dist100 });
+                expect(zoneMiles(at800.teams[0]!.zone)).toBe(800 as Miles);
+                expect(contextFromGame(at800, bob).throwIfFailed().tripDistance).toBe(1000 as Miles);
+            });
+
+
+            it("pays the caller 200 when the caller reaches 1,000 first", () => {
+                const hands = [
+                    [Card.dist50, Card.dist100, Card.dist100, Card.dist100, Card.roll, Card.roll, Card.roll],
+                    six(Card.roll),
+                ];
+                let g = play(annReaches700({ hands, drawPile: [] }), ann, callExtension).game;
+                for (let i = 0; i < 3; i++) {
+                    g = play(g, bob, discardRoll).game;
+                    g = play(g, ann, { type: "Drive", card: Card.dist100 }).game;
+                }
+                const result = resultOf(g);
+                expect(result.outcome)
+                .toEqual({ kind: "TripCompleted", team: team0, delayedAction: true, extensionCaller: team0 });
+                expect(result.scores.map((s) => s.tripCompleted)).toEqual([400 as Points, 0 as Points]);
+                expect(result.scores.map((s) => s.extension)).toEqual([200 as Points, 0 as Points]);
+            });
+
+
+            it("pays every other team 200 when another team reaches 1,000 first", () => {
+                let g = play(threeSeatOffer(), ann, callExtension).game;
+                g = play(g, bob, { type: "Drive", card: Card.dist200 }).game;
+                g = play(g, cy, discardRoll).game;
+                g = play(g, ann, { type: "Discard", card: Card.stop }).game;
+                const { game } = play(g, bob, { type: "Drive", card: Card.dist200 });
+                const result = resultOf(game);
+                expect(result.outcome)
+                .toEqual({ kind: "TripCompleted", team: team1, delayedAction: true, extensionCaller: team0 });
+                expect(result.scores.map((s) => s.tripCompleted)).toEqual([0, 400, 0] as Array<Points>);
+                expect(result.scores.map((s) => s.extension)).toEqual([0, 200, 200] as Array<Points>);
+            });
+
+
+            it("opens the offer on the last card, then ends the race either way", () => {
+                const lastCard = (): Game => threeSeatOffer({ hands: [[Card.dist50], [], []], drawPile: [] });
+                const called = play(lastCard(), ann, callExtension);
+                expect(called.events.map((e) => e.type)).toEqual(["ExtensionCalled", "RaceEnded"]);
+                const result = resultOf(called.game);
+                expect(result.outcome).toEqual({ kind: "Exhausted", winner: team0, extensionCaller: team0 });
+                expect(result.scores.map((s) => s.extension)).toEqual([0, 200, 200] as Array<Points>);
+
+                const declined = play(lastCard(), ann, declineExtension);
+                expect(resultOf(declined.game).outcome)
+                .toEqual({ kind: "TripCompleted", team: team0, delayedAction: true, extensionCaller: null });
+            });
+
+
+            it("opens no offer when a second team reaches 700 after the call", () => {
+                const g = annReaches700({
+                    hands: [annAt650().players[0]!.hand, [Card.dist50, ...Array.from({ length: 5 }, () => Card.roll)]],
+                    zones: [
+                        rollingAt(Card.dist200, Card.dist200, Card.dist100, Card.dist100, Card.dist50),
+                        rollingAt(Card.dist200, Card.dist200, Card.dist100, Card.dist100, Card.dist50),
+                    ],
+                });
+                const bobsTurn = play(g, ann, callExtension).game;
+                const { game, events } = play(bobsTurn, bob, { type: "Drive", card: Card.dist50 });
+                expect(zoneMiles(game.teams[1]!.zone)).toBe(700 as Miles);
+                expect(game.phase).toEqual({ kind: "Turn", player: ann });
+                expect(events.map((e) => e.type)).toEqual(["DistancePlayed", "TurnStarted"]);
+            });
+
+
+            it("refuses Extension decisions once the offer is resolved", () => {
+                const offered = annReaches700();
+                const called = play(offered, ann, callExtension).game;
+                const declined = play(offered, ann, declineExtension).game;
+                expect(refuseSystem(called, closeOffer)).toEqual({ reason: "NoExtensionOffer" });
+                expect(refuseSystem(declined, closeOffer)).toEqual({ reason: "NoExtensionOffer" });
+                expect(refuse(called, ann, callExtension)).toEqual({ reason: "NoExtensionOffer" });
+                expect(refuse(declined, ann, callExtension)).toEqual({ reason: "WrongPhase" });
+            });
+
+
+            it("refuses a decision from anyone but the decider", () => {
+                expect(refuse(annReaches700(), bob, declineExtension))
+                .toEqual({ reason: "NotTheCaller", decider: seatFor("Ann").name });
+            });
+
+
+            it("refuses CloseHazardWindow during the offer", () => {
+                expect(refuseSystem(annReaches700(), closeWindow)).toEqual({ reason: "NoWindowOpen" });
+            });
+
+
+            it("refuses every Extension command when there is no offer", () => {
+                for (const g of [annAt650(), gameWhereAnnHolds(annHand)]) {
+                    const seats = g.players.length;
+                    expect(refuse(g, ann, callExtension)).withContext(`${seats} seats`)
+                    .toEqual({ reason: "NoExtensionOffer" });
+                    expect(refuse(g, ann, declineExtension)).withContext(`${seats} seats`)
+                    .toEqual({ reason: "NoExtensionOffer" });
+                    expect(refuseSystem(g, closeOffer)).withContext(`${seats} seats`)
+                    .toEqual({ reason: "NoExtensionOffer" });
+                }
+            });
+
+        });
+
     });
 
 
@@ -812,16 +997,27 @@ describe("engine", () => {
         });
 
 
-        it("refuses the Extension and next-race commands until they are implemented", () => {
-            const g = deepFreeze(attackGame());
-            const cmds: ReadonlyArray<SystemCommand> = [
-                { type: "CloseExtensionOffer" },
-                { type: "StartNextRace", deck: createDeck() },
+        it("refuses StartNextRace until it is implemented", () => {
+            expect(refuseSystem(attackGame(), { type: "StartNextRace", deck: createDeck() }))
+            .toEqual({ reason: "WrongPhase" });
+        });
+
+
+        it("refuses malformed commands without throwing or changing the game", () => {
+            const g = deepFreeze(annReaches700());
+            const snapshot = structuredClone(g);
+            const malformed: ReadonlyArray<[string, unknown]> = [
+                ["null", null],
+                ["a string", "CloseExtensionOffer"],
+                ["a number", 7],
+                ["a command with no type", {}],
+                ["an unknown command type", { type: "Nope" }],
             ];
-            for (const cmd of cmds) {
-                expect(applySystemCommand(g, cmd).throwIfSucceeded()).withContext(cmd.type)
-                .toEqual({ reason: "WrongPhase" });
+            for (const [name, cmd] of malformed) {
+                expect(refuseSystem(g, cmd as SystemCommand)).withContext(name)
+                .toEqual({ reason: "MalformedCommand" });
             }
+            expect(g).toEqual(snapshot);
         });
 
     });
