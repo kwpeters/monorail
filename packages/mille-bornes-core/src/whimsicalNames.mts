@@ -20,14 +20,14 @@ const rawNames: ReadonlyArray<string> = [
     "Gearbox Gus",
     "Sputter",
     "Colonel Cupholder",
-    "Honkers McGee",
+    "Beep Beep Barbara",
     "Sally Sideswipe",
     "Doctor Dipstick",
     "Mr. Backseat Driver",
     "Pedal Pete",
     "Granny Gasket",
     "Bumper Betty",
-    "Skid Marks Sam",
+    "Traffic Cone Tony",
     "Count Carburetor",
     "Lunchbox Larry",
     "Princess Piston",
@@ -59,7 +59,8 @@ export const whimsicalNames: ReadonlyArray<PlayerName> =
 /**
  * Picks a random whimsical name that nobody is using.
  * @param taken - The names already in use; a name that differs only by case,
- * spacing or accents counts as in use
+ * spacing or compatibility form (such as full-width letters) counts as in use,
+ * but one that differs by accents does not
  * @param rand - Returns a number from 0 (included) to 1 (excluded)
  * @returns The name, or a failed result when every name in the pool is taken
  */
@@ -68,10 +69,13 @@ export function pickWhimsicalName(
     rand:   () => number = getRandom
 ): Result<PlayerName, string> {
     const available = whimsicalNames.filter((name) => !taken.some((t) => PlayerName.isSame(t, name)));
-    if (available.length === 0) {
-        return new FailedResult("Every whimsical name is already taken.");
-    }
-    // Clamp so that a misbehaving `rand` cannot index past the end.
-    const index = Math.min(available.length - 1, Math.max(0, Math.floor(rand() * available.length)));
-    return new SucceededResult(available[index]!);
+    // Clamp so that a misbehaving `rand` (out of range or NaN) stays in bounds.
+    const r = rand();
+    const scaled = Number.isNaN(r) ? 0 : Math.floor(r * available.length);
+    const index = Math.min(available.length - 1, Math.max(0, scaled));
+    const name = available[index];
+    // Undefined only when nothing is available.
+    return name === undefined ?
+        new FailedResult("Every whimsical name is already taken.") :
+        new SucceededResult(name);
 }

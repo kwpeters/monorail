@@ -40,7 +40,8 @@ export namespace PlayerName {
 
     /**
      * Determines whether two names refer to the same player name, ignoring
-     * case after NFKC normalization.
+     * case after NFKC normalization.  Accents are not folded, so "é" and "e"
+     * are different.
      * @param a - The first name
      * @param b - The second name
      * @returns Whether the names are the same

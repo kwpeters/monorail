@@ -57,6 +57,14 @@ describe("pendingGame", () => {
         });
 
 
+        it("stores a copy of the organizer's seat without extra properties", () => {
+            const input = { ...a, secret: "x" };
+            const p = createPending(gameId, input);
+            expect(JSON.stringify(p)).not.toContain("secret");
+            expect(p.seats[0]).not.toBe(input);
+        });
+
+
         it("is plain JSON", () => {
             const p = build(a, [b, c]);
             expect(JSON.parse(JSON.stringify(p))).toEqual(p);
@@ -121,9 +129,38 @@ describe("pendingGame", () => {
             });
 
 
-            it("cannot be given an over-long name because Seat.name is a PlayerName", () => {
+            it("refuses a seat whose name or id could not have been made by PlayerName or PlayerId", () => {
+                const p = createPending(gameId, a);
+                const badSeats: ReadonlyArray<[string, unknown]> = [
+                    ["empty name", { ...c, name: "" }],
+                    ["21 code points", { ...c, name: "x".repeat(21) }],
+                    ["control character", { ...c, name: "Cy" }],
+                    ["bidi override", { ...c, name: "Cy‮evil" }],
+                    ["unnormalized spacing", { ...c, name: "  Cy  " }],
+                    ["non-canonical id", { ...c, id: "NOT-A-UUID" }],
+                    ["uppercase id", { ...c, id: "00000000-0000-4000-8000-00000000000A" }],
+                    ["unknown kind", { ...c, kind: "Cat" }],
+                ];
+                for (const [label, seat] of badSeats) {
+                    const cmd = { type: "AddHuman", seat } as unknown as PendingCommand;
+                    const result = applyPendingCommand(p, (seat as Seat).id, cmd);
+                    expect(result.throwIfSucceeded()).withContext(label).toEqual({ reason: "MalformedCommand" });
+                }
                 expect(PlayerName.tryCreate("x".repeat(20)).succeeded).toBeTrue();
-                expect(PlayerName.tryCreate("x".repeat(21)).failed).toBeTrue();
+                const exactly20: Seat = { ...c, name: PlayerName.tryCreate("x".repeat(20)).throwIfFailed() };
+                expect(applyPendingCommand(p, c.id, { type: "AddHuman", seat: exactly20 }).succeeded).toBeTrue();
+            });
+
+
+            it("stores a copy of the seat without extra properties", () => {
+                const input = { ...b, secret: "x" };
+                const p = applyPendingCommand(createPending(gameId, a), b.id, { type: "AddHuman", seat: input })
+                .throwIfFailed();
+                expect(p.seats[1]).toEqual(b);
+                expect(JSON.stringify(p)).not.toContain("secret");
+                expect(p.seats[1]).not.toBe(input);
+                (input as { name: string }).name = "Changed";
+                expect(p.seats[1]!.name).toBe(b.name);
             });
 
         });
@@ -330,6 +367,21 @@ describe("pendingGame", () => {
         it("fails for 5 seats", () => {
             expect(readiness(build(a, [b, c, d, e])).throwIfSucceeded())
             .toEqual({ reason: "UnsupportedPlayerCount", count: 5 });
+        });
+
+
+        it("fails with something other than WrongDeck for a hand-built pending game that cannot be played", () => {
+            const twin: Seat = { ...b, id: PlayerId.create(), name: a.name };
+            const duplicateNames: PendingGame = { ...createPending(gameId, a), seats: [a, twin] };
+            const noHuman: PendingGame = {
+                ...createPending(gameId, a),
+                seats: [{ ...a, kind: "Robot" }, { ...b, kind: "Robot" }],
+            };
+            for (const p of [duplicateNames, noHuman]) {
+                expect(readiness(p).throwIfSucceeded()).toEqual({ reason: "MalformedCommand" });
+                expect(beginGame(p, a.id, createDeck("Reduced")).throwIfSucceeded())
+                .toEqual({ reason: "MalformedCommand" });
+            }
         });
 
 

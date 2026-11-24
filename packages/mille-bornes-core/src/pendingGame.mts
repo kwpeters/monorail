@@ -1,9 +1,9 @@
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import { type Applied } from "./commands.mjs";
-import { type ShuffledDeck } from "./deck.mjs";
+import { ShuffledDeck } from "./deck.mjs";
 import { createGame } from "./engine.mjs";
-import { gameLengthSchema, type GameConfig, type Seat } from "./game.mjs";
-import { type GameId, type PlayerId } from "./ids.mjs";
+import { gameLengthSchema, seatKindSchema, validateGameConfig, type GameConfig, type Seat } from "./game.mjs";
+import { PlayerId, type GameId } from "./ids.mjs";
 import { PlayerName } from "./playerName.mjs";
 import { type Rejection } from "./rejection.mjs";
 import { type GameLength } from "./scoring.mjs";
@@ -46,7 +46,14 @@ export type PendingCommand =
  * @returns The pending game
  */
 export function createPending(id: GameId, organizer: Seat): PendingGame {
-    return { id, organizer: organizer.id, length: "Quick", seats: [{ ...organizer, kind: "Human" }] };
+    return { id, organizer: organizer.id, length: "Quick", seats: [copySeat(organizer, "Human")] };
+}
+
+
+// A fresh copy, so extra properties and later mutation of the caller's object
+// never reach the lobby state.
+function copySeat(seat: Seat, kind: Seat["kind"] = seat.kind): Seat {
+    return { id: seat.id, name: seat.name, kind };
 }
 
 
@@ -69,7 +76,7 @@ function addSeat(p: PendingGame, seat: Seat, kind: Seat["kind"]): Result<Pending
     if (p.seats.some((s) => PlayerName.isSame(s.name, seat.name))) {
         return reject({ reason: "NameTaken", name: seat.name });
     }
-    return new SucceededResult({ ...p, seats: [...p.seats, seat] });
+    return new SucceededResult({ ...p, seats: [...p.seats, copySeat(seat)] });
 }
 
 
@@ -103,9 +110,15 @@ function isString(x: unknown): boolean {
 }
 
 
+// The name must already be in the normalized form `PlayerName` guarantees:
+// the branded `Seat.name` is stored as given, never silently changed.
 function isSeatShaped(x: unknown): boolean {
     const s = x as Partial<Seat> | null | undefined;
-    return typeof s === "object" && s !== null && isString(s.id) && isString(s.name) && isString(s.kind);
+    if (typeof s !== "object" || s === null || !isString(s.id) || !isString(s.name)) {
+        return false;
+    }
+    const normalized = PlayerName.tryCreate(s.name as string).match((n) => n === s.name, () => false);
+    return PlayerId.tryCreate(s.id as string).succeeded && normalized && seatKindSchema.safeParse(s.kind).success;
 }
 
 
@@ -184,7 +197,13 @@ export function teamLayout(p: PendingGame): Result<ReadonlyArray<ReadonlyArray<S
  * @returns The config to start the game with, or why Start is disabled
  */
 export function readiness(p: PendingGame): Result<GameConfig, Rejection> {
-    return teamLayout(p).mapSuccess((teams) => ({ id: p.id, length: p.length, teams }));
+    return teamLayout(p)
+    .mapSuccess((teams): GameConfig => ({ id: p.id, length: p.length, teams }))
+    .bind((config) => {
+        // A pending game decoded from storage may not be one `applyPendingCommand`
+        // could have built.
+        return validateGameConfig(config).mapError((): Rejection => ({ reason: "MalformedCommand" }));
+    });
 }
 
 
@@ -199,8 +218,13 @@ export function beginGame(p: PendingGame, by: PlayerId, deck: ShuffledDeck): Res
     if (by !== p.organizer) {
         return reject({ reason: "NotOrganizer" });
     }
-    // The pending game guarantees a valid config, so only the deck can fail.
     return readiness(p).bind((config) => {
-        return createGame(config, deck).mapError((): Rejection => ({ reason: "WrongDeck" }));
+        const wanted = variantForSeatCount(config.teams.flat().length).throwIfFailed().deck;
+        if (ShuffledDeck.kind(deck) !== wanted) {
+            return reject({ reason: "WrongDeck" });
+        }
+        // `readiness()` validated the config and the deck kind matches, so
+        // this is not expected to fail.
+        return createGame(config, deck).mapError((): Rejection => ({ reason: "MalformedCommand" }));
     });
 }

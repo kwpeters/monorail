@@ -57,7 +57,7 @@ describe("whimsicalNames", () => {
         });
 
 
-        it("treats case, whitespace and accent variants as taken", () => {
+        it("treats case and full-width variants as taken", () => {
             const variants = ["sir honks-a-lot", "SIR HONKS-A-LOT", "Ｓir Honks-a-Lot"].map(nameOf);
             const rest = whimsicalNames.filter((n) => n !== nameOf("Sir Honks-a-Lot"));
             for (const variant of variants) {
@@ -77,8 +77,15 @@ describe("whimsicalNames", () => {
         });
 
 
-        it("clamps a random number that is out of range", () => {
-            expect(pickWhimsicalName([], () => 1).succeeded).toBeTrue();
+        it("clamps a random number that is out of range to the last available name", () => {
+            expect(pickWhimsicalName([], () => 1).throwIfFailed()).toBe(whimsicalNames.at(-1)!);
+            expect(pickWhimsicalName([], () => 7).throwIfFailed()).toBe(whimsicalNames.at(-1)!);
+            expect(pickWhimsicalName([], () => -3).throwIfFailed()).toBe(whimsicalNames[0]!);
+        });
+
+
+        it("treats a NaN random number as 0", () => {
+            expect(pickWhimsicalName([], () => NaN).throwIfFailed()).toBe(whimsicalNames[0]!);
         });
 
     });
