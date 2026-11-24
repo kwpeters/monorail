@@ -76,6 +76,10 @@
         "./variant": {
             "types": "./src/variant.mts",
             "default": "./dist/variant.mjs"
+        },
+        "./view": {
+            "types": "./src/view.mts",
+            "default": "./dist/view.mjs"
         }
     },
     "devDependencies": {

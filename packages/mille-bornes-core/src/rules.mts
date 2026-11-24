@@ -8,12 +8,14 @@ import {
     canAttack, playCoupFourre, playDistance, playRemedy, playSafety, type DrivingZone,
     type ZoneChange
 } from "./drivingZone.mjs";
-import { type Game } from "./game.mjs";
+import { type Game, type Phase } from "./game.mjs";
 import { type PlayerId, type TeamIndex } from "./ids.mjs";
 import { type Miles } from "./miles.mjs";
 import { type PlayerName } from "./playerName.mjs";
 import { type Rejection } from "./rejection.mjs";
 import { tripDistance } from "./variant.mjs";
+// A type-only import, so the cycle with view.mts never exists at run time.
+import type { PlayerView } from "./view.mjs";
 
 
 /**
@@ -47,10 +49,11 @@ export interface PlayContext {
 }
 
 
-function contextPhase(g: Game): PlayContext["phase"] {
-    // The invariants guarantee that a phase names only players in the game.
-    const nameOf = (id: PlayerId): PlayerName => g.players.find((p) => p.seat.id === id)!.seat.name;
-    const phase = g.phase;
+// `nameOf` gets the name of a player the phase names.
+function contextPhase(
+    phase: Phase | PlayerView["phase"],
+    nameOf: (id: PlayerId) => PlayerName
+): PlayContext["phase"] {
     switch (phase.kind) {
         case "Turn":
             return { ...phase, playerName: nameOf(phase.player) };
@@ -76,14 +79,35 @@ export function contextFromGame(g: Game, me: PlayerId): Result<PlayContext, Reje
     if (!player) {
         return new FailedResult({ reason: "WrongPhase" });
     }
+    // The invariants guarantee that a phase names only players in the game.
+    const nameOf = (id: PlayerId): PlayerName => g.players.find((p) => p.seat.id === id)!.seat.name;
     return new SucceededResult({
         me,
         myTeam:       player.team,
         hand:         player.hand,
         zones:        g.teams.map((t) => t.zone),
         tripDistance: tripDistance(g.extension),
-        phase:        contextPhase(g),
+        phase:        contextPhase(g.phase, nameOf),
     });
+}
+
+
+/**
+ * Builds the viewer's play context from their view, so a client can check
+ * commands exactly as the engine does.
+ * @param v - The view, as built by `viewFor()`
+ * @returns The context; equal to `contextFromGame()` for the same player
+ */
+export function contextFromView(v: PlayerView): PlayContext {
+    return {
+        me:           v.me.id,
+        myTeam:       v.me.team,
+        hand:         v.me.hand,
+        zones:        v.teams.map((t) => t.zone),
+        tripDistance: v.trip.distance,
+        // viewFor() names only seated players in the phase.
+        phase:        contextPhase(v.phase, (id) => v.seats.find((s) => s.id === id)!.name),
+    };
 }
 
 
