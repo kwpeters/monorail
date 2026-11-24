@@ -1,5 +1,8 @@
-import { type BlockingHazard, type HazardCard, type RemedyCard, type SafetyCard, remedyFor } from "./card.mjs";
+import {
+    type BlockingHazard, type Card, type HazardCard, type RemedyCard, type SafetyCard, remedyFor, safetyFor
+} from "./card.mjs";
 import { type Miles } from "./miles.mjs";
+import { type PlayerName } from "./playerName.mjs";
 
 
 /**
@@ -18,11 +21,31 @@ export type Rejection =
     | { reason: "TargetNotMoving"; hazard: HazardCard }
     | { reason: "TargetProtected"; safety: SafetyCard }
     | { reason: "TargetAlreadySpeedLimited" }
-    | { reason: "SafetyAlreadyPlayed"; safety: SafetyCard };
+    | { reason: "SafetyAlreadyPlayed"; safety: SafetyCard }
+    | { reason: "NotYourTurn"; current: PlayerName }
+    | { reason: "CardNotInHand"; card: Card }
+    | { reason: "WrongPhase" }
+    | { reason: "WindowOpen" }
+    | { reason: "NoWindowOpen" }
+    | { reason: "NotOnTargetTeam" }
+    | { reason: "WrongSafetyForHazard"; hazard: HazardCard; card: SafetyCard }
+    | { reason: "ExtensionOfferOpen"; decider: PlayerName }
+    | { reason: "NoExtensionOffer" }
+    | { reason: "NotTheCaller"; decider: PlayerName }
+    | { reason: "UnsupportedPlayerCount"; count: number }
+    | { reason: "WrongDeck" };
 
 
 function formatMiles(miles: Miles): string {
     return miles.toLocaleString("en-US");
+}
+
+
+function playerCountAdvice(count: number): string {
+    if (count <= 0) {
+        return "add players";
+    }
+    return count < 7 ? "add a robot" : "remove someone";
 }
 
 
@@ -60,5 +83,31 @@ export function describeRejection(r: Rejection): string {
             return "That team already has a Speed Limit, so another one would do nothing.";
         case "SafetyAlreadyPlayed":
             return `You have already played ${r.safety}.`;
+        case "NotYourTurn":
+            return `It's ${r.current}'s turn. Please wait until it's yours.`;
+        case "CardNotInHand":
+            return `You don't have that card (${r.card}) in your hand.`;
+        case "WrongPhase":
+            return "You can't do that right now.";
+        // Shown to every player, so it must not hint at whether anyone can
+        // answer the hazard.
+        case "WindowOpen":
+            return "Please wait for the hazard card to finish being played.";
+        case "NoWindowOpen":
+            return "There is no hazard to answer with a Coup Fourré right now.";
+        case "NotOnTargetTeam":
+            return "Only the team that was hit by the hazard can answer it with a Coup Fourré.";
+        case "WrongSafetyForHazard":
+            return `${r.card} doesn't protect against ${r.hazard}. Only ${safetyFor(r.hazard)} can answer it.`;
+        case "ExtensionOfferOpen":
+            return `Please wait: ${r.decider} is deciding whether to call Extension.`;
+        case "NoExtensionOffer":
+            return "There is no Extension to decide on right now.";
+        case "NotTheCaller":
+            return `Only ${r.decider} can decide whether to call Extension.`;
+        case "UnsupportedPlayerCount":
+            return `Mille Bornes needs 2, 3, 4, or 6 players. You have ${r.count}, so ${playerCountAdvice(r.count)}.`;
+        case "WrongDeck":
+            return "That deck doesn't match the number of players in this game.";
     }
 }

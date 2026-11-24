@@ -1,6 +1,10 @@
-import { Card, blockingHazardSchema, hazardCardSchema, remedyCardSchema, safetyCardSchema } from "./card.mjs";
+import { Card, blockingHazardSchema, cardSchema, hazardCardSchema, remedyCardSchema, safetyCardSchema } from "./card.mjs";
 import { type Miles } from "./miles.mjs";
+import { type PlayerName } from "./playerName.mjs";
 import { describeRejection, type Rejection } from "./rejection.mjs";
+
+
+const ann = "Ann" as PlayerName;
 
 
 describe("rejection", () => {
@@ -45,6 +49,20 @@ describe("rejection", () => {
                 ...safetyCardSchema.options.map((safety): Rejection => ({ reason: "TargetProtected", safety })),
                 { reason: "TargetAlreadySpeedLimited" },
                 ...safetyCardSchema.options.map((safety): Rejection => ({ reason: "SafetyAlreadyPlayed", safety })),
+                { reason: "NotYourTurn", current: ann },
+                ...cardSchema.options.map((card): Rejection => ({ reason: "CardNotInHand", card })),
+                { reason: "WrongPhase" },
+                { reason: "WindowOpen" },
+                { reason: "NoWindowOpen" },
+                { reason: "NotOnTargetTeam" },
+                ...hazardCardSchema.options.flatMap((hazard) => safetyCardSchema.options.map(
+                    (card): Rejection => ({ reason: "WrongSafetyForHazard", hazard, card })
+                )),
+                { reason: "ExtensionOfferOpen", decider: ann },
+                { reason: "NoExtensionOffer" },
+                { reason: "NotTheCaller", decider: ann },
+                ...[0, 1, 5, 7, 12].map((count): Rejection => ({ reason: "UnsupportedPlayerCount", count })),
+                { reason: "WrongDeck" },
             ];
             for (const rejection of rejections) {
                 const text = describeRejection(rejection);
@@ -62,6 +80,38 @@ describe("rejection", () => {
             .toBe("Your car is blocked by Out of Gas. Play Gasoline to fix it first.");
             expect(describeRejection({ reason: "BlockedByHazard", hazard: Card.stop }))
             .toBe("Your car is blocked by Stop. Play Roll to fix it first.");
+        });
+
+
+        it("explains an unsupported player count with advice that fits it", () => {
+            expect(describeRejection({ reason: "UnsupportedPlayerCount", count: 5 }))
+            .toBe("Mille Bornes needs 2, 3, 4, or 6 players. You have 5, so add a robot.");
+            expect(describeRejection({ reason: "UnsupportedPlayerCount", count: 1 }))
+            .toBe("Mille Bornes needs 2, 3, 4, or 6 players. You have 1, so add a robot.");
+            expect(describeRejection({ reason: "UnsupportedPlayerCount", count: 7 }))
+            .toBe("Mille Bornes needs 2, 3, 4, or 6 players. You have 7, so remove someone.");
+            expect(describeRejection({ reason: "UnsupportedPlayerCount", count: 0 }))
+            .toBe("Mille Bornes needs 2, 3, 4, or 6 players. You have 0, so add players.");
+        });
+
+
+        it("names the player whose turn it is", () => {
+            expect(describeRejection({ reason: "NotYourTurn", current: ann }))
+            .toBe("It's Ann's turn. Please wait until it's yours.");
+        });
+
+
+        it("names the player deciding on Extension", () => {
+            expect(describeRejection({ reason: "ExtensionOfferOpen", decider: ann }))
+            .toBe("Please wait: Ann is deciding whether to call Extension.");
+            expect(describeRejection({ reason: "NotTheCaller", decider: ann }))
+            .toBe("Only Ann can decide whether to call Extension.");
+        });
+
+
+        it("names the safety that answers a hazard", () => {
+            expect(describeRejection({ reason: "WrongSafetyForHazard", hazard: Card.flatTire, card: Card.extraTank }))
+            .toBe("Extra Tank doesn't protect against Flat Tire. Only Puncture Proof can answer it.");
         });
 
     });

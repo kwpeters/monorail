@@ -1,5 +1,15 @@
 import { type Card, cardSchema } from "./card.mjs";
 import { cardCounts, type DeckKind, type ShuffledDeck } from "./deck.mjs";
+import { newZone, type DrivingZone } from "./drivingZone.mjs";
+import {
+    seatOrder, type Game, type GameConfig, type Phase, type Seat, type SeatKind
+} from "./game.mjs";
+import { GameId, PlayerId } from "./ids.mjs";
+import { checkInvariants, physicalCards } from "./invariants.mjs";
+import { PlayerName } from "./playerName.mjs";
+import { type Points } from "./points.mjs";
+import { describeRejection } from "./rejection.mjs";
+import { initialExtension, variantForSeatCount, type ExtensionState } from "./variant.mjs";
 
 
 /**
@@ -26,4 +36,130 @@ export function deckFor(
     }
     const rest = cardSchema.options.flatMap((card) => Array.from({ length: remaining[card] }, () => card));
     return [...requested, ...rest] as unknown as ShuffledDeck;
+}
+
+
+/**
+ * Test support: creates a seat whose id is derived from the name, so the same
+ * name always gets the same id.  Ids are unique for names of up to 6 ASCII
+ * characters.
+ * @param name - The player's name
+ * @param kind - Human (default) or Robot
+ * @returns The seat
+ */
+export function seatFor(name: string, kind: SeatKind = "Human"): Seat {
+    const hex = Array.from(name, (ch) => ch.codePointAt(0)!.toString(16))
+    .join("")
+    .padStart(12, "0")
+    .slice(-12);
+    return {
+        id:   PlayerId.tryCreate(`00000000-0000-4000-8000-${hex}`).throwIfFailed(),
+        name: PlayerName.tryCreate(name).throwIfFailed(),
+        kind,
+    };
+}
+
+
+function fullGameOf(teams: ReadonlyArray<ReadonlyArray<string>>): GameConfig {
+    return {
+        id:     GameId.tryCreate("00000000-0000-4000-8000-000000000000").throwIfFailed(),
+        length: "Full",
+        teams:  teams.map((team) => team.map((name) => seatFor(name))),
+    };
+}
+
+
+/**
+ * Test support: a Full game for 4 humans in 2 teams of 2.
+ * @returns Teams [Ann, Cy] and [Bob, Di]
+ */
+export function twoByTwo(): GameConfig {
+    return fullGameOf([["Ann", "Cy"], ["Bob", "Di"]]);
+}
+
+
+/**
+ * Test support: a Full game for 2 humans.
+ * @returns Teams [Ann] and [Bob]
+ */
+export function oneOnOne(): GameConfig {
+    return fullGameOf([["Ann"], ["Bob"]]);
+}
+
+
+/**
+ * Test support: a Full game for 3 humans playing alone.
+ * @returns Teams [Ann], [Bob] and [Cy]
+ */
+export function threeSolo(): GameConfig {
+    return fullGameOf([["Ann"], ["Bob"], ["Cy"]]);
+}
+
+
+/**
+ * Test support: a Full game for 6 humans in 3 teams of 2.
+ * @returns Teams [Ann, Di], [Bob, Ed] and [Cy, Flo]
+ */
+export function threeByTwo(): GameConfig {
+    return fullGameOf([["Ann", "Di"], ["Bob", "Ed"], ["Cy", "Flo"]]);
+}
+
+
+/** The parts of a game a test may specify; see `buildGame()`. */
+export interface GameParts {
+    readonly config:      GameConfig;
+    /** Hands in turn order (default: empty). */
+    readonly hands?:      ReadonlyArray<ReadonlyArray<Card>>;
+    /** Zones by team (default: `newZone()`). */
+    readonly zones?:      ReadonlyArray<DrivingZone>;
+    /** Default: empty. */
+    readonly drawPile?:   ReadonlyArray<Card>;
+    /** Default: the first player's turn. */
+    readonly phase?:      Phase;
+    /** Default: 1. */
+    readonly raceNumber?: number;
+    /** Default: the variant's initial state. */
+    readonly extension?:  ExtensionState;
+    /** Points by team (default: 0). */
+    readonly points?:     ReadonlyArray<number>;
+}
+
+
+/**
+ * Test support: builds a valid game from the parts given.  Every card of the
+ * variant's deck that the parts do not place goes to the discard pile.
+ * @param parts - The parts to use; anything omitted gets its default
+ * @returns The game
+ * @throws If the parts need more of a card than the deck has, or the game
+ * fails `checkInvariants()`
+ */
+export function buildGame(parts: GameParts): Game {
+    const { config } = parts;
+    const variant = variantForSeatCount(config.teams.flat().length);
+    if (variant.failed) {
+        throw new Error(`buildGame: ${describeRejection(variant.error)}`);
+    }
+    const players = seatOrder(config.teams)
+    .map(({ seat, team }, i) => ({ seat, team, hand: parts.hands?.[i] ?? [] }));
+    const placed: Game = {
+        config,
+        players,
+        teams: config.teams.map((_, t) => ({
+            zone:   parts.zones?.[t] ?? newZone(),
+            points: (parts.points?.[t] ?? 0) as Points,
+        })),
+        drawPile:    parts.drawPile ?? [],
+        discardPile: [],
+        raceNumber:  parts.raceNumber ?? 1,
+        extension:   parts.extension ?? initialExtension(variant.value),
+        phase:       parts.phase ?? { kind: "Turn", player: players[0]!.seat.id },
+    };
+    const cards = physicalCards(placed);
+    const unplaced = deckFor([cards], [], variant.value.deck).slice(cards.length);
+    const game = { ...placed, discardPile: unplaced };
+    const valid = checkInvariants(game);
+    if (valid.failed) {
+        throw new Error(`buildGame: ${valid.error}`);
+    }
+    return game;
 }

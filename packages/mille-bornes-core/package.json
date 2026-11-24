@@ -17,6 +17,10 @@
             "types": "./src/card.mts",
             "default": "./dist/card.mjs"
         },
+        "./commands": {
+            "types": "./src/commands.mts",
+            "default": "./dist/commands.mjs"
+        },
         "./deck": {
             "types": "./src/deck.mts",
             "default": "./dist/deck.mjs"
@@ -25,9 +29,25 @@
             "types": "./src/drivingZone.mts",
             "default": "./dist/drivingZone.mjs"
         },
+        "./engine": {
+            "types": "./src/engine.mts",
+            "default": "./dist/engine.mjs"
+        },
+        "./events": {
+            "types": "./src/events.mts",
+            "default": "./dist/events.mjs"
+        },
+        "./game": {
+            "types": "./src/game.mts",
+            "default": "./dist/game.mjs"
+        },
         "./ids": {
             "types": "./src/ids.mts",
             "default": "./dist/ids.mjs"
+        },
+        "./invariants": {
+            "types": "./src/invariants.mts",
+            "default": "./dist/invariants.mjs"
         },
         "./miles": {
             "types": "./src/miles.mts",
@@ -48,6 +68,10 @@
         "./scoring": {
             "types": "./src/scoring.mts",
             "default": "./dist/scoring.mjs"
+        },
+        "./variant": {
+            "types": "./src/variant.mts",
+            "default": "./dist/variant.mjs"
         }
     },
     "devDependencies": {
