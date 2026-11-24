@@ -7,7 +7,7 @@ const maxNameLength = 20;
 
 /**
  * A player's display name.  Trimmed, whitespace-collapsed, 1 to 20 code points
- * and free of control characters.
+ * and free of control and invisible format characters.
  */
 export type PlayerName = Brand<string, "PlayerName">;
 
@@ -25,8 +25,11 @@ export namespace PlayerName {
         if (name.length === 0) {
             return new FailedResult("A player name cannot be empty.");
         }
-        if (/\p{Cc}/u.test(name)) {
-            return new FailedResult("A player name cannot contain control characters.");
+        // Cc: control characters.  Cf: invisible format characters such as
+        // zero-width spaces and bidi overrides.  (Cf includes ZWJ, so ZWJ emoji
+        // sequences are rejected.)
+        if (/[\p{Cc}\p{Cf}]/u.test(name)) {
+            return new FailedResult("A player name cannot contain control or invisible characters.");
         }
         if (Array.from(name).length > maxNameLength) {
             return new FailedResult(`A player name cannot be longer than ${maxNameLength} characters.`);

@@ -1,6 +1,17 @@
 import { GameId, PlayerId, TeamIndex } from "./ids.mjs";
 
 
+const canonical = "9f7bc8b7-a483-43a7-8c3a-df36fe59e9b4";
+const nonCanonical = [
+    canonical.toUpperCase(),
+    canonical.replace(/-/g, ""),
+    "9f7bc8b7a-483-43a7-8c3a-df36fe59e9b4",
+    ` ${canonical} `,
+    `${canonical}
+`
+];
+
+
 describe("ids", () => {
 
     describe("PlayerId", () => {
@@ -16,6 +27,14 @@ describe("ids", () => {
         it("tryCreate() rejects an empty or malformed string", () => {
             expect(PlayerId.tryCreate("").failed).toBeTrue();
             expect(PlayerId.tryCreate("not-a-uuid").failed).toBeTrue();
+        });
+
+
+        it("tryCreate() accepts only the canonical lowercase dashed form", () => {
+            expect(PlayerId.tryCreate(canonical).succeeded).toBeTrue();
+            for (const bad of nonCanonical) {
+                expect(PlayerId.tryCreate(bad).failed).toBeTrue();
+            }
         });
 
     });
@@ -34,6 +53,14 @@ describe("ids", () => {
         it("tryCreate() rejects an empty or malformed string", () => {
             expect(GameId.tryCreate("").failed).toBeTrue();
             expect(GameId.tryCreate("not-a-uuid").failed).toBeTrue();
+        });
+
+
+        it("tryCreate() accepts only the canonical lowercase dashed form", () => {
+            expect(GameId.tryCreate(canonical).succeeded).toBeTrue();
+            for (const bad of nonCanonical) {
+                expect(GameId.tryCreate(bad).failed).toBeTrue();
+            }
         });
 
     });

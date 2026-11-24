@@ -34,6 +34,12 @@ describe("playerName", () => {
             expect(PlayerName.tryCreate("A\u0007B").failed).toBeTrue();
         });
 
+
+        it("rejects invisible format characters", () => {
+            expect(PlayerName.tryCreate("A​B").failed).toBeTrue();
+            expect(PlayerName.tryCreate("A‮B").failed).toBeTrue();
+        });
+
     });
 
 

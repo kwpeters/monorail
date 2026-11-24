@@ -1,10 +1,15 @@
 import { type Brand } from "@repo/depot/brand";
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
-import { generateUuid, Uuid } from "@repo/depot/uuid";
+import { generateUuid, reStrUuidFormatD } from "@repo/depot/uuid";
+
+
+// Only the canonical form (lowercase, dashed) is accepted so that one UUID has
+// exactly one spelling.
+const canonicalUuidRegex = new RegExp(`^${reStrUuidFormatD}$`, "u");
 
 
 /**
- * Identifies a player.  A UUID string.
+ * Identifies a player.  A canonical (lowercase, dashed) UUID string.
  */
 export type PlayerId = Brand<string, "PlayerId">;
 
@@ -27,7 +32,7 @@ export namespace PlayerId {
      * containing an error message
      */
     export function tryCreate(s: string): Result<PlayerId, string> {
-        return Uuid.isValid(s) ?
+        return canonicalUuidRegex.test(s) ?
             new SucceededResult(s as PlayerId) :
             new FailedResult(`"${s}" is not a valid PlayerId.`);
     }
@@ -36,7 +41,7 @@ export namespace PlayerId {
 
 
 /**
- * Identifies a game.  A UUID string.
+ * Identifies a game.  A canonical (lowercase, dashed) UUID string.
  */
 export type GameId = Brand<string, "GameId">;
 
@@ -59,7 +64,7 @@ export namespace GameId {
      * containing an error message
      */
     export function tryCreate(s: string): Result<GameId, string> {
-        return Uuid.isValid(s) ?
+        return canonicalUuidRegex.test(s) ?
             new SucceededResult(s as GameId) :
             new FailedResult(`"${s}" is not a valid GameId.`);
     }
