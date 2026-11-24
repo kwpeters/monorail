@@ -21,6 +21,10 @@
             "types": "./src/deck.mts",
             "default": "./dist/deck.mjs"
         },
+        "./drivingZone": {
+            "types": "./src/drivingZone.mts",
+            "default": "./dist/drivingZone.mjs"
+        },
         "./ids": {
             "types": "./src/ids.mts",
             "default": "./dist/ids.mjs"
@@ -36,6 +40,10 @@
         "./points": {
             "types": "./src/points.mts",
             "default": "./dist/points.mjs"
+        },
+        "./rejection": {
+            "types": "./src/rejection.mts",
+            "default": "./dist/rejection.mjs"
         }
     },
     "devDependencies": {
