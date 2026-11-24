@@ -71,7 +71,8 @@ This section restates only what the engine pins, so the tests below are unambigu
   Right of Way also cancels an active Stop and an active Speed Limit; status becomes `Rolling` unless a calamity is active.
   Cancelled hazards go to the discard pile.
 - Coup Fourré: only while a hazard window is open, by any member of the target team who holds the safety that counters that hazard.
-  The hazard goes to the discard pile, the safety is recorded as a Coup Fourré, and the zone is otherwise unchanged.
+  The hazard in flight goes to the discard pile and the safety is recorded as a Coup Fourré.
+  The zone is otherwise unchanged, except that Right of Way acts as it does when played normally: it also clears a showing Stop and a Speed Limit and leaves the team `Rolling`; `ZoneChange.discarded` lists those cards.
 - Extension: when a `Drive` brings a team to exactly 700 miles while Extension is `Available`, the race pauses in an Extension offer for the player who played that card.
   Calling Extension makes the trip distance 1,000 for every team and the race continues.
   Declining, or the offer timing out, completes the trip at 700 and ends the race.
@@ -264,7 +265,7 @@ All under `packages/mille-bornes-core/src/` (tests beside sources as `*.test.mts
   playSafety(z, card: SafetyCard): Result<ZoneChange, Rejection>;
   canAttack(z, hazard: HazardCard): Result<void, Rejection>;
   landHazard(z, hazard: HazardCard): Result<ZoneChange, Rejection>;  // re-checks canAttack
-  playCoupFourre(z, card: SafetyCard): ZoneChange;  // records {card, coupFourre: true}; status unchanged
+  playCoupFourre(z, card: SafetyCard): ZoneChange;  // records {card, coupFourre: true}; status unchanged except Right of Way (see Rules); the caller also discards the hazard in flight and `change.discarded`
   // rejection.mts
   type Rejection =
     | { reason: "NotRolling" } | { reason: "BlockedByHazard"; hazard: BlockingHazard }
@@ -570,7 +571,7 @@ All under `packages/mille-bornes-core/src/` (tests beside sources as `*.test.mts
   It removes the card from the attacker's hand, leaves every zone unchanged, sets phase `HazardIncoming`, and emits `HazardPlayed` (no turn start yet).
   While the window is open every other player command returns `WindowOpen`.
   `CoupFourre`: valid only in the window, from a member of the target team (`NotOnTargetTeam`) who holds the safety that counters the hazard (`WrongSafetyForHazard`).
-  It records the safety as a Coup Fourré, discards the hazard card, draws a replacement if the pile has cards, then starts that player's own turn (a second draw).
+  It records the safety as a Coup Fourré, discards the hazard card in flight plus the zone change's `discarded` cards, draws a replacement if the pile has cards, then starts that player's own turn (a second draw).
   Events: `CoupFourrePlayed, CardDrawn, TurnStarted, CardDrawn`.
   `CloseHazardWindow`: valid only in the window (else `NoWindowOpen`).
   It lands the hazard on the target zone (`HazardLanded`), then starts the turn of the next player after the attacker who holds cards (or ends the race as `Exhausted` if none).
