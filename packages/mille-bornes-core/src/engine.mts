@@ -1,5 +1,5 @@
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
-import { type Card, type SafetyCard } from "./card.mjs";
+import { cardSchema, type Card, type SafetyCard } from "./card.mjs";
 import { type Applied, type PlayerCommand, type SystemCommand } from "./commands.mjs";
 import { ShuffledDeck } from "./deck.mjs";
 import { landHazard, newZone, zoneMiles, type ZoneChange } from "./drivingZone.mjs";
@@ -332,22 +332,59 @@ function closeHazardWindow(g: Game): Result<Applied, Rejection> {
 }
 
 
+// Keyed by every SystemCommand type, so the compiler fails here when a type is
+// added to the union without being listed.
+/* eslint-disable @typescript-eslint/naming-convention */
+const systemTypes: Readonly<Record<SystemCommand["type"], true>> = {
+    CloseHazardWindow:   true,
+    CloseExtensionOffer: true,
+    StartNextRace:       true,
+};
+/* eslint-enable @typescript-eslint/naming-convention */
+
+
 // The static type is not trusted, so a bad command is refused, never thrown on.
+// Own-property lookup keeps "constructor", "toString" and "__proto__" out.
 function isSystemCommand(cmd: unknown): boolean {
-    const types: ReadonlyArray<unknown> = ["CloseHazardWindow", "CloseExtensionOffer", "StartNextRace"];
-    return typeof cmd === "object" && cmd !== null && "type" in cmd && types.includes(cmd.type);
+    return typeof cmd === "object" && cmd !== null && "type" in cmd &&
+        typeof cmd.type === "string" && Object.hasOwn(systemTypes, cmd.type);
+}
+
+
+/**
+ * Deals the next race.  The shape is checked first (a deck that is not an
+ * array of valid cards is MalformedCommand), then the phase (WrongPhase unless
+ * RaceOver), then the deck: a list of valid cards that is not a whole Standard
+ * or Reduced deck is WrongDeck, as is a deck of the wrong kind for the variant.
+ */
+function startNextRace(g: Game, deck: unknown): Result<Applied, Rejection> {
+    if (!Array.isArray(deck) || !deck.every((c) => cardSchema.safeParse(c).success)) {
+        return new FailedResult({ reason: "MalformedCommand" });
+    }
+    if (g.phase.kind !== "RaceOver") {
+        return new FailedResult({ reason: "WrongPhase" });
+    }
+    // tryCreate() copies the cards, so the game never shares the caller's array.
+    return ShuffledDeck.tryCreate(deck as ReadonlyArray<Card>)
+    .mapError((): Rejection => ({ reason: "WrongDeck" }))
+    .bind((valid) => dealRace(g.config, g.players, g.teams, valid, g.raceNumber + 1));
 }
 
 
 /**
  * Applies a command issued by the server.  CloseExtensionOffer (the timeout)
- * declines Extension.
+ * declines Extension.  StartNextRace deals the next race from the given deck
+ * (see `dealRace()`): only in phase RaceOver, so the scoreboard stays up
+ * until the server asks for the next race.
  * @param g - The game
  * @param cmd - The command
  * @returns The new game and its events, or the reason the command is refused:
- * MalformedCommand for anything that is not a system command, NoWindowOpen for
+ * MalformedCommand for anything that is not a system command (or a
+ * StartNextRace whose deck is not an array of valid cards), NoWindowOpen for
  * a CloseHazardWindow with no hazard in flight, NoExtensionOffer for a
- * CloseExtensionOffer with no offer open
+ * CloseExtensionOffer with no offer open, WrongPhase for a StartNextRace
+ * outside RaceOver, WrongDeck for a StartNextRace whose deck is not a whole
+ * deck of the variant's kind
  */
 export function applySystemCommand(g: Game, cmd: SystemCommand): Result<Applied, Rejection> {
     if (!isSystemCommand(cmd)) {
@@ -359,8 +396,7 @@ export function applySystemCommand(g: Game, cmd: SystemCommand): Result<Applied,
         case "CloseExtensionOffer":
             return decideExtension(g, false);
         case "StartNextRace":
-            // shortcut: Task 9 implements the next race; refused until then.
-            return new FailedResult({ reason: "WrongPhase" });
+            return startNextRace(g, cmd.deck);
     }
 }
 

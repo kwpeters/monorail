@@ -1,7 +1,7 @@
 import { type Result } from "@repo/depot/result";
 import { Card, type DistanceCard, type HazardCard } from "./card.mjs";
 import { type Applied, type PlayerCommand, type SystemCommand } from "./commands.mjs";
-import { createDeck, type DeckKind } from "./deck.mjs";
+import { createDeck, type DeckKind, type ShuffledDeck } from "./deck.mjs";
 import { newZone, zoneMiles, type DrivingZone } from "./drivingZone.mjs";
 import { applyPlayerCommand, applySystemCommand, createGame, dealRace } from "./engine.mjs";
 import { type Game, type GameConfig, type RaceResult } from "./game.mjs";
@@ -71,13 +71,13 @@ const discardRoll: PlayerCommand = { type: "Discard", card: Card.roll };
 
 /** Applies a system command (by default CloseHazardWindow) that must be accepted. */
 function close(g: Game, cmd: SystemCommand = closeWindow): Applied {
-    return checked(applySystemCommand(deepFreeze(g), cmd));
+    return checked(applySystemCommand(deepFreeze(g), deepFreeze(cmd)));
 }
 
 
 /** Applies a system command that must be refused. */
 function refuseSystem(g: Game, cmd: SystemCommand): Rejection {
-    return applySystemCommand(deepFreeze(g), cmd).throwIfSucceeded();
+    return applySystemCommand(deepFreeze(g), deepFreeze(cmd)).throwIfSucceeded();
 }
 
 
@@ -209,6 +209,41 @@ function exhaustedGame(
     zones: ReadonlyArray<DrivingZone> = [newZone(), newZone()]
 ): Game {
     return buildGame({ config: twoByTwo(), hands, zones, drawPile: [] });
+}
+
+
+/** A 2-seat game where Ann has completed the trip and declined Extension: RaceOver. */
+function annWinsRace(parts: Partial<GameParts> = {}): Game {
+    return play(annReaches700(parts), ann, declineExtension).game;
+}
+
+
+const startRace = (deck: ShuffledDeck): SystemCommand => ({ type: "StartNextRace", deck });
+
+
+/** A 4-seat game where Ann has completed the 1,000 miles: RaceOver. */
+function annWinsFourSeatRace(): Game {
+    return play(annAt900(), ann, { type: "Drive", card: Card.dist100 }).game;
+}
+
+
+/**
+ * A 6-seat game (3 teams of 2) where Ann reaches 700 and declines Extension
+ * while the other teams are in `others`: RaceOver.
+ */
+function threeTeamWin(others: [DrivingZone, DrivingZone]): Game {
+    const g = buildGame({
+        config: threeByTwo(),
+        hands:  [
+            [Card.dist50, Card.roll, Card.dist25, Card.dist75, Card.repairs, Card.stop, Card.gasoline],
+            six(Card.roll), six(Card.dist50), six(Card.dist75), six(Card.spareTire),
+            six(Card.endOfSpeedLimit),
+        ],
+        zones:    [rollingAt(Card.dist200, Card.dist200, Card.dist100, Card.dist100, Card.dist50), ...others],
+        drawPile: [Card.gasoline],
+    });
+    const offered = play(g, ann, { type: "Drive", card: Card.dist50 }).game;
+    return play(offered, ann, declineExtension).game;
 }
 
 
@@ -997,9 +1032,258 @@ describe("engine", () => {
         });
 
 
-        it("refuses StartNextRace until it is implemented", () => {
-            expect(refuseSystem(attackGame(), { type: "StartNextRace", deck: createDeck() }))
-            .toEqual({ reason: "WrongPhase" });
+        describe("StartNextRace", () => {
+
+            it("deals race 2 from the front of the deck onto the same teams, keeping points", () => {
+                const over = annWinsRace({ points: [100, 200] });
+                const totals = resultOf(over).scores.map((s) => s.combinedTotal);
+                expect(totals[0]).toBeGreaterThan(400);
+                const hands = [
+                    [Card.dist25, Card.dist25, Card.dist25, Card.dist50, Card.dist50, Card.dist50],
+                    [Card.stop, Card.stop, Card.accident, Card.repairs, Card.gasoline, Card.spareTire],
+                ];
+                const deck = deckFor(hands, [Card.dist200, Card.roll], "Reduced");
+                const { game, events } = close(over, startRace(deck));
+                expect(game.raceNumber).toBe(2);
+                expect(game.teams.map((t) => t.points)).toEqual(totals);
+                expect(game.teams.map((t) => t.zone)).toEqual([newZone(), newZone()]);
+                expect(game.discardPile).toEqual([]);
+                expect(game.extension).toEqual({ kind: "Available" });
+                // Race 2 starts with the second player, Bob, who draws the card after the hands.
+                expect(game.phase).toEqual({ kind: "Turn", player: bob });
+                expect(game.players[0]!.hand).toEqual(hands[0]!);
+                expect(game.players[1]!.hand).toEqual([...hands[1]!, Card.dist200]);
+                expect(game.drawPile).toEqual(deck.slice(13));
+                expect(events).toEqual([
+                    { type: "RaceDealt", race: 2 },
+                    { type: "TurnStarted", player: bob },
+                    { type: "CardDrawn", player: bob, card: Card.dist200 },
+                ]);
+            });
+
+
+            it("does not advance on its own: RaceOver persists until StartNextRace", () => {
+                const over = annWinsRace();
+                expect(over.phase.kind).toBe("RaceOver");
+                for (const by of [ann, bob]) {
+                    const commands: ReadonlyArray<PlayerCommand> = [
+                        { type: "Drive", card: Card.dist25 },
+                        { type: "Attack", card: Card.accident, targetTeam: team1 },
+                        { type: "Remedy", card: Card.roll },
+                        { type: "PlaySafety", card: Card.drivingAce },
+                        discardRoll,
+                        { type: "CoupFourre", card: Card.drivingAce },
+                        callExtension,
+                        declineExtension,
+                    ];
+                    for (const cmd of commands) {
+                        expect(refuse(over, by, cmd)).withContext(`${by} ${cmd.type}`)
+                        .toEqual({ reason: "WrongPhase" });
+                    }
+                }
+                expect(over.phase.kind).toBe("RaceOver");
+            });
+
+
+            it("carries each team's total into the next race's broughtForward", () => {
+                const race1 = annWinsRace();
+                const totals = resultOf(race1).scores.map((s) => s.combinedTotal);
+                // Bob reaches exactly 700 with 5 drives; Ann discards in between.
+                const bobsHand = [
+                    Card.roll, Card.dist200, Card.dist200, Card.dist100, Card.dist100, Card.dist100,
+                ];
+                let g = close(race1, startRace(deckFor([six(Card.dist25), bobsHand], [], "Reduced"))).game;
+                const bobsPlays: ReadonlyArray<PlayerCommand> = [
+                    { type: "Remedy", card: Card.roll },
+                    { type: "Drive", card: Card.dist200 },
+                    { type: "Drive", card: Card.dist200 },
+                    { type: "Drive", card: Card.dist100 },
+                    { type: "Drive", card: Card.dist100 },
+                    { type: "Drive", card: Card.dist100 },
+                ];
+                bobsPlays.forEach((cmd, i) => {
+                    g = play(g, bob, cmd).game;
+                    if (i < bobsPlays.length - 1) {
+                        g = play(g, ann, { type: "Discard", card: g.players[0]!.hand[0]! }).game;
+                    }
+                });
+                expect(g.phase.kind).toBe("ExtensionOffer");
+                g = play(g, bob, declineExtension).game;
+                const result = resultOf(g);
+                expect(result.outcome)
+                .toEqual({ kind: "TripCompleted", team: team1, delayedAction: false, extensionCaller: null });
+                expect(result.scores.map((s) => s.broughtForward)).toEqual(totals);
+                expect(g.teams.map((t) => t.points))
+                .toEqual(result.scores.map((s) => s.combinedTotal));
+            });
+
+
+            it("makes Extension Available again after a race that ended with it Called", () => {
+                const hands = [
+                    [Card.dist50, Card.dist100, Card.dist100, Card.dist100, Card.roll, Card.roll, Card.roll],
+                    six(Card.roll),
+                ];
+                let twoSeat = play(annReaches700({ hands, drawPile: [] }), ann, callExtension).game;
+                for (let i = 0; i < 3; i++) {
+                    twoSeat = play(twoSeat, bob, discardRoll).game;
+                    twoSeat = play(twoSeat, ann, { type: "Drive", card: Card.dist100 }).game;
+                }
+                let threeSeat = play(threeSeatOffer(), ann, callExtension).game;
+                threeSeat = play(threeSeat, bob, { type: "Drive", card: Card.dist200 }).game;
+                threeSeat = play(threeSeat, cy, discardRoll).game;
+                threeSeat = play(threeSeat, ann, { type: "Discard", card: Card.stop }).game;
+                threeSeat = play(threeSeat, bob, { type: "Drive", card: Card.dist200 }).game;
+                for (const over of [twoSeat, threeSeat]) {
+                    const seats = over.players.length;
+                    expect(over.phase.kind).withContext(`${seats} seats`).toBe("RaceOver");
+                    expect(over.extension.kind).withContext(`${seats} seats`).toBe("Called");
+                    const { game } = close(over, startRace(createDeck("Reduced")));
+                    expect(game.extension).withContext(`${seats} seats`).toEqual({ kind: "Available" });
+                    expect(contextFromGame(game, ann).throwIfFailed().tripDistance)
+                    .withContext(`${seats} seats`).toBe(700 as Miles);
+                }
+            });
+
+
+            it("leaves Extension NotApplicable in a 4-seat game", () => {
+                const { game } = close(annWinsFourSeatRace(), startRace(createDeck()));
+                expect(game.extension).toEqual({ kind: "NotApplicable" });
+                expect(contextFromGame(game, bob).throwIfFailed().tripDistance).toBe(1000 as Miles);
+                expect(game.teams.map((t) => t.points)).not.toEqual([0, 0] as Array<Points>);
+            });
+
+
+            it("rotates the first player one seat per race: 4 seats play first in turn 0, 1, 2, 3, 0", () => {
+                const over = annWinsFourSeatRace();
+                const names = [ann, bob, cy, di];
+                const first = createGame(twoByTwo(), createDeck()).throwIfFailed().game;
+                expect(first.phase).toEqual({ kind: "Turn", player: ann });
+                for (let race = 1; race <= 4; race++) {
+                    const deck = createDeck();
+                    const { game, events } = close({ ...over, raceNumber: race }, startRace(deck));
+                    const firstSeat = race % 4;
+                    expect(game.raceNumber).withContext(`race ${race + 1}`).toBe(race + 1);
+                    expect(game.phase).withContext(`race ${race + 1}`)
+                    .toEqual({ kind: "Turn", player: names[firstSeat]! });
+                    expect(game.players.map((p) => p.hand)).withContext(`race ${race + 1}`)
+                    .toEqual(game.players.map((_, i) => [
+                        ...deck.slice(6 * i, 6 * i + 6),
+                        ...(i === firstSeat ? [deck[24]!] : []),
+                    ]));
+                    expect(game.drawPile).withContext(`race ${race + 1}`).toEqual(deck.slice(25));
+                    expect(game.discardPile).toEqual([]);
+                    expect(events.map((e) => e.type)).toEqual(["RaceDealt", "TurnStarted", "CardDrawn"]);
+                }
+            });
+
+
+            it("is refused outside RaceOver: Turn, HazardIncoming, ExtensionOffer and GameOver", () => {
+                const shortOver = annWinsRace({ config: { ...oneOnOne(), length: "Short" }, points: [1500, 0] });
+                expect(shortOver.phase.kind).toBe("GameOver");
+                const cases: ReadonlyArray<[string, Game, DeckKind]> = [
+                    ["Turn", gameWhereAnnHolds(annHand), "Standard"],
+                    ["HazardIncoming", annAttacks(Card.accident), "Standard"],
+                    ["ExtensionOffer", annReaches700(), "Reduced"],
+                    ["GameOver", shortOver, "Reduced"],
+                ];
+                for (const [name, g, kind] of cases) {
+                    const snapshot = structuredClone(g);
+                    expect(refuseSystem(g, startRace(createDeck(kind)))).withContext(name)
+                    .toEqual({ reason: "WrongPhase" });
+                    expect(g).withContext(name).toEqual(snapshot);
+                }
+            });
+
+
+            it("refuses a deck of the wrong kind for the variant with WrongDeck", () => {
+                const twoSeat = annWinsRace();
+                const fourSeat = annWinsFourSeatRace();
+                expect(refuseSystem(twoSeat, startRace(createDeck("Standard"))))
+                .toEqual({ reason: "WrongDeck" });
+                expect(refuseSystem(fourSeat, startRace(createDeck("Reduced"))))
+                .toEqual({ reason: "WrongDeck" });
+                expect(twoSeat.phase.kind).toBe("RaceOver");
+            });
+
+
+            it("refuses a card list that is not a whole deck with WrongDeck", () => {
+                const over = annWinsRace();
+                const short = createDeck("Reduced").slice(1) as unknown as ShuffledDeck;
+                const doubled = [...createDeck("Reduced"), ...createDeck("Reduced")] as unknown as ShuffledDeck;
+                for (const deck of [short, doubled, [] as unknown as ShuffledDeck]) {
+                    expect(refuseSystem(over, startRace(deck))).withContext(String(deck.length))
+                    .toEqual({ reason: "WrongDeck" });
+                }
+            });
+
+
+            it("refuses a missing, non-array or unknown-card deck with MalformedCommand, never throwing", () => {
+                const over = annWinsRace();
+                const snapshot = structuredClone(over);
+                const unknownCard = [...createDeck("Reduced").slice(1), "Nope"];
+                const badDecks: ReadonlyArray<[string, unknown]> = [
+                    ["a missing deck", undefined],
+                    ["null", null],
+                    ["a string", "Roll"],
+                    ["an object with a length", { length: 101 }],
+                    ["a deck with an unknown card", unknownCard],
+                ];
+                for (const [name, deck] of badDecks) {
+                    const cmd = { type: "StartNextRace", deck } as unknown as SystemCommand;
+                    expect(refuseSystem(over, cmd)).withContext(name).toEqual({ reason: "MalformedCommand" });
+                }
+                const noDeck = { type: "StartNextRace" } as unknown as SystemCommand;
+                expect(refuseSystem(over, noDeck)).toEqual({ reason: "MalformedCommand" });
+                // The shape is checked before the phase.
+                expect(refuseSystem(annReaches700(), noDeck)).toEqual({ reason: "MalformedCommand" });
+                expect(over).toEqual(snapshot);
+            });
+
+
+            it("ends a Short game through the engine when a team reaches 2,000", () => {
+                const config = { ...oneOnOne(), length: "Short" as const };
+                const { game } = play(annReaches700({ config, points: [1500, 0] }), ann, declineExtension);
+                expect(game.phase).toEqual(jasmine.objectContaining({ kind: "GameOver", winner: team0 }));
+                expect(game.teams[0]!.points).toBeGreaterThanOrEqual(2000);
+            });
+
+
+            it("keeps a Short game going when the totals are [2000, 2000], then plays another race", () => {
+                const config = { ...oneOnOne(), length: "Short" as const };
+                const raceScores = resultOf(annWinsRace({ config })).scores.map((s) => s.totalForRace);
+                const points = raceScores.map((s) => 2000 - s);
+                const over = annWinsRace({ config, points });
+                expect(over.phase.kind).toBe("RaceOver");
+                expect(over.teams.map((t) => t.points)).toEqual([2000, 2000] as Array<Points>);
+                const { game } = close(over, startRace(createDeck("Reduced")));
+                expect(game.raceNumber).toBe(2);
+                expect(game.phase.kind).toBe("Turn");
+                expect(game.teams.map((t) => t.points)).toEqual([2000, 2000] as Array<Points>);
+            });
+
+
+            it("ends a Quick race tied on miles as RaceOver, not GameOver", () => {
+                const config = { ...twoByTwo(), length: "Quick" as const };
+                const g = buildGame({
+                    config,
+                    hands:    [[Card.dist25], [], [], []],
+                    zones:    [rollingAt(Card.dist100, Card.dist75), rollingAt(Card.dist200)],
+                    drawPile: [],
+                });
+                const { game } = play(g, ann, { type: "Drive", card: Card.dist25 });
+                expect(resultOf(game).outcome).toEqual({ kind: "Exhausted", winner: "Tie", extensionCaller: null });
+                expect(game.phase.kind).toBe("RaceOver");
+                expect(close(game, startRace(createDeck())).game.raceNumber).toBe(2);
+            });
+
+
+            it("scores the shutout row (500) in a 3-team game only when both opponents have 0 miles", () => {
+                const shutout = threeTeamWin([newZone(), newZone()]);
+                expect(resultOf(shutout).scores.map((s) => s.shutout)).toEqual([500, 0, 0] as Array<Points>);
+                const notShutout = threeTeamWin([newZone(), rollingAt(Card.dist25)]);
+                expect(resultOf(notShutout).scores.map((s) => s.shutout)).toEqual([0, 0, 0] as Array<Points>);
+            });
+
         });
 
 
@@ -1012,6 +1296,10 @@ describe("engine", () => {
                 ["a number", 7],
                 ["a command with no type", {}],
                 ["an unknown command type", { type: "Nope" }],
+                ["a non-string type", { type: 7 }],
+                ["the prototype key constructor", { type: "constructor" }],
+                ["the prototype key __proto__", { type: "__proto__" }],
+                ["the prototype key toString", { type: "toString" }],
             ];
             for (const [name, cmd] of malformed) {
                 expect(refuseSystem(g, cmd as SystemCommand)).withContext(name)
