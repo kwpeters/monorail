@@ -36,7 +36,7 @@ export function describeRejection(r: Rejection): string {
         case "NotRolling":
             return "You can't drive yet. Play a Roll card first.";
         case "BlockedByHazard":
-            return `Your car is blocked by a ${r.hazard} card. Play ${remedyFor(r.hazard)} to fix it first.`;
+            return `Your car is blocked by ${r.hazard}. Play ${remedyFor(r.hazard)} to fix it first.`;
         case "SpeedLimited":
             return "A speed limit is active: you can only play 25- or 50-mile cards until you play End of Speed Limit.";
         case "WouldOvershoot":

@@ -1,4 +1,6 @@
-import { Card, type DistanceCard, type HazardCard, type RemedyCard, type SafetyCard } from "./card.mjs";
+import {
+    Card, safetyCardSchema, type DistanceCard, type HazardCard, type RemedyCard, type SafetyCard
+} from "./card.mjs";
 import {
     canAttack, canMove, hasSafety, landHazard, newZone, playCoupFourre, playDistance, playRemedy, playSafety,
     zoneMiles, type DrivingZone, type ZoneChange
@@ -403,6 +405,52 @@ describe("drivingZone", () => {
             const change = playCoupFourre(zone, Card.rightOfWay);
             expect(change.zone.speedLimit).toBeFalse();
             expect(change.discarded).toEqual([Card.speedLimit]);
+        });
+
+
+        it("Right of Way as a coup fourre clears a Stop already showing", () => {
+            const zone = afterHazard(rolling(), Card.stop);
+            const change = playCoupFourre(zone, Card.rightOfWay);
+            expect(change.zone.status).toEqual({ kind: "Rolling" });
+            expect(change.discarded).toEqual([Card.stop]);
+        });
+
+
+        it("Right of Way as a coup fourre starts a car that needs a Roll", () => {
+            const change = playCoupFourre(deepFreeze(newZone()), Card.rightOfWay);
+            expect(change.zone.status).toEqual({ kind: "Rolling" });
+            expect(change.discarded).toEqual([]);
+        });
+
+    });
+
+
+    describe("Right of Way invariant", () => {
+
+        it("never coexists with NeedsRoll, Hazard(stop) or a speed limit", () => {
+            const limited = afterHazard(rolling(), Card.speedLimit);
+            const zones: Array<DrivingZone> = [
+                deepFreeze(newZone()),
+                rolling(),
+                limited,
+                afterHazard(limited, Card.stop),
+                afterHazard(limited, Card.accident),
+                afterHazard(rolling(), Card.outOfGas),
+                afterHazard(rolling(), Card.flatTire),
+            ];
+            const results: Array<DrivingZone> = [];
+            for (const zone of zones) {
+                for (const safety of safetyCardSchema.options) {
+                    results.push(succeeded(playSafety(zone, safety)).zone, playCoupFourre(zone, safety).zone);
+                }
+            }
+            const withRightOfWay = results.filter((z) => hasSafety(z, Card.rightOfWay));
+            expect(withRightOfWay.length).toBeGreaterThan(0);
+            for (const z of withRightOfWay) {
+                expect(z.status).not.toEqual({ kind: "NeedsRoll" });
+                expect(z.status).not.toEqual({ kind: "Hazard", hazard: Card.stop });
+                expect(z.speedLimit).toBeFalse();
+            }
         });
 
     });

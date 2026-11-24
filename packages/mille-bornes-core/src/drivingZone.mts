@@ -27,6 +27,10 @@ export interface PlayedSafety {
 /**
  * Everything showing in front of a team: its battle pile status, speed limit,
  * distance cards and safeties.  Instances are immutable.
+ *
+ * Invariant: once Right of Way is in play, the status is never `NeedsRoll` or
+ * `Hazard(stop)` and `speedLimit` is false.  `canMove()` relies on this by
+ * testing only for `Rolling`.
  */
 export interface DrivingZone {
     readonly status:     ZoneStatus;
@@ -205,11 +209,13 @@ function applySafety(z: DrivingZone, card: SafetyCard, coupFourre: boolean): Zon
 
 
 /**
- * Plays a safety card.  It cancels any matching hazard showing, leaving the
- * car rolling.
+ * Plays a safety card.  It cancels a matching blocking hazard showing, leaving
+ * the car rolling; Right of Way also clears a speed limit and starts a car that
+ * needs a Roll.  Any other hazard or status is left as it was.
  * @param z - The zone to play on
  * @param card - The safety card
- * @returns The new zone, or SafetyAlreadyPlayed
+ * @returns The new zone and the cards cleared from it (to be discarded), or
+ * SafetyAlreadyPlayed
  */
 export function playSafety(z: DrivingZone, card: SafetyCard): Result<ZoneChange, Rejection> {
     if (hasSafety(z, card)) {
@@ -255,9 +261,15 @@ export function landHazard(z: DrivingZone, hazard: HazardCard): Result<ZoneChang
  * Plays a safety card as a Coup Fourre in response to an attack that was
  * never shown on this zone.  The caller must ensure the safety has not
  * already been played.
+ *
+ * The caller must discard the hazard in flight (it never reaches this zone)
+ * plus every card in `discarded` of the result.  Right of Way clears a Stop
+ * and a speed limit already showing (both are in `discarded`) and starts a car
+ * that needs a Roll.  Other safeties leave the status unchanged.
  * @param z - The zone of the team playing the Coup Fourre
  * @param card - The safety card
- * @returns The new zone with the safety recorded as a Coup Fourre
+ * @returns The new zone with the safety recorded as a Coup Fourre, and the
+ * cards cleared from the zone that must also be discarded
  */
 export function playCoupFourre(z: DrivingZone, card: SafetyCard): ZoneChange {
     return applySafety(z, card, true);

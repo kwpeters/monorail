@@ -56,7 +56,12 @@ describe("rejection", () => {
 
 
         it("names the card that fixes a blocking hazard", () => {
-            expect(describeRejection({ reason: "BlockedByHazard", hazard: Card.accident })).toContain(Card.repairs);
+            expect(describeRejection({ reason: "BlockedByHazard", hazard: Card.accident }))
+            .toBe("Your car is blocked by Accident. Play Repairs to fix it first.");
+            expect(describeRejection({ reason: "BlockedByHazard", hazard: Card.outOfGas }))
+            .toBe("Your car is blocked by Out of Gas. Play Gasoline to fix it first.");
+            expect(describeRejection({ reason: "BlockedByHazard", hazard: Card.stop }))
+            .toBe("Your car is blocked by Stop. Play Roll to fix it first.");
         });
 
     });
