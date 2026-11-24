@@ -110,6 +110,12 @@ describe("rules", () => {
 
     describe("checkCommand()", () => {
 
+        it("refuses a malformed command before checking the phase", () => {
+            const cmd = { type: "Drive", card: Card.roll } as unknown as PlayerCommand;
+            expect(refusal(annsContext({ kind: "Over" }), cmd)).toEqual({ reason: "MalformedCommand" });
+        });
+
+
         it("lets the player discard any card in hand", () => {
             const ctx = annsContext(annsTurn);
             for (const card of ctx.hand) {

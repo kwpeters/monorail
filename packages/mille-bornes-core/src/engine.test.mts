@@ -97,7 +97,7 @@ function annAt900(parts: Partial<GameParts> = {}): Game {
 
 
 /** A 2-seat game where Ann is at 650 miles and holds a 100 and a 50. */
-function annAt650(): Game {
+function annAt650(parts: Partial<GameParts> = {}): Game {
     return buildGame({
         config: oneOnOne(),
         hands:  [
@@ -109,6 +109,7 @@ function annAt650(): Game {
             newZone(),
         ],
         drawPile: [Card.spareTire],
+        ...parts,
     });
 }
 
@@ -427,6 +428,63 @@ describe("engine", () => {
         });
 
 
+        it("refuses malformed commands before anything else, without changing the game", () => {
+            const g = deepFreeze(gameWhereAnnHolds(annHand));
+            const snapshot = structuredClone(g);
+            const malformed: ReadonlyArray<[string, unknown]> = [
+                ["a Drive of a Roll", { type: "Drive", card: Card.roll }],
+                ["a Remedy of a distance card", { type: "Remedy", card: Card.dist100 }],
+                ["a PlaySafety of a remedy", { type: "PlaySafety", card: Card.roll }],
+                ["a CoupFourre of a hazard", { type: "CoupFourre", card: Card.accident }],
+                ["an Attack with a remedy", { type: "Attack", card: Card.roll, targetTeam: 1 }],
+                ["an Attack on a team out of range", { type: "Attack", card: Card.accident, targetTeam: 2 }],
+                ["an Attack on a negative team", { type: "Attack", card: Card.accident, targetTeam: -1 }],
+                ["an Attack on a fractional team", { type: "Attack", card: Card.accident, targetTeam: 0.5 }],
+                ["an Attack on a team given as text", { type: "Attack", card: Card.accident, targetTeam: "1" }],
+                ["an Attack with no team", { type: "Attack", card: Card.accident }],
+                ["a Discard of an unknown card", { type: "Discard", card: "Joker" }],
+                ["a Discard with no card", { type: "Discard" }],
+                ["an unknown command type", { type: "Cheat" }],
+                ["a command with no type", {}],
+                ["null", null],
+                ["a string", "Drive"],
+            ];
+            for (const [name, cmd] of malformed) {
+                for (const by of [ann, bob]) {
+                    expect(refuse(g, by, cmd as PlayerCommand)).withContext(name)
+                    .toEqual({ reason: "MalformedCommand" });
+                }
+            }
+            expect(g).toEqual(snapshot);
+        });
+
+
+        it("ends the race with the Extension caller when a team completes 1,000 miles", () => {
+            for (const caller of [team0, team1]) {
+                const g = buildGame({
+                    config:    oneOnOne(),
+                    hands:     [[Card.dist100], six(Card.roll)],
+                    zones:     [rollingAt(...Array.from({ length: 9 }, () => Card.dist100)), newZone()],
+                    drawPile:  [Card.spareTire],
+                    extension: { kind: "Called", caller },
+                });
+                const { game } = play(g, ann, { type: "Drive", card: Card.dist100 });
+                expect(resultOf(game).outcome).withContext(`caller ${caller}`)
+                .toEqual({ kind: "TripCompleted", team: team0, delayedAction: false, extensionCaller: caller });
+            }
+        });
+
+
+        it("opens no offer when a team reaches 700 after Extension is called", () => {
+            const { game, events } = play(annAt650({ extension: { kind: "Called", caller: team1 } }), ann, {
+                type: "Drive",
+                card: Card.dist50,
+            });
+            expect(game.phase).toEqual({ kind: "Turn", player: bob });
+            expect(events.map((e) => e.type)).toEqual(["DistancePlayed", "TurnStarted", "CardDrawn"]);
+        });
+
+
         describe("when the draw pile is exhausted", () => {
 
             it("starts the next turn without a draw", () => {
@@ -481,6 +539,26 @@ describe("engine", () => {
                 );
                 const { game } = play(g, ann, { type: "Drive", card: Card.dist25 });
                 expect(resultOf(game).outcome).toEqual({ kind: "Exhausted", winner: "Tie", extensionCaller: null });
+            });
+
+
+            it("ends the race as Exhausted when the last card is a Safety", () => {
+                const g = exhaustedGame([[Card.drivingAce], [], [], []], [rollingAt(Card.dist100), newZone()]);
+                const { game, events } = play(g, ann, { type: "PlaySafety", card: Card.drivingAce });
+                expect(events.map((e) => e.type)).toEqual(["SafetyPlayed", "RaceEnded"]);
+                expect(resultOf(game).outcome).toEqual({ kind: "Exhausted", winner: team0, extensionCaller: null });
+            });
+
+
+            it("records the Extension caller when the race ends Exhausted", () => {
+                const g = buildGame({
+                    config:    oneOnOne(),
+                    hands:     [[Card.dist25], []],
+                    zones:     [rollingAt(Card.dist100), newZone()],
+                    extension: { kind: "Called", caller: team1 },
+                });
+                const { game } = play(g, ann, { type: "Drive", card: Card.dist25 });
+                expect(resultOf(game).outcome).toEqual({ kind: "Exhausted", winner: team0, extensionCaller: team1 });
             });
 
         });

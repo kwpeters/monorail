@@ -1,5 +1,8 @@
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
-import { type Card, type HazardCard } from "./card.mjs";
+import {
+    cardSchema, distanceCardSchema, hazardCardSchema, remedyCardSchema, safetyCardSchema,
+    type Card, type HazardCard
+} from "./card.mjs";
 import { type PlayerCommand } from "./commands.mjs";
 import {
     playDistance, playRemedy, playSafety, type DrivingZone, type ZoneChange
@@ -88,6 +91,37 @@ function isExtensionDecision(cmd: PlayerCommand): boolean {
 }
 
 
+// Commands may come from untrusted clients, so their static types are not
+// trusted: this check runs first so malformed input never reaches zone code.
+function isWellFormed(ctx: PlayContext, cmd: unknown): boolean {
+    if (typeof cmd !== "object" || cmd === null || !("type" in cmd)) {
+        return false;
+    }
+    const card = "card" in cmd ? cmd.card : undefined;
+    switch (cmd.type) {
+        case "Drive":
+            return distanceCardSchema.safeParse(card).success;
+        case "Remedy":
+            return remedyCardSchema.safeParse(card).success;
+        case "PlaySafety":
+        case "CoupFourre":
+            return safetyCardSchema.safeParse(card).success;
+        case "Attack": {
+            const target = "targetTeam" in cmd ? cmd.targetTeam : undefined;
+            return hazardCardSchema.safeParse(card).success && typeof target === "number" &&
+                Number.isInteger(target) && target >= 0 && target < ctx.zones.length;
+        }
+        case "Discard":
+            return cardSchema.safeParse(card).success;
+        case "CallExtension":
+        case "DeclineExtension":
+            return true;
+        default:
+            return false;
+    }
+}
+
+
 function checkPhaseAndTurn(ctx: PlayContext, cmd: PlayerCommand): Rejection | null {
     const phase = ctx.phase;
     switch (phase.kind) {
@@ -147,7 +181,8 @@ function checkZone(ctx: PlayContext, cmd: PlayerCommand): Result<ZoneChange | nu
 
 /**
  * Checks a command like `checkCommand()` and also works out the change it
- * makes to the player's own zone.
+ * makes to the player's own zone.  Shared by the engine, which applies the
+ * change.
  * @param ctx - The player's context
  * @param cmd - The command
  * @returns The change to the player's zone, null for a command that changes
@@ -157,13 +192,17 @@ export function checkPlay(
     ctx: PlayContext,
     cmd: PlayerCommand
 ): Result<ZoneChange | null, Rejection> {
+    if (!isWellFormed(ctx, cmd)) {
+        return new FailedResult({ reason: "MalformedCommand" });
+    }
     const refused = checkPhaseAndTurn(ctx, cmd) ?? checkHand(ctx, cmd);
     return refused ? new FailedResult(refused) : checkZone(ctx, cmd);
 }
 
 
 /**
- * Determines whether a player may issue a command.  Checks, in order: the
+ * Determines whether a player may issue a command.  Checks, in order: that
+ * the command is well formed (it may come from an untrusted client), the
  * phase, the turn, that the card is in the player's hand, and the zone rules.
  * Any card in hand may be discarded.
  * @param ctx - The player's context

@@ -27,7 +27,7 @@ const handSize = 6;
  * @param events - The events so far; the new ones are appended
  * @returns The game on the player's turn and the events
  */
-export function startTurn(g: Game, index: number, events: ReadonlyArray<GameEvent>): Applied {
+function startTurn(g: Game, index: number, events: ReadonlyArray<GameEvent>): Applied {
     const player = g.players[index]!.seat.id;
     const game: Game = { ...g, phase: { kind: "Turn", player } };
     const started: GameEvent = { type: "TurnStarted", player };
@@ -53,7 +53,7 @@ export function startTurn(g: Game, index: number, events: ReadonlyArray<GameEven
  * the search wraps around and checks every player once
  * @returns The player's index, or undefined when nobody holds cards
  */
-export function nextPlayerWithCards(g: Game, from: number): number | undefined {
+function nextPlayerWithCards(g: Game, from: number): number | undefined {
     const n = g.players.length;
     return Array.from({ length: n }, (_, k) => (from + k) % n)
     .find((i) => g.players[i]!.hand.length > 0);
@@ -86,7 +86,7 @@ function exhausted(g: Game): RaceOutcome {
  * @param events - The events so far; RaceEnded (and GameEnded) are appended
  * @returns The game in phase RaceOver or GameOver and the events
  */
-export function finishRace(
+function finishRace(
     g: Game,
     outcome: RaceOutcome,
     events: ReadonlyArray<GameEvent>
@@ -116,7 +116,7 @@ export function finishRace(
  * @param events - The events so far; the new ones are appended
  * @returns The game and the events
  */
-export function nextTurn(g: Game, from: number, events: ReadonlyArray<GameEvent>): Applied {
+function nextTurn(g: Game, from: number, events: ReadonlyArray<GameEvent>): Applied {
     const next = nextPlayerWithCards(g, from);
     return next === undefined ? finishRace(g, exhausted(g), events) : startTurn(g, next, events);
 }

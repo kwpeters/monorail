@@ -61,6 +61,7 @@ describe("rejection", () => {
                 { reason: "ExtensionOfferOpen", decider: ann },
                 { reason: "NoExtensionOffer" },
                 { reason: "NotTheCaller", decider: ann },
+                { reason: "MalformedCommand" },
                 ...[0, 1, 5, 7, 12].map((count): Rejection => ({ reason: "UnsupportedPlayerCount", count })),
                 { reason: "WrongDeck" },
             ];

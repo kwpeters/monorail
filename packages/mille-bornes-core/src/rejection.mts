@@ -32,6 +32,7 @@ export type Rejection =
     | { reason: "ExtensionOfferOpen"; decider: PlayerName }
     | { reason: "NoExtensionOffer" }
     | { reason: "NotTheCaller"; decider: PlayerName }
+    | { reason: "MalformedCommand" }
     | { reason: "UnsupportedPlayerCount"; count: number }
     | { reason: "WrongDeck" };
 
@@ -105,6 +106,8 @@ export function describeRejection(r: Rejection): string {
             return "There is no Extension to decide on right now.";
         case "NotTheCaller":
             return `Only ${r.decider} can decide whether to call Extension.`;
+        case "MalformedCommand":
+            return "That isn't a move the game understands.";
         case "UnsupportedPlayerCount":
             return `Mille Bornes needs 2, 3, 4, or 6 players. You have ${r.count}, so ${playerCountAdvice(r.count)}.`;
         case "WrongDeck":
