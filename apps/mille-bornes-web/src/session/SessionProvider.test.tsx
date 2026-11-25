@@ -2,8 +2,13 @@ import { NoneOption, SomeOption } from "@repo/depot/option";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StrictMode, type ReactElement } from "react";
-import { describe, expect, it } from "vitest";
-import { type Credential } from "../api/credential.mjs";
+import { describe, expect, it, vi } from "vitest";
+import { type ApiDeps } from "../api/client.mjs";
+import {
+    createCredentialStore,
+    type Credential,
+    type CredentialStore
+} from "../api/credential.mjs";
 import { voidWire } from "../api/outcomes.mjs";
 import { type ScreenStoreDeps } from "../state/screenStore.mjs";
 import { createFakeStore, type FakeStore } from "../testing/fakeStore.mjs";
@@ -47,18 +52,22 @@ function unauthorized(): Response {
 }
 
 
+type Respond = (input: string, init?: RequestInit) => Promise<Response>;
+
+
 function setup(
     initial?: Credential,
-    respond:  () => Promise<Response> = () => Promise.resolve(unauthorized())
+    respond: Respond = () => Promise.resolve(unauthorized()),
+    persisted?: CredentialStore
 ) {
-    const credentials = createMemoryCredentials(initial);
+    const credentials = persisted ?? createMemoryCredentials(initial);
     const created: Created[] = [];
     const createStore = (deps: ScreenStoreDeps): FakeStore => {
         const store = createFakeStore();
         created.push({ store, deps });
         return store;
     };
-    const fetch = respond;
+    const fetch = respond as unknown as ApiDeps["fetch"];
     const tree = (
         <SessionProvider credentials={credentials} createStore={createStore} fetch={fetch}>
             <Probe />
@@ -177,6 +186,60 @@ describe("SessionProvider", () => {
             expect(screen.getByText("signed in as pB")).toBeInTheDocument();
             expect(credentials.load()).toEqual(new SomeOption(bob));
             expect(created[1]!.store.stop).not.toHaveBeenCalled();
+        });
+
+    });
+
+
+    describe("when the credential cannot be saved", () => {
+
+        // Like a browser in private mode: reads find nothing, writes throw.
+        function unsavable(): CredentialStore {
+            return createCredentialStore({
+                getItem: () => null,
+                setItem: () => {
+                    throw new Error("The storage is full.");
+                },
+                removeItem: () => undefined
+            });
+        }
+
+
+        it("still signs in for this visit, and sends the credential", async () => {
+            const respond = vi.fn<Respond>(() => Promise.resolve(unauthorized()));
+            const { tree, created, user } = setup(undefined, respond, unsavable());
+            render(tree);
+            await user.click(screen.getByRole("button", { name: "sign in A" }));
+            expect(screen.getByText("signed in as pA")).toBeInTheDocument();
+            expect(created[0]!.store.start).toHaveBeenCalledTimes(1);
+
+            await created[0]!.deps.api.call((t) => t.session.me.query(), voidWire);
+            expect(new Headers(respond.mock.calls[0]?.[1]?.headers).get("authorization"))
+            .toBe("Bearer pA.tokenA");
+        });
+
+
+        it("returns to name entry when the subscription reports UNAUTHORIZED", async () => {
+            const { tree, created, user } = setup(undefined, undefined, unsavable());
+            render(tree);
+            await user.click(screen.getByRole("button", { name: "sign in A" }));
+            act(() => created[0]!.deps.onUnauthorized());
+            expect(screen.getByText("nobody")).toBeInTheDocument();
+            expect(created[0]!.store.stop).toHaveBeenCalled();
+        });
+
+
+        it("returns to name entry when a call is answered with UNAUTHORIZED", async () => {
+            const { tree, created, user } = setup(undefined, undefined, unsavable());
+            render(tree);
+            await user.click(screen.getByRole("button", { name: "sign in A" }));
+            await created[0]!.deps.api.call(
+                (t) => t.session.rename.mutate({ name: "x" }),
+                voidWire
+            );
+            await waitFor(() => {
+                expect(screen.getByText("nobody")).toBeInTheDocument();
+            });
         });
 
     });

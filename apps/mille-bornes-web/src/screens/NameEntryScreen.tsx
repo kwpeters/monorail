@@ -1,11 +1,15 @@
 import { NoneOption, type Option, SomeOption } from "@repo/depot/option";
-import { useId, useState, type FormEvent, type ReactElement } from "react";
+import { useId, useRef, useState, type FormEvent, type ReactElement } from "react";
 import { type Api } from "../api/client.mjs";
 import { type Credential } from "../api/credential.mjs";
 import { sessionCreatedSchema } from "../api/outcomes.mjs";
 
 
-/** The server's name limit (20 characters), as the field enforces it. */
+/**
+ * The server's name limit is 20 code points; `maxLength` counts UTF-16
+ * units, so the field is only ever stricter than the server (an emoji counts
+ * as two).
+ */
 const maxNameLength = 20;
 
 
@@ -39,23 +43,33 @@ export function NameEntryScreen(props: NameEntryScreenProps): ReactElement {
     const [message, setMessage] = useState<Option<string>>(NoneOption.get());
     const [busy, setBusy] = useState(false);
 
+    // Set before the first await: two submits in the same tick send one request.
+    const inFlight = useRef(false);
+
     // A name of None asks the server to pick one.
     const createSession = async (chosen: Option<string>): Promise<void> => {
-        if (busy) {
+        if (inFlight.current) {
             return;
         }
+        inFlight.current = true;
         setBusy(true);
         setMessage(NoneOption.get());
-        const result = await api.call(
-            (t) => t.session.create.mutate({ name: chosen.toNullable(null) }),
-            sessionCreatedSchema
-        );
-        setBusy(false);
-        if (result.succeeded) {
-            onSignedIn({ playerId: result.value.playerId, token: result.value.token });
+        try {
+            const result = await api.call(
+                (t) => t.session.create.mutate({ name: chosen.toNullable(null) }),
+                sessionCreatedSchema
+            );
+            if (result.succeeded) {
+                onSignedIn({ playerId: result.value.playerId, token: result.value.token });
+            }
+            else {
+                setMessage(new SomeOption(result.error));
+            }
         }
-        else {
-            setMessage(new SomeOption(result.error));
+        finally {
+            // eslint-disable-next-line require-atomic-updates -- only cleared here
+            inFlight.current = false;
+            setBusy(false);
         }
     };
 

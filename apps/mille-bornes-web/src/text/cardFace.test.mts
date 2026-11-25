@@ -59,7 +59,7 @@ describe("cardFace", () => {
 
     it("says a remedy needs a Roll first unless the team has Right of Way", () => {
         for (const card of [Card.repairs, Card.gasoline, Card.spareTire]) {
-            expect(cardFace(card).blurb, card).toContain("unless you have Right of Way");
+            expect(cardFace(card).blurb, card).toContain("unless it has Right of Way");
         }
     });
 

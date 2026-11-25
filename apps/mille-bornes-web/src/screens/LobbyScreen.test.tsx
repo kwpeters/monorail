@@ -1,10 +1,10 @@
 import { GameId } from "@repo/mille-bornes-core/ids";
 import { type PlayerName } from "@repo/mille-bornes-core/playerName";
 import type { PendingSummary } from "@repo/mille-bornes-core/pendingView";
-import { render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import { createFakeApi, failWire } from "../testing/fakeApi.mjs";
+import { createFakeApi, failWire, neverSettles } from "../testing/fakeApi.mjs";
 import { LobbyScreen, type LobbyData } from "./LobbyScreen.js";
 
 
@@ -57,6 +57,17 @@ describe("LobbyScreen", () => {
             const { procs } = setup();
             expect(await screen.findByText("Ann")).toBeInTheDocument();
             expect(procs.me).toHaveBeenCalledTimes(1);
+        });
+
+
+        it("shows no Playing as line when the server's name is empty", async () => {
+            const fake = createFakeApi();
+            fake.procs.me.mockResolvedValue({ playerId: "p1", name: "" });
+            const { container } = render(<LobbyScreen screen={lobby()} api={fake.api} />);
+            await screen.findByRole("button", { name: "Change name" });
+            await waitFor(() => expect(fake.procs.me).toHaveBeenCalled());
+            expect(screen.queryByText(/playing as/iu)).not.toBeInTheDocument();
+            expect(container.querySelector("strong")).toBeNull();
         });
 
 
@@ -119,6 +130,50 @@ describe("LobbyScreen", () => {
             await user.click(screen.getByRole("button", { name: "Cancel" }));
             expect(screen.queryByLabelText("New name")).not.toBeInTheDocument();
             expect(procs.rename).not.toHaveBeenCalled();
+        });
+
+    });
+
+
+    describe("two taps in the same tick", () => {
+
+        function twice(element: HTMLElement): void {
+            // Both land before React has re-rendered the buttons as disabled.
+            act(() => {
+                element.click();
+                element.click();
+            });
+        }
+
+
+        it("start one game", () => {
+            const { procs } = setup();
+            procs.createGame.mockReturnValue(neverSettles());
+            twice(screen.getByRole("button", { name: "Start a new game" }));
+            expect(procs.createGame).toHaveBeenCalledTimes(1);
+        });
+
+
+        it("join once", () => {
+            const { procs } = setup(lobby([game("Dad")]));
+            procs.join.mockReturnValue(neverSettles());
+            twice(screen.getByRole("button", { name: "Join Dad's game" }));
+            expect(procs.join).toHaveBeenCalledTimes(1);
+        });
+
+
+        it("save a new name once", async () => {
+            const { procs, user } = setup();
+            await screen.findByText("Ann");
+            procs.rename.mockReturnValue(neverSettles());
+            await user.click(screen.getByRole("button", { name: "Change name" }));
+            await user.type(screen.getByLabelText("New name"), "x");
+            const form = screen.getByLabelText("New name").closest("form")!;
+            act(() => {
+                fireEvent.submit(form);
+                fireEvent.submit(form);
+            });
+            expect(procs.rename).toHaveBeenCalledTimes(1);
         });
 
     });
@@ -254,6 +309,33 @@ describe("LobbyScreen", () => {
             await user.click(screen.getByRole("button", { name: "Dismiss" }));
             expect(screen.queryByRole("status")).not.toBeInTheDocument();
             expect(screen.queryByText("The organizer ended the game.")).not.toBeInTheDocument();
+        });
+
+
+        it("keeps the notice when the next Lobby screen carries none", () => {
+            const { api, rerender } = setup(lobby([], "The organizer ended the game."));
+            rerender(<LobbyScreen screen={lobby([game("Dad")], null)} api={api} />);
+            expect(screen.getByRole("status")).toHaveTextContent("The organizer ended the game.");
+        });
+
+
+        it("shows a new notice again after a dismiss, even with the same text", async () => {
+            const { api, rerender, user } = setup(lobby([], "The organizer ended the game."));
+            await user.click(screen.getByRole("button", { name: "Dismiss" }));
+            expect(screen.queryByRole("status")).not.toBeInTheDocument();
+
+            rerender(
+                <LobbyScreen screen={lobby([], "The organizer ended the game.")} api={api} />
+            );
+            expect(screen.getByRole("status")).toHaveTextContent("The organizer ended the game.");
+        });
+
+
+        it("keeps a dismissed notice hidden when the next screen carries none", async () => {
+            const { api, rerender, user } = setup(lobby([], "The organizer ended the game."));
+            await user.click(screen.getByRole("button", { name: "Dismiss" }));
+            rerender(<LobbyScreen screen={lobby([game("Dad")], null)} api={api} />);
+            expect(screen.queryByRole("status")).not.toBeInTheDocument();
         });
 
 

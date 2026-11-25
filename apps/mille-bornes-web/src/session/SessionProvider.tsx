@@ -67,7 +67,22 @@ function sameCredential(a: Credential, b: Credential): boolean {
 // The credential and the one store per credential, outside React so that
 // building them has no circular dependency on component state.
 function createSessionController(props: SessionProviderProps) {
-    const { credentials } = props;
+    // The session's own copy is the source of truth while the page is open, so
+    // a storage that cannot save (private mode) still gives a working session:
+    // the API sends it, and an UNAUTHORIZED answer is compared with it.  The
+    // real store only carries the credential over to the next visit.
+    let current = props.credentials.load();
+    const credentials: CredentialStore = {
+        load: () => current,
+        save: (c) => {
+            current = new SomeOption(c);
+            props.credentials.save(c);
+        },
+        clear: () => {
+            current = NoneOption.get();
+            props.credentials.clear();
+        }
+    };
     const makeStore = props.createStore ?? createScreenStore;
     const listeners = new Set<() => void>();
     let active: Option<ActiveSession> = NoneOption.get();
@@ -77,7 +92,7 @@ function createSessionController(props: SessionProviderProps) {
         [...listeners].forEach((listener) => listener());
     };
 
-    // Signs out, but only when `candidate` is the credential stored now.
+    // Signs out, but only when `candidate` is the credential in use now.
     const signOutIfCurrent = (candidate: Credential): void => {
         const stored = credentials.load();
         if (stored.isSome && sameCredential(stored.value, candidate)) {

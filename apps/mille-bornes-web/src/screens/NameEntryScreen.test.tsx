@@ -1,7 +1,7 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { createFakeApi, failWire, okWire } from "../testing/fakeApi.mjs";
+import { createFakeApi, failWire, neverSettles, okWire } from "../testing/fakeApi.mjs";
 import { NameEntryScreen } from "./NameEntryScreen.js";
 
 
@@ -106,6 +106,27 @@ describe("NameEntryScreen", () => {
 
 
     describe("while a request is in flight", () => {
+
+        it("sends one request when Enter is pressed twice quickly", async () => {
+            const { procs, user } = setup();
+            procs.create.mockReturnValue(neverSettles());
+            await user.type(screen.getByLabelText("Your name"), "Ann{Enter}{Enter}");
+            expect(procs.create).toHaveBeenCalledTimes(1);
+        });
+
+
+        it("sends one request when two submits arrive before React re-renders", async () => {
+            const { procs, user } = setup();
+            procs.create.mockReturnValue(neverSettles());
+            await user.type(screen.getByLabelText("Your name"), "Ann");
+            const form = screen.getByLabelText("Your name").closest("form")!;
+            act(() => {
+                fireEvent.submit(form);
+                fireEvent.submit(form);
+            });
+            expect(procs.create).toHaveBeenCalledTimes(1);
+        });
+
 
         it("disables both buttons, sends once, and enables them after a refusal", async () => {
             const { procs, user } = setup();

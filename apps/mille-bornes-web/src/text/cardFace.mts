@@ -76,18 +76,18 @@ const faces: Readonly<Record<Card, CardFace>> = {
     ),
     [Card.repairs]: remedy(
         "🔧", "Repairs",
-        "Repairs fixes an Accident, and then you can roll again " +
-        "(you need a Roll first unless you have Right of Way)."
+        "Repairs fixes an Accident, and then your team needs a Roll to move again, " +
+        "unless it has Right of Way."
     ),
     [Card.gasoline]: remedy(
         "⛽", "Gasoline",
-        "Gasoline fixes Out of Gas, and then you can roll again " +
-        "(you need a Roll first unless you have Right of Way)."
+        "Gasoline fixes Out of Gas, and then your team needs a Roll to move again, " +
+        "unless it has Right of Way."
     ),
     [Card.spareTire]: remedy(
         "🛞", "Spare Tire",
-        "Spare Tire fixes a Flat Tire, and then you can roll again " +
-        "(you need a Roll first unless you have Right of Way)."
+        "Spare Tire fixes a Flat Tire, and then your team needs a Roll to move again, " +
+        "unless it has Right of Way."
     ),
     [Card.endOfSpeedLimit]: remedy(
         "🐇", "End of Speed Limit",

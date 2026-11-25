@@ -28,7 +28,11 @@ export interface LobbyScreenProps {
 const maxSeats = 6;
 
 
-/** The server's name limit (20 characters), as the field enforces it. */
+/**
+ * The server's name limit is 20 code points; `maxLength` counts UTF-16
+ * units, so the field is only ever stricter than the server (an emoji counts
+ * as two).
+ */
 const maxNameLength = 20;
 
 
@@ -46,22 +50,32 @@ export function LobbyScreen(props: LobbyScreenProps): ReactElement {
     const [message, setMessage] = useState<Option<string>>(NoneOption.get());
     const [busy, setBusy] = useState(false);
 
+    // Set before the first await: two taps in the same tick send one request.
+    const inFlight = useRef(false);
+
     const run = async (fn: (t: Api["trpc"]) => Promise<unknown>): Promise<void> => {
-        if (busy) {
+        if (inFlight.current) {
             return;
         }
+        inFlight.current = true;
         setBusy(true);
         setMessage(NoneOption.get());
-        const result = await api.call(fn, voidWire);
-        setBusy(false);
-        if (!result.succeeded) {
-            setMessage(new SomeOption(result.error));
+        try {
+            const result = await api.call(fn, voidWire);
+            if (!result.succeeded) {
+                setMessage(new SomeOption(result.error));
+            }
+        }
+        finally {
+            // eslint-disable-next-line require-atomic-updates -- only cleared here
+            inFlight.current = false;
+            setBusy(false);
         }
     };
 
     return (
         <section className="screen">
-            <Notice text={Option.fromNullable(screen.notice)} />
+            <Notice screen={screen} />
             <h2>Lobby</h2>
             <MyName api={api} />
             <h3>Games waiting for players</h3>
@@ -92,22 +106,33 @@ export function LobbyScreen(props: LobbyScreenProps): ReactElement {
 
 
 interface NoticeProps {
-    text: Option<string>;
+    screen: LobbyData;
 }
 
 
-// The one-time message; dismissing it is local, the server has already
-// forgotten it.
+// The server sends a notice once, and the next Lobby screen (another player
+// starting a game, say) carries none.  So the notice is kept here from the
+// moment it arrives until the player dismisses it.  A later screen with a
+// notice shows it again, even when the text is the same: the effect is keyed
+// on the screen object, not on the text.
 function Notice(props: NoticeProps): ReactElement | null {
-    const [dismissed, setDismissed] = useState<Option<string>>(NoneOption.get());
-    const { text } = props;
-    if (text.isNone || (dismissed.isSome && dismissed.value === text.value)) {
+    const { screen } = props;
+    const [shown, setShown] = useState<Option<string>>(() => Option.fromNullable(screen.notice));
+
+    useEffect(() => {
+        const arrived = Option.fromNullable(screen.notice);
+        if (arrived.isSome) {
+            setShown(arrived);
+        }
+    }, [screen]);
+
+    if (shown.isNone) {
         return null;
     }
     return (
         <div className="notice" role="status">
-            <p className="notice-text">{text.value}</p>
-            <button type="button" className="button" onClick={() => setDismissed(text)}>
+            <p className="notice-text">{shown.value}</p>
+            <button type="button" className="button" onClick={() => setShown(NoneOption.get())}>
                 Dismiss
             </button>
         </div>
@@ -174,19 +199,23 @@ function MyName(props: MyNameProps): ReactElement {
     const [busy, setBusy] = useState(false);
     const input = useRef<HTMLInputElement>(null);
     const latest = useRef(0);
+    const saving = useRef(false);
 
     // Only the newest answer counts, so a slow early reply cannot undo a rename.
     const refresh = async (): Promise<void> => {
         const mine = ++latest.current;
-        try {
-            const decoded = meSchema.safeParse(await api.trpc.session.me.query());
-            if (decoded.success && mine === latest.current) {
-                setName(new SomeOption(decoded.data.name));
-            }
-        }
-        catch {
-            // The lobby works without the name; the subscription reports
-            // an invalid credential.
+        // `me` answers with a plain object, so it is wrapped as a succeeded
+        // wire result to go through `call`, which also handles UNAUTHORIZED
+        // like every other call.  Any other failure leaves the name as it was.
+        const result = await api.call(
+            async (t) => ({ succeeded: true, value: await t.session.me.query() }),
+            meSchema
+        );
+        if (result.succeeded && mine === latest.current) {
+            // An empty name is not worth a "Playing as" line.
+            setName(result.value.name === "" ?
+                NoneOption.get() :
+                new SomeOption(result.value.name));
         }
     };
 
@@ -216,16 +245,29 @@ function MyName(props: MyNameProps): ReactElement {
             setMessage(new SomeOption("Please type a name"));
             return;
         }
+        if (saving.current) {
+            return;
+        }
+        saving.current = true;
         setBusy(true);
         setMessage(NoneOption.get());
-        const result = await api.call((t) => t.session.rename.mutate({ name: trimmed }), voidWire);
-        setBusy(false);
-        if (result.succeeded) {
-            setEditing(false);
-            await refresh();
+        try {
+            const result = await api.call(
+                (t) => t.session.rename.mutate({ name: trimmed }),
+                voidWire
+            );
+            if (result.succeeded) {
+                setEditing(false);
+                await refresh();
+            }
+            else {
+                setMessage(new SomeOption(result.error));
+            }
         }
-        else {
-            setMessage(new SomeOption(result.error));
+        finally {
+            // eslint-disable-next-line require-atomic-updates -- only cleared here
+            saving.current = false;
+            setBusy(false);
         }
     };
 

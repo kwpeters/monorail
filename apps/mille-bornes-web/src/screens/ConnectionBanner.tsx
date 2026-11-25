@@ -16,9 +16,10 @@ export interface ConnectionBannerProps {
  * A small banner that shows while the connection is being re-established,
  * and a stronger message once that has taken 10 seconds.
  * @param props - The connection status
- * @returns The banner, or nothing while connecting or live
+ * @returns A status region that stays mounted (so assistive technology
+ * announces text put into it), empty unless reconnecting
  */
-export function ConnectionBanner(props: ConnectionBannerProps): ReactElement | null {
+export function ConnectionBanner(props: ConnectionBannerProps): ReactElement {
     const reconnecting = props.status === "Reconnecting";
     const [lost, setLost] = useState(false);
 
@@ -33,10 +34,15 @@ export function ConnectionBanner(props: ConnectionBannerProps): ReactElement | n
         };
     }, [reconnecting]);
 
-    if (!reconnecting) {
-        return null;
-    }
+    // The region exists before the outage: a role added together with its text
+    // is announced unreliably.
     return (
-        <p className="banner">{lost ? "Lost connection, trying again" : "Reconnecting..."}</p>
+        <div role="status">
+            {reconnecting ?
+                <p className="banner">
+                    {lost ? "Lost connection, trying again" : "Reconnecting..."}
+                </p> :
+                null}
+        </div>
     );
 }

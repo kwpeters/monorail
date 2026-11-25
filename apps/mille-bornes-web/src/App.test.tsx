@@ -2,7 +2,7 @@ import { NoneOption, SomeOption } from "@repo/depot/option";
 import { GameId } from "@repo/mille-bornes-core/ids";
 import { PlayerName } from "@repo/mille-bornes-core/playerName";
 import type { Screen } from "@repo/mille-bornes-game-server/screens";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StrictMode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -206,7 +206,9 @@ describe("App", () => {
                 status: "Live"
             }));
             await screen.findByText("Ann");
-            expect(screen.getByRole("status")).toHaveTextContent("The organizer ended the game.");
+            // The connection banner's status region is outside `main`.
+            expect(within(screen.getByRole("main")).getByRole("status"))
+            .toHaveTextContent("The organizer ended the game.");
 
             expect(view.container.textContent).not.toContain(secretToken);
             for (const element of view.container.querySelectorAll("*")) {
@@ -252,7 +254,41 @@ describe("App", () => {
     });
 
 
+    describe("a name lookup answered with UNAUTHORIZED", () => {
+
+        it("returns to name entry like any other call", async () => {
+            const unauthorized = Response.json([{
+                error: {
+                    message: "x",
+                    code:    -32001,
+                    data:    { code: "UNAUTHORIZED", httpStatus: 401 }
+                }
+            }], { status: 401 });
+            const { credentials, current } = setup(ann, [["session.me", unauthorized]]);
+            act(() => current().set({ screen: new SomeOption(lobby()), status: "Live" }));
+            expect(await screen.findByLabelText("Your name")).toBeInTheDocument();
+            expect(credentials.load()).toEqual(NoneOption.get());
+        });
+
+    });
+
+
     describe("the connection banner", () => {
+
+        it("has a status region before any outage, fills it while reconnecting, then empties it",
+           () => {
+               const { current } = setup(ann);
+               act(() => current().set({ screen: new SomeOption(lobby()), status: "Live" }));
+               const region = screen.getByRole("status");
+               expect(region).toBeEmptyDOMElement();
+
+               act(() => current().set({ status: "Reconnecting" }));
+               expect(region).toHaveTextContent("Reconnecting...");
+
+               act(() => current().set({ status: "Live" }));
+               expect(region).toBeEmptyDOMElement();
+           });
+
 
         it("appears while reconnecting and goes away when live", () => {
             const { current } = setup(ann);

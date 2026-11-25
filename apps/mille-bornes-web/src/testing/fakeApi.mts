@@ -82,3 +82,14 @@ export function createFakeApi(): FakeApi {
 
     return { api: { trpc, call }, procs };
 }
+
+
+/**
+ * A promise that never settles: a request still in flight.
+ * @returns The pending promise
+ */
+export function neverSettles(): Promise<never> {
+    return new Promise<never>(() => {
+        // Nothing resolves or rejects it.
+    });
+}
