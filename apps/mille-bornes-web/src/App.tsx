@@ -3,6 +3,7 @@ import type { Screen } from "@repo/mille-bornes-game-server/screens";
 import { useLayoutEffect, useState, type ReactElement } from "react";
 import { type Api } from "./api/client.mjs";
 import { ConnectionBanner } from "./screens/ConnectionBanner.js";
+import { ErrorBoundary } from "./screens/ErrorBoundary.js";
 import { GameScreen } from "./screens/GameScreen.js";
 import { LobbyScreen } from "./screens/LobbyScreen.js";
 import { NameEntryScreen } from "./screens/NameEntryScreen.js";
@@ -43,16 +44,20 @@ export function App(props: AppProps): ReactElement {
     const [credentials] = useState(
         () => props.credentials ?? createCredentialStore(window.localStorage)
     );
+    // The last resort: anything that throws outside a screen gets a page with
+    // words and a Reload button, not a blank one.
     return (
-        <SoundProvider {...(props.audio === undefined ? {} : { engine: props.audio })}>
-            <SessionProvider
-                credentials={credentials}
-                {...(props.fetch === undefined ? {} : { fetch: props.fetch })}
-                {...(props.createStore === undefined ? {} : { createStore: props.createStore })}
-            >
-                <Routes />
-            </SessionProvider>
-        </SoundProvider>
+        <ErrorBoundary>
+            <SoundProvider {...(props.audio === undefined ? {} : { engine: props.audio })}>
+                <SessionProvider
+                    credentials={credentials}
+                    {...(props.fetch === undefined ? {} : { fetch: props.fetch })}
+                    {...(props.createStore === undefined ? {} : { createStore: props.createStore })}
+                >
+                    <Routes />
+                </SessionProvider>
+            </SoundProvider>
+        </ErrorBoundary>
     );
 }
 
@@ -103,9 +108,13 @@ function Following(props: FollowingProps): ReactElement {
 
     return (
         <Shell controls={props.mute} banner={<ConnectionBanner status={snapshot.status} />}>
-            {snapshot.screen.isNone ?
-                <section className="screen"><p>Connecting...</p></section> :
-                screenFor(snapshot.screen.value, props.api, snapshot, props.store)}
+            {/* A screen that throws keeps the header and the banner; the next
+                screen from the server tries again. */}
+            <ErrorBoundary resetKey={snapshot.screen}>
+                {snapshot.screen.isNone ?
+                    <section className="screen"><p>Connecting...</p></section> :
+                    screenFor(snapshot.screen.value, props.api, snapshot, props.store)}
+            </ErrorBoundary>
         </Shell>
     );
 }

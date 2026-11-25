@@ -247,6 +247,40 @@ describe("App", () => {
         });
 
 
+        it("keeps the header and banner when a screen throws, and tries the next screen", () => {
+            // React reports the caught render error on the console, and jsdom as
+            // an uncaught error event.
+            const quiet = vi.spyOn(console, "error").mockImplementation(() => undefined);
+            const hush = (e: ErrorEvent): void => e.preventDefault();
+            window.addEventListener("error", hush);
+            try {
+                const { current } = setup(ann);
+                // A phase from a newer server: this page cannot show it.
+                const unknown = {
+                    ...playing,
+                    view: { ...playing.view, phase: { kind: "Pitstop" } }
+                } as unknown as Screen;
+                act(() => current().set({
+                    screen: new SomeOption(unknown),
+                    status: "Reconnecting"
+                }));
+                expect(screen.getByRole("alert")).toHaveTextContent("Something went wrong");
+                expect(screen.getByRole("button", { name: "Reload" })).toBeInTheDocument();
+                expect(within(screen.getByRole("banner")).getByText("Mille Bornes"))
+                .toBeInTheDocument();
+                expect(screen.getByText("Reconnecting...")).toBeInTheDocument();
+
+                act(() => current().set({ screen: new SomeOption(lobby()), status: "Live" }));
+                expect(screen.getByRole("heading", { name: "Lobby" })).toBeInTheDocument();
+                expect(screen.queryByRole("button", { name: "Reload" })).not.toBeInTheDocument();
+            }
+            finally {
+                window.removeEventListener("error", hush);
+                quiet.mockRestore();
+            }
+        });
+
+
         it("animates the store's pending batch and consumes it", async () => {
             const { current } = setup(ann);
             const { view, events } = annPlays({ type: "Drive", card: "50" });
