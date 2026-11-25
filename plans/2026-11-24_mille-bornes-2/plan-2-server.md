@@ -37,7 +37,7 @@ The old `mille-bornes-shared`, `-engine`, and `-server` projects are reference o
 - Add the app's `data/` directory to the repo `.gitignore`.
 - Run one test file with: `npm test -w @repo/mille-bornes-game-server -- src/<name>.test.mts` (core: `-w @repo/mille-bornes-core`).
   Core's consumers resolve it through `dist`, so run `npm run build -w @repo/mille-bornes-core` after adding or changing a core export.
-- Final gate (Task 11): `npm run all && npm run type-check` from the repo root passes.
+- Final gate (Task 12): `npm run all && npm run type-check` from the repo root passes.
 
 ## Calls made by the author
 
@@ -46,10 +46,11 @@ These are not in the design; the owner can veto any of them.
 - **One subscription per player.**
   `watch` emits a `Screen` (the lobby, a waiting room, or the game) so a reconnecting phone always lands in the right place.
   The first message of every subscription is the current screen; missed events are not replayed, so a phone that was asleep snaps to the latest state without animation.
-- **`Result` in server code, a plain object on the wire** (the owner's preference).
+- **`Result` in TypeScript code, a plain `ResultWire` object on the wire** (the owner's preference).
   Every `Hub` and `Table` method returns `Result<void, string>`, where the error is plain English from `describeRejection`.
-  Only the router converts, with one helper `toOutcome(result): Outcome`, to `{ ok: true } | { ok: false; message }`, because the `Result` class does not survive JSON.
-  The client never sees a `Result`.
+  The `Result` class does not survive JSON, so the wire shape is a plain `ResultWire` (`{ succeeded: true; value } | { succeeded: false; error }`).
+  Task 9 adds `resultToWire()` and `discriminatedResultSchema()` to depot (modeled on the existing `discriminatedOptionSchema`):
+  the router encodes every outcome with `resultToWire`, and the scripted client (and later the web client) decodes the response back into a real `Result` with the schema.
   tRPC errors are only for a bad or missing credential (`UNAUTHORIZED`) and malformed input (`BAD_REQUEST`).
 - **Use depot's `zodHelpers`:** `safeParse`/`zodErrorToString` to decode records and config into a `Result`, and `unwrapOrAddIssue` to turn `GameId.tryCreate` and `PlayerId.tryCreate` into Zod input transforms.
 - **Names are per player, not per game.**
@@ -67,12 +68,12 @@ These are not in the design; the owner can veto any of them.
 Failure modes the spec implies; each has a test in the owning task.
 
 1. A phone locks mid hazard window and reconnects: the new subscription gets the current screen with the true remaining time; no timer is duplicated or restarted; no events are replayed.
-2. Two tabs or devices for one player: both receive updates, either may play, presence stays connected until both close (Task 8, Task 9).
-3. Hostile input: a missing, malformed, or wrong token; a token for another player's id; a command for a game the caller is not in; a PlayerCommand with extra fields (Task 9).
-4. Restart with damage: a corrupt game file, a half-written `.tmp` file, a game file of the wrong shape, a missing sessions file; the server still starts and the good games load (Task 4, Task 10).
+2. Two tabs or devices for one player: both receive updates, either may play, presence stays connected until both close (Task 8, Task 10).
+3. Hostile input: a missing, malformed, or wrong token; a token for another player's id; a command for a game the caller is not in; a PlayerCommand with extra fields (Task 10).
+4. Restart with damage: a corrupt game file, a half-written `.tmp` file, a game file of the wrong shape, a missing sessions file; the server still starts and the good games load (Task 4, Task 11).
 5. A double tap sends the same command twice, or a command arrives during a robot's turn or after the race ended: the second is rejected with a plain message and nothing changes (Task 6, Task 8).
 6. A game ended (by the organizer, the host page, or the stuck guard) while a timer is pending: nothing fires afterward and the game is not resurrected (Task 6, Task 8).
-7. A player name containing HTML on the `/host` page is escaped (Task 10).
+7. A player name containing HTML on the `/host` page is escaped (Task 11).
 8. The lobby never reveals which seats are robots to anyone but the organizer (Task 2, Task 7).
 
 ---
@@ -306,7 +307,7 @@ Failure modes the spec implies; each has a test in the owning task.
 - Consumes: `SessionRegistry`, `SnapshotStore`, `PendingGame`, `createPending`, `applyPendingCommand`, `pendingViewFor`, `pendingSummary`, `pickWhimsicalName`, `Clock`, `Timings`, `Logger`.
 - Produces:
   ```ts
-  type Outcome = { ok: true } | { ok: false; message: string };   // wire shape only; see toOutcome in Task 9
+  // Mutations return Result<void, string>; the wire form is ResultWire (Task 9, depot).
   type Screen =
     | { kind: "Lobby"; notice: string | null; games: ReadonlyArray<PendingSummary> }
     | { kind: "Waiting"; pending: PendingView }
@@ -383,7 +384,7 @@ Failure modes the spec implies; each has a test in the owning task.
 - [ ] **Step 1: Write failing tests.**
   - `startGame`: non-organizer fails; with 1 seat fails with the "add a robot" message; with 2 seats every player's screen becomes `Playing` with their own hand of 6 or 7 cards and `view.me.id` correct; the snapshot on disk is a `Running` record.
   - No leakage: for each player, `JSON.stringify(screen)` contains no other player's hand-only cards (use a seeded game and compare with `Game.players[i].hand`), no draw pile contents, and `robots` is `null` unless the player is the organizer.
-  - `play`: a legal play yields one `Playing` update to every player with redacted events (`CardDrawn.card` null for non-drawers); an illegal play returns `{ ok: false, message }` with plain text and changes nothing; a player not in a game fails; a non-participant cannot play into someone else's game.
+  - `play`: a legal play yields one `Playing` update to every player with redacted events (`CardDrawn.card` null for non-drawers); an illegal play returns a failed `Result` with plain text and changes nothing; a player not in a game fails; a non-participant cannot play into someone else's game.
   - Timers through the Hub: with a human on each side, advancing `FakeClock` by 5,000 ms after a hazard closes the window and emits `HazardLanded`; a screen built at 1,000 ms into the window has `timer.remainingMs === 4000` (**Review Focus 1**) and a later reconnect (`watch`) does not restart or duplicate timers (`FakeClock.pendingCount()` is unchanged).
   - A game with a robot on turn plays by itself after the delay and the human screens update; an all-robot-plus-one-human game reaches `GameOver` with the human playing via `chooseCommand` in the test loop.
   - Presence: opening a watch marks the player connected for others; closing it marks them disconnected only after 3,000 ms; closing then reopening within 2,000 ms never emits a disconnected screen; two watches for one player stay connected until both close (**Review Focus 2**); robots always connected.
@@ -395,49 +396,80 @@ Failure modes the spec implies; each has a test in the owning task.
 
 ---
 
-### Task 9: tRPC router, context, and authentication
+### Task 9: Depot: `Result` wire encoding and schema
+
+**Files:**
+- Modify: `packages/depot/src/schemaUtility.mts`, `packages/depot/src/schemaUtility.test.mts` (create the test file if it does not exist; match the style of any existing schema tests).
+
+**Interfaces:**
+- Consumes: `Result`, `SucceededResult`, `FailedResult` (`result.mts`); `z` (zod).
+- Produces:
+  ```ts
+  type ResultWire<TValue, TError> =
+      | { succeeded: true; value: TValue }
+      | { succeeded: false; error: TError };
+  function resultToWire<TValue, TError>(r: Result<TValue, TError>): ResultWire<TValue, TError>;
+  function discriminatedResultSchema<TValue, TError>(
+      valueSchema: z.ZodType<TValue>, errorSchema: z.ZodType<TError>
+  ): z.ZodType<Result<TValue, TError>>;     // strict objects, discriminated on "succeeded"
+  ```
+  Place both under a new "Result" banner in the style of the existing "Option" section, with JSDoc (`@param`, `@returns`).
+  A successful `Result<void, E>` has no `value` after `JSON.stringify`, so the wire form `{ succeeded: true }` must decode to a `SucceededResult` of `undefined` when `valueSchema` accepts `undefined` (for example `z.void()` or `z.undefined()`), and must be rejected when it does not.
+
+- [ ] **Step 1: Write failing tests.**
+  - `resultToWire` of `SucceededResult(5)` is `{ succeeded: true, value: 5 }`; of `FailedResult("no")` is `{ succeeded: false, error: "no" }`; neither contains private fields (`Object.keys` is exactly the two expected keys).
+  - Round trip: `discriminatedResultSchema(z.number(), z.string())` parses `JSON.parse(JSON.stringify(resultToWire(r)))` back to a `Result` that `.succeeded`/`.failed`, `.value`/`.error` match, for both a success and a failure, and the parsed value has the `Result` methods (`.match` returns the right branch).
+  - Void: `Result<void, string>` success round-trips through JSON (`{"succeeded":true}`) with `z.void()` as the value schema; with `z.number()` as the value schema the same input is rejected.
+  - Rejections: an extra property, `{}`, `null`, `{ succeeded: "yes" }`, a success with the wrong value type, a failure with the wrong error type, and `{ succeeded: true, error: "x" }` all fail to parse.
+  - Complex values: a result whose value is an object with a nested array round-trips.
+- [ ] **Step 2: Run, expect FAIL (`npm test -w @repo/depot -- src/schemaUtility.test.mts`; check the package's own test command first). Step 3: Implement. Step 4: Run, expect PASS; run depot's whole suite, lint, type-check and depcheck; build depot (`npm run build -w @repo/depot`) so dependent packages see it; commit** (`feat(depot): Result wire encoding and Zod schema`).
+
+---
+
+
+### Task 10: tRPC router, context, and authentication
 
 **Files:**
 - Create: `src/router.mts`, `src/context.mts`, `src/router.test.mts`.
 
 **Interfaces:**
-- Consumes: `Hub`, `SessionRegistry`, `parseBearer`, core `playerCommandSchema`, `gameLengthSchema`, `GameId.tryCreate`, `PlayerId.tryCreate`.
+- Consumes: `Hub`, `SessionRegistry`, `parseBearer`, depot `resultToWire` (Task 9), core `playerCommandSchema`, `gameLengthSchema`, `GameId.tryCreate`, `PlayerId.tryCreate`.
 - Produces:
   ```ts
   interface Context { hub: Hub; sessions: SessionRegistry; player: PlayerId | null }   // player is set only by a valid credential
   function createContextFromHeader(deps: { hub: Hub; sessions: SessionRegistry }, authorization: string | undefined): Context;
-  function toOutcome(r: Result<void, string>): Outcome;   // the only place a Result becomes wire data
   const t = initTRPC.context<Context>().create({ sse: { ping: { enabled: true, intervalMs: 2000 },
                                                          client: { reconnectAfterInactivityMs: 6000 } } });
   const appRouter: Router;  type AppRouter = typeof appRouter;     // the client imports this type only
   ```
+  Every mutation returns `resultToWire(hubResult)`; nothing else converts a `Result`.
   Procedures (every one except `session.create` requires `ctx.player`, else `TRPCError` `UNAUTHORIZED` with the message "Your session is not valid. Please enter your name again."):
   ```
-  session.create({ name: string | null })        mutation -> { playerId, token, name } | { ok: false; message }   (public)
-  session.rename({ name })                       mutation -> Outcome
+  session.create({ name: string | null })        mutation -> ResultWire<{ playerId, token, name }, string>   (public)
+  session.rename({ name })                       mutation -> ResultWire<void, string>
   session.me()                                   query    -> { playerId, name }          (UNAUTHORIZED if the credential is bad)
-  lobby.createGame()   lobby.join({ gameId })    mutations -> Outcome
+  lobby.createGame()   lobby.join({ gameId })    mutations -> ResultWire<void, string>
   pending.leave()  pending.cancel()  pending.addRobot()  pending.removeSeat({ seat })
-  pending.swapSeats({ a, b })  pending.setLength({ length })  pending.start()          mutations -> Outcome
-  game.play(PlayerCommand)  game.end()  game.leave()                                   mutations -> Outcome
+  pending.swapSeats({ a, b })  pending.setLength({ length })  pending.start()          mutations -> ResultWire<void, string>
+  game.play(PlayerCommand)  game.end()  game.leave()                                   mutations -> ResultWire<void, string>
   watch()                                        subscription -> Screen  (yields hub.watch(ctx.player, signal))
   ```
-  Inputs are Zod schemas: ids parse with `tryCreate` through depot's `unwrapOrAddIssue` (a failure becomes `BAD_REQUEST`), `PlayerCommand` uses core's strict `playerCommandSchema`, names are `z.string().max(200)`, and the router sets `maxBodySize` through the Express adapter (Task 10).
+  Inputs are Zod schemas: ids parse with `tryCreate` through depot's `unwrapOrAddIssue` (a failure becomes `BAD_REQUEST`), `PlayerCommand` uses core's strict `playerCommandSchema`, names are `z.string().max(200)`, and the router sets `maxBodySize` through the Express adapter (Task 11).
   For `watch`, a credential comes from the connection parameter `authorization` (the adapter passes `opts.info.connectionParams` to the context factory; extend `createContextFromHeader` or add `createContext` that accepts either source).
 
 - [ ] **Step 1: Write failing tests** with `createCallerFactory` and a `Hub` over `MemorySnapshotStore` and `FakeClock`.
-  - `session.create` returns a credential that `createContextFromHeader` accepts; `session.create({ name: null })` returns a whimsical name; a blank name returns `{ ok: false, message }`.
+  - `session.create` returns a successful `ResultWire` whose credential `createContextFromHeader` accepts; `session.create({ name: null })` returns a whimsical name; a blank name returns `{ succeeded: false, error }`.
   - **Hostile (Review Focus 3):** every procedure but `session.create` throws `UNAUTHORIZED` for a missing header, `Bearer`, a wrong token, a valid token with another player's id, a malformed id, and a 10,000-character header; the error text contains no token.
   - Inputs: `lobby.join({ gameId: "nope" })`, `pending.swapSeats` with a non-UUID, `game.play` with `{ type: "Drive", card: "Roll" }`, an extra field, a missing `type`, and `null` each fail with `BAD_REQUEST` and change nothing.
-  - A caller who is not in a game: `game.play`, `game.end`, `game.leave`, `pending.start` return `{ ok: false, message }` (not a thrown error); a player cannot play into a game they are not in even when they know its id (there is no game id input to `play`).
-  - Flow through the router: Ann creates, Bob joins, Ann adds a robot (3 seats), starts; Bob's `watch` first item is `Playing`; `game.play` with Bob's legal command from `legalPlays` returns `{ ok: true }` and Ann's watcher receives the update (consume the async iterable from the caller; if a caller does not return an iterable for subscriptions, test `hub.watch` plus the procedure's generator body through the raw procedure call instead, and say so in the report).
+  - A caller who is not in a game: `game.play`, `game.end`, `game.leave`, `pending.start` return `{ succeeded: false, error }` (not a thrown error); a player cannot play into a game they are not in even when they know its id (there is no game id input to `play`).
+  - Flow through the router: Ann creates, Bob joins, Ann adds a robot (3 seats), starts; Bob's `watch` first item is `Playing`; `game.play` with Bob's legal command from `legalPlays` returns `{ succeeded: true }` and Ann's watcher receives the update (consume the async iterable from the caller; if a caller does not return an iterable for subscriptions, test `hub.watch` plus the procedure's generator body through the raw procedure call instead, and say so in the report).
   - Aborting the subscription's signal ends the iteration and decrements presence.
-  - `Outcome` failures carry `describeRejection` text, not JSON: a play on someone else's turn returns "It is not your turn." (use the message core produces).
+  - Failed results carry `describeRejection` text, not JSON: a play on someone else's turn returns "It is not your turn." (use the message core produces).
 - [ ] **Step 2: Run, expect FAIL. Step 3: Implement. Step 4: Run, expect PASS; commit** (`feat(game-server): tRPC router and credentials`).
 
 ---
 
-### Task 10: Express app, host page, startup
+### Task 11: Express app, host page, startup
 
 **Files:**
 - Create: `src/app.mts`, `src/hostPage.mts`, `src/network.mts`, `src/www.mts`, `src/app.test.mts`, `src/hostPage.test.mts`, `src/network.test.mts`.
@@ -470,11 +502,11 @@ Failure modes the spec implies; each has a test in the owning task.
   - `/trpc/session.me` without credentials is 401; `/trpc/session.create` over HTTP returns a credential; a body over 16 KB is rejected.
   - Static: with a temp `webRoot` containing `index.html` and `a.js`, `/a.js` and `/` are served and an unknown path falls back to `index.html`; `..` path traversal (`/..%2f..%2fpackage.json`) never leaves the root; with `webRoot: null` `/` returns the placeholder.
   - A thrown error inside a route returns 500 JSON without a stack trace and the server keeps serving.
-- [ ] **Step 2: Run, expect FAIL. Step 3: Implement (`www.mts` is covered by Task 11, not unit tests). Step 4: Run, expect PASS; commit** (`feat(game-server): express app, host page, startup`).
+- [ ] **Step 2: Run, expect FAIL. Step 3: Implement (`www.mts` is covered by Task 12, not unit tests). Step 4: Run, expect PASS; commit** (`feat(game-server): express app, host page, startup`).
 
 ---
 
-### Task 11: Scripted client, end-to-end tests, final gate
+### Task 12: Scripted client, end-to-end tests, final gate
 
 **Files:**
 - Create: `src/scriptedPlayer.mts`, `src/endToEnd.test.mts`, `README.md` (the app: how to run, the API in one table, env vars, the data directory, the failed-game directory).
@@ -488,7 +520,9 @@ Failure modes the spec implies; each has a test in the owning task.
   interface ScriptedPlayer {
     readonly playerId: PlayerId;  readonly name: PlayerName;
     readonly screens: ReadonlyArray<Screen>;          // everything received, in order
-    createGame(): Promise<Outcome>;  join(gameId: GameId): Promise<Outcome>;  addRobot(): Promise<Outcome>;  start(): Promise<Outcome>;
+    createGame(): Promise<Result<void, string>>;  join(gameId: GameId): Promise<Result<void, string>>;
+    addRobot(): Promise<Result<void, string>>;  start(): Promise<Result<void, string>>;
+    //   every response is decoded back into a real Result with depot's discriminatedResultSchema (Task 9)
     waitFor(pred: (s: Screen) => boolean, timeoutMs?: number): Promise<Screen>;     // rejects with the last screen in the message on timeout
     autoPlay(): void;                                  // on every Playing screen where this player may act, send chooseCommand(view)
     close(): void;
@@ -513,6 +547,7 @@ Failure modes the spec implies; each has a test in the owning task.
 
 ## Self-review notes
 
-- Spec coverage: lobby with pending games and organizer (Tasks 2, 7); robots and robot disguise (Tasks 2, 7, 8); Coup Fourre window always full length, server-owned timer, robots at delay 0, restart restarts it (Task 6, 8); Extension offer timer (Task 6); snapshots with atomic writes, corrupt files skipped (Task 4, 8, 11); credentials never in views (Tasks 5, 9); presence (Task 8); end game by the organizer (Task 8); `/host` with QR, LAN addresses, End game (Task 10); terminal QR (Task 10); tRPC with SSE subscriptions (Task 9); tests with injected clock and in-process caller (Tasks 6 to 9) plus a scripted client over real HTTP (Task 11).
+- Task numbering: Task 9 (depot `Result` wire schema) was inserted after Tasks 1 to 8 were planned, so the router, host page, and end-to-end tasks are 10, 11, and 12.
+- Spec coverage: lobby with pending games and organizer (Tasks 2, 7); robots and robot disguise (Tasks 2, 7, 8); Coup Fourre window always full length, server-owned timer, robots at delay 0, restart restarts it (Task 6, 8); Extension offer timer (Task 6); snapshots with atomic writes, corrupt files skipped (Task 4, 8, 11); credentials never in views (Tasks 5, 10); presence (Task 8); end game by the organizer (Task 8); `/host` with QR, LAN addresses, End game (Task 11); terminal QR (Task 11); tRPC with SSE subscriptions (Task 10); a `Result` crossing the wire as plain data and decoded back (Task 9); tests with injected clock and in-process caller (Tasks 6 to 10) plus a scripted client over real HTTP (Task 12).
 - The carry-over must-haves are covered: `pendingViewFor` (Task 2), the shared decider helper (Task 1), `broadcast` (Tasks 1, 8), phase-derived timers (Task 6), presence (Task 8), two cheap minors (Task 1).
 - Deliberately skipped, so the owner knows: event replay on reconnect, a command log, a "deal now" button, Zod schemas for views and events (the client gets types from the router), per-origin CSRF checks on `/host`, accent-insensitive name comparison, and persistence of the one-time lobby notice.
