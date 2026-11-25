@@ -17,6 +17,7 @@ import { annPlays } from "./testing/engineBatches.mjs";
 import { createFakeEngine } from "./testing/fakeAudio.mjs";
 import type { AudioEngine } from "./sound/audioEngine.mjs";
 import { viewForSeats } from "./testing/viewFixtures.mjs";
+import { finishedGame, screenOf } from "./testing/finishedGames.mjs";
 
 
 const secretToken = "SECRET-TOKEN-12345";
@@ -222,6 +223,27 @@ describe("App", () => {
             expect(main.getByRole("region", { name: "Your hand" })).toBeInTheDocument();
             expect(main.getByText("Your turn: play or discard a card")).toBeInTheDocument();
             expect(main.getAllByRole("progressbar")).toHaveLength(2);
+        });
+
+
+        it("starts each new screen at the top, but not each move at the table", () => {
+            const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => undefined);
+            const over = finishedGame(2, { seed: 4, length: "Quick", names: ["Ann", "Bob"] });
+            const { current } = setup(ann);
+            const show = (s: Screen): void => {
+                act(() => current().set({ screen: new SomeOption(s), status: "Live" }));
+            };
+            show(waiting(0));
+            scrollTo.mockClear();
+            show(playing);
+            expect(scrollTo).toHaveBeenCalledExactlyOnceWith(0, 0);
+            // A later move, or a snapshot after a reconnect.
+            show({ ...playing });
+            expect(scrollTo).toHaveBeenCalledTimes(1);
+            show(screenOf(over.gameOver, "Ann"));
+            expect(scrollTo).toHaveBeenCalledTimes(2);
+            show(lobby());
+            expect(scrollTo).toHaveBeenCalledTimes(3);
         });
 
 

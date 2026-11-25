@@ -15,6 +15,11 @@ afterEach(() => {
 });
 
 
+// jsdom has no layout, so it does not scroll; its own `scrollTo` only
+// reports that it is not implemented.
+window.scrollTo = (): void => undefined;
+
+
 // jsdom has no modal dialogs: `showModal()` and `close()` are missing.  This
 // stand-in does what a browser does that the tests rely on: `showModal()`
 // opens the dialog and remembers the focused element, Escape closes it, and
