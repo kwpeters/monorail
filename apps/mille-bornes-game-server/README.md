@@ -17,19 +17,23 @@ npm start -w @repo/mille-bornes-game-server
 
 The server prints the URLs that phones on the network can open,
 a QR code for the first one,
+the data directory,
 and the address of the host page.
 Press Ctrl+C to stop it;
 it waits for every save to finish before it exits.
 
 ## Environment variables
 
-| Variable      | Default      | Meaning                                                 |
-| ------------- | ------------ | ------------------------------------------------------- |
-| `PORT`        | `3000`       | The port to listen on (1 to 65535), on all interfaces.  |
-| `MB_DATA_DIR` | `<cwd>/data` | Where games and sessions are saved.                     |
-| `MB_WEB_ROOT` | none         | The built web app to serve; without it `/` is a notice. |
+| Variable      | Default                              | Meaning                                                 |
+| ------------- | ------------------------------------ | ------------------------------------------------------- |
+| `PORT`        | `3000`                               | The port to listen on (1 to 65535), on all interfaces.  |
+| `MB_DATA_DIR` | `apps/mille-bornes-game-server/data` | Where games and sessions are saved.                     |
+| `MB_WEB_ROOT` | none                                 | The built web app to serve; without it `/` is a notice. |
 
 An empty variable counts as unset.
+The default data directory belongs to the package,
+so the server finds its games wherever it is started from;
+a relative `MB_DATA_DIR` is taken from the current directory.
 
 ## The data directory
 
@@ -107,7 +111,7 @@ change them there and rebuild.
 Tests build their own `ServerConfig` with shorter ones.
 
 | Timing              | Default | What it is                                                  |
-| ------------------- | ------- | ----------------------------------------------------------- |
+| ------------------- | ------------------------------------ | ----------------------------------------------------------- |
 | `hazardWindowMs`    | 5,000   | How long the target team has to play a Coup Fourre.         |
 | `extensionOfferMs`  | 30,000  | How long the decider has to call or decline Extension.      |
 | `raceOverPauseMs`   | 20,000  | How long the scores show before the next race is dealt.     |

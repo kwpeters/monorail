@@ -1,5 +1,6 @@
 import path from "node:path";
-import { defaultTimings, loadConfig } from "./config.mjs";
+import { fileURLToPath } from "node:url";
+import { defaultTimings, loadConfig, packageDataDir } from "./config.mjs";
 
 
 describe("config", () => {
@@ -23,26 +24,42 @@ describe("config", () => {
     describe("loadConfig()", () => {
 
         const cwd = path.resolve("some", "dir");
+        const pkgData = path.resolve("pkg", "data");
 
 
         it("uses defaults for an empty environment", () => {
-            const result = loadConfig({}, cwd);
+            const result = loadConfig({}, cwd, pkgData);
             expect(result.succeeded).toBeTrue();
             expect(result.value).toEqual({
                 port:    3000,
-                dataDir: path.join(cwd, "data"),
+                dataDir: pkgData,
                 webRoot: null,
                 timings: defaultTimings
             });
         });
 
 
+        it("defaults the data directory to the package's, wherever it runs", () => {
+            const expected = fileURLToPath(new URL("../data", import.meta.url));
+            expect(packageDataDir).toBe(expected);
+            expect(path.basename(path.dirname(expected))).toBe("mille-bornes-game-server");
+            expect(loadConfig({}, cwd).value?.dataDir).toBe(expected);
+        });
+
+
         it("respects PORT, MB_DATA_DIR and MB_WEB_ROOT", () => {
-            const result = loadConfig({ PORT: "8080", MB_DATA_DIR: "/x/data", MB_WEB_ROOT: "/x/web" }, cwd);
+            const env = { PORT: "8080", MB_DATA_DIR: "/x/data", MB_WEB_ROOT: "/x/web" };
+            const result = loadConfig(env, cwd, pkgData);
             expect(result.succeeded).toBeTrue();
             expect(result.value?.port).toBe(8080);
-            expect(result.value?.dataDir).toBe("/x/data");
+            expect(result.value?.dataDir).toBe(path.resolve("/x/data"));
             expect(result.value?.webRoot).toBe("/x/web");
+        });
+
+
+        it("resolves a relative MB_DATA_DIR against the working directory", () => {
+            const result = loadConfig({ MB_DATA_DIR: "saves" }, cwd, pkgData);
+            expect(result.value?.dataDir).toBe(path.join(cwd, "saves"));
         });
 
 

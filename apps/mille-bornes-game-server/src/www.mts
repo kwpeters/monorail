@@ -45,6 +45,7 @@ catch (err) {
 const urls = running.urls.length > 0 ? running.urls : [`http://localhost:${running.port.toString()}/`];
 console.log("Mille Bornes is running.  Players can open:");
 urls.forEach((u) => { console.log(`  ${u}`); });
+console.log(`Games are saved in ${config.value.dataDir}`);
 console.log(`Host page (on this computer only): http://localhost:${running.port.toString()}/host`);
 console.log(await qrcode.toString(urls[0]!, { type: "terminal", small: true }));
 
