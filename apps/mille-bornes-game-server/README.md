@@ -24,16 +24,20 @@ it waits for every save to finish before it exits.
 
 ## Environment variables
 
-| Variable      | Default                              | Meaning                                                 |
-| ------------- | ------------------------------------ | ------------------------------------------------------- |
-| `PORT`        | `3000`                               | The port to listen on (1 to 65535), on all interfaces.  |
-| `MB_DATA_DIR` | `apps/mille-bornes-game-server/data` | Where games and sessions are saved.                     |
-| `MB_WEB_ROOT` | none                                 | The built web app to serve; without it `/` is a notice. |
+| Variable      | Default                              | Meaning                                                |
+| ------------- | ------------------------------------ | ------------------------------------------------------ |
+| `PORT`        | `3000`                               | The port to listen on (1 to 65535), on all interfaces. |
+| `MB_DATA_DIR` | `apps/mille-bornes-game-server/data` | Where games and sessions are saved.                    |
+| `MB_WEB_ROOT` | `apps/mille-bornes-web/dist`         | The built web app to serve.                            |
 
 An empty variable counts as unset.
 The default data directory belongs to the package,
 so the server finds its games wherever it is started from;
 a relative `MB_DATA_DIR` is taken from the current directory.
+The web app is found the same way once it is built
+(`npm run build` at the repository root builds both).
+If `MB_WEB_ROOT` is unset and the web app has not been built,
+`/` shows a short notice instead.
 
 ## The data directory
 
@@ -119,18 +123,24 @@ A phone on the network gets 403.
 
 ## Timings
 
-The timings are the `defaultTimings` in `src/config.mts`;
-change them there and rebuild.
-Tests build their own `ServerConfig` with shorter ones.
+The timings are the `defaultTimings` in `src/config.mts`.
+Each one can be overridden with an environment variable,
+mainly for tests:
+the browser end-to-end tests of the web app use them to play whole games in seconds.
+A value is a whole number of milliseconds,
+at least 1 for the window, the offer and the pause
+and at least 0 for the robot delays and the grace;
+the robot delay minimum must not be more than the maximum.
+The server refuses to start with a bad value and says which variable is wrong.
 
-| Timing              | Default | What it is                                                  |
-| ------------------- | ------- | ----------------------------------------------------------- |
-| `hazardWindowMs`    | 5,000   | How long the target team has to play a Coup Fourre.         |
-| `extensionOfferMs`  | 30,000  | How long the decider has to call or decline Extension.      |
-| `raceOverPauseMs`   | 20,000  | How long the scores show before the next race is dealt.     |
-| `robotDelayMinMs`   | 1,000   | The shortest wait before a robot plays or answers.          |
-| `robotDelayMaxMs`   | 3,000   | The longest wait before a robot plays or answers.           |
-| `disconnectGraceMs` | 3,000   | How long after a dropped connection a player is shown gone. |
+| Timing              | Variable                 | Default | What it is                                                  |
+| ------------------- | ------------------------ | ------- | ----------------------------------------------------------- |
+| `hazardWindowMs`    | `MB_HAZARD_WINDOW_MS`    | 5,000   | How long the target team has to play a Coup Fourre.         |
+| `extensionOfferMs`  | `MB_EXTENSION_OFFER_MS`  | 30,000  | How long the decider has to call or decline Extension.      |
+| `raceOverPauseMs`   | `MB_RACE_OVER_PAUSE_MS`  | 20,000  | How long the scores show before the next race is dealt.     |
+| `robotDelayMinMs`   | `MB_ROBOT_DELAY_MIN_MS`  | 1,000   | The shortest wait before a robot plays or answers.          |
+| `robotDelayMaxMs`   | `MB_ROBOT_DELAY_MAX_MS`  | 3,000   | The longest wait before a robot plays or answers.           |
+| `disconnectGraceMs` | `MB_DISCONNECT_GRACE_MS` | 3,000   | How long after a dropped connection a player is shown gone. |
 
 A robot answers a Coup Fourre window after its usual random wait,
 so its speed does not reveal that it is a robot,
