@@ -6,6 +6,9 @@ import type { Screen } from "@repo/mille-bornes-game-server/screens";
 import { useRef, type ReactElement } from "react";
 import type { Api } from "../api/client.mjs";
 import { voidWire } from "../api/outcomes.mjs";
+import { prefersReducedMotion, useFlyingCards } from "../animation/FlyingCard.js";
+import { useAnimator } from "../animation/useAnimator.js";
+import type { EventBatch } from "../state/screenStore.mjs";
 import { EndGameDialog } from "../table/EndGameDialog.js";
 import { ExtensionOffer } from "../table/ExtensionOffer.js";
 import { Hand } from "../table/Hand.js";
@@ -27,10 +30,17 @@ import { RaceSummary } from "./RaceSummary.js";
 export type PlayingData = Extract<Screen, { kind: "Playing" }>;
 
 
-/** What `GameScreen` needs. */
+/**
+ * What `GameScreen` needs.  The store's queue comes in as props (not a
+ * context): `GameScreen` is its only consumer, and its tests pass it plainly.
+ */
 export interface GameScreenProps {
-    screen: PlayingData;
-    api:    Api;
+    screen:        PlayingData;
+    api:           Api;
+    /** The store's batches still to animate, oldest first. */
+    pendingEvents: ReadonlyArray<EventBatch>;
+    /** Marks a batch as played. */
+    consumeEvents: (id: number) => void;
 }
 
 
@@ -54,13 +64,20 @@ function windowSeconds(screen: PlayingData): Option<number> {
  * offer when they apply.  A play is two taps: a card, then a target (a lane,
  * the discard pile, or Play); the server judges it, and a refusal shows in
  * the top bar.  Components inside it can show a transient top bar message
- * through `useSetOverride()`.
- * @param props - The Playing screen and the API
+ * through `useSetOverride()`.  The pending events play as animations, one
+ * batch after another, and the last move line follows the batch that is
+ * playing, so the words and the motion agree.
+ * @param props - The Playing screen, the API and the store's event queue
  * @returns The table
  */
 export function GameScreen(props: GameScreenProps): ReactElement {
     const { screen, api } = props;
     const { view } = screen;
+    const flying = useFlyingCards();
+    const started = useAnimator(props.pendingEvents, props.consumeEvents, view, {
+        play:          flying.play,
+        reducedMotion: prefersReducedMotion
+    });
     const { override, setOverride } = useOverrideMessage();
     const { selection, dispatch } = useSelection(view, setOverride);
     const phaseMessage = windowSeconds(screen).match(
@@ -141,7 +158,10 @@ export function GameScreen(props: GameScreenProps): ReactElement {
                     />
                 ))}
             </div>
-            <LastMove events={screen.events} view={view} />
+            <LastMove
+                events={started.match((b) => b.events, () => [])}
+                view={started.match((b) => b.view, () => view)}
+            />
             <Piles
                 drawPileCount={view.drawPileCount}
                 discardTop={Option.fromNullable(view.discardTop)}
@@ -196,6 +216,7 @@ export function GameScreen(props: GameScreenProps): ReactElement {
                 <EndGameDialog api={api} /> :
                 null}
             {body}
+            {flying.layer}
         </section>
     );
 }

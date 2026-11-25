@@ -214,6 +214,17 @@ describe("screenStore", () => {
                 expect([...ids].sort((a, b) => a - b)).toEqual(ids);
             });
 
+
+            it("drops unplayed batches when the screen leaves Playing", () => {
+                // The game ended mid-animation: its last batch must not play
+                // when the next game's table mounts.
+                const { store, callbacks } = started();
+                callbacks().onData(playing());
+                callbacks().onData(playing(race(1)));
+                callbacks().onData(lobby);
+                expect(store.getSnapshot().pendingEvents).toEqual([]);
+            });
+
         });
 
 

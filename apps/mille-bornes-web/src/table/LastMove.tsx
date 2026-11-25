@@ -8,7 +8,7 @@ import { pickLastMove } from "./pickLastMove.mjs";
 
 /** What `LastMove` shows. */
 export interface LastMoveProps {
-    /** The latest batch of events; empty most of the time. */
+    /** The batch that started animating most recently; empty before one. */
     events: ReadonlyArray<GameEvent>;
     view:   PlayerView;
 }
@@ -17,7 +17,7 @@ export interface LastMoveProps {
 /**
  * The most recent move, in one plain line (see `pickLastMove()`).  The line
  * is kept until a later non-empty batch of events replaces it.
- * @param props - The latest events and the view that names the players
+ * @param props - The latest started batch and the view it arrived with
  * @returns The line, in a polite status region
  */
 export function LastMove(props: LastMoveProps): ReactElement {

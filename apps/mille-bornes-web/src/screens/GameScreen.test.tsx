@@ -20,6 +20,7 @@ import {
     blockedZone, rollingZone, speedLimitedZone, withSafety
 } from "../testing/zoneFixtures.mjs";
 import { finishedGame, screenOf } from "../testing/finishedGames.mjs";
+import type { EventBatch } from "../state/screenStore.mjs";
 import { GameScreen, type PlayingData } from "./GameScreen.js";
 import { Shell } from "./Shell.js";
 
@@ -30,11 +31,16 @@ const robotIcon = "\u{1F916}";
 
 
 function show(screenData: PlayingData, fake: FakeApi = createFakeApi()) {
-    const rendered = render(<GameScreen screen={screenData} api={fake.api} />);
-    const again = (next: PlayingData): void => {
-        rendered.rerender(<GameScreen screen={next} api={fake.api} />);
+    const consume = vi.fn<(id: number) => void>();
+    const ui = (d: PlayingData, pending: ReadonlyArray<EventBatch>): ReactElement => (
+        <GameScreen screen={d} api={fake.api} pendingEvents={pending} consumeEvents={consume} />
+    );
+    const rendered = render(ui(screenData, []));
+    // The next screen, with the store's queue as it is then (default empty).
+    const again = (next: PlayingData, pending: ReadonlyArray<EventBatch> = []): void => {
+        rendered.rerender(ui(next, pending));
     };
-    return { ...rendered, again, fake };
+    return { ...rendered, again, fake, consume };
 }
 
 
@@ -307,15 +313,95 @@ describe("GameScreen", () => {
     });
 
 
-    describe("the last move", () => {
+    describe("the last move and the animations", () => {
 
-        it("shows the move of an engine batch and keeps it when a later screen has none", () => {
-            // The batch ends with the next turn and its draw, as the engine emits it.
-            const { view, events } = annPlays({ type: "Drive", card: "50" });
-            const { again } = show(playingScreen(view, { events }));
-            expect(screen.getByRole("status")).toHaveTextContent("You drove 50 miles.");
-            again(playingScreen(view, { events: [] }));
-            expect(screen.getByRole("status")).toHaveTextContent("You drove 50 miles.");
+        // Engine batches end with the next turn and its draw: a Fly, a 150 ms
+        // Pause and a Fly.  jsdom has no Web Animations, so only the Pause
+        // takes time.
+        const drove = annPlays({ type: "Drive", card: "50" });
+        const discarded = annPlays({ type: "Discard", card: "25" });
+        const first: EventBatch = { id: 1, events: drove.events };
+        const second: EventBatch = { id: 2, events: discarded.events };
+
+
+        function line(): HTMLElement {
+            return screen.getByRole("status");
+        }
+
+
+        beforeEach(() => {
+            vi.useFakeTimers();
+        });
+
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+
+        it("changes when a batch starts, not when its screen arrives", async () => {
+            const { again, consume } = show(playingScreen(viewForSeats(2)));
+            expect(line()).toHaveTextContent("Good luck!");
+            // A snapshot: events in the screen, none queued.  Nothing plays.
+            again(playingScreen(drove.view, { events: drove.events }));
+            await act(() => vi.advanceTimersByTimeAsync(1000));
+            expect(line()).toHaveTextContent("Good luck!");
+
+            again(playingScreen(drove.view, { events: drove.events }), [first]);
+            expect(line()).toHaveTextContent("Good luck!");
+            await act(() => vi.advanceTimersByTimeAsync(0));
+            expect(line()).toHaveTextContent("You drove 50 miles.");
+            expect(consume).not.toHaveBeenCalled();
+            await act(() => vi.advanceTimersByTimeAsync(150));
+            expect(consume).toHaveBeenCalledExactlyOnceWith(1);
+        });
+
+
+        it("keeps the line while the next batch waits behind a running one", async () => {
+            const { again, consume } = show(playingScreen(viewForSeats(2)));
+            again(playingScreen(drove.view, { events: drove.events }), [first]);
+            await act(() => vi.advanceTimersByTimeAsync(0));
+            again(playingScreen(discarded.view, { events: discarded.events }), [first, second]);
+            await act(() => vi.advanceTimersByTimeAsync(100));
+            expect(line()).toHaveTextContent("You drove 50 miles.");
+            await act(() => vi.advanceTimersByTimeAsync(100));
+            expect(line()).toHaveTextContent("You discarded 25 miles.");
+            await act(() => vi.advanceTimersByTimeAsync(150));
+            expect(consume.mock.calls).toEqual([[1], [2]]);
+        });
+
+
+        it("keeps the line across a later screen with no events", async () => {
+            const { again } = show(playingScreen(viewForSeats(2)));
+            again(playingScreen(drove.view, { events: drove.events }), [first]);
+            await act(() => vi.advanceTimersByTimeAsync(200));
+            again(playingScreen(drove.view), []);
+            await act(() => vi.advanceTimersByTimeAsync(200));
+            expect(line()).toHaveTextContent("You drove 50 miles.");
+        });
+
+
+        it("keeps the table usable while a batch plays", async () => {
+            const { again, consume } = show(playingScreen(viewOf(midRace, "Ann")));
+            again(playingScreen(viewOf(midRace, "Ann")), [first]);
+            await act(() => vi.advanceTimersByTimeAsync(0));
+            fireEvent.click(card("50 miles"));
+            expect(pressedCards()).toHaveLength(1);
+            expect(consume).not.toHaveBeenCalled();
+            await act(() => vi.advanceTimersByTimeAsync(150));
+            expect(consume).toHaveBeenCalledExactlyOnceWith(1);
+            expect(pressedCards()).toHaveLength(1);
+        });
+
+
+        it("flies in a layer that takes no taps and is hidden and empty after", async () => {
+            const { again } = show(playingScreen(drove.view));
+            again(playingScreen(drove.view), [first]);
+            await act(() => vi.advanceTimersByTimeAsync(200));
+            const layer = document.querySelector<HTMLElement>(".flying-layer")!;
+            expect(layer).toHaveAttribute("aria-hidden", "true");
+            expect(layer.style.pointerEvents).toBe("none");
+            expect(layer).toBeEmptyDOMElement();
         });
 
     });
@@ -719,7 +805,14 @@ describe("GameScreen", () => {
 
         function inShell(data: PlayingData, fake: FakeApi = createFakeApi()) {
             const ui = (d: PlayingData): ReactElement => (
-                <Shell><GameScreen screen={d} api={fake.api} /></Shell>
+                <Shell>
+                    <GameScreen
+                        screen={d}
+                        api={fake.api}
+                        pendingEvents={[]}
+                        consumeEvents={vi.fn()}
+                    />
+                </Shell>
             );
             const rendered = render(ui(data));
             return { ...rendered, again: (d: PlayingData) => rendered.rerender(ui(d)), fake };

@@ -1,0 +1,59 @@
+/*
+ * The flying card layer.  Above the table, below native dialogs (they sit in
+ * the top layer).  It never takes a tap.  Its sprites are animated with the
+ * Web Animations API on `transform` and `opacity` only.
+ */
+.flying-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.flying-card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    will-change: transform, opacity;
+}
+
+.flying-card .card {
+    box-shadow: 0 0.4rem 1rem rgb(0 0 0 / 30%);
+}
+
+.card.face-down {
+    border-color: #1c2e80;
+    background: repeating-linear-gradient(45deg, #364fc7 0 6px, #4c6ef5 6px 12px);
+}
+
+/* A glow over a lane: a box of its own, so only its opacity changes. */
+.pulse {
+    position: absolute;
+    border-radius: 0.75rem;
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+.pulse.tone-good {
+    box-shadow: 0 0 0 4px #2b8a3e, 0 0 1.5rem #69db7c;
+}
+
+.pulse.tone-bad {
+    box-shadow: 0 0 0 4px #c92a2a, 0 0 1.5rem #ff8787;
+}
+
+.pulse.tone-gold {
+    box-shadow: 0 0 0 4px #b58900, 0 0 2rem #ffd43b;
+}
+
+.pulse.tone-info {
+    box-shadow: 0 0 0 4px #1f5a99, 0 0 1.5rem #74c0fc;
+}
+
+/* The animator plays nothing then; this only makes sure. */
+@media (prefers-reduced-motion: reduce) {
+    .flying-layer {
+        display: none;
+    }
+}

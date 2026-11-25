@@ -29,8 +29,9 @@ export interface Snapshot {
     /**
      * Not yet consumed by the animator, oldest first.  The animator is the
      * only consumer; a snapshot (the first message after every connect or
-     * reconnect) drops whatever it had not played yet, so the list cannot
-     * grow without bound across reconnects or in a hidden tab.
+     * reconnect) or a screen other than Playing drops whatever it had not
+     * played yet, so the list cannot grow without bound across reconnects
+     * or in a hidden tab, and never outlives its game.
      */
     readonly pendingEvents: ReadonlyArray<EventBatch>;
 }
@@ -166,7 +167,9 @@ export function createScreenStore(deps: ScreenStoreDeps): ScreenStore {
         nextIsSnapshot = false;
         backoffMs = firstBackoffMs;
         const queue = !isSnapshot && screen.kind === "Playing" && screen.events.length > 0;
-        const kept = isSnapshot ? [] : snapshot.pendingEvents;
+        // Leaving the table (the game ended) drops its unplayed batches too,
+        // so they cannot play on the next game's table.
+        const kept = isSnapshot || screen.kind !== "Playing" ? [] : snapshot.pendingEvents;
         update({
             screen:        new SomeOption(screen),
             status:        "Live",

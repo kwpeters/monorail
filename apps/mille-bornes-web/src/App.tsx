@@ -14,7 +14,7 @@ import {
     type SessionProviderProps
 } from "./session/SessionProvider.js";
 import { useScreen } from "./state/useScreen.js";
-import type { ScreenStore } from "./state/screenStore.mjs";
+import type { ScreenStore, Snapshot } from "./state/screenStore.mjs";
 
 
 /** Options for tests; the real app passes none. */
@@ -74,7 +74,7 @@ function Following(props: FollowingProps): ReactElement {
         <Shell banner={<ConnectionBanner status={snapshot.status} />}>
             {snapshot.screen.isNone ?
                 <section className="screen"><p>Connecting...</p></section> :
-                screenFor(snapshot.screen.value, props.api)}
+                screenFor(snapshot.screen.value, props.api, snapshot, props.store)}
         </Shell>
     );
 }
@@ -82,13 +82,25 @@ function Following(props: FollowingProps): ReactElement {
 
 // One exhaustive switch: a new kind of Screen is a compile error until it
 // has a component.
-function screenFor(screen: Screen, api: Api): ReactElement {
+function screenFor(
+    screen: Screen,
+    api: Api,
+    snapshot: Snapshot,
+    store: ScreenStore
+): ReactElement {
     switch (screen.kind) {
         case "Lobby":
             return <LobbyScreen screen={screen} api={api} />;
         case "Waiting":
             return <WaitingScreen screen={screen} api={api} />;
         case "Playing":
-            return <GameScreen screen={screen} api={api} />;
+            return (
+                <GameScreen
+                    screen={screen}
+                    api={api}
+                    pendingEvents={snapshot.pendingEvents}
+                    consumeEvents={store.consumeEvents}
+                />
+            );
     }
 }

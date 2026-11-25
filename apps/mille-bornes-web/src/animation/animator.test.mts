@@ -113,7 +113,7 @@ describe("createAnimator", () => {
         });
 
 
-        it("under reduced motion plays no step but still starts and finishes each batch", async () => {
+        it("under reduced motion plays no step but starts and finishes each batch", async () => {
             const h = harness();
             h.reduce(true);
             const animator = createAnimator(h.deps);
@@ -167,7 +167,8 @@ describe("createAnimator", () => {
             const h = harness();
             const animator = createAnimator(h.deps);
             animator.enqueue(h.batch("drive", drive.events), view, h.done("drive"));
-            const drop = animator.enqueue(h.batch("discard", discard.events), view, h.done("discard"));
+            const later = h.batch("discard", discard.events);
+            const drop = animator.enqueue(later, view, h.done("discard"));
             await vi.advanceTimersByTimeAsync(10);
             drop();
             await vi.runAllTimersAsync();
@@ -187,7 +188,8 @@ describe("createAnimator", () => {
             expect(h.log.at(-1)).toBe("start Hold");
             animator.enqueue(h.batch("drive", drive.events), view, h.done("drive"));
             await vi.advanceTimersByTimeAsync(0);
-            expect(h.log.slice(-4)).toEqual(["end Hold", "done attack", "batch drive", "start Fly"]);
+            expect(h.log.slice(-4))
+            .toEqual(["end Hold", "done attack", "batch drive", "start Fly"]);
         });
 
 

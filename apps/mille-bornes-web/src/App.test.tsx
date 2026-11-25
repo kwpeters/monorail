@@ -13,6 +13,7 @@ import { okWire } from "./testing/fakeApi.mjs";
 import { createFakeStore, type FakeStore } from "./testing/fakeStore.mjs";
 import { createMemoryCredentials } from "./testing/memoryCredentials.mjs";
 import { pendingViewForSeats } from "./testing/pendingFixtures.mjs";
+import { annPlays } from "./testing/engineBatches.mjs";
 import { viewForSeats } from "./testing/viewFixtures.mjs";
 
 
@@ -214,6 +215,19 @@ describe("App", () => {
             expect(main.getByRole("region", { name: "Your hand" })).toBeInTheDocument();
             expect(main.getByText("Your turn: play or discard a card")).toBeInTheDocument();
             expect(main.getAllByRole("progressbar")).toHaveLength(2);
+        });
+
+
+        it("animates the store's pending batch and consumes it", async () => {
+            const { current } = setup(ann);
+            const { view, events } = annPlays({ type: "Drive", card: "50" });
+            act(() => current().set({
+                screen:        new SomeOption({ ...playing, view, events }),
+                status:        "Live",
+                pendingEvents: [{ id: 3, events }]
+            }));
+            await waitFor(() => expect(current().consumeEvents).toHaveBeenCalledWith(3));
+            expect(screen.getByText("You drove 50 miles.")).toBeInTheDocument();
         });
 
 
