@@ -79,8 +79,14 @@ function createSessionController(props: SessionProviderProps) {
             props.credentials.save(c);
         },
         clear: () => {
+            const mine = current;
             current = NoneOption.get();
-            props.credentials.clear();
+            // Another tab may have saved a new credential since; it is not this
+            // session's to remove.
+            const stored = props.credentials.load();
+            if (mine.isSome && stored.isSome && sameCredential(mine.value, stored.value)) {
+                props.credentials.clear();
+            }
         }
     };
     const makeStore = props.createStore ?? createScreenStore;

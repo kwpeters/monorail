@@ -1,5 +1,5 @@
 import { NoneOption, SomeOption } from "@repo/depot/option";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StrictMode, type ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -175,6 +175,22 @@ describe("SessionProvider", () => {
             expect(screen.getByText("nobody")).toBeInTheDocument();
             expect(credentials.load()).toEqual(NoneOption.get());
             expect(created[0]!.store.stop).toHaveBeenCalled();
+        });
+
+
+        it("leaves alone the new credential another tab saved since", async () => {
+            // Two tabs share one storage.  Tab A signs in as Bob; tab B, still
+            // on Ann, then hears that Ann's credential is no longer valid.
+            const shared = createMemoryCredentials(ann);
+            const tabA = setup(undefined, undefined, shared);
+            const tabB = setup(undefined, undefined, shared);
+            const a = render(tabA.tree);
+            const b = render(tabB.tree);
+            await tabA.user.click(within(a.container).getByRole("button", { name: "sign in B" }));
+            act(() => tabB.created[0]!.deps.onUnauthorized());
+            expect(within(b.container).getByText("nobody")).toBeInTheDocument();
+            expect(within(a.container).getByText("signed in as pB")).toBeInTheDocument();
+            expect(shared.load()).toEqual(new SomeOption(bob));
         });
 
 
