@@ -16,7 +16,9 @@
         "mille-bornes-game-server": "./dist/www.mjs"
     },
     "dependencies": {
-        "@repo/depot": "*"
+        "@repo/depot": "*",
+        "@repo/mille-bornes-core": "*",
+        "zod": "^4.3.6"
     },
     "devDependencies": {
         "@repo/eslint-config": "*",
