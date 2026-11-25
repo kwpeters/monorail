@@ -1,0 +1,148 @@
+<h2>Which game-table layout feels right on a phone?</h2>
+<p class="subtitle">Portrait phone, mid-game. Team 1 (Ann + Bob) vs Team 2 (Cy + Sir Honks-a-Lot). It is Ann's turn, and she is the viewer.</p>
+
+<style>
+  .phone { width: 290px; height: 560px; margin: 0 auto; border: 3px solid #333; border-radius: 26px; background: #fdfaf0; overflow: hidden; display: flex; flex-direction: column; font-size: 12px; color: #222; position: relative; }
+  .topbar { background: #2b6cb0; color: #fff; padding: 8px 10px; font-weight: bold; text-align: center; }
+  .topbar.me { background: #2f9e44; }
+  .lane { margin: 8px; padding: 6px 8px; background: #fff; border: 2px solid #ddd; border-radius: 10px; }
+  .lane.active { border-color: #2f9e44; box-shadow: 0 0 0 2px #b2f2bb; }
+  .road { position: relative; height: 22px; background: #555; border-radius: 4px; margin: 6px 0; }
+  .road:after { content: ""; position: absolute; left: 0; right: 0; top: 10px; border-top: 2px dashed #ddd; }
+  .car { position: absolute; top: -4px; font-size: 20px; z-index: 2; }
+  .flag { position: absolute; right: 2px; top: 1px; font-size: 16px; z-index: 2; }
+  .chip { display: inline-block; padding: 1px 6px; border-radius: 9px; font-size: 10px; margin-right: 3px; }
+  .go { background: #d3f9d8; color: #2b8a3e; }
+  .stop { background: #ffe3e3; color: #c92a2a; }
+  .info { background: #e7f5ff; color: #1864ab; }
+  .safe { background: #fff3bf; color: #8a6d00; }
+  .players { font-size: 11px; color: #555; margin-top: 3px; }
+  .turn { color: #2f9e44; font-weight: bold; }
+  .center { display: flex; justify-content: center; gap: 14px; margin: 4px 0 6px; }
+  .pile { width: 46px; height: 62px; border-radius: 6px; border: 2px dashed #aaa; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 10px; background: #f1f3f5; }
+  .pile.draw { background: #364fc7; color: #fff; border: 2px solid #1c2e80; }
+  .hand { margin-top: auto; padding: 8px 6px 10px; background: #e9ecef; border-top: 2px solid #ccc; }
+  .hand-label { font-size: 10px; color: #555; margin-bottom: 4px; text-align: center; }
+  .cards { display: flex; gap: 3px; justify-content: center; }
+  .c { width: 36px; height: 56px; border-radius: 5px; background: #fff; border: 2px solid #868e96; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 15px; font-weight: bold; }
+  .c small { font-size: 8px; font-weight: normal; }
+  .c.hz { border-color: #c92a2a; background: #fff5f5; }
+  .c.rm { border-color: #2b8a3e; background: #f4fff6; }
+  .c.sf { border-color: #d9a400; background: #fffbe6; }
+  .c.new { transform: translateY(-8px); box-shadow: 0 3px 6px rgba(0,0,0,.3); }
+  .scoreboard { margin: 8px; }
+  .row { display: flex; align-items: center; gap: 8px; padding: 8px; margin-bottom: 6px; background: #fff; border: 2px solid #ddd; border-radius: 10px; }
+  .row.active { border-color: #2f9e44; box-shadow: 0 0 0 2px #b2f2bb; }
+  .miles { font-size: 22px; font-weight: bold; width: 62px; text-align: center; line-height: 1; }
+  .miles small { display: block; font-size: 9px; font-weight: normal; color: #777; }
+  .bar { height: 8px; background: #e9ecef; border-radius: 4px; overflow: hidden; margin: 4px 0; }
+  .bar i { display: block; height: 100%; background: #2f9e44; }
+  .avatars { display: flex; gap: 4px; margin: 3px 0; }
+  .av { padding: 1px 6px; border-radius: 9px; background: #f1f3f5; font-size: 10px; border: 2px solid transparent; }
+  .av.turn-av { border-color: #2f9e44; background: #d3f9d8; font-weight: bold; }
+  .last { margin: 0 8px; padding: 6px 8px; background: #fff9db; border: 1px solid #ffe066; border-radius: 8px; font-size: 11px; }
+</style>
+
+<div class="split">
+
+  <div>
+    <div class="phone">
+      <div class="topbar me">Your turn, Ann: play or discard</div>
+
+      <div class="lane active">
+        <b>Team 1</b> (you + Bob) &nbsp;<span class="chip go">Rolling</span><span class="chip safe">&#128737; Right of Way</span>
+        <div class="road"><span class="car" style="left:42%">&#128663;</span><span class="flag">&#127937;</span></div>
+        <div class="players">425 / 1000 mi &middot; <span class="turn">&#9679; Ann</span> &middot; Bob</div>
+      </div>
+
+      <div class="lane">
+        <b>Team 2</b> (Cy + Sir Honks-a-Lot) &nbsp;<span class="chip stop">Flat Tire</span><span class="chip info">&#128012; Speed Limit</span>
+        <div class="road"><span class="car" style="left:30%">&#128661;</span><span class="flag">&#127937;</span></div>
+        <div class="players">300 / 1000 mi &middot; Cy &middot; Sir Honks-a-Lot</div>
+      </div>
+
+      <div class="last">&#128172; Cy played <b>Flat Tire</b> on Team 1... which Bob blocked.</div>
+
+      <div class="center">
+        <div class="pile draw">Draw<br>62</div>
+        <div class="pile">Discard<br>Roll</div>
+      </div>
+
+      <div class="hand">
+        <div class="hand-label">Your hand (tap a card, then tap a target)</div>
+        <div class="cards">
+          <div class="c">50<small>mi</small></div>
+          <div class="c">75<small>mi</small></div>
+          <div class="c hz">&#128165;<small>Accident</small></div>
+          <div class="c rm">&#128295;<small>Repairs</small></div>
+          <div class="c">100<small>mi</small></div>
+          <div class="c rm">&#9989;<small>Roll</small></div>
+          <div class="c new">25<small>mi</small></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body" style="text-align:center;margin-top:8px">
+      <h3>A: Road lanes</h3>
+      <p>Each team is a lane with a little car that moves along the road. It is the most playful, and the animations are obvious: a card flies onto a lane and the car lurches.</p>
+    </div>
+  </div>
+
+  <div>
+    <div class="phone">
+      <div class="topbar me">Your turn, Ann: play or discard</div>
+
+      <div class="scoreboard">
+        <div class="row active">
+          <div class="miles">425<small>of 1000</small></div>
+          <div style="flex:1">
+            <b>Team 1</b>
+            <div class="bar"><i style="width:42.5%"></i></div>
+            <div class="avatars"><span class="av turn-av">&#9679; Ann</span><span class="av">Bob</span></div>
+            <span class="chip go">Rolling</span><span class="chip safe">&#128737; Right of Way</span>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="miles">300<small>of 1000</small></div>
+          <div style="flex:1">
+            <b>Team 2</b>
+            <div class="bar"><i style="width:30%;background:#1c7ed6"></i></div>
+            <div class="avatars"><span class="av">Cy</span><span class="av">Sir Honks-a-Lot</span></div>
+            <span class="chip stop">Flat Tire</span><span class="chip info">Speed Limit</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="last">&#128172; Cy played <b>Flat Tire</b> on Team 1... which Bob blocked.</div>
+
+      <div class="center" style="margin-top:12px">
+        <div class="pile draw">Draw<br>62</div>
+        <div class="pile">Discard<br>Roll</div>
+      </div>
+
+      <div class="hand">
+        <div class="hand-label">Your hand (tap a card, then tap a target)</div>
+        <div class="cards">
+          <div class="c">50<small>mi</small></div>
+          <div class="c">75<small>mi</small></div>
+          <div class="c hz">&#128165;<small>Accident</small></div>
+          <div class="c rm">&#128295;<small>Repairs</small></div>
+          <div class="c">100<small>mi</small></div>
+          <div class="c rm">&#9989;<small>Roll</small></div>
+          <div class="c new">25<small>mi</small></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body" style="text-align:center;margin-top:8px">
+      <h3>B: Scoreboard rows</h3>
+      <p>Compact, clear numbers, and it scales to 3 teams without crowding. Less whimsical, though a car icon could still sit on the progress bar.</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="options" style="margin-top:20px">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)"><div class="letter">A</div><div class="content"><h3>Road lanes</h3><p>Playful and animation-friendly</p></div></div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)"><div class="letter">B</div><div class="content"><h3>Scoreboard rows</h3><p>Compact and clear</p></div></div>
+  <div class="option" data-choice="mix" onclick="toggleSelect(this)"><div class="letter">C</div><div class="content"><h3>Mix</h3><p>Tell me what to combine in the terminal</p></div></div>
+</div>

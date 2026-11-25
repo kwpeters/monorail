@@ -1,0 +1,114 @@
+<h2>Lobby and waiting room: does this flow feel right?</h2>
+<p class="subtitle">Three phone screens in order: the lobby (everyone), the organizer's waiting room, and a joiner's waiting room.</p>
+
+<style>
+  .row3 { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .ph { width: 235px; height: 470px; border: 3px solid #333; border-radius: 24px; background: #fdfaf0; overflow: hidden; display: flex; flex-direction: column; font-size: 12px; color: #222; }
+  .tb { background: #2b6cb0; color: #fff; padding: 8px 10px; font-weight: bold; text-align: center; }
+  .body { padding: 10px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .gamerow { background: #fff; border: 2px solid #ddd; border-radius: 10px; padding: 8px; display: flex; align-items: center; justify-content: space-between; }
+  .btn { background: #2f9e44; color: #fff; border-radius: 8px; padding: 8px; text-align: center; font-weight: bold; }
+  .btn.sm { padding: 3px 10px; font-size: 11px; }
+  .btn.off { background: #adb5bd; }
+  .btn.alt { background: #1c7ed6; }
+  .btn.ghost { background: #fff; color: #333; border: 2px solid #adb5bd; }
+  .lbl { font-size: 10px; text-transform: uppercase; color: #777; margin-top: 2px; }
+  .team { background: #fff; border: 2px solid #ddd; border-radius: 10px; padding: 6px 8px; }
+  .team b { font-size: 11px; }
+  .pl { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; }
+  .bot { color: #7048e8; }
+  .x { color: #c92a2a; font-size: 11px; }
+  .seg { display: flex; gap: 4px; }
+  .seg div { flex: 1; text-align: center; padding: 5px 2px; border: 2px solid #ced4da; border-radius: 7px; font-size: 10px; background: #fff; }
+  .seg div.sel { border-color: #2f9e44; background: #d3f9d8; font-weight: bold; }
+  .warn { background: #fff3bf; border: 1px solid #ffe066; border-radius: 8px; padding: 5px 7px; font-size: 10.5px; }
+  .field { background: #fff; border: 2px solid #ced4da; border-radius: 8px; padding: 7px; color: #555; }
+</style>
+
+<div class="row3">
+
+  <div>
+    <div class="ph">
+      <div class="tb">&#127937; Mille Bornes</div>
+      <div class="body">
+        <div class="lbl">Your name</div>
+        <div class="field">Ann</div>
+        <div class="lbl">Games waiting for players</div>
+        <div class="gamerow"><div><b>Dad's game</b><br><small>Dad + 2 bots &middot; 1 of 6 seats open</small></div><div class="btn sm">Join</div></div>
+        <div class="gamerow"><div><b>Cy's game</b><br><small>Cy &middot; 5 seats open</small></div><div class="btn sm">Join</div></div>
+        <div class="gamerow" style="opacity:.6"><div><b>Game in progress</b><br><small>Bob's game &middot; locked</small></div><div class="btn sm off">Full</div></div>
+        <div style="margin-top:auto" class="btn alt">+ Start a new game</div>
+      </div>
+    </div>
+    <p style="text-align:center"><b>1. Lobby</b></p>
+  </div>
+
+  <div>
+    <div class="ph">
+      <div class="tb">Your game (you're the organizer)</div>
+      <div class="body">
+        <div class="lbl">How long?</div>
+        <div class="seg"><div class="sel">Quick<br>1 hand</div><div>Short<br>2,000 pts</div><div>Full<br>5,000 pts</div></div>
+
+        <div class="lbl">Teams (4 players, 2 teams)</div>
+        <div class="team"><b>Team 1</b>
+          <div class="pl"><span>Ann (you)</span><span></span></div>
+          <div class="pl"><span>Bob</span><span class="x">move</span></div>
+        </div>
+        <div class="team"><b>Team 2</b>
+          <div class="pl"><span>Cy</span><span class="x">move</span></div>
+          <div class="pl bot"><span>&#129302; Sir Honks-a-Lot</span><span class="x">remove</span></div>
+        </div>
+        <div class="btn ghost">+ Add a robot</div>
+        <div style="margin-top:auto" class="btn">Start game</div>
+      </div>
+    </div>
+    <p style="text-align:center"><b>2a. Organizer waiting room</b></p>
+  </div>
+
+  <div>
+    <div class="ph">
+      <div class="tb">Your game (you're the organizer)</div>
+      <div class="body">
+        <div class="lbl">How long?</div>
+        <div class="seg"><div class="sel">Quick<br>1 hand</div><div>Short<br>2,000 pts</div><div>Full<br>5,000 pts</div></div>
+
+        <div class="lbl">Players (5)</div>
+        <div class="team">
+          <div class="pl"><span>Ann (you)</span></div>
+          <div class="pl"><span>Bob</span></div>
+          <div class="pl"><span>Cy</span></div>
+          <div class="pl"><span>Dad</span></div>
+          <div class="pl"><span>Mom</span></div>
+        </div>
+        <div class="warn">5 players can't make equal teams. Add a robot to make 6 (2 teams of 3, or 3 teams of 2).</div>
+        <div class="btn ghost">+ Add a robot</div>
+        <div style="margin-top:auto" class="btn off">Start game</div>
+      </div>
+    </div>
+    <p style="text-align:center"><b>2b. Same screen, 5 players</b></p>
+  </div>
+
+  <div>
+    <div class="ph">
+      <div class="tb">Ann's game</div>
+      <div class="body">
+        <div style="text-align:center;font-size:30px;margin-top:6px">&#128663;</div>
+        <div style="text-align:center"><b>Waiting for Ann to start the game...</b></div>
+        <div class="lbl">Format</div>
+        <div>Quick: first team to 1,000 miles</div>
+        <div class="lbl">Teams so far</div>
+        <div class="team"><b>Team 1</b><div class="pl">Ann</div><div class="pl">Bob</div></div>
+        <div class="team"><b>Team 2</b><div class="pl">Cy (you)</div><div class="pl bot">&#129302; Sir Honks-a-Lot</div></div>
+        <div style="margin-top:auto" class="btn ghost">Leave game</div>
+      </div>
+    </div>
+    <p style="text-align:center"><b>3. Joiner waiting room</b></p>
+  </div>
+
+</div>
+
+<div class="options" style="margin-top:20px">
+  <div class="option" data-choice="ok" onclick="toggleSelect(this)"><div class="letter">&#10003;</div><div class="content"><h3>Looks right</h3><p>Flow and screens work for me</p></div></div>
+  <div class="option" data-choice="changes" onclick="toggleSelect(this)"><div class="letter">&#9998;</div><div class="content"><h3>Needs changes</h3><p>Tell me what in the terminal</p></div></div>
+</div>
