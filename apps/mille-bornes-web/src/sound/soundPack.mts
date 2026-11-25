@@ -118,7 +118,7 @@ export const soundPack: Readonly<Record<SoundName, ReadonlyArray<Tone>>> = {
         tone("sine", note.a5, 320, 170, 0.28)
     ],
 
-    // An urgent warble, three short bleeps alternating high and low.
+    // An urgent warble, four short bleeps alternating high and low.
     windowAlert: [
         tone("square", 880, 90, 0, 0.14),
         tone("square", 660, 90, 110, 0.14),

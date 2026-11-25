@@ -1,9 +1,19 @@
+import { SomeOption } from "@repo/depot/option";
 import { fireEvent, render, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
-import { createFakeEngine } from "../testing/fakeAudio.mjs";
+import { createFakeAudio, createFakeEngine, createMemoryStorage } from "../testing/fakeAudio.mjs";
+import { createAudioEngine, type AudioContextLike } from "./audioEngine.mjs";
 import { SoundProvider } from "./SoundProvider.js";
 import { useAudioEngine } from "./useSound.js";
+
+
+const gestures: ReadonlyArray<readonly [string, () => void]> = [
+    ["pointerup", () => void fireEvent.pointerUp(window)],
+    ["touchend", () => void fireEvent.touchEnd(window)],
+    ["click", () => void fireEvent.click(window)],
+    ["keydown", () => void fireEvent.keyDown(window, { key: "a" })]
+];
 
 
 describe("SoundProvider", () => {
@@ -30,33 +40,80 @@ describe("SoundProvider", () => {
     });
 
 
-    it("unlocks the engine on a tap or a key press, until it is unlocked", () => {
+    it.each(gestures)("unlocks the engine on %s, however many times", (_type, gesture) => {
         const engine = createFakeEngine();
         render(<SoundProvider engine={engine}><p>app</p></SoundProvider>);
         expect(engine.unlocks).not.toHaveBeenCalled();
-        fireEvent.pointerUp(window);
+        gesture();
         expect(engine.unlocks).toHaveBeenCalledTimes(1);
-        fireEvent.keyDown(window, { key: "a" });
+        gesture();
         expect(engine.unlocks).toHaveBeenCalledTimes(2);
     });
 
 
-    it("stops listening once the engine has unlocked", () => {
+    it("keeps listening for the session, even once the engine says it is unlocked", () => {
         const engine = createFakeEngine();
         Object.defineProperty(engine, "unlocked", { value: true });
         render(<SoundProvider engine={engine}><p>app</p></SoundProvider>);
-        fireEvent.pointerUp(window);
-        fireEvent.pointerUp(window);
-        fireEvent.keyDown(window, { key: "a" });
-        expect(engine.unlocks).toHaveBeenCalledTimes(1);
+        for (const [, gesture] of gestures) {
+            gesture();
+        }
+        expect(engine.unlocks).toHaveBeenCalledTimes(gestures.length);
     });
 
 
-    it("removes its listeners on unmount", () => {
+    describe("with a context that suspends again, as after a phone lock", () => {
+
+        function showWithAudio() {
+            const audio = createFakeAudio("suspended");
+            const engine = createAudioEngine({
+                createContext: () => new SomeOption<AudioContextLike>(audio.context),
+                storage:       createMemoryStorage()
+            });
+            const rendered = render(<SoundProvider engine={engine}><p>app</p></SoundProvider>);
+            return { audio, engine, ...rendered };
+        }
+
+
+        it.each(gestures)("resumes it once on the next %s", async (_type, gesture) => {
+            const { audio, engine } = showWithAudio();
+            gesture();
+            await Promise.resolve();
+            expect(audio.resume).toHaveBeenCalledTimes(1);
+            expect(engine.unlocked).toBe(true);
+
+            // Running: a gesture does not touch the context.
+            gesture();
+            expect(audio.resume).toHaveBeenCalledTimes(1);
+
+            // The phone locks and the context is suspended again.
+            audio.setState("suspended");
+            expect(engine.unlocked).toBe(false);
+            gesture();
+            await Promise.resolve();
+            expect(audio.resume).toHaveBeenCalledTimes(2);
+            expect(engine.unlocked).toBe(true);
+            gesture();
+            expect(audio.resume).toHaveBeenCalledTimes(2);
+        });
+
+
+        it("calls resume() synchronously inside the gesture", () => {
+            const { audio } = showWithAudio();
+            fireEvent.touchEnd(window);
+            expect(audio.resume).toHaveBeenCalledTimes(1);
+        });
+
+    });
+
+
+    it("removes all its listeners on unmount", () => {
         const engine = createFakeEngine();
         const { unmount } = render(<SoundProvider engine={engine}><p>app</p></SoundProvider>);
         unmount();
-        fireEvent.pointerUp(window);
+        for (const [, gesture] of gestures) {
+            gesture();
+        }
         expect(engine.unlocks).not.toHaveBeenCalled();
     });
 

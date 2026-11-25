@@ -106,6 +106,38 @@ describe("useSound", () => {
     });
 
 
+    it("plays nothing for a batch the animator skipped", async () => {
+        const engine = createFakeEngine();
+        const { result } = renderHook(() => useSound(), {
+            wrapper: ({ children }: { children: ReactNode }) => (
+                <AudioEngineContext.Provider value={engine}>{children}</AudioEngineContext.Provider>
+            )
+        });
+        const vibrate = vi.fn(() => true);
+        setVibrate(vibrate);
+        result.current(batch.events, view, true);
+        await advance(5000);
+        expect(engine.played).not.toHaveBeenCalled();
+        expect(vibrate).not.toHaveBeenCalled();
+        result.current(batch.events, view, false);
+        await advance(5000);
+        expect(engine.played).toHaveBeenCalledTimes(3);
+        expect(vibrate).toHaveBeenCalledOnce();
+    });
+
+
+    it("plays only the newest batches of a backlog, while the last move still follows", async () => {
+        const batches: EventBatch[] = [1, 2, 3, 4, 5, 6, 7, 8].map((id) => (
+            { id, events: eventsFor(annId, bobs.events) }
+        ));
+        const { engine, result } = setup(batches);
+        await advance(5000);
+        // Six are skipped; the newest two play three sounds each.
+        expect(engine.played).toHaveBeenCalledTimes(6);
+        expect(result.current.isSome && result.current.value.events).toBe(batches[7]!.events);
+    });
+
+
     it("plays nothing for a reconnect snapshot, which brings no batch", async () => {
         const { engine, rerender } = setup([]);
         rerender({ pending: [] });

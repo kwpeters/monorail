@@ -55,9 +55,9 @@ export function useAnimator(
         const animator = createAnimator({
             play:          (step, signal) => latest.current.deps.play(step, signal),
             reducedMotion: () => latest.current.deps.reducedMotion(),
-            onBatchStart:  (events, batchView) => {
+            onBatchStart:  (events, batchView, skipped) => {
                 setStarted(new SomeOption({ events, view: batchView }));
-                latest.current.deps.onBatchStart?.(events, batchView);
+                latest.current.deps.onBatchStart?.(events, batchView, skipped);
             }
         });
         live.current = new SomeOption({

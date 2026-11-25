@@ -257,6 +257,10 @@ export function createAudioEngine(deps: {
 
         setMuted: (m) => {
             muted = m;
+            if (m) {
+                // Sounds already scheduled are cut short too.
+                [...live].forEach((sound) => sound.stop());
+            }
             try {
                 deps.storage.setItem(muteStorageKey, String(m));
             }

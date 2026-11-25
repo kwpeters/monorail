@@ -195,6 +195,44 @@ describe("createAnimator", () => {
         });
 
 
+        it("tells onBatchStart which batches of a backlog were skipped, in order", async () => {
+            const h = harness();
+            const started: Array<readonly [string, boolean]> = [];
+            const animator = createAnimator({
+                ...h.deps,
+                onBatchStart: (events, _view, skipped) => {
+                    started.push([h.names.get(events) ?? "?", skipped]);
+                }
+            });
+            animator.enqueue(h.batch("b0", drive.events), view, h.done("b0"));
+            await vi.advanceTimersByTimeAsync(10);
+            for (let i = 1; i <= 7; i++) {
+                animator.enqueue(h.batch(`b${i}`, drive.events), view, h.done(`b${i}`));
+            }
+            await vi.runAllTimersAsync();
+            expect(started).toEqual([
+                ["b0", false],
+                ["b1", true], ["b2", true], ["b3", true], ["b4", true], ["b5", true],
+                ["b6", false],
+                ["b7", false]
+            ]);
+        });
+
+
+        it("does not call a batch skipped when only reduced motion skips its steps", async () => {
+            const h = harness();
+            h.reduce(true);
+            const skippedFlags: boolean[] = [];
+            const animator = createAnimator({
+                ...h.deps,
+                onBatchStart: (_events, _view, skipped) => void skippedFlags.push(skipped)
+            });
+            animator.enqueue(h.batch("drive", drive.events), view, h.done("drive"));
+            await vi.runAllTimersAsync();
+            expect(skippedFlags).toEqual([false]);
+        });
+
+
         it("returns a function that drops a batch that has not started", async () => {
             const h = harness();
             const animator = createAnimator(h.deps);

@@ -159,6 +159,41 @@ describe("createAudioEngine", () => {
         });
 
 
+        it("gives every tone an attack from silence and a release to silence", () => {
+            const { engine, audio } = engineWith();
+            engine.unlock();
+            for (const [name, tones] of Object.entries(soundPack)) {
+                const first = audio.oscillators.length;
+                engine.play(name as keyof typeof soundPack);
+                tones.forEach((tone, i) => {
+                    const calls = audio.gains[first + i]!;
+                    const osc = audio.oscillators[first + i]!;
+                    const start = 10 + tone.delayMs / 1000;
+                    const end = start + tone.ms / 1000;
+                    const [set, attack, release] = calls;
+                    expect(calls).toHaveLength(3);
+                    // Starts silent at the note's start.
+                    expect(set).toMatchObject({ kind: "set", time: start });
+                    expect(set!.value).toBeLessThanOrEqual(0.001);
+                    // Ramps to the peak within the attack window (15 ms at most).
+                    expect(attack).toMatchObject({ kind: "linear", value: tone.peak });
+                    expect(attack!.time).toBeGreaterThan(start);
+                    expect(attack!.time - start).toBeLessThanOrEqual(0.015);
+                    // Fades to near silence before the oscillator stops.
+                    expect(release).toMatchObject({ kind: "exponential", time: end });
+                    expect(release!.value).toBeGreaterThan(0);
+                    expect(release!.value).toBeLessThanOrEqual(0.001);
+                    expect(osc.stoppedAt[0]).toBeGreaterThan(release!.time);
+                    for (const call of calls) {
+                        expect(call.value).toBeLessThanOrEqual(1);
+                        expect(call.value).toBeGreaterThanOrEqual(0);
+                    }
+                });
+                audio.endAll();
+            }
+        });
+
+
         it("releases the nodes of a sound once its oscillators end", () => {
             const { engine, audio } = engineWith();
             engine.unlock();
@@ -223,6 +258,30 @@ describe("createAudioEngine", () => {
 
 
     describe("muted", () => {
+
+        it("stops sounds that are already playing, and frees their slots", () => {
+            const { engine, audio } = engineWith();
+            engine.unlock();
+            engine.play("coupFourre");
+            engine.play("hazard");
+            const scheduled = audio.oscillators.length;
+            expect(audio.oscillators.every((o) => o.stoppedAt.length === 1)).toBe(true);
+            engine.setMuted(true);
+            expect(audio.oscillators).toHaveLength(scheduled);
+            // Each was stopped at once (a second stop call) and disconnected.
+            expect(audio.oscillators.every((o) => o.stoppedAt.length === 2)).toBe(true);
+            expect(audio.oscillators.every((o) => o.disconnects > 0)).toBe(true);
+            // The browser then fires `ended`: releasing twice is harmless.
+            expect(() => audio.endAll()).not.toThrow();
+            expect(audio.oscillators.every((o) => o.disconnects === 1)).toBe(true);
+            // Muting again, or unmuting, stops nothing more.
+            engine.setMuted(true);
+            engine.setMuted(false);
+            expect(audio.oscillators.every((o) => o.stoppedAt.length === 2)).toBe(true);
+            engine.play("drive");
+            expect(audio.oscillators.length).toBeGreaterThan(scheduled);
+        });
+
 
         it("starts unmuted with nothing stored", () => {
             expect(engineWith().engine.muted).toBe(false);

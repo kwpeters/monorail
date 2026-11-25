@@ -18,10 +18,20 @@ export interface FakeOscillator {
 }
 
 
+/** One envelope call made on a gain node's `gain` param. */
+export interface GainCall {
+    kind:  "set" | "linear" | "exponential";
+    value: number;
+    time:  number;
+}
+
+
 /** A fake `AudioContext` and what happened to it. */
 export interface FakeAudio {
     context:     AudioContextLike;
     oscillators: FakeOscillator[];
+    /** The gain nodes' envelope calls; one list per oscillator, in order. */
+    gains:       GainCall[][];
     /** Makes every oscillator end, as the browser does once a sound is over. */
     endAll:      () => void;
     resume:      Mock<() => Promise<void>>;
@@ -45,10 +55,22 @@ export function createFakeAudio(
     const resumeFn = vi.fn(resume ?? ((): Promise<void> => Promise.resolve().then(() => {
         current = "running";
     })));
+    const gains: GainCall[][] = [];
     const param = (record: number[], slides: number[]) => ({
         setValueAtTime:               (v: number) => void record.push(v),
         linearRampToValueAtTime:      () => undefined,
         exponentialRampToValueAtTime: (v: number) => void slides.push(v)
+    });
+    const gainParam = (calls: GainCall[]) => ({
+        setValueAtTime: (value: number, time: number) => {
+            calls.push({ kind: "set", value, time });
+        },
+        linearRampToValueAtTime: (value: number, time: number) => {
+            calls.push({ kind: "linear", value, time });
+        },
+        exponentialRampToValueAtTime: (value: number, time: number) => {
+            calls.push({ kind: "exponential", value, time });
+        }
     });
     const context: AudioContextLike = {
         currentTime: 10,
@@ -57,11 +79,15 @@ export function createFakeAudio(
             return current;
         },
         resume:     () => resumeFn(),
-        createGain: () => ({
-            gain:       param([], []),
-            connect:    () => undefined,
-            disconnect: () => undefined
-        }),
+        createGain: () => {
+            const calls: GainCall[] = [];
+            gains.push(calls);
+            return {
+                gain:       gainParam(calls),
+                connect:    () => undefined,
+                disconnect: () => undefined
+            };
+        },
         createOscillator: () => {
             const osc: FakeOscillator = {
                 type:        "sine",
@@ -102,6 +128,7 @@ export function createFakeAudio(
     return {
         context,
         oscillators,
+        gains,
         endAll:   () => oscillators.forEach((o) => o.onended?.()),
         resume:   resumeFn,
         setState: (s) => {

@@ -17,9 +17,15 @@ export interface AnimatorDeps {
 
     /**
      * Called once as each batch starts, before its first step (also when its
-     * steps are skipped), with the view the batch arrived with.
+     * steps are skipped), with the view the batch arrived with.  `skipped`
+     * is true when backlog protection skips the batch's steps: it is still
+     * announced (the last move line needs it), but a sound should not play.
      */
-    onBatchStart?: (events: ReadonlyArray<GameEvent>, view: PlayerView) => void;
+    onBatchStart?: (
+        events: ReadonlyArray<GameEvent>,
+        view: PlayerView,
+        skipped: boolean
+    ) => void;
 }
 
 
@@ -95,9 +101,9 @@ export function createAnimator(deps: AnimatorDeps): Animator {
         waiters.forEach((resolve) => resolve());
     };
 
-    const start = (batch: Queued): void => {
+    const start = (batch: Queued, skipped = false): void => {
         try {
-            deps.onBatchStart?.(batch.events, batch.view);
+            deps.onBatchStart?.(batch.events, batch.view, skipped);
         }
         catch {
             // A hook that throws (a sound) must not stop the animations.
@@ -150,7 +156,7 @@ export function createAnimator(deps: AnimatorDeps): Animator {
         while (!isStopped() && waiting.length > 0) {
             if (waiting.length > maxWaiting) {
                 for (const old of waiting.splice(0, waiting.length - playInFull)) {
-                    start(old);
+                    start(old, true);
                     finish(old);
                 }
             }

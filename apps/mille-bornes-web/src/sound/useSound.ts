@@ -54,11 +54,16 @@ function vibrate(pattern: ReadonlyArray<number>): void {
  * event of the batch sounds a `staggerMs` after the one before (events that
  * are silent for this viewer take no slot), and those still waiting are
  * cancelled on unmount.  Nothing plays for a reconnect snapshot, because it
- * brings no batch.  Vibration follows the mute choice and needs
+ * brings no batch, nor for a batch the animator skipped (a backlog after a
+ * phone woke up would otherwise sound all at once).  Vibration follows the mute choice and needs
  * `navigator.vibrate`.  Never throws.
  * @returns A stable `onBatchStart(events, view)`
  */
-export function useSound(): (events: ReadonlyArray<GameEvent>, view: PlayerView) => void {
+export function useSound(): (
+    events: ReadonlyArray<GameEvent>,
+    view: PlayerView,
+    skipped?: boolean
+) => void {
     const engine = useAudioEngine();
     const timers = useRef(new Set<number>());
 
@@ -70,7 +75,10 @@ export function useSound(): (events: ReadonlyArray<GameEvent>, view: PlayerView)
         };
     }, []);
 
-    return useCallback((events, view) => {
+    return useCallback((events, view, skipped = false) => {
+        if (skipped) {
+            return;
+        }
         let slot = 0;
         for (const event of events) {
             const sounds = soundsFor(event, view);
@@ -108,25 +116,22 @@ export function useSound(): (events: ReadonlyArray<GameEvent>, view: PlayerView)
 /**
  * Unlocks the engine on the user's gestures: browsers keep audio silent
  * until one, so the first tap or key press creates and resumes the context.
- * The listeners stay until the context runs, so a resume that failed is
- * tried again on the next gesture.
+ * The listeners stay for the whole session: a phone that locks or switches
+ * apps suspends the context again (iOS may refuse a resume made outside a
+ * gesture), and the next tap must wake it.  `unlock()` is cheap and calls
+ * `resume()` only when the context is not running.
  * @param engine - The engine to unlock
  */
 export function useUnlockOnGesture(engine: AudioEngine): void {
     useEffect(() => {
-        // `pointerup` and `keydown` are the events that count as a gesture
-        // for audio in every browser (a bare `pointerdown` does not in iOS).
-        const events = ["pointerup", "keydown"] as const;
-        const onGesture = (): void => {
-            engine.unlock();
-            if (engine.unlocked) {
-                stop();
-            }
-        };
-        const stop = (): void => {
+        // These count as a gesture for audio (a bare `pointerdown` does not
+        // on iOS); `touchend` and `click` hedge for `pointerup`.  The handler
+        // is synchronous: `resume()` must be called inside the gesture.
+        const events = ["pointerup", "touchend", "click", "keydown"] as const;
+        const onGesture = (): void => engine.unlock();
+        events.forEach((type) => window.addEventListener(type, onGesture));
+        return () => {
             events.forEach((type) => window.removeEventListener(type, onGesture));
         };
-        events.forEach((type) => window.addEventListener(type, onGesture));
-        return stop;
     }, [engine]);
 }
