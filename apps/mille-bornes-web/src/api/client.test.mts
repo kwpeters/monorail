@@ -1,7 +1,9 @@
 import { NoneOption, type Option, SomeOption } from "@repo/depot/option";
 import { afterEach, describe, expect, it, vi, type Mock } from "vitest";
 import { z } from "zod";
-import { authorizationParams, createApi, type Api, type ApiDeps } from "./client.mjs";
+import {
+    authorizationParams, callTimeoutMs, createApi, type Api, type ApiDeps
+} from "./client.mjs";
 import { type Credential, type CredentialStore } from "./credential.mjs";
 import {
     failedMessage,
@@ -195,6 +197,64 @@ describe("client", () => {
             const result = await api.call(rename, voidWire);
             expect(result.failed && result.error).toBe(networkMessage);
             expect(onUnauthorized).not.toHaveBeenCalled();
+        });
+
+
+        it("fails with the plain network message when nothing answers for 15 s", async () => {
+            vi.useFakeTimers();
+            try {
+                const never = (): Promise<Response> => new Promise<Response>(() => {
+                    // The server never answers.
+                });
+                const { api } = makeApi(never);
+                let result: Awaited<ReturnType<typeof api.call>> | undefined;
+                void api.call(rename, voidWire).then((r) => {
+                    result = r;
+                });
+                await vi.advanceTimersByTimeAsync(callTimeoutMs - 1);
+                expect(result).toBeUndefined();
+                await vi.advanceTimersByTimeAsync(1);
+                expect(result?.failed && result.error).toBe(networkMessage);
+            }
+            finally {
+                vi.useRealTimers();
+            }
+        });
+
+
+        it("clears its timeout once the call is answered", async () => {
+            // Real timers: tRPC's batching waits on one of its own.
+            const set = vi.spyOn(window, "setTimeout");
+            const clear = vi.spyOn(window, "clearTimeout");
+            const answered = (): Promise<Response> => Promise.resolve(data({ succeeded: true }));
+            const { api } = makeApi(answered);
+            const result = await api.call(rename, voidWire);
+            expect(result.succeeded).toBe(true);
+            const at = set.mock.calls.findIndex((c) => c[1] === callTimeoutMs);
+            expect(at).toBeGreaterThanOrEqual(0);
+            expect(clear).toHaveBeenCalledWith(set.mock.results[at]?.value);
+        });
+
+
+        it("ignores the late answer of a call that timed out, even UNAUTHORIZED", async () => {
+            vi.useFakeTimers();
+            try {
+                let answer: (r: Response) => void = () => undefined;
+                const { api, onUnauthorized } = makeApi(() => new Promise<Response>((resolve) => {
+                    answer = resolve;
+                }));
+                const call = api.call(rename, voidWire);
+                await vi.advanceTimersByTimeAsync(callTimeoutMs);
+                expect((await call).failed).toBe(true);
+                answer(batchResponse({
+                    error: { message: "x", code: -32001, data: { code: "UNAUTHORIZED" } }
+                }, 401));
+                await vi.advanceTimersByTimeAsync(0);
+                expect(onUnauthorized).not.toHaveBeenCalled();
+            }
+            finally {
+                vi.useRealTimers();
+            }
         });
 
 

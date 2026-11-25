@@ -20,6 +20,18 @@ import {
 } from "./outcomes.mjs";
 
 
+/**
+ * How long a call may go unanswered before it fails with the network
+ * message; without a limit, a lost request would keep a screen's buttons
+ * disabled for good.
+ */
+export const callTimeoutMs = 15_000;
+
+
+// What a call that timed out resolves to; no answer from the server is this.
+const callTimedOut = Symbol("timed out");
+
+
 /** What `createApi()` needs. */
 export interface ApiDeps {
     credentials:    CredentialStore;
@@ -106,9 +118,19 @@ export function createApi(deps: ApiDeps): Api {
         valueSchema: z.ZodType<TOut>
     ): Promise<Result<TOut, string>> {
         const used = deps.credentials.load();
+        const pending = fn(trpc);
+        let timer: number | undefined;
+        const timedOut = new Promise<typeof callTimedOut>((resolve) => {
+            timer = window.setTimeout(() => resolve(callTimedOut), callTimeoutMs);
+        });
         let wire: unknown;
         try {
-            wire = await fn(trpc);
+            wire = await Promise.race([pending, timedOut]);
+            if (wire === callTimedOut) {
+                // Given up: its late answer (even UNAUTHORIZED) changes nothing.
+                pending.catch(() => undefined);
+                return new FailedResult(networkMessage);
+            }
         }
         catch (err) {
             if (isUnauthorized(err)) {
@@ -116,6 +138,9 @@ export function createApi(deps: ApiDeps): Api {
                 return new FailedResult(unauthorizedMessage);
             }
             return new FailedResult(plainMessage(err));
+        }
+        finally {
+            window.clearTimeout(timer);
         }
 
         const decoded = discriminatedResultSchema(valueSchema, z.string()).safeParse(wire);
