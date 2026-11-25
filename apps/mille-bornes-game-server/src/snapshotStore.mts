@@ -78,7 +78,6 @@ function checkId(id: string): void {
 
 interface Job {
     kind:    "save" | "other";
-    label:   string;
     op:      () => Promise<void>;
     waiters: Array<{ resolve: () => void; reject: (e: unknown) => void }>;
 }
@@ -115,7 +114,7 @@ class CoalescingQueue {
             const replaces = kind === "save" && last?.kind === "save";
             const waiters = replaces ? last.waiters : [];
             waiters.push({ resolve, reject });
-            const job: Job = { kind, label, op, waiters };
+            const job: Job = { kind, op, waiters };
             if (replaces) {
                 slot.queue[slot.queue.length - 1] = job;
             }
