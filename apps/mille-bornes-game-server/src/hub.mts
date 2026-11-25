@@ -20,7 +20,7 @@ import { recordGameId } from "./records.mjs";
 import { humansOf, RunningGames, type AdminEntry, type RunningGame } from "./runningGames.mjs";
 import { lobbyScreen, waitingScreen, type Screen } from "./screens.mjs";
 import { type SessionRegistry } from "./sessions.mjs";
-import { type SnapshotStore } from "./snapshotStore.mjs";
+import { type LoadedSnapshots, type SnapshotStore } from "./snapshotStore.mjs";
 import { Table, type TableOptions } from "./table.mjs";
 
 
@@ -38,6 +38,8 @@ export interface HubOptions {
      * test can drive the stuck guard with a faulty one.
      */
     tableFactory?: (opts: TableOptions) => Table;
+    /** The games already read with `store.loadAll()`; default: read them now. */
+    saved?:        LoadedSnapshots["games"];
 }
 
 
@@ -86,7 +88,7 @@ export class Hub {
      * @returns The hub
      */
     public static async open(opts: HubOptions): Promise<Hub> {
-        const { games } = await opts.store.loadAll();
+        const games = opts.saved ?? (await opts.store.loadAll()).games;
         const records = games
         .map(({ record }) => record)
         .sort((a, b) => recordGameId(a).localeCompare(recordGameId(b)));

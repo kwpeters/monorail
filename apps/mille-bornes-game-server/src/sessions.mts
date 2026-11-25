@@ -20,6 +20,9 @@ export interface SessionRegistryOptions {
     /** Makes a new token; the default is 24 random bytes, base64url (32 characters). */
     newToken?: () => string;
 
+    /** The sessions already read with `store.loadAll()`; default: read them now. */
+    saved?: ReadonlyArray<SessionRecord>;
+
 }
 
 
@@ -69,7 +72,7 @@ export class SessionRegistry {
         rand:     () => number,
         options?: SessionRegistryOptions
     ): Promise<SessionRegistry> {
-        const { sessions } = await store.loadAll();
+        const sessions = options?.saved ?? (await store.loadAll()).sessions;
         return new SessionRegistry(store, rand, options?.newToken ?? defaultToken, sessions);
     }
 

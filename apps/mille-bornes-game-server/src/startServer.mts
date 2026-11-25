@@ -51,8 +51,12 @@ export interface RunningServer {
 export async function startServer(deps: StartServerDeps): Promise<RunningServer> {
     const { config, clock, rand, logger } = deps;
     const store = new FileSnapshotStore(config.dataDir, logger);
-    const sessions = await SessionRegistry.load(store, rand);
-    const hub = await Hub.open({ store, sessions, clock, rand, timings: config.timings, logger });
+    // Read once for both, so each damaged file is read and reported once.
+    const saved = await store.loadAll();
+    const sessions = await SessionRegistry.load(store, rand, { saved: saved.sessions });
+    const hub = await Hub.open({
+        store, sessions, clock, rand, timings: config.timings, logger, saved: saved.games
+    });
 
     const server = http.createServer();
     try {
