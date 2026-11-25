@@ -50,6 +50,14 @@ To try the app on a phone on the same network,
 start the dev server from this directory with `npm run dev -- --host`
 and open the network address it prints.
 
+While the game server is down,
+the dev server prints `http proxy error:` with the address it could not reach.
+For the game's event stream that address carries the player's credential
+(a browser's event stream cannot send it in a header),
+so the token shows in the dev terminal.
+Only `npm run dev` does this;
+the game server never logs an address.
+
 ## Tests
 
 ```powershell
