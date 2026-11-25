@@ -1,0 +1,12 @@
+{
+    "quiet": true,
+    "skip-missing": true,
+    "ignores": [
+        "@testing-library/jest-dom",
+        "@types/node",
+        "@vitejs/plugin-react",
+        "jsdom",
+        "vite",
+        "vitest"
+    ]
+}

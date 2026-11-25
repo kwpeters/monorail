@@ -1,0 +1,21 @@
+{
+    "extends": "@repo/typescript-config/tsconfig.app.json",
+    "compilerOptions": {
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "jsx": "react-jsx",
+        "noEmit": true,
+        "types": [
+            "node",
+            "vite/client"
+        ]
+    },
+    "include": [
+        "src",
+        "vite.config.mts"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}
