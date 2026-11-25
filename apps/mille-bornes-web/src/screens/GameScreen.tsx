@@ -59,10 +59,11 @@ export function GameScreen(props: GameScreenProps): ReactElement {
     const { view } = screen;
     const { override, setOverride } = useOverrideMessage();
     const { selection, dispatch } = useSelection(view, setOverride);
-    const message = override.defaultValue(windowSeconds(screen).match(
+    const phaseMessage = windowSeconds(screen).match(
         (seconds) => topBarMessage(view, seconds),
         () => topBarMessage(view)
-    ));
+    );
+    const message = override.defaultValue(phaseMessage);
     const onTurn = playerOnTurn(view);
     const robots = Option.fromNullable(screen.robots);
     const connected = Option.fromNullable(screen.connected);
@@ -131,7 +132,7 @@ export function GameScreen(props: GameScreenProps): ReactElement {
                 }}
             >
                 <TopBar text={message.text} tone={message.tone} />
-                <HazardBanner screen={screen} />
+                <HazardBanner screen={screen} alert={phaseMessage.text} />
                 <ExtensionOffer screen={screen} onDecide={(command) => void send(command)} />
                 <div className="scoreboard">
                     {view.teams.map((team) => (

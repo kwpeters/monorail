@@ -831,6 +831,12 @@ svg {
     font-size: 1.25rem;
 }
 
+/* The title and the countdown share a row; what to do goes under them. */
+.hazard-alert {
+    flex-basis: 100%;
+    font-weight: 600;
+}
+
 .countdown {
     font-weight: 700;
     font-variant-numeric: tabular-nums;

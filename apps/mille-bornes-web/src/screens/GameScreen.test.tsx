@@ -594,6 +594,17 @@ describe("GameScreen", () => {
         });
 
 
+        it("keeps what to do in the banner while the top bar explains a tap", () => {
+            show(windowFor("Bob"));
+            expect(banner()).toHaveTextContent(topBarMessage(viewOf(flatTireWindow, "Bob")).text);
+            fireEvent.click(card("75 miles"));
+            expect(bar()).toHaveTextContent(describeRejection({ reason: "WindowOpen" }));
+            expect(banner()).toHaveTextContent(
+                "If anyone on your team holds Puncture Proof, play it now."
+            );
+        });
+
+
         it("clears the banner and a half-finished selection when the window closes", () => {
             const { again } = show(windowFor("Di"));
             fireEvent.click(card("Puncture Proof Blocks it!"));
