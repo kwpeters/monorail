@@ -207,10 +207,13 @@ describe("App", () => {
         });
 
 
-        it("shows a placeholder for a Playing screen", () => {
+        it("shows the game table for a Playing screen", () => {
             const { current } = setup(ann);
             act(() => current().set({ screen: new SomeOption(playing), status: "Live" }));
-            expect(screen.getByText("Game coming soon")).toBeInTheDocument();
+            const main = within(screen.getByRole("main"));
+            expect(main.getByRole("region", { name: "Your hand" })).toBeInTheDocument();
+            expect(main.getByText("Your turn: play or discard a card")).toBeInTheDocument();
+            expect(main.getAllByRole("progressbar")).toHaveLength(2);
         });
 
 

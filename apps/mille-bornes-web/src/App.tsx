@@ -3,6 +3,7 @@ import type { Screen } from "@repo/mille-bornes-game-server/screens";
 import { useState, type ReactElement } from "react";
 import { type Api } from "./api/client.mjs";
 import { ConnectionBanner } from "./screens/ConnectionBanner.js";
+import { GameScreen } from "./screens/GameScreen.js";
 import { LobbyScreen } from "./screens/LobbyScreen.js";
 import { NameEntryScreen } from "./screens/NameEntryScreen.js";
 import { Shell } from "./screens/Shell.js";
@@ -80,7 +81,7 @@ function Following(props: FollowingProps): ReactElement {
 
 
 // One exhaustive switch: a new kind of Screen is a compile error until it
-// has a component.  Task 7 replaces the Playing placeholder.
+// has a component.
 function screenFor(screen: Screen, api: Api): ReactElement {
     switch (screen.kind) {
         case "Lobby":
@@ -88,6 +89,6 @@ function screenFor(screen: Screen, api: Api): ReactElement {
         case "Waiting":
             return <WaitingScreen screen={screen} api={api} />;
         case "Playing":
-            return <section className="screen"><p>Game coming soon</p></section>;
+            return <GameScreen screen={screen} />;
     }
 }

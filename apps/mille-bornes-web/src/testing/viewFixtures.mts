@@ -1,4 +1,5 @@
 import { shuffleDeck } from "@repo/mille-bornes-core/deck";
+import { type DrivingZone } from "@repo/mille-bornes-core/drivingZone";
 import { createGame } from "@repo/mille-bornes-core/engine";
 import { type Game, type GameConfig, type Seat } from "@repo/mille-bornes-core/game";
 import { GameId, PlayerId, TeamIndex } from "@repo/mille-bornes-core/ids";
@@ -6,6 +7,7 @@ import { PlayerName } from "@repo/mille-bornes-core/playerName";
 import { seededRandom } from "@repo/mille-bornes-core/simulation";
 import { variantForSeatCount } from "@repo/mille-bornes-core/variant";
 import { viewFor, type PlayerView, type ViewPhase } from "@repo/mille-bornes-core/view";
+import type { PlayingData } from "../screens/GameScreen.js";
 
 
 // Test support: never import this from production code.  It builds real games
@@ -149,4 +151,43 @@ export function withPhase(view: PlayerView, phase: ViewPhase): PlayerView {
  */
 export function team(n: number): TeamIndex {
     return TeamIndex.tryCreate(n).throwIfFailed();
+}
+
+
+/**
+ * Replaces one team's driving zone (build the zone with core's own functions,
+ * for example `playRemedy(newZone(), Card.roll)`).
+ * @param view - The view to start from
+ * @param teamIndex - The team
+ * @param zone - The team's new zone
+ * @returns A copy of the view with that zone
+ */
+export function withZone(view: PlayerView, teamIndex: number, zone: DrivingZone): PlayerView {
+    return {
+        ...view,
+        teams: view.teams.map((t) => t.index === teamIndex ? { ...t, zone } : t),
+    };
+}
+
+
+/**
+ * Builds a `Playing` screen around a view.
+ * @param view - The viewer's view
+ * @param extras - Any of the other fields of the screen
+ * @returns The screen: no events, not the organizer, no organizer-only lists
+ */
+export function playingScreen(
+    view: PlayerView,
+    extras: Partial<Omit<PlayingData, "kind" | "view">> = {}
+): PlayingData {
+    return {
+        kind:        "Playing",
+        view,
+        events:      [],
+        connected:   null,
+        timer:       null,
+        isOrganizer: false,
+        robots:      null,
+        ...extras,
+    };
 }

@@ -452,3 +452,276 @@ svg {
         transition: background-color 0.15s;
     }
 }
+
+
+/* The game table.  Mobile first: one column, 320px and up. */
+
+.top-bar {
+    padding: var(--space-2) var(--space-3);
+    border-radius: 0.5rem;
+    color: #ffffff;
+    font-weight: 700;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+.top-bar.tone-green {
+    background: #1e7a34;
+}
+
+.top-bar.tone-red {
+    background: #b02a2a;
+}
+
+.top-bar.tone-blue {
+    background: #1f5a99;
+}
+
+.scoreboard {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.team-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    border: 2px solid var(--color-border);
+    border-radius: 0.75rem;
+    background: var(--color-surface);
+}
+
+.team-row.active {
+    border-color: #1e7a34;
+    box-shadow: 0 0 0 2px #b2f2bb;
+}
+
+.miles {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    align-items: center;
+    inline-size: 4rem;
+    line-height: 1;
+}
+
+.miles-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.miles-of {
+    color: var(--color-text-soft);
+    font-size: 0.7rem;
+}
+
+.team-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-inline-size: 0;
+}
+
+.team-name {
+    font-size: 1rem;
+}
+
+.bar {
+    overflow: hidden;
+    block-size: 0.5rem;
+    border-radius: 0.25rem;
+    background: #e9ecef;
+}
+
+.bar > i {
+    display: block;
+    block-size: 100%;
+    background: #1e7a34;
+    transform-origin: left;
+}
+
+.players,
+.statuses {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.player {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    max-inline-size: 100%;
+    padding: 0 var(--space-2);
+    border: 2px solid transparent;
+    border-radius: 1rem;
+    background: var(--color-bg);
+    font-size: 0.8rem;
+}
+
+.player.on-turn {
+    border-color: #1e7a34;
+    background: #d3f9d8;
+    font-weight: 700;
+}
+
+.offline {
+    flex-shrink: 0;
+    color: #8a3b00;
+    font-size: 0.7rem;
+}
+
+.status {
+    padding: 0 var(--space-2);
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status.go {
+    background: #d3f9d8;
+    color: #1d6b2e;
+}
+
+.status.stop {
+    background: #ffe3e3;
+    color: #a52323;
+}
+
+.status.info {
+    background: #e7f5ff;
+    color: #1864ab;
+}
+
+.status.safe {
+    background: #fff3bf;
+    color: #6b5300;
+}
+
+.last-move {
+    padding: var(--space-2);
+    border: 1px solid #ffe066;
+    border-radius: 0.5rem;
+    background: #fff9db;
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
+}
+
+.piles {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-3);
+}
+
+.pile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    inline-size: 4.5rem;
+    min-block-size: 5.5rem;
+    border: 2px dashed #868e96;
+    border-radius: 0.5rem;
+    background: #f1f3f5;
+    font-size: 0.8rem;
+}
+
+.pile.draw {
+    border: 2px solid #1c2e80;
+    background: #364fc7;
+    color: #ffffff;
+}
+
+.pile-count {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.pile.discard .card {
+    border-style: solid;
+}
+
+.hand {
+    padding: var(--space-2);
+    border-radius: 0.75rem;
+    background: #e9ecef;
+}
+
+.hand-label {
+    margin-block-end: var(--space-2);
+    color: var(--color-text-soft);
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+/* Seven cards at 320px wrap to a second row instead of clipping. */
+.cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.cards > li {
+    display: flex;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    inline-size: 3.5rem;
+    min-block-size: 4.75rem;
+    padding: var(--space-1);
+    border: 2px solid #868e96;
+    border-radius: 0.4rem;
+    background: var(--color-surface);
+    text-align: center;
+}
+
+.card.kind-hazard {
+    border-color: #c92a2a;
+    background: #fff5f5;
+}
+
+.card.kind-remedy {
+    border-color: #2b8a3e;
+    background: #f4fff6;
+}
+
+.card.kind-safety {
+    border-color: #b58900;
+    background: #fffbe6;
+}
+
+.card-emoji {
+    font-size: 1.25rem;
+    line-height: 1.2;
+}
+
+.card-label {
+    font-size: 0.65rem;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+
+.card-miles {
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.card-unit {
+    color: var(--color-text-soft);
+    font-size: 0.65rem;
+}
