@@ -1,10 +1,8 @@
-
 {
     "quiet": true,
     "skip-missing": true,
     "ignores": [
         "@types/jasmine",
-        "fast-check",
         "jasmine"
     ]
 }

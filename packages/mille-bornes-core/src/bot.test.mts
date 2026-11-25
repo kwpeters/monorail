@@ -1,15 +1,11 @@
 import { Card, type DistanceCard } from "./card.mjs";
 import { type PlayerCommand } from "./commands.mjs";
-import { shuffleDeck, type DeckKind } from "./deck.mjs";
 import { newZone, type DrivingZone } from "./drivingZone.mjs";
-import { applyPlayerCommand, applySystemCommand, createGame } from "./engine.mjs";
 import { type Game, type GameConfig, type Phase } from "./game.mjs";
 import { type PlayerId, type TeamIndex } from "./ids.mjs";
-import { checkInvariants } from "./invariants.mjs";
 import { chooseCommand } from "./bot.mjs";
-import { describeRejection } from "./rejection.mjs";
+import { playGame, seededRandom } from "./simulation.mjs";
 import { buildGame, oneOnOne, seatFor, threeByTwo, threeSolo, twoByTwo } from "./testHelpers.mjs";
-import { variantForSeatCount } from "./variant.mjs";
 import { legalPlays, viewFor, type PlayerView } from "./view.mjs";
 
 
@@ -61,81 +57,6 @@ PlayerCommand | null {
         phase: { kind: "ExtensionOffer", decider, team: team0 },
     });
     return chooseCommand(view(g, to), () => 0);
-}
-
-
-// A small seeded generator (mulberry32) so a failing game can be replayed.
-function mulberry32(seed: number): () => number {
-    let a = seed >>> 0;
-    return () => {
-        a = (a + 0x6D2B79F5) >>> 0;
-        let t = a;
-        t = Math.imul(t ^ (t >>> 15), t | 1);
-        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-}
-
-
-const stepCap = 5000;
-
-
-// Plays a whole game with every seat a robot, checking each decision.
-function playRobotGame(config: GameConfig, seed: number): void {
-    const rand = mulberry32(seed);
-    const deckKind: DeckKind = variantForSeatCount(config.teams.flat().length).throwIfFailed().deck;
-    let g = createGame(config, shuffleDeck(deckKind, rand)).throwIfFailed().game;
-
-    // Asks every seat; each non-null answer must be legal.
-    const decisions = (): Array<{ id: PlayerId; cmd: PlayerCommand }> => g.players.flatMap((p) => {
-        const v = view(g, p.seat.id);
-        const cmd = chooseCommand(v, rand);
-        if (cmd === null) {
-            return [];
-        }
-        expect(legalPlays(v)).withContext(`seed ${seed}: ${JSON.stringify(cmd)}`).toContain(cmd);
-        return [{ id: p.seat.id, cmd }];
-    });
-
-    for (let step = 0; step < stepCap; step++) {
-        const valid = checkInvariants(g);
-        expect(valid.succeeded).withContext(`seed ${seed}, step ${step}`).toBeTrue();
-        const phase = g.phase;
-        if (phase.kind === "GameOver") {
-            return;
-        }
-        const asked = decisions();
-        const on = (ids: ReadonlyArray<PlayerId>): boolean => asked.every((a) => ids.includes(a.id));
-        const first = asked[0];
-        let applied;
-        if (phase.kind === "RaceOver") {
-            expect(asked).toEqual([]);
-            applied = applySystemCommand(g, {
-                type: "StartNextRace",
-                deck: shuffleDeck(deckKind, rand),
-            });
-        }
-        else if (phase.kind === "HazardIncoming") {
-            // Only the target team may answer.
-            const target = g.players.filter((p) => p.team === phase.target).map((p) => p.seat.id);
-            expect(on(target)).withContext(`seed ${seed}`).toBeTrue();
-            applied = first ?
-                applyPlayerCommand(g, first.id, first.cmd) :
-                applySystemCommand(g, { type: "CloseHazardWindow" });
-        }
-        else {
-            // A turn or an Extension offer: exactly one player decides.
-            const decider = phase.kind === "Turn" ? phase.player : phase.decider;
-            expect(asked.map((a) => a.id)).withContext(`seed ${seed}`).toEqual([decider]);
-            applied = applyPlayerCommand(g, first!.id, first!.cmd);
-        }
-        if (applied.failed) {
-            fail(`seed ${seed}, step ${step}: ${describeRejection(applied.error)}`);
-            return;
-        }
-        g = applied.value.game;
-    }
-    fail(`seed ${seed}: no GameOver within ${stepCap} steps`);
 }
 
 
@@ -387,11 +308,15 @@ describe("bot", () => {
 
 
         it("always gives a legal command, and never gets stuck, in whole robot games", () => {
+            // playGame() fails on any robot answer not in legalPlays(view), on
+            // a robot with no play on its turn, and after 5,000 steps.
             const configs: ReadonlyArray<() => GameConfig> = [oneOnOne, threeSolo, twoByTwo, threeByTwo];
             for (const config of configs) {
                 for (const length of ["Quick", "Short"] as const) {
                     for (let seed = 1; seed <= 4; seed++) {
-                        playRobotGame({ ...config(), length }, seed);
+                        const label = `${config.name}, ${length}, seed ${seed}`;
+                        const result = playGame({ ...config(), length }, seededRandom(seed), 5000, { label });
+                        expect(result.failed ? result.error : "").toBe("");
                     }
                 }
             }

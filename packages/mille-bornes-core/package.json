@@ -85,6 +85,10 @@
             "types": "./src/scoring.mts",
             "default": "./dist/scoring.mjs"
         },
+        "./simulation": {
+            "types": "./src/simulation.mts",
+            "default": "./dist/simulation.mjs"
+        },
         "./variant": {
             "types": "./src/variant.mts",
             "default": "./dist/variant.mjs"
