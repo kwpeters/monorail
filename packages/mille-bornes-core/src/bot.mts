@@ -11,10 +11,12 @@ import { legalPlays, type PlayerView } from "./view.mjs";
 type Command<TType extends PlayerCommand["type"]> = Extract<PlayerCommand, { type: TType }>;
 
 
-// Picks one item at random; callers pass a non-empty list.  `rand` may return
-// 1 only through a faulty source, so the index is clamped.
+// Picks one item at random; callers pass a non-empty list.  A faulty `rand`
+// may return NaN, a negative number or 1 or more, so the index is clamped:
+// NaN and negatives pick the first item, 1 and more the last.
 function pick<TItem>(items: ReadonlyArray<TItem>, rand: () => number): TItem | undefined {
-    return items[Math.min(items.length - 1, Math.floor(rand() * items.length))];
+    const r = rand();
+    return items[r >= 0 ? Math.min(items.length - 1, Math.floor(r * items.length)) : 0];
 }
 
 
@@ -93,7 +95,8 @@ function discardRank(card: Card, view: PlayerView, legal: ReadonlyArray<PlayerCo
  * between the 100 and the 200); and a safety only when nothing else is left.
  * @param view - What the robot sees
  * @param rand - Returns a number in [0, 1); breaks ties between equally good
- * plays (default `getRandom`); a fixed `rand` makes the choice deterministic
+ * plays (default `getRandom`); a fixed `rand` makes the choice deterministic.
+ * A value outside [0, 1), or NaN, still gives a legal play
  * @returns The command, or null when the robot has no decision to make (not
  * its turn, no Coup Fourre it can play, no Extension offer for it)
  */

@@ -369,6 +369,23 @@ describe("bot", () => {
         });
 
 
+        it("still makes a legal play on its turn when rand is out of range", () => {
+            const attackTie = buildGame({
+                config: threeSolo(),
+                hands:  [[Card.stop], [Card.dist25], [Card.dist25]],
+                zones:  [rollingAt(), rollingAt(Card.dist100), rollingAt(Card.dist100)],
+            });
+            const views = [view(attackTie, ann.id), view(annToPlay([Card.dist25, Card.dist50]), ann.id)];
+            for (const v of views) {
+                for (const rand of [(): number => NaN, (): number => -1, (): number => 1]) {
+                    const choice = chooseCommand(v, rand);
+                    expect(choice).not.toBeNull();
+                    expect(legalPlays(v)).toContain(choice!);
+                }
+            }
+        });
+
+
         it("always gives a legal command, and never gets stuck, in whole robot games", () => {
             const configs: ReadonlyArray<() => GameConfig> = [oneOnOne, threeSolo, twoByTwo, threeByTwo];
             for (const config of configs) {
