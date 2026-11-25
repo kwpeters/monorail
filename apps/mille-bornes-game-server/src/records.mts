@@ -1,4 +1,4 @@
-import { type Result } from "@repo/depot/result";
+import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import { safeParse, unwrapOrAddIssue } from "@repo/depot/zodHelpers";
 import { type Game } from "@repo/mille-bornes-core/game";
 import { PlayerId } from "@repo/mille-bornes-core/ids";
@@ -80,16 +80,29 @@ const envelopeSchema = z.discriminatedUnion("state", [
  */
 export function decodeRecord(json: unknown): Result<GameRecord, string> {
     return safeParse(envelopeSchema, json).bind((env): Result<GameRecord, string> => {
-        return env.state === "Pending" ?
-            decodePendingGame(env.pending).mapSuccess((pending) => ({ format: 1, state: "Pending", pending })) :
-            decodeGame(env.game).mapSuccess((game) => ({
+        if (env.state === "Pending") {
+            return decodePendingGame(env.pending).mapSuccess((pending) => ({ format: 1, state: "Pending", pending }));
+        }
+        return decodeGame(env.game).bind((game): Result<GameRecord, string> => {
+            const seated = new Set<string>(game.config.teams.flat().map((s) => s.id));
+            if (!seated.has(env.organizer)) {
+                return new FailedResult("The organizer is not seated in the game.");
+            }
+            if (env.left.some((id) => !seated.has(id))) {
+                return new FailedResult("A player who left is not seated in the game.");
+            }
+            if (new Set(env.left).size !== env.left.length) {
+                return new FailedResult("A player is listed as having left twice.");
+            }
+            return new SucceededResult({
                 format:    1,
                 state:     "Running",
                 organizer: env.organizer,
                 game,
                 seq:       env.seq,
                 left:      env.left
-            }));
+            });
+        });
     });
 }
 

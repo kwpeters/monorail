@@ -14,7 +14,12 @@ export interface LoadedSnapshots {
 }
 
 
-/** Persists game records and player sessions. */
+/**
+ * Persists game records and player sessions.  Operations on one game run in
+ * call order.  A save queued behind another waiting save replaces it (the
+ * latest state wins); a delete or quarantine is never dropped or replaced, and
+ * a later save queues behind it.
+ */
 export interface SnapshotStore {
 
     /**
@@ -70,6 +75,7 @@ function checkId(id: string): void {
 
 
 interface Job {
+    kind:    "save" | "other";
     op:      () => Promise<void>;
     waiters: Array<{ resolve: () => void; reject: (e: unknown) => void }>;
 }
@@ -77,14 +83,16 @@ interface Job {
 
 interface Slot {
     running: boolean;
-    next:    Job | null;
+    queue:   Array<Job>;
 }
 
 
 /**
- * Runs jobs per key, one at a time and in call order.  A job queued behind a
- * running one replaces any job already waiting; the replaced job's callers
- * settle with the job that replaced it.
+ * Runs jobs per key, one at a time and in call order.  Only a "save" queued
+ * right behind another waiting "save" replaces it (the replaced job's callers
+ * settle with the job that replaced it); any other job, such as a delete or a
+ * quarantine, is never dropped or replaced and later jobs queue behind it.
+ * A failed job is logged and rejects its callers; the next job still runs.
  */
 class CoalescingQueue {
 
@@ -92,16 +100,28 @@ class CoalescingQueue {
     private readonly _outstanding = new Set<Promise<void>>();
 
 
-    public enqueue(key: string, op: () => Promise<void>): Promise<void> {
+    public constructor(private readonly _logger: Logger) {
+    }
+
+
+    public enqueue(key: string, kind: Job["kind"], op: () => Promise<void>): Promise<void> {
         const done = new Promise<void>((resolve, reject) => {
             let slot = this._slots.get(key);
             if (!slot) {
-                slot = { running: false, next: null };
+                slot = { running: false, queue: [] };
                 this._slots.set(key, slot);
             }
-            const waiters = slot.next?.waiters ?? [];
+            const last = slot.queue[slot.queue.length - 1];
+            const replaces = kind === "save" && last?.kind === "save";
+            const waiters = replaces ? last.waiters : [];
             waiters.push({ resolve, reject });
-            slot.next = { op, waiters };
+            const job: Job = { kind, op, waiters };
+            if (replaces) {
+                slot.queue[slot.queue.length - 1] = job;
+            }
+            else {
+                slot.queue.push(job);
+            }
             if (!slot.running) {
                 void this.drain(key, slot);
             }
@@ -120,14 +140,15 @@ class CoalescingQueue {
 
     private async drain(key: string, slot: Slot): Promise<void> {
         slot.running = true;
-        while (slot.next) {
-            const job = slot.next;
-            slot.next = null;
+        for (let job = slot.queue.shift(); job; job = slot.queue.shift()) {
             try {
                 await job.op();
                 job.waiters.forEach((w) => { w.resolve(); });
             }
             catch (err) {
+                // Never the contents; an un-awaited save must not fail silently.
+                const reason = err instanceof Error ? err.message : String(err);
+                this._logger.error(`Writing ${path.basename(key)} failed: ${reason}`);
                 job.waiters.forEach((w) => { w.reject(err); });
             }
         }
@@ -152,7 +173,7 @@ export class FileSnapshotStore implements SnapshotStore {
     private readonly _gamesDir:     string;
     private readonly _failedDir:    string;
     private readonly _sessionsFile: string;
-    private readonly _queue = new CoalescingQueue();
+    private readonly _queue:        CoalescingQueue;
     private _writeCount = 0;
 
 
@@ -162,6 +183,7 @@ export class FileSnapshotStore implements SnapshotStore {
      * @param _logger - Receives a warning for each damaged file
      */
     public constructor(dataDir: string, private readonly _logger: Logger) {
+        this._queue = new CoalescingQueue(_logger);
         this._gamesDir = path.join(dataDir, "games");
         this._failedDir = path.join(dataDir, "failed");
         this._sessionsFile = path.join(dataDir, "sessions.json");
@@ -177,21 +199,21 @@ export class FileSnapshotStore implements SnapshotStore {
     public saveGame(id: GameId, record: GameRecord): Promise<void> {
         return this.guard(id, () => {
             const json = JSON.stringify(encodeRecord(record));
-            return this._queue.enqueue(this.gameFile(id), () => this.writeFile(this.gameFile(id), json));
+            return this._queue.enqueue(this.gameFile(id), "save", () => this.writeFile(this.gameFile(id), json));
         });
     }
 
 
     public deleteGame(id: GameId): Promise<void> {
         return this.guard(id, () => {
-            return this._queue.enqueue(this.gameFile(id), () => fs.rm(this.gameFile(id), { force: true }));
+            return this._queue.enqueue(this.gameFile(id), "other", () => fs.rm(this.gameFile(id), { force: true }));
         });
     }
 
 
     public quarantineGame(id: GameId): Promise<void> {
         return this.guard(id, () => {
-            return this._queue.enqueue(this.gameFile(id), async () => {
+            return this._queue.enqueue(this.gameFile(id), "other", async () => {
                 await fs.mkdir(this._failedDir, { recursive: true });
                 try {
                     await fs.rename(this.gameFile(id), path.join(this._failedDir, `${id}.json`));
@@ -208,24 +230,32 @@ export class FileSnapshotStore implements SnapshotStore {
 
     public saveSessions(records: ReadonlyArray<SessionRecord>): Promise<void> {
         const json = JSON.stringify(records);
-        return this._queue.enqueue(this._sessionsFile, () => this.writeFile(this._sessionsFile, json));
+        return this._queue.enqueue(this._sessionsFile, "save", () => this.writeFile(this._sessionsFile, json));
     }
 
 
     public async loadAll(): Promise<LoadedSnapshots> {
         const games: Array<{ id: GameId; record: GameRecord }> = [];
+        let names: Array<string> = [];
         try {
             await fs.mkdir(this._gamesDir, { recursive: true });
             await fs.mkdir(this._failedDir, { recursive: true });
-            for (const name of (await fs.readdir(this._gamesDir)).sort()) {
+            names = (await fs.readdir(this._gamesDir)).sort();
+        }
+        catch (err) {
+            this._logger.warn(`Could not read the games directory: ${String(err)}`);
+        }
+        // One bad entry must never keep the later ones from loading.
+        for (const name of names) {
+            try {
                 const loaded = await this.loadGame(name);
                 if (loaded) {
                     games.push(loaded);
                 }
             }
-        }
-        catch (err) {
-            this._logger.warn(`Could not read the games directory: ${String(err)}`);
+            catch (err) {
+                this._logger.warn(`Skipping ${name}: ${String(err)}`);
+            }
         }
         return { games, sessions: await this.loadSessions() };
     }
@@ -261,7 +291,9 @@ export class FileSnapshotStore implements SnapshotStore {
         const file = path.join(this._gamesDir, name);
         if (name.endsWith(".tmp")) {
             this._logger.info(`Removing the unfinished write ${name}.`);
-            await fs.rm(file, { force: true });
+            await fs.rm(file, { force: true }).catch((err: unknown) => {
+                this._logger.warn(`Could not remove ${name}: ${String(err)}`);
+            });
             return undefined;
         }
         const id = name.endsWith(".json") ? GameId.tryCreate(name.slice(0, -".json".length)) : undefined;

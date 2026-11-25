@@ -93,6 +93,14 @@ describe("records", () => {
         });
 
 
+        it("refuses an organizer or a leaver who is not seated, and a duplicated leaver", () => {
+            const w = wire(runningRecord());
+            expect(decodeRecord({ ...w, organizer: PlayerId.create() }).failed).toBeTrue();
+            expect(decodeRecord({ ...w, left: [PlayerId.create()] }).failed).toBeTrue();
+            expect(decodeRecord({ ...w, left: [bob.id, bob.id] }).failed).toBeTrue();
+        });
+
+
         it("refuses a game that breaks an invariant", () => {
             const w = wire(runningRecord());
             const game = w.game as { drawPile: Array<unknown> };
@@ -280,6 +288,60 @@ describe("FileSnapshotStore", () => {
         });
 
 
+        describe("ordering", () => {
+
+            it("leaves no file when a delete follows a save", async () => {
+                const r = runningRecord();
+                const id = recordId(r);
+                await Promise.all([store.saveGame(id, r), store.saveGame(id, r), store.deleteGame(id)]);
+                expect(await fs.readdir(path.join(dir, "games"))).toEqual([]);
+            });
+
+
+            it("keeps the file when a save follows a delete", async () => {
+                const r = runningRecord();
+                const id = recordId(r);
+                await Promise.all([store.saveGame(id, r), store.deleteGame(id), store.saveGame(id, r)]);
+                expect(await fs.readdir(path.join(dir, "games"))).toEqual([`${id}.json`]);
+            });
+
+        });
+
+
+        describe("write failures", () => {
+
+            it("logs the failure, rejects, and recovers on a later save", async () => {
+                const r = pendingRecord();
+                const id = recordId(r);
+                await fs.writeFile(path.join(dir, "games"), "not a directory");
+
+                await expectAsync(store.saveGame(id, r)).toBeRejected();
+                const errors = logger.lines.filter((l) => l.startsWith("ERROR"));
+                expect(errors.length).toBe(1);
+                expect(errors[0]).toContain(`${id}.json`);
+                expect(errors[0]).not.toContain(ann.name);
+
+                await fs.rm(path.join(dir, "games"));
+                await store.saveGame(id, r);
+                expect((await store.loadAll()).games).toEqual([{ id, record: r }]);
+            });
+
+        });
+
+
+        describe("saveGame with a bad id", () => {
+
+            it("creates nothing in the data directory", async () => {
+                await expectAsync(store.saveGame("../evil" as GameId, pendingRecord())).toBeRejected();
+                await expectAsync(store.deleteGame("..\\evil" as GameId)).toBeRejected();
+                await expectAsync(store.quarantineGame("a/b" as GameId)).toBeRejected();
+                await store.flush();
+                expect(await fs.readdir(dir)).toEqual([]);
+            });
+
+        });
+
+
         describe("saveSessions", () => {
 
             it("writes sessions.json", async () => {
@@ -338,6 +400,41 @@ describe("FileSnapshotStore", () => {
                 const loaded = await store.loadAll();
                 expect(loaded.games).toEqual([{ id: recordId(good), record: good }]);
                 expect(logger.lines.filter((l) => l.startsWith("WARN")).length).toBe(6);
+            });
+
+
+            it("loads every good game around entries that cannot be read or removed", async () => {
+                const first = runningRecord("00000000-0000-4000-8000-000000000001" as GameId);
+                const last = pendingRecord("ffffffff-ffff-4fff-8fff-ffffffffffff" as GameId);
+                await store.saveGame(recordId(first), first);
+                await store.saveGame(recordId(last), last);
+                await store.flush();
+                // Sorted between the two good games: a directory named like a game file, and one named .tmp.
+                await fs.mkdir(gameFile("80000000-0000-4000-8000-000000000000"));
+                await fs.mkdir(path.join(dir, "games", "a.tmp"));
+
+                const loaded = await store.loadAll();
+                expect(loaded.games.map((g) => g.id)).toEqual([recordId(first), recordId(last)]);
+                const warnings = logger.lines.filter((l) => l.startsWith("WARN"));
+                expect(warnings.length).toBe(2);
+                expect(warnings.some((w) => w.includes("a.tmp"))).toBeTrue();
+                expect(warnings.some((w) => w.includes("80000000-0000-4000-8000-000000000000.json"))).toBeTrue();
+            });
+
+
+            it("skips a running record whose organizer or leaver is not seated", async () => {
+                const good = pendingRecord();
+                await store.saveGame(recordId(good), good);
+                await store.flush();
+                for (const left of [[PlayerId.create()], [bob.id, bob.id]]) {
+                    const r = runningRecord();
+                    await fs.writeFile(gameFile(recordId(r)), JSON.stringify({ ...wire(r), left }));
+                }
+                const r = runningRecord();
+                await fs.writeFile(gameFile(recordId(r)), JSON.stringify({ ...wire(r), organizer: PlayerId.create() }));
+
+                expect((await store.loadAll()).games.map((g) => g.id)).toEqual([recordId(good)]);
+                expect(logger.lines.filter((l) => l.startsWith("WARN")).length).toBe(3);
             });
 
 
