@@ -124,7 +124,7 @@ change them there and rebuild.
 Tests build their own `ServerConfig` with shorter ones.
 
 | Timing              | Default | What it is                                                  |
-| ------------------- | ------------------------------------ | ----------------------------------------------------------- |
+| ------------------- | ------- | ----------------------------------------------------------- |
 | `hazardWindowMs`    | 5,000   | How long the target team has to play a Coup Fourre.         |
 | `extensionOfferMs`  | 30,000  | How long the decider has to call or decline Extension.      |
 | `raceOverPauseMs`   | 20,000  | How long the scores show before the next race is dealt.     |
