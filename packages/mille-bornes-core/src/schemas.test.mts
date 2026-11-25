@@ -1,4 +1,4 @@
-import { Card, type DistanceCard } from "./card.mjs";
+import { Card, cardSchema, type DistanceCard } from "./card.mjs";
 import { type PlayerCommand } from "./commands.mjs";
 import { createDeck, type DeckKind } from "./deck.mjs";
 import { newZone, type DrivingZone } from "./drivingZone.mjs";
@@ -6,6 +6,7 @@ import { applyPlayerCommand, createGame } from "./engine.mjs";
 import { type Game, type GameConfig } from "./game.mjs";
 import { GameId, type PlayerId, type TeamIndex } from "./ids.mjs";
 import { createPending, type PendingCommand, type PendingGame } from "./pendingGame.mjs";
+import { contextFromGame, isWellFormed } from "./rules.mjs";
 import {
     decodeGame, decodePendingGame, encodeGame, encodePendingGame, pendingCommandSchema,
     playerCommandSchema
@@ -184,6 +185,35 @@ describe("schemas", () => {
             ];
             for (const cmd of hostile) {
                 expect(playerCommandSchema.safeParse(cmd).success).withContext(JSON.stringify(cmd)).toBeFalse();
+            }
+        });
+
+    });
+
+
+    describe("playerCommandSchema and isWellFormed()", () => {
+
+        it("agree on valid and invalid commands", () => {
+            // Three teams, the most the schema's team index allows.  Extra
+            // properties are left out: the schema is strict, the engine ignores them.
+            const ctx = contextFromGame(buildGame({ config: threeSolo() }), ann.id).throwIfFailed();
+            const cards = [...cardSchema.options, "Banana", null];
+            const commands: ReadonlyArray<unknown> = [
+                ...validCommands,
+                ...cards.flatMap((card) => [
+                    ...["Drive", "Remedy", "PlaySafety", "Discard", "CoupFourre"].map((type) => ({ type, card })),
+                    ...[0, 1, 2, -1, 0.5, "1"].map((targetTeam) => ({ type: "Attack", card, targetTeam })),
+                    { type: "Attack", card },
+                ]),
+                { type: "Teleport" },
+                null,
+                [],
+                "Drive",
+            ];
+            for (const cmd of commands) {
+                expect(playerCommandSchema.safeParse(cmd).success)
+                .withContext(JSON.stringify(cmd))
+                .toBe(isWellFormed(ctx, cmd));
             }
         });
 

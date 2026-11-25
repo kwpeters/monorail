@@ -3,8 +3,10 @@ import { z } from "zod";
 import { chooseCommand } from "./bot.mjs";
 import { type Applied, type PlayerCommand } from "./commands.mjs";
 import { shuffleDeck } from "./deck.mjs";
+import { deciders } from "./driver.mjs";
 import { applyPlayerCommand, applySystemCommand, createGame } from "./engine.mjs";
-import { type Game, type GameConfig, type PlayerState } from "./game.mjs";
+import { type GameEvent } from "./events.mjs";
+import { type Game, type GameConfig } from "./game.mjs";
 import { type PlayerId } from "./ids.mjs";
 import { checkInvariants } from "./invariants.mjs";
 import { describeRejection } from "./rejection.mjs";
@@ -72,37 +74,26 @@ export interface SimulationOptions {
      * Prefixed to every failure message, so a failing game can be replayed:
      * for example the seed and the config.
      */
-    readonly label?:  string;
+    readonly label?:     string;
     /**
      * Called with every state the game passes through, the dealt game first
      * and the finished game last, before the next command is applied.
      */
-    readonly onStep?: (g: Game) => void;
+    readonly onStep?:    (g: Game) => void;
+    /**
+     * Called after every command applied, with its type (a player command's,
+     * or "CloseHazardWindow", "CloseExtensionOffer", "StartNextRace") and the
+     * events it emitted.
+     */
+    readonly onApplied?: (command: string, events: ReadonlyArray<GameEvent>) => void;
     /** How the players choose (default Bot). */
-    readonly policy?: SimulationPolicy;
+    readonly policy?:    SimulationPolicy;
 }
 
 
 interface Decision {
     readonly by:  PlayerId;
     readonly cmd: PlayerCommand;
-}
-
-
-// The seats the phase lets decide, in turn order.
-function deciders(g: Game): ReadonlyArray<PlayerState> {
-    const phase = g.phase;
-    switch (phase.kind) {
-        case "Turn":
-            return g.players.filter((p) => p.seat.id === phase.player);
-        case "HazardIncoming":
-            return g.players.filter((p) => p.team === phase.target);
-        case "ExtensionOffer":
-            return g.players.filter((p) => p.seat.id === phase.decider);
-        case "RaceOver":
-        case "GameOver":
-            return [];
-    }
 }
 
 
@@ -252,5 +243,6 @@ export function playGame(
         }
         g = next.value.game;
         lastCommand = next.value.command;
+        options.onApplied?.(lastCommand, next.value.events);
     }
 }

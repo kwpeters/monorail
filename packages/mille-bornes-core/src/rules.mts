@@ -116,9 +116,15 @@ function isExtensionDecision(cmd: PlayerCommand): boolean {
 }
 
 
-// Commands may come from untrusted clients, so their static types are not
-// trusted: this check runs first so malformed input never reaches zone code.
-function isWellFormed(ctx: PlayContext, cmd: unknown): boolean {
+/**
+ * Checks that an untrusted command has a known type, the right kind of card
+ * and, for an attack, a real team.  Extra properties are ignored.  This check
+ * runs first so malformed input never reaches zone code.
+ * @param ctx - The play context, which says how many teams there are
+ * @param cmd - The command, whatever its static type claims
+ * @returns True when the command is well formed
+ */
+export function isWellFormed(ctx: PlayContext, cmd: unknown): boolean {
     if (typeof cmd !== "object" || cmd === null || !("type" in cmd)) {
         return false;
     }

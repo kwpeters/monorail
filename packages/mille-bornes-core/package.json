@@ -17,6 +17,10 @@
             "types": "./src/bot.mts",
             "default": "./dist/bot.mjs"
         },
+        "./broadcast": {
+            "types": "./src/broadcast.mts",
+            "default": "./dist/broadcast.mjs"
+        },
         "./card": {
             "types": "./src/card.mts",
             "default": "./dist/card.mjs"
@@ -28,6 +32,10 @@
         "./deck": {
             "types": "./src/deck.mts",
             "default": "./dist/deck.mjs"
+        },
+        "./driver": {
+            "types": "./src/driver.mts",
+            "default": "./dist/driver.mjs"
         },
         "./drivingZone": {
             "types": "./src/drivingZone.mts",

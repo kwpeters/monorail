@@ -7,6 +7,7 @@ import {
 import { type PlayerCommand, type SystemCommand } from "./commands.mjs";
 import { shuffleDeck } from "./deck.mjs";
 import { applyPlayerCommand, applySystemCommand } from "./engine.mjs";
+import { type GameEvent } from "./events.mjs";
 import { type Game, type GameConfig, type RaceResult } from "./game.mjs";
 import { PlayerId, type TeamIndex } from "./ids.mjs";
 import { checkInvariants } from "./invariants.mjs";
@@ -391,6 +392,30 @@ describe("simulation", () => {
             expect(states[0]!.raceNumber).toBe(1);
             expect(states.at(-1)).toBe(result.game);
             expect(result.racesPlayed).toBe(result.game.raceNumber);
+        });
+
+
+        it("emits HazardLanded for every CloseHazardWindow applied", () => {
+            const closes: Array<ReadonlyArray<GameEvent>> = [];
+            for (const layout of layouts) {
+                for (const policy of policies) {
+                    playGame(
+                        { ...layout.config(), length: "Short" },
+                        seededRandom(3),
+                        undefined,
+                        {
+                            policy,
+                            onApplied: (command, events) => {
+                                if (command === "CloseHazardWindow") {
+                                    closes.push(events);
+                                }
+                            },
+                        }
+                    ).throwIfFailed();
+                }
+            }
+            expect(closes.length).toBeGreaterThan(0);
+            expect(closes.every((events) => events.some((e) => e.type === "HazardLanded"))).toBeTrue();
         });
 
 
