@@ -1,31 +1,47 @@
 import { EventEmitter, on } from "node:events";
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
+import { type PlayerCommand } from "@repo/mille-bornes-core/commands";
+import { shuffleDeck } from "@repo/mille-bornes-core/deck";
 import { type Seat } from "@repo/mille-bornes-core/game";
 import { GameId, PlayerId } from "@repo/mille-bornes-core/ids";
 import {
-    applyPendingCommand, createPending, type PendingCommand, type PendingGame
+    applyPendingCommand, beginGame, createPending, type PendingCommand, type PendingGame
 } from "@repo/mille-bornes-core/pendingGame";
+import { pendingSummary } from "@repo/mille-bornes-core/pendingView";
 import { describeRejection } from "@repo/mille-bornes-core/rejection";
 import { type GameLength } from "@repo/mille-bornes-core/scoring";
+import { variantForSeatCount } from "@repo/mille-bornes-core/variant";
 import { pickWhimsicalName } from "@repo/mille-bornes-core/whimsicalNames";
 import { type Clock } from "./clock.mjs";
 import { type Timings } from "./config.mjs";
 import { type Logger } from "./logger.mjs";
+import { Presence } from "./presence.mjs";
+import { recordGameId } from "./records.mjs";
+import { humansOf, RunningGames, type AdminEntry, type RunningGame } from "./runningGames.mjs";
 import { lobbyScreen, waitingScreen, type Screen } from "./screens.mjs";
 import { type SessionRegistry } from "./sessions.mjs";
 import { type SnapshotStore } from "./snapshotStore.mjs";
+import { Table, type TableOptions } from "./table.mjs";
 
 
 /** What a `Hub` needs. */
 export interface HubOptions {
-    store:    SnapshotStore;
-    sessions: SessionRegistry;
-    clock:    Clock;
-    /** Returns a number in [0, 1); picks robot names. */
-    rand:     () => number;
-    timings:  Timings;
-    logger:   Logger;
+    store:         SnapshotStore;
+    sessions:      SessionRegistry;
+    clock:         Clock;
+    /** Returns a number in [0, 1); robot names, decks and robot moves. */
+    rand:          () => number;
+    timings:       Timings;
+    logger:        Logger;
+    /**
+     * Test hook: builds each game's Table (default `new Table(opts)`), so a
+     * test can drive the stuck guard with a faulty one.
+     */
+    tableFactory?: (opts: TableOptions) => Table;
 }
+
+
+export { type AdminEntry } from "./runningGames.mjs";
 
 
 const saveFailed = "Something went wrong saving the game. Please try again.";
@@ -54,22 +70,33 @@ const ok = new SucceededResult<void>(undefined);
  * ends first leaves it for the next `watch()`.  With several watches of one
  * player only the first to read it shows it.  `screenFor()` shows a notice
  * but never clears it.
+ *
+ * A started game runs on a `Table` (see `RunningGames`).  A player counts as
+ * connected while a watch is open, and for `disconnectGraceMs` after the last
+ * one closes; the others in a running game see each change.
  */
 export class Hub {
 
     /**
-     * Opens a hub holding the pending games saved earlier.  Saved games have no
-     * creation time, so they are listed in `GameId` order: arbitrary, but the
-     * same after every restart.  (Running games are not restored yet.)
+     * Opens a hub holding the games saved earlier.  Saved games have no
+     * creation time, so pending games are listed in `GameId` order: arbitrary,
+     * but the same after every restart.  Each running game's timers restart in
+     * full; one that cannot be restored is quarantined.
      * @param opts - What the hub needs
      * @returns The hub
      */
     public static async open(opts: HubOptions): Promise<Hub> {
         const { games } = await opts.store.loadAll();
-        const pending = games
-        .flatMap(({ record }) => record.state === "Pending" ? [record.pending] : [])
-        .sort((a, b) => a.id.localeCompare(b.id));
-        return new Hub(opts, pending);
+        const records = games
+        .map(({ record }) => record)
+        .sort((a, b) => recordGameId(a).localeCompare(recordGameId(b)));
+        const hub = new Hub(opts, records.flatMap((r) => r.state === "Pending" ? [r.pending] : []));
+        for (const r of records) {
+            if (r.state === "Running") {
+                hub._running.restore(r);
+            }
+        }
+        return hub;
     }
 
 
@@ -78,6 +105,8 @@ export class Hub {
     private readonly _notices = new Map<PlayerId, string>();
     private readonly _emitter = new EventEmitter();
     private readonly _stop = new AbortController();
+    private readonly _presence: Presence;
+    private readonly _running:  RunningGames;
     private readonly _store:    SnapshotStore;
     private readonly _sessions: SessionRegistry;
     private readonly _rand:     () => number;
@@ -89,6 +118,17 @@ export class Hub {
         this._sessions = opts.sessions;
         this._rand = opts.rand;
         this._logger = opts.logger;
+        this._presence = new Presence(opts.clock, opts.timings.disconnectGraceMs, (p) => {
+            this.presenceChanged(p);
+        });
+        this._running = new RunningGames({
+            ...opts,
+            tableFactory: opts.tableFactory ?? ((o): Table => new Table(o)),
+            isConnected:  (p) => this._presence.isConnected(p),
+            persist:      (write, id) => this.persist(write, id),
+            publish:      (players, screens) => { this.publish(players, screens); },
+            notify:       (p, notice) => { this._notices.set(p, notice); }
+        });
         pending.forEach((p) => this._pending.set(p.id, p));
         // One listener per open watch, however many there are.
         this._emitter.setMaxListeners(0);
@@ -98,8 +138,8 @@ export class Hub {
     /**
      * Gets what a player's screen shows now.  Does not clear a notice.
      * @param player - The player
-     * @returns The waiting room if the player is seated in a game, otherwise
-     * the Lobby
+     * @returns The game if the player is in a running game, the waiting room
+     * if they are seated in a pending one, otherwise the Lobby
      */
     public screenFor(player: PlayerId): Screen {
         return this.build(player);
@@ -109,7 +149,8 @@ export class Hub {
     /**
      * Follows a player's screen: the current one first, then each later one.
      * Ends quietly when `signal` aborts or the hub is disposed.  The current
-     * screen is taken now, so no change after this call is missed.
+     * screen is taken now, so no change after this call is missed.  The
+     * player counts as connected from the first read until the watch ends.
      * @param player - The player
      * @param signal - Stops the watch
      * @returns The screens, in order
@@ -149,7 +190,7 @@ export class Hub {
         const game = createPending(GameId.create(), seated.value);
         this._pending.set(game.id, game);
         this._notices.delete(player);
-        this.publish([player]);
+        this.publish([player, ...this.lobbyWatchers()]);
         return this.save(game);
     }
 
@@ -197,11 +238,8 @@ export class Hub {
             if (game.organizer !== player) {
                 return fail(describeRejection({ reason: "NotOrganizer" }));
             }
-            this._pending.delete(game.id);
             const others = game.seats.map((s) => s.id).filter((id) => id !== player);
-            others.forEach((id) => this._notices.set(id, "The organizer cancelled the game."));
-            this.publish(game.seats.map((s) => s.id));
-            return this.persist(() => this._store.deleteGame(game.id), game.id);
+            return this.endPending(game, "The organizer cancelled the game.", others);
         });
     }
 
@@ -276,6 +314,109 @@ export class Hub {
 
 
     /**
+     * Starts the pending game: deals race 1 from a deck shuffled for the seat
+     * count, and every seat's screen becomes Playing.
+     * @param player - The organizer
+     * @returns Success, or a plain-English reason
+     */
+    public async startGame(player: PlayerId): Promise<Result<void, string>> {
+        return this.inGame(player, (pending) => {
+            if (pending.organizer !== player) {
+                return fail(describeRejection({ reason: "NotOrganizer" }));
+            }
+            const begun = variantForSeatCount(pending.seats.length)
+            .bind((v) => beginGame(pending, player, shuffleDeck(v.deck, this._rand)));
+            if (begun.failed) {
+                return fail(describeRejection(begun.error));
+            }
+            const running = this._running.start(begun.value.game, player);
+            if (running.failed) {
+                return running;
+            }
+            this._pending.delete(pending.id);
+            this.publish(this.lobbyWatchers());
+            return this._running.accepted(running.value, begun.value.events);
+        });
+    }
+
+
+    /**
+     * Plays a move in the player's running game.
+     * @param player - The player
+     * @param cmd - The move (untrusted)
+     * @returns Success, or a plain-English reason
+     */
+    public async play(player: PlayerId, cmd: PlayerCommand): Promise<Result<void, string>> {
+        return this.inRunning(player, (r) => this._running.play(r, player, cmd));
+    }
+
+
+    /**
+     * Ends the player's running game at any time; everyone else returns to
+     * the Lobby with a notice.
+     * @param player - The organizer
+     * @returns Success, or a plain-English reason
+     */
+    public async endGame(player: PlayerId): Promise<Result<void, string>> {
+        return this.inRunning(player, (r) => {
+            if (r.organizer !== player) {
+                return Promise.resolve(fail(describeRejection({ reason: "NotOrganizer" })));
+            }
+            return this._running.end(r, "The organizer ended the game.", humansOf(r), player);
+        });
+    }
+
+
+    /**
+     * Leaves a finished game.  The game is deleted once every human has left.
+     * @param player - The player
+     * @returns Success, or a plain-English reason
+     */
+    public async leaveFinished(player: PlayerId): Promise<Result<void, string>> {
+        return this.inRunning(player, (r) => {
+            return r.game.phase.kind === "GameOver" ?
+                this._running.leave(r, player) :
+                Promise.resolve(fail("The game is not over yet."));
+        });
+    }
+
+
+    /**
+     * Ends any game, pending or running, for the host page; every human in it
+     * returns to the Lobby with a notice.
+     * @param gameId - The game
+     * @returns Success, or a plain-English reason
+     */
+    public async adminEnd(gameId: GameId): Promise<Result<void, string>> {
+        const notice = "The game was ended on the host computer.";
+        const running = this._running.get(gameId);
+        if (running) {
+            return this._running.end(running, notice);
+        }
+        const pending = this._pending.get(gameId);
+        if (!pending) {
+            return fail("There is no such game.");
+        }
+        const humans = pending.seats.filter((s) => s.kind === "Human").map((s) => s.id);
+        return this.endPending(pending, notice, humans);
+    }
+
+
+    /**
+     * Lists every game for the host page.
+     * @returns The pending games (oldest first), then the running and finished
+     * ones
+     */
+    public adminList(): ReadonlyArray<AdminEntry> {
+        const pending = [...this._pending.values()].map((p): AdminEntry => {
+            const { id, organizerName, seatNames } = pendingSummary(p);
+            return { id, state: "Pending", organizerName, seatNames, phase: "Waiting" };
+        });
+        return [...pending, ...this._running.list()];
+    }
+
+
+    /**
      * Waits for every save queued so far.
      * @returns Resolves when they are done
      */
@@ -285,24 +426,27 @@ export class Hub {
 
 
     /**
-     * Ends every watch and forgets every game.  Nothing is deleted from the store.
+     * Ends every watch, stops every game's timers and forgets every game.
+     * Nothing is deleted from the store.
      */
     public dispose(): void {
         this._stop.abort();
+        this._presence.dispose();
+        this._running.dispose();
         this._pending.clear();
         this._notices.clear();
     }
 
 
-    // Where a player is: the id of their game, or null.  Running games are
-    // added here later.
+    // Where a player is: the id of their game, or null.  A player who left a
+    // finished game is in none.
     private gameOf(player: PlayerId): GameId | null {
         for (const game of this._pending.values()) {
             if (game.seats.some((s) => s.id === player)) {
                 return game.id;
             }
         }
-        return null;
+        return this._running.of(player)?.game.config.id ?? null;
     }
 
 
@@ -324,7 +468,23 @@ export class Hub {
     ): Promise<Result<void, string>> {
         const gameId = this.gameOf(player);
         const game = gameId === null ? undefined : this._pending.get(gameId);
-        return Promise.resolve(game ? act(game) : fail(notInGame));
+        if (game) {
+            return Promise.resolve(act(game));
+        }
+        return Promise.resolve(fail(gameId === null ? notInGame : "The game has already started."));
+    }
+
+
+    private inRunning(
+        player: PlayerId,
+        act:    (r: RunningGame) => Promise<Result<void, string>>
+    ): Promise<Result<void, string>> {
+        const r = this._running.of(player);
+        if (r) {
+            return act(r);
+        }
+        const why = this.gameOf(player) === null ? notInGame : "The game has not started yet.";
+        return Promise.resolve(fail(why));
     }
 
 
@@ -341,8 +501,22 @@ export class Hub {
         }
         this._pending.set(game.id, applied.value);
         onApplied();
-        this.publish([...game.seats, ...applied.value.seats].map((s) => s.id));
+        const seats = [...game.seats, ...applied.value.seats].map((s) => s.id);
+        this.publish([...seats, ...this.lobbyWatchers()]);
         return this.save(applied.value);
+    }
+
+
+    // Removes a pending game, leaves `noticed` the notice, and deletes it.
+    private endPending(
+        game:    PendingGame,
+        notice:  string,
+        noticed: ReadonlyArray<PlayerId>
+    ): Promise<Result<void, string>> {
+        this._pending.delete(game.id);
+        noticed.forEach((id) => this._notices.set(id, notice));
+        this.publish([...game.seats.map((s) => s.id), ...this.lobbyWatchers()]);
+        return this.persist(() => this._store.deleteGame(game.id), game.id);
     }
 
 
@@ -369,9 +543,28 @@ export class Hub {
     }
 
 
+    // Shows the other humans in the player's running game that the player
+    // connected or disconnected.  Runs from a clock timer, so never throws.
+    private presenceChanged(player: PlayerId): void {
+        try {
+            const r = this._running.of(player);
+            if (r) {
+                this.publish(humansOf(r).filter((p) => p !== player));
+            }
+        }
+        catch (e) {
+            this._logger.error(`Showing presence of ${player} threw: ${String(e)}`);
+        }
+    }
+
+
     // Builds a player's screen.  A notice is shown but not cleared; see
     // `deliver()`.
     private build(player: PlayerId): Screen {
+        const shown = this._running.screenFor(player);
+        if (shown) {
+            return shown;
+        }
         const gameId = this.gameOf(player);
         const game = gameId === null ? undefined : this._pending.get(gameId);
         if (game) {
@@ -382,17 +575,26 @@ export class Hub {
     }
 
 
-    // Sends the new screen to every watcher of the affected players and of
-    // everyone in the Lobby, whose game list may have changed.  A player with
-    // no watcher is skipped so that their notice is kept.
-    private publish(affected: ReadonlyArray<PlayerId>): void {
+    // Watched players in the Lobby, whose game list changes with every
+    // pending game.
+    private lobbyWatchers(): Array<PlayerId> {
         // `events.on` also listens for "error", which is not a player.
         const watched = (this._emitter.eventNames() as Array<string>)
         .filter((name) => PlayerId.tryCreate(name).succeeded) as Array<PlayerId>;
-        const audience = new Set([...affected, ...watched.filter((p) => this.gameOf(p) === null)]);
-        for (const player of audience) {
+        return watched.filter((p) => this.gameOf(p) === null);
+    }
+
+
+    // Sends each affected player's watchers their new screen: the one given in
+    // `screens`, or else a freshly built one.  A player with no watcher is
+    // skipped so that their notice is kept.
+    private publish(
+        affected: Iterable<PlayerId>,
+        screens:  ReadonlyMap<PlayerId, Screen> = new Map()
+    ): void {
+        for (const player of new Set(affected)) {
             if (this._emitter.listenerCount(player) > 0) {
-                this._emitter.emit(player, this.build(player));
+                this._emitter.emit(player, screens.get(player) ?? this.build(player));
             }
         }
     }
@@ -416,7 +618,7 @@ export class Hub {
         stop:   AbortSignal
     ): AsyncGenerator<Screen> {
         try {
-            // Task 8 starts presence here, and ends it in the finally.
+            this._presence.open(player);
             if (!stop.aborted) {
                 yield this.deliver(player, first);
             }
@@ -433,6 +635,7 @@ export class Hub {
             }
         }
         finally {
+            this._presence.close(player);
             // A consumer that stops after the first screen never enters the
             // loop above, so close the listener here.
             await later.return?.();
