@@ -1,3 +1,4 @@
+import { Option } from "@repo/depot/option";
 import { resultToWire, type ResultWire } from "@repo/depot/schemaUtility";
 import { unwrapOrAddIssue } from "@repo/depot/zodHelpers";
 import { gameLengthSchema } from "@repo/mille-bornes-core/game";
@@ -54,7 +55,7 @@ const sessionRouter = t.router({
         { playerId: string; token: string; name: string },
         string
     >> => {
-        const created = await ctx.sessions.create(input.name ?? undefined);
+        const created = await ctx.sessions.create(Option.fromNullable(input.name));
         return resultToWire(created.mapSuccess((c) => {
             return { playerId: c.playerId, token: c.token, name: c.name };
         }));

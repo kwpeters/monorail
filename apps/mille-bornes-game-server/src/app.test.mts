@@ -3,7 +3,7 @@ import * as http from "node:http";
 import * as os from "node:os";
 import * as path from "node:path";
 import { type Request, type Response } from "express";
-import { Option } from "@repo/depot/option";
+import { Option, SomeOption } from "@repo/depot/option";
 import { type GameId } from "@repo/mille-bornes-core/ids";
 import { seededRandom } from "@repo/mille-bornes-core/simulation";
 import {
@@ -67,7 +67,7 @@ function tempDir(): string {
 
 
 async function newPendingGame(h: Harness, name: string): Promise<GameId> {
-    const created = (await h.sessions.create(name)).throwIfFailed();
+    const created = (await h.sessions.create(new SomeOption(name))).throwIfFailed();
     (await h.hub.createGame(created.playerId)).throwIfFailed();
     return h.hub.adminList()[0]!.id;
 }

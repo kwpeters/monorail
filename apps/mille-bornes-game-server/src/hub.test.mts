@@ -46,7 +46,7 @@ async function openHub(
 
 
 async function newPlayer(h: Harness, name: string): Promise<PlayerId> {
-    return (await h.sessions.create(name)).throwIfFailed().playerId;
+    return (await h.sessions.create(new SomeOption(name))).throwIfFailed().playerId;
 }
 
 

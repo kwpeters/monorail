@@ -106,16 +106,18 @@ export class SessionRegistry {
     /**
      * Issues a new credential.  Nothing is issued when the name is invalid or
      * the session cannot be saved.
-     * @param name - The player's name; when omitted, a whimsical one is given
+     * @param name - The player's name; when none, a whimsical one is given.  A
+     * present name, even an empty one, must be valid
      * @returns The credential and the player's name, or a plain-English reason
      */
     public async create(
-        name?: string
+        name: Option<string>
     ): Promise<Result<Credential & { name: PlayerName }, string>> {
         // Names are unique only within a game, so a surprise name avoids no one.
-        const named = name === undefined ?
-            pickWhimsicalName([], this._rand) :
-            PlayerName.tryCreate(name);
+        const named = name.match(
+            (n) => PlayerName.tryCreate(n),
+            () => pickWhimsicalName([], this._rand)
+        );
         if (named.failed) {
             return named;
         }

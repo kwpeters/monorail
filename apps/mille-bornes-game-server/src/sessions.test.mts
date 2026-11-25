@@ -50,7 +50,7 @@ describe("SessionRegistry", () => {
             it("restores the sessions an earlier registry saved", async () => {
                 const store = new MemorySnapshotStore();
                 const first = await SessionRegistry.load(store, rand);
-                const made = (await first.create("Ann")).throwIfFailed();
+                const made = (await first.create(new SomeOption("Ann"))).throwIfFailed();
 
                 const second = await SessionRegistry.load(store, rand);
 
@@ -77,7 +77,7 @@ describe("SessionRegistry", () => {
             it("issues a valid id, a 32 character token and the trimmed name", async () => {
                 const registry = await SessionRegistry.load(new MemorySnapshotStore(), rand);
 
-                const made = (await registry.create("  Ann  ")).throwIfFailed();
+                const made = (await registry.create(new SomeOption("  Ann  "))).throwIfFailed();
 
                 expect(PlayerId.tryCreate(made.playerId).succeeded).toBeTrue();
                 expect(made.token).toMatch(/^[A-Za-z0-9_-]{32}$/u);
@@ -89,8 +89,8 @@ describe("SessionRegistry", () => {
             it("issues a different token each time", async () => {
                 const registry = await SessionRegistry.load(new MemorySnapshotStore(), rand);
 
-                const a = (await registry.create("Ann")).throwIfFailed();
-                const b = (await registry.create("Bob")).throwIfFailed();
+                const a = (await registry.create(new SomeOption("Ann"))).throwIfFailed();
+                const b = (await registry.create(new SomeOption("Bob"))).throwIfFailed();
 
                 expect(a.token).not.toBe(b.token);
             });
@@ -101,14 +101,14 @@ describe("SessionRegistry", () => {
                     newToken: () => "fixed-token"
                 });
 
-                expect((await registry.create("Ann")).throwIfFailed().token).toBe("fixed-token");
+                expect((await registry.create(new SomeOption("Ann"))).throwIfFailed().token).toBe("fixed-token");
             });
 
 
             it("picks a whimsical name when none is given", async () => {
                 const registry = await SessionRegistry.load(new MemorySnapshotStore(), rand);
 
-                const made = (await registry.create()).throwIfFailed();
+                const made = (await registry.create(NoneOption.get())).throwIfFailed();
 
                 expect(whimsicalNames).toContain(made.name);
             });
@@ -119,7 +119,7 @@ describe("SessionRegistry", () => {
                 const registry = await SessionRegistry.load(store, rand);
 
                 for (const bad of ["   ", "x".repeat(101), "An​n"]) {
-                    const result = await registry.create(bad);
+                    const result = await registry.create(new SomeOption(bad));
 
                     expect(result.failed).withContext(bad).toBeTrue();
                     expect(result.failed && result.error).withContext(bad).toMatch(/^A player name /u);
@@ -132,7 +132,7 @@ describe("SessionRegistry", () => {
                 const registry = await SessionRegistry.load(new MemorySnapshotStore(), rand);
 
                 for (let i = 0; i < whimsicalNames.length + 10; i++) {
-                    expect((await registry.create()).succeeded).withContext(String(i)).toBeTrue();
+                    expect((await registry.create(NoneOption.get())).succeeded).withContext(String(i)).toBeTrue();
                 }
             });
 
@@ -140,8 +140,8 @@ describe("SessionRegistry", () => {
             it("accepts a 20 character name and refuses a 21 character one", async () => {
                 const registry = await SessionRegistry.load(new MemorySnapshotStore(), rand);
 
-                expect((await registry.create("x".repeat(20))).succeeded).toBeTrue();
-                expect((await registry.create("x".repeat(21))).failed).toBeTrue();
+                expect((await registry.create(new SomeOption("x".repeat(20)))).succeeded).toBeTrue();
+                expect((await registry.create(new SomeOption("x".repeat(21)))).failed).toBeTrue();
             });
 
 
@@ -150,7 +150,7 @@ describe("SessionRegistry", () => {
                 slowSaves(store);
                 const registry = await SessionRegistry.load(store, rand);
 
-                const [a, b] = await Promise.all([registry.create("Ann"), registry.create("Bob")]);
+                const [a, b] = await Promise.all([registry.create(new SomeOption("Ann")), registry.create(new SomeOption("Bob"))]);
 
                 expect(a.succeeded && b.succeeded).toBeTrue();
                 expect(await storedNames(store)).toEqual(["Ann", "Bob"]);
@@ -162,8 +162,8 @@ describe("SessionRegistry", () => {
                 slowSaves(store, [1]);
                 const registry = await SessionRegistry.load(store, rand);
 
-                const [a, b] = await Promise.all([registry.create("Ann"), registry.create("Bob")]);
-                const c = (await registry.create("Cy")).throwIfFailed();
+                const [a, b] = await Promise.all([registry.create(new SomeOption("Ann")), registry.create(new SomeOption("Bob"))]);
+                const c = (await registry.create(new SomeOption("Cy"))).throwIfFailed();
 
                 expect(a.failed).toBeTrue();
                 expect(b.succeeded).toBeTrue();
@@ -176,8 +176,8 @@ describe("SessionRegistry", () => {
                 const store = new MemorySnapshotStore();
                 const registry = await SessionRegistry.load(store, rand);
 
-                await registry.create("Ann");
-                await registry.create("Bob");
+                await registry.create(new SomeOption("Ann"));
+                await registry.create(new SomeOption("Bob"));
 
                 expect((await store.loadAll()).sessions.map((s) => s.name)).toEqual([name("Ann"), name("Bob")]);
             });
@@ -186,17 +186,17 @@ describe("SessionRegistry", () => {
             it("fails and issues nothing when the session cannot be saved", async () => {
                 const store = new MemorySnapshotStore();
                 const registry = await SessionRegistry.load(store, rand, { newToken: () => "tok" });
-                const ann = (await registry.create("Ann")).throwIfFailed();
+                const ann = (await registry.create(new SomeOption("Ann"))).throwIfFailed();
                 failSaves(store);
 
-                const result = await registry.create("Bob");
+                const result = await registry.create(new SomeOption("Bob"));
 
                 expect(result.failed).toBeTrue();
                 expect(result.failed && result.error).toBe("The session could not be saved.");
                 // Ann is untouched and the failed session is gone, so a retry works.
                 expect(registry.authenticate({ playerId: ann.playerId, token: ann.token })).toBeTrue();
                 store.saveSessions = MemorySnapshotStore.prototype.saveSessions.bind(store);
-                expect((await registry.create("Bob")).succeeded).toBeTrue();
+                expect((await registry.create(new SomeOption("Bob"))).succeeded).toBeTrue();
                 expect((await store.loadAll()).sessions.map((s) => s.name)).toEqual([name("Ann"), name("Bob")]);
             });
 
@@ -208,7 +208,7 @@ describe("SessionRegistry", () => {
             it("changes the name and saves it", async () => {
                 const store = new MemorySnapshotStore();
                 const registry = await SessionRegistry.load(store, rand);
-                const made = (await registry.create("Ann")).throwIfFailed();
+                const made = (await registry.create(new SomeOption("Ann"))).throwIfFailed();
 
                 const renamed = (await registry.rename(made.playerId, " Annie ")).throwIfFailed();
 
@@ -220,7 +220,7 @@ describe("SessionRegistry", () => {
 
             it("changes nothing for an invalid name", async () => {
                 const registry = await SessionRegistry.load(new MemorySnapshotStore(), rand);
-                const made = (await registry.create("Ann")).throwIfFailed();
+                const made = (await registry.create(new SomeOption("Ann"))).throwIfFailed();
 
                 const result = await registry.rename(made.playerId, "   ");
 
@@ -241,7 +241,7 @@ describe("SessionRegistry", () => {
             it("ends with the last of two concurrent renames applied and persisted", async () => {
                 const store = new MemorySnapshotStore();
                 const registry = await SessionRegistry.load(store, rand);
-                const made = (await registry.create("Ann")).throwIfFailed();
+                const made = (await registry.create(new SomeOption("Ann"))).throwIfFailed();
                 slowSaves(store);
 
                 await Promise.all([registry.rename(made.playerId, "One"), registry.rename(made.playerId, "Two")]);
@@ -254,7 +254,7 @@ describe("SessionRegistry", () => {
             it("does not undo a concurrent rename when the first one cannot be saved", async () => {
                 const store = new MemorySnapshotStore();
                 const registry = await SessionRegistry.load(store, rand);
-                const made = (await registry.create("Ann")).throwIfFailed();
+                const made = (await registry.create(new SomeOption("Ann"))).throwIfFailed();
                 slowSaves(store, [1]);
 
                 const [one, two] = await Promise.all([
@@ -272,7 +272,7 @@ describe("SessionRegistry", () => {
             it("keeps a concurrent rename that succeeded when the second cannot be saved", async () => {
                 const store = new MemorySnapshotStore();
                 const registry = await SessionRegistry.load(store, rand);
-                const made = (await registry.create("Ann")).throwIfFailed();
+                const made = (await registry.create(new SomeOption("Ann"))).throwIfFailed();
                 slowSaves(store, [2]);
 
                 await Promise.all([registry.rename(made.playerId, "One"), registry.rename(made.playerId, "Two")]);
@@ -285,7 +285,7 @@ describe("SessionRegistry", () => {
             it("restores the old name when the change cannot be saved", async () => {
                 const store = new MemorySnapshotStore();
                 const registry = await SessionRegistry.load(store, rand);
-                const made = (await registry.create("Ann")).throwIfFailed();
+                const made = (await registry.create(new SomeOption("Ann"))).throwIfFailed();
                 failSaves(store);
 
                 const result = await registry.rename(made.playerId, "Annie");
@@ -301,7 +301,7 @@ describe("SessionRegistry", () => {
                 const logger = collectingLogger();
                 const options = { newToken: () => "tok", logger };
                 const registry = await SessionRegistry.load(store, rand, options);
-                const made = (await registry.create("Ann")).throwIfFailed();
+                const made = (await registry.create(new SomeOption("Ann"))).throwIfFailed();
                 failSaves(store);
 
                 await registry.rename(made.playerId, "Annie");
@@ -330,7 +330,7 @@ describe("SessionRegistry", () => {
 
             it("accepts the issued credential", async () => {
                 const registry = await SessionRegistry.load(new MemorySnapshotStore(), rand);
-                const made = (await registry.create("Ann")).throwIfFailed();
+                const made = (await registry.create(new SomeOption("Ann"))).throwIfFailed();
 
                 expect(registry.authenticate({ playerId: made.playerId, token: made.token })).toBeTrue();
             });
@@ -338,8 +338,8 @@ describe("SessionRegistry", () => {
 
             it("rejects everything else without throwing", async () => {
                 const registry = await SessionRegistry.load(new MemorySnapshotStore(), rand);
-                const ann = (await registry.create("Ann")).throwIfFailed();
-                const bob = (await registry.create("Bob")).throwIfFailed();
+                const ann = (await registry.create(new SomeOption("Ann"))).throwIfFailed();
+                const bob = (await registry.create(new SomeOption("Bob"))).throwIfFailed();
                 const sameLength = `${ann.token.slice(0, -1)}${ann.token.endsWith("A") ? "B" : "A"}`;
                 const bad = [
                     { playerId: ann.playerId, token: "wrong" },

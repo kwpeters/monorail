@@ -1,4 +1,4 @@
-import { NoneOption, Option } from "@repo/depot/option";
+import { NoneOption, Option, SomeOption } from "@repo/depot/option";
 import { type Result } from "@repo/depot/result";
 import { discriminatedResultSchema } from "@repo/depot/schemaUtility";
 import { chooseCommand } from "@repo/mille-bornes-core/bot";
@@ -128,7 +128,7 @@ export async function connectScriptedPlayer(
     authorization: string,
     rand?:         () => number
 ): Promise<ScriptedPlayer> {
-    const client = clientFor(baseUrl, Option.fromNullable(authorization));
+    const client = clientFor(baseUrl, new SomeOption(authorization));
     const me = await client.session.me.query();
     const playerId = PlayerId.tryCreate(me.playerId).throwIfFailed();
     const name = PlayerName.tryCreate(me.name).throwIfFailed();
@@ -150,7 +150,7 @@ export async function connectScriptedPlayer(
             return;
         }
         const command = cmd.value;
-        lastPlayed = Option.fromNullable(key);
+        lastPlayed = new SomeOption(key);
         client.game.play.mutate(command)
         .then((wire) => {
             const played = voidResultSchema.parse(wire);
