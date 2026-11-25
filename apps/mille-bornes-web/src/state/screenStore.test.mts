@@ -1,7 +1,7 @@
 import type { GameEvent } from "@repo/mille-bornes-core/events";
 import type { Screen } from "@repo/mille-bornes-game-server/screens";
 import { TRPCClientError } from "@trpc/client";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Api } from "../api/client.mjs";
 import { createScreenStore, type ScreenStore } from "./screenStore.mjs";
 
@@ -17,13 +17,15 @@ interface ConnectionState {
 interface Callbacks {
     onData:                  (screen: Screen) => void;
     onError:                 (err: unknown) => void;
+    onStopped:               () => void;
+    onComplete:              () => void;
     onConnectionStateChange: (state: ConnectionState) => void;
 }
 
 
 interface Harness {
     store:          ScreenStore;
-    callbacks:      () => Callbacks;
+    callbacks:      (index?: number) => Callbacks;
     subscribe:      ReturnType<typeof vi.fn>;
     unsubscribe:    ReturnType<typeof vi.fn>;
     onUnauthorized: ReturnType<typeof vi.fn<() => void>>;
@@ -31,20 +33,22 @@ interface Harness {
 
 
 function makeStore(): Harness {
-    let captured: Callbacks | undefined;
+    const captured: Callbacks[] = [];
     const unsubscribe = vi.fn();
     const subscribe = vi.fn((_input: unknown, callbacks: Callbacks) => {
-        captured = callbacks;
+        captured.push(callbacks);
         return { unsubscribe };
     });
     const api = { trpc: { watch: { subscribe } } } as unknown as Api;
     const onUnauthorized = vi.fn<() => void>();
     const store = createScreenStore({ api, onUnauthorized });
-    const callbacks = (): Callbacks => {
-        if (captured === undefined) {
+    // By default the callbacks of the newest subscription.
+    const callbacks = (index = captured.length - 1): Callbacks => {
+        const found = captured[index];
+        if (found === undefined) {
             throw new Error("The store has not subscribed yet.");
         }
-        return captured;
+        return found;
     };
     return { store, callbacks, subscribe, unsubscribe, onUnauthorized };
 }
@@ -91,6 +95,16 @@ const unauthorizedError = TRPCClientError.from({
 
 
 describe("screenStore", () => {
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+    });
+
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
 
     describe("createScreenStore()", () => {
 
@@ -177,6 +191,15 @@ describe("screenStore", () => {
             });
 
 
+            it("decides by kind, not by shape: a Lobby carrying events queues nothing", () => {
+                const { store, callbacks } = started();
+                const odd = { ...lobby, events: [race(1)] } as unknown as Screen;
+                callbacks().onData(odd);
+                callbacks().onData(odd);
+                expect(store.getSnapshot().pendingEvents).toEqual([]);
+            });
+
+
             it("keeps batches in order, each with a unique increasing id", () => {
                 const { store, callbacks } = started();
                 callbacks().onData(playing());
@@ -219,6 +242,17 @@ describe("screenStore", () => {
                 store.consumeEvents(first);
                 callbacks().onData(playing(race(2)));
                 expect(store.getSnapshot().pendingEvents[0]?.id).toBeGreaterThan(first);
+            });
+
+
+            it("notifies exactly once for a known id", () => {
+                const { store, callbacks } = started();
+                callbacks().onData(playing());
+                callbacks().onData(playing(race(1)));
+                const listener = vi.fn();
+                store.subscribe(listener);
+                store.consumeEvents(store.getSnapshot().pendingEvents[0]!.id);
+                expect(listener).toHaveBeenCalledTimes(1);
             });
 
 
@@ -265,7 +299,7 @@ describe("screenStore", () => {
                 callbacks().onConnectionStateChange(dropped);
                 callbacks().onData(playing(race(2), race(3)));
                 const snapshot = store.getSnapshot();
-                expect(snapshot.pendingEvents.map((b) => b.events)).toEqual([[race(1)]]);
+                expect(snapshot.pendingEvents).toEqual([]);
                 expect(snapshot.sequence).toBe(3);
                 expect(snapshot.status).toBe("Live");
             });
@@ -292,12 +326,127 @@ describe("screenStore", () => {
             });
 
 
-            it("treats a transport error as a drop too", () => {
-                const { store, callbacks } = started();
+            it("restarts after a non-UNAUTHORIZED error, treating the new first message as a snapshot", () => {
+                const { store, callbacks, subscribe } = started();
                 callbacks().onData(playing());
+                callbacks().onData(playing(race(1)));
                 callbacks().onError(new TRPCClientError("The stream failed."));
                 expect(store.getSnapshot().status).toBe("Reconnecting");
+                expect(subscribe).toHaveBeenCalledTimes(1);
+
+                vi.advanceTimersByTime(999);
+                expect(subscribe).toHaveBeenCalledTimes(1);
+                vi.advanceTimersByTime(1);
+                expect(subscribe).toHaveBeenCalledTimes(2);
+                expect(subscribe.mock.calls[1]?.[0]).toBeUndefined();
+                expect(store.getSnapshot().status).toBe("Reconnecting");
+
+                callbacks().onData(playing(race(2), race(3)));
+                const snapshot = store.getSnapshot();
+                expect(snapshot.status).toBe("Live");
+                expect(snapshot.pendingEvents).toEqual([]);
+
+                callbacks().onData(playing(race(4)));
+                expect(store.getSnapshot().pendingEvents.map((b) => b.events)).toEqual([
+                    [race(4)]
+                ]);
+            });
+
+
+            it("waits 1 s, 2 s, 4 s ... up to 10 s between attempts", () => {
+                const { callbacks, subscribe } = started();
+                const waits: number[] = [];
+                for (let i = 0; i < 7; i++) {
+                    callbacks().onError(new TRPCClientError("down"));
+                    const before = subscribe.mock.calls.length;
+                    let waited = 0;
+                    while (subscribe.mock.calls.length === before) {
+                        vi.advanceTimersByTime(1);
+                        waited++;
+                    }
+                    waits.push(waited);
+                }
+                expect(waits).toEqual([1000, 2000, 4000, 8000, 10_000, 10_000, 10_000]);
+            });
+
+
+            it("starts the backoff over at 1 s after a message arrives", () => {
+                const { callbacks, subscribe } = started();
+                callbacks().onError(new TRPCClientError("down"));
+                vi.advanceTimersByTime(1000);
+                callbacks().onError(new TRPCClientError("down"));
+                vi.advanceTimersByTime(2000);
+                expect(subscribe).toHaveBeenCalledTimes(3);
+
+                callbacks().onData(playing());
+                callbacks().onError(new TRPCClientError("down"));
+                vi.advanceTimersByTime(1000);
+                expect(subscribe).toHaveBeenCalledTimes(4);
+            });
+
+
+            it("restarts when the stream stops without stop() being called", () => {
+                const { store, callbacks, subscribe } = started();
+                callbacks().onData(playing());
+                callbacks().onStopped();
+                expect(store.getSnapshot().status).toBe("Reconnecting");
+                vi.advanceTimersByTime(1000);
+                expect(subscribe).toHaveBeenCalledTimes(2);
+            });
+
+
+            it("restarts when the stream completes without stop() being called", () => {
+                const { store, callbacks, subscribe } = started();
+                callbacks().onData(playing());
+                callbacks().onComplete();
+                expect(store.getSnapshot().status).toBe("Reconnecting");
+                vi.advanceTimersByTime(1000);
+                expect(subscribe).toHaveBeenCalledTimes(2);
+            });
+
+
+            it("restarts once when both onStopped and onComplete fire", () => {
+                const { callbacks, subscribe } = started();
+                callbacks().onStopped();
+                callbacks().onComplete();
+                vi.advanceTimersByTime(60_000);
+                expect(subscribe).toHaveBeenCalledTimes(2);
+            });
+
+
+            it("ignores late callbacks from a subscription that was replaced", () => {
+                const { store, callbacks, subscribe } = started();
+                callbacks().onData(playing());
+                callbacks().onError(new TRPCClientError("down"));
+                vi.advanceTimersByTime(1000);
+                expect(subscribe).toHaveBeenCalledTimes(2);
+                callbacks().onData(playing());
                 callbacks().onData(playing(race(1)));
+                store.consumeEvents(store.getSnapshot().pendingEvents[0]!.id);
+                const before = store.getSnapshot();
+
+                const old = callbacks(0);
+                old.onData(playing(race(2)));
+                old.onConnectionStateChange(dropped);
+                old.onError(new TRPCClientError("late"));
+                old.onStopped();
+                old.onComplete();
+                vi.advanceTimersByTime(60_000);
+
+                expect(store.getSnapshot()).toBe(before);
+                expect(subscribe).toHaveBeenCalledTimes(2);
+            });
+
+
+            it("drops batches the animator has not played when a snapshot arrives", () => {
+                const { store, callbacks } = started();
+                callbacks().onData(playing());
+                callbacks().onData(playing(race(1)));
+                callbacks().onData(playing(race(2)));
+                expect(store.getSnapshot().pendingEvents).toHaveLength(2);
+
+                callbacks().onConnectionStateChange(dropped);
+                callbacks().onData(playing(race(3)));
                 expect(store.getSnapshot().pendingEvents).toEqual([]);
             });
 
@@ -320,6 +469,25 @@ describe("screenStore", () => {
                 expect(store.getSnapshot()).toBe(before);
             });
 
+
+            it("never restarts the subscription", () => {
+                const { callbacks, subscribe } = started();
+                callbacks().onData(playing());
+                callbacks().onError(unauthorizedError);
+                callbacks().onStopped();
+                callbacks().onComplete();
+                vi.advanceTimersByTime(60_000);
+                expect(subscribe).toHaveBeenCalledTimes(1);
+            });
+
+
+            it("lets a later start() open a fresh subscription", () => {
+                const { store, callbacks, subscribe } = started();
+                callbacks().onError(unauthorizedError);
+                store.start();
+                expect(subscribe).toHaveBeenCalledTimes(2);
+            });
+
         });
 
 
@@ -333,11 +501,41 @@ describe("screenStore", () => {
             });
 
 
-            it("does nothing after stop()", () => {
-                const { store, subscribe } = makeStore();
+            it("opens exactly one more subscription after start, stop, start", () => {
+                const { store, subscribe, unsubscribe } = makeStore();
+                store.start();
                 store.stop();
                 store.start();
-                expect(subscribe).not.toHaveBeenCalled();
+                expect(subscribe).toHaveBeenCalledTimes(2);
+                expect(unsubscribe).toHaveBeenCalledTimes(1);
+            });
+
+
+            it("keeps the screen, reads Connecting and snapshots after a restart", () => {
+                const { store, callbacks } = started();
+                const screen = playing();
+                callbacks().onData(screen);
+                callbacks().onData(playing(race(1)));
+                store.stop();
+                store.start();
+
+                const restarted = store.getSnapshot();
+                expect(restarted.status).toBe("Connecting");
+                expect(restarted.screen.isSome).toBe(true);
+
+                callbacks().onData(playing(race(2)));
+                expect(store.getSnapshot().status).toBe("Live");
+                expect(store.getSnapshot().pendingEvents).toEqual([]);
+            });
+
+
+            it("ignores callbacks of the subscription that stop() closed", () => {
+                const { store, callbacks } = started();
+                store.stop();
+                store.start();
+                const before = store.getSnapshot();
+                callbacks(0).onData(playing(race(1)));
+                expect(store.getSnapshot()).toBe(before);
             });
 
         });
@@ -364,6 +562,15 @@ describe("screenStore", () => {
                 store.stop();
                 store.stop();
                 expect(unsubscribe).toHaveBeenCalledTimes(1);
+            });
+
+
+            it("cancels a pending restart so no second subscription is made", () => {
+                const { store, callbacks, subscribe } = started();
+                callbacks().onError(new TRPCClientError("down"));
+                store.stop();
+                vi.advanceTimersByTime(60_000);
+                expect(subscribe).toHaveBeenCalledTimes(1);
             });
 
 
