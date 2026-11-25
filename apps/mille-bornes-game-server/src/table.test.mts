@@ -573,7 +573,7 @@ describe("Table", () => {
                     const failures: Array<string> = [];
                     for (let seed = 1; seed <= 20; seed++) {
                         const seats = [2, 3, 4, 6][seed % 4]!;
-                        const { harness: h, problems } = playWholeGame(seats, 1000 + seed, "Short");
+                        const { harness: h, problems } = playWholeGame(seats, 1000 + seed, "Full");
                         const phase = h.table.game.phase.kind;
                         const errors = [...problems, ...h.stuck];
                         if (phase !== "GameOver" || errors.length > 0) {
