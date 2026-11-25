@@ -32,7 +32,7 @@ export interface RunningGame {
     readonly organizer: PlayerId;
     /** Humans who pressed "Back to lobby" after GameOver. */
     readonly left:      Array<PlayerId>;
-    /** The newest update shown and saved; an older one arriving late is ignored. */
+    /** The newest update shown and saved; an older one is ignored. */
     game:               Game;
     seq:                number;
     /** The save of the newest update. */

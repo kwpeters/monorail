@@ -835,6 +835,22 @@ describe("Hub", () => {
             });
 
 
+            it("refuses the same command sent twice and changes nothing", async () => {
+                const h = await openHub();
+                const players = await startedGame(h, ["Ann", "Bob"]);
+                const move = nextMove(h, players, seededRandom(1))!;
+                (await h.hub.play(move.by, move.cmd)).throwIfFailed();
+                const { seq } = await runningRecord(h);
+                const before = h.hub.screenFor(move.by);
+
+                const r = await h.hub.play(move.by, move.cmd);
+
+                expect(errorOf(r)).not.toBe("");
+                expect(h.hub.screenFor(move.by)).toEqual(before);
+                expect((await runningRecord(h)).seq).toBe(seq);
+            });
+
+
             it("fails for a player in no game or in a game not started", async () => {
                 const h = await openHub();
                 const ann = await newPlayer(h, "Ann");
@@ -918,7 +934,7 @@ describe("Hub", () => {
                             onUpdate: (u) => {
                                 const inner = nest;
                                 nest = null;
-                                // A second change lands before the hub hears of the first.
+                                // Nest a change before the hub hears.
                                 expect(inner?.().succeeded ?? true).toBeTrue();
                                 o.onUpdate(u);
                             }
@@ -947,7 +963,7 @@ describe("Hub", () => {
                 expect((await runningRecord(h)).seq).toBe(2);
                 const shown = playing(await nextScreen(annWatch));
                 expect(shown.view).toEqual(playing(h.hub.screenFor(ann!)).view);
-                // A presence change is the next screen: nothing stale came between.
+                // The next screen is a presence change: nothing stale.
                 const bobWatch = watcher(h.hub, bob!);
                 await nextScreen(bobWatch);
                 const after = playing(await nextScreen(annWatch));
@@ -1007,6 +1023,10 @@ describe("Hub", () => {
                 });
                 const w = watcher(h.hub, ann!);
                 await nextScreen(w);
+                const { seq } = await runningRecord(h);
+                const early = await h.hub.play(ann!, { type: "Drive", card: Card.dist25 });
+                expect(errorOf(early)).toContain("turn");
+                expect((await runningRecord(h)).seq).toBe(seq);
 
                 h.clock.advance(3000);
 
@@ -1090,7 +1110,7 @@ describe("Hub", () => {
                 const move = nextMove(h, players, seededRandom(1))!;
                 (await h.hub.play(move.by, move.cmd)).throwIfFailed();
 
-                // The play is Ann's next screen, so no presence screen came first.
+                // Ann sees the play next, so no presence screen came first.
                 const next = playing(await nextScreen(annWatch));
                 expect(next.events.length).toBeGreaterThan(0);
                 expect(next.connected).toContain(bob!);
@@ -1099,13 +1119,18 @@ describe("Hub", () => {
             });
 
 
-            it("keeps a player with two watches connected until both close", async () => {
+            it("updates both of a player's watches and keeps them connected", async () => {
                 const h = await openHub();
-                const [ann, bob] = await startedGame(h, ["Ann", "Bob"]);
+                const players = await startedGame(h, ["Ann", "Bob"]);
+                const [ann, bob] = players;
                 const tab1 = watcher(h.hub, bob!);
                 const tab2 = watcher(h.hub, bob!);
                 await nextScreen(tab1);
                 await nextScreen(tab2);
+                const move = nextMove(h, players, seededRandom(1))!;
+                (await h.hub.play(move.by, move.cmd)).throwIfFailed();
+                expect(playing(await nextScreen(tab1)).events.length).toBeGreaterThan(0);
+                expect(playing(await nextScreen(tab2)).events.length).toBeGreaterThan(0);
 
                 tab1.abort.abort();
                 expect((await tab1.next()).done).toBeTrue();
@@ -1240,6 +1265,10 @@ describe("Hub", () => {
                 const phase = playing(h.hub.screenFor(bob!)).view.phase;
                 expect(phase.kind === "GameOver" ? phase.reveal.map((r) => r.kind) : [])
                 .toEqual(["Human", "Human"]);
+                const { seq } = await runningRecord(h);
+                const late = await h.hub.play(ann!, { type: "Drive", card: Card.dist25 });
+                expect(errorOf(late)).not.toBe("");
+                expect((await runningRecord(h)).seq).toBe(seq);
 
                 (await h.hub.leaveFinished(ann!)).throwIfFailed();
 
@@ -1299,6 +1328,9 @@ describe("Hub", () => {
                 expect(lobby(h.hub.screenFor(ann!)).notice).toBe(stuckNotice);
                 expect((await records(h)).length).toBe(1);
                 expect(h.logger.lines.some((l) => l.startsWith("ERROR"))).toBeTrue();
+                h.clock.advance(24 * 60 * 60 * 1000);
+                expect((await records(h)).length).toBe(1);
+                expect(h.hub.screenFor(ann!).kind).toBe("Lobby");
                 await playUntil(h, others, (_s, moves) => moves === 2);
                 w.abort.abort();
             });
