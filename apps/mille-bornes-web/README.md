@@ -24,6 +24,11 @@ open `http://localhost:3000/host`:
 it shows each address with a QR code for the players to scan,
 and every game with an End game button.
 
+At the table a player taps a card, then where it goes.
+A long press on a card explains it,
+and so does the **What's this?** button beside Play once a card is picked up
+(the way in from a keyboard, too).
+
 ## Development
 
 Start the game server in one terminal
@@ -97,8 +102,6 @@ in its folder under `test-results/`;
 - Phones are not kept awake during a game (deferred by the owner).
   A phone that locks reconnects when it wakes
   and shows the game as it is then.
-- Card help opens only with a long press;
-  there is no way to open it from the keyboard.
 - The synthesized sounds have not been judged by the owner yet.
 - Dimmed cards are marked `aria-disabled`,
   but they can still be tapped:

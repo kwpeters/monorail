@@ -613,6 +613,19 @@ describe("GameScreen", () => {
         });
 
 
+        it("explains a picked-up card with What's this?, keeping it picked up", async () => {
+            const user = userEvent.setup();
+            const { fake } = show(ann());
+            await user.click(card("50 miles"));
+            await user.click(screen.getByRole("button", { name: "What's this?" }));
+            expect(screen.getByRole("dialog", { name: "50 miles" })).toBeInTheDocument();
+            await user.click(screen.getByRole("button", { name: "Close" }));
+            expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+            expect(pressedCards()).toEqual([card("50 miles")]);
+            expect(fake.procs.play).not.toHaveBeenCalled();
+        });
+
+
         it("dims a card with no play, explains it and sends nothing", async () => {
             const user = userEvent.setup();
             const { fake } = show(ann());

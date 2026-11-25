@@ -126,6 +126,52 @@ describe("Hand", () => {
     });
 
 
+    describe("the What's this? button", () => {
+
+        it("is there only while a card is picked up, with or without Play", () => {
+            const { rerender, props } = showHand([Card.dist25, Card.flatTire]);
+            expect(screen.queryByRole("button", { name: "What's this?" })).not.toBeInTheDocument();
+            rerender(<Hand {...props} selected={new SomeOption(1)} />);
+            expect(screen.getByRole("button", { name: "What's this?" })).toBeInTheDocument();
+            expect(screen.queryByRole("button", { name: "Play" })).not.toBeInTheDocument();
+        });
+
+
+        it("explains the picked-up card without playing or tapping it", () => {
+            const onPlay = vi.fn();
+            const { props } = showHand([Card.dist25, Card.flatTire], {
+                selected: new SomeOption(1),
+                onPlay:   new SomeOption(onPlay)
+            });
+            fireEvent.click(screen.getByRole("button", { name: "What's this?" }));
+            const help = screen.getByRole("dialog", { name: "Flat Tire" });
+            expect(help).toHaveTextContent(cardFace(Card.flatTire).blurb);
+            expect(onPlay).not.toHaveBeenCalled();
+            expect(props.onTap).not.toHaveBeenCalled();
+        });
+
+
+        it("gets the focus back when the help closes with Escape or Close", () => {
+            showHand([Card.flatTire], { selected: new SomeOption(0) });
+            const whatsThis = screen.getByRole("button", { name: "What's this?" });
+            for (const close of ["Escape", "Close"]) {
+                whatsThis.focus();
+                fireEvent.click(whatsThis);
+                expect(screen.getByRole("dialog", { name: "Flat Tire" })).toBeInTheDocument();
+                if (close === "Escape") {
+                    fireEvent.keyDown(window, { key: "Escape" });
+                }
+                else {
+                    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+                }
+                expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+                expect(whatsThis).toHaveFocus();
+            }
+        });
+
+    });
+
+
     describe("long press", () => {
 
         beforeEach(() => {

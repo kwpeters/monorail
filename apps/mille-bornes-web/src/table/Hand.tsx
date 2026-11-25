@@ -1,4 +1,4 @@
-import { NoneOption, SomeOption, type Option } from "@repo/depot/option";
+import { NoneOption, Option, SomeOption } from "@repo/depot/option";
 import type { Card } from "@repo/mille-bornes-core/card";
 import {
     useEffect, useId, useRef, useState, type MutableRefObject, type ReactElement
@@ -110,6 +110,7 @@ function HandCard(props: HandCardProps): ReactElement {
 
 interface Help {
     readonly card:   Card;
+    /** Where the focus goes back to once the help closes. */
     readonly button: HTMLButtonElement;
 }
 
@@ -117,7 +118,9 @@ interface Help {
 /**
  * The viewer's cards, in hand order, as toggle buttons: tapping one reports
  * it, a long press explains it, and the picked-up card can show a Play
- * button.  The row wraps on narrow screens, so nothing is clipped.
+ * button and always shows a "What's this?" button that explains it too (the
+ * way in for a keyboard, and for anyone who does not know the long press).
+ * The row wraps on narrow screens, so nothing is clipped.
  * @param props - The cards, their state and the handlers
  * @returns The hand
  */
@@ -126,6 +129,7 @@ export function Hand(props: HandProps): ReactElement {
     const labelId = useId();
     const [help, setHelp] = useState<Option<Help>>(NoneOption.get());
     const longPressed = useRef(false);
+    const picked = selected.bind((i) => Option.fromNullable(cards[i]));
 
     const closeHelp = (): void => {
         longPressed.current = false;
@@ -154,10 +158,22 @@ export function Hand(props: HandProps): ReactElement {
                     </li>
                 ))}
             </ul>
-            {onPlay.isSome ?
+            {picked.isSome ?
                 <div className="hand-actions">
-                    <button type="button" className="button primary" onClick={onPlay.value}>
-                        Play
+                    {onPlay.isSome ?
+                        <button type="button" className="button primary" onClick={onPlay.value}>
+                            Play
+                        </button> :
+                        null}
+                    <button
+                        type="button"
+                        className="button"
+                        onClick={(e) => {
+                            const button = e.currentTarget;
+                            setHelp(new SomeOption({ card: picked.value, button }));
+                        }}
+                    >
+                        What's this?
                     </button>
                 </div> :
                 null}
