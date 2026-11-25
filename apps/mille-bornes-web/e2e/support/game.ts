@@ -110,7 +110,24 @@ export async function untilMyTurn(page: Page): Promise<void> {
 }
 
 
-/** Looks at the table while a card is picked up, before it is played. */
+/**
+ * Tells whether it is the player's turn.  The top bar says so, unless it is
+ * showing why a card cannot be played (for 3 s, which can outlast a round of
+ * fast robots); the player's chip on the table is marked either way.
+ * @param page - A phone at the table
+ * @param name - The player's name
+ * @returns True on the player's turn
+ */
+async function isMyTurn(page: Page, name: string): Promise<boolean> {
+    if ((await topBarText(page)).startsWith("Your turn")) {
+        return true;
+    }
+    const onTurn = await page.locator(".player.on-turn .truncate").allTextContents();
+    return onTurn.includes(name);
+}
+
+
+/** Looks at the table at a moment of the game (a card picked up, an offer). */
 export type OnPicked = (page: Page) => Promise<void>;
 
 
@@ -162,17 +179,20 @@ async function takeTurn(page: Page, onPicked: OnPicked): Promise<void> {
  * because the screen moved on is tried again, so `onPicked` should record
  * what it finds rather than throw.
  * @param page - A phone at the table
- * @param label - Names the phone in a failure message
- * @param options - How long the game may take (default `gameTimeoutMs`), and
- * what to do each time a card is picked up
+ * @param name - The player's name: the table marks their turn with it, and a
+ * failure message names the phone with it
+ * @param options - How long the game may take (default `gameTimeoutMs`), what
+ * to do each time a card is picked up, and what to do when an Extension offer
+ * shows (before Stop here is tapped)
  * @returns Once the phone shows Back to lobby
  */
 export async function playToGameOver(
     page:    Page,
-    label:   string,
-    options: { timeoutMs?: number; onPicked?: OnPicked } = {}
+    name:    string,
+    options: { timeoutMs?: number; onPicked?: OnPicked; onOffer?: OnPicked } = {}
 ): Promise<void> {
-    const { timeoutMs = gameTimeoutMs, onPicked = async () => Promise.resolve() } = options;
+    const nothing = async (): Promise<void> => Promise.resolve();
+    const { timeoutMs = gameTimeoutMs, onPicked = nothing, onOffer = nothing } = options;
     const deadline = Date.now() + timeoutMs;
     const backToLobby = page.getByRole("button", { name: "Back to lobby" });
     const stopHere = page.getByRole("button", { name: "Stop here" });
@@ -180,15 +200,16 @@ export async function playToGameOver(
     let lastError = "none";
     while (!(await backToLobby.isVisible())) {
         if (Date.now() > deadline) {
-            throw new Error(`${label}: the game did not end within ${timeoutMs.toString()} ms ` +
+            throw new Error(`${name}: the game did not end within ${timeoutMs.toString()} ms ` +
                 `after ${turns.toString()} turns; the top bar says "${await topBarText(page)}"; ` +
                 `the last failed step: ${lastError}`);
         }
         try {
             if (await stopHere.isVisible()) {
+                await onOffer(page);
                 await stopHere.tap({ timeout: 2000 });
             }
-            else if ((await topBarText(page)).startsWith("Your turn")) {
+            else if (await isMyTurn(page, name)) {
                 await takeTurn(page, onPicked);
                 turns++;
             }

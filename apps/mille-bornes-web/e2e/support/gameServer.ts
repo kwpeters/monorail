@@ -61,10 +61,15 @@ export class GameServer {
      * Starts a game server.
      * @param dataDir - Where it saves games and sessions
      * @param logFile - Where its output goes
+     * @param env - Environment variables that replace the fast timings
      * @returns The running server
      */
-    public static async start(dataDir: string, logFile: string): Promise<GameServer> {
-        const server = new GameServer(await freePort(), dataDir, logFile);
+    public static async start(
+        dataDir: string,
+        logFile: string,
+        env:     Readonly<Record<string, string>> = {}
+    ): Promise<GameServer> {
+        const server = new GameServer(await freePort(), dataDir, logFile, env);
         await server.start();
         return server;
     }
@@ -77,7 +82,8 @@ export class GameServer {
     private constructor(
         public readonly port:    number,
         public readonly dataDir: string,
-        logFile:                 string
+        logFile:                 string,
+        private readonly _env:   Readonly<Record<string, string>>
     ) {
         this._log = fs.createWriteStream(logFile, { flags: "a" });
     }
@@ -103,7 +109,8 @@ export class GameServer {
                 PORT:        this.port.toString(),
                 MB_DATA_DIR: this.dataDir,
                 MB_WEB_ROOT: webRoot,
-                ...fastTimings
+                ...fastTimings,
+                ...this._env
             },
             stdio: ["ignore", "pipe", "pipe"]
         });

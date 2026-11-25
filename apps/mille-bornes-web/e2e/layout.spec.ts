@@ -86,7 +86,8 @@ interface TargetCheck {
 
 /**
  * Checks that the Discard button is on screen, on top at its centre and at
- * least 44 x 44, and that every lane button on screen is on top too.
+ * least 44 x 44, and that every lane button with its centre on screen is on
+ * top too.
  * @param page - A phone with a card picked up
  * @returns What was found
  */
@@ -106,7 +107,11 @@ async function checkTargets(page: Page): Promise<TargetCheck> {
         else {
             const r = discard.getBoundingClientRect();
             if (r.top < 0 || r.bottom > window.innerHeight || !onTop(discard)) {
-                problems.push(`Discard is covered or off screen at ${r.top.toString()}`);
+                // Enough to tell a covered button from a scroll that did not happen.
+                const handTop = document.querySelector(".hand")?.getBoundingClientRect().top ?? NaN;
+                problems.push(`Discard is covered or off screen at ${r.top.toString()} ` +
+                    `(hand top ${handTop.toString()}, scrolled ${window.scrollY.toString()} ` +
+                    `of ${document.documentElement.scrollHeight.toString()})`);
             }
             if (r.width < min - 0.5 || r.height < min - 0.5) {
                 problems.push(`Discard is ${r.width.toString()} x ${r.height.toString()}`);
@@ -114,7 +119,10 @@ async function checkTargets(page: Page): Promise<TargetCheck> {
         }
         for (const lane of document.querySelectorAll(".lane-target")) {
             const r = lane.getBoundingClientRect();
-            if (r.bottom > 0 && r.top < window.innerHeight) {
+            // Scrolling Discard clear can push the top lane up out of view; a
+            // lane with its centre on screen must be on top, not under the hand.
+            const middle = r.top + r.height / 2;
+            if (middle > 0 && middle < window.innerHeight) {
                 lanes++;
                 if (!onTop(lane)) {
                     problems.push(`${lane.textContent} is covered at ${r.top.toString()}`);
@@ -148,17 +156,32 @@ test("at 320 x 568 a picked-up card's Discard and lane buttons are never under t
     const problems: Array<string> = [];
     let picks = 0;
     let lanes = 0;
+    let offers = 0;
     await playToGameOver(ann, "Ann", {
         onPicked: async (page) => {
             const found = await checkTargets(page);
             picks++;
             lanes += found.lanes;
             problems.push(...found.problems);
+        },
+        // The offer sits at the top of the table, which a pick may have
+        // scrolled away; it scrolls itself back into view.
+        onOffer: async (page) => {
+            offers++;
+            // The offer lasts 1.5 s; one that ran out fails this step only.
+            const top = await page.locator(".extension-offer").evaluate((el) => {
+                return el.getBoundingClientRect().top;
+            }, undefined, { timeout: 1000 });
+            // Scrolled to the top gives a sub-pixel position, not exactly 0.
+            if (top < -1) {
+                problems.push(`the Extension offer is above the screen at ${top.toString()}`);
+            }
         }
     });
     test.info().annotations.push({
         type:        "targets checked",
-        description: `${picks.toString()} picks, ${lanes.toString()} lane buttons on screen`
+        description: `${picks.toString()} picks, ${lanes.toString()} lane buttons on screen, ` +
+            `${offers.toString()} Extension offers`
     });
     expect(picks, "cards were picked up").toBeGreaterThan(5);
     expect(problems, "no target under the hand").toEqual([]);

@@ -17,7 +17,10 @@ export default defineConfig({
     reporter:    "list",
     use:         {
         ...phone,
-        browserName: "chromium",
-        trace:       "retain-on-failure"
+        browserName:   "chromium",
+        // A read of an element that has gone fails, rather than waiting for
+        // the test's own timeout.
+        actionTimeout: 5000,
+        trace:         "retain-on-failure"
     }
 });

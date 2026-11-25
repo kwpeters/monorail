@@ -14,6 +14,12 @@ import { Relay } from "./relay.js";
 
 /** What every spec gets. */
 export interface Fixtures {
+    /**
+     * Environment variables for this test's server, over the fast timings;
+     * set with `test.use({ serverEnv: { ... } })`.
+     */
+    serverEnv: Readonly<Record<string, string>>;
+
     /** A game server of this test's own, started before the test. */
     server:    GameServer;
 
@@ -50,12 +56,13 @@ async function openPhoneOn(
 
 /** The Playwright `test` with a game server and phones. */
 export const test = base.extend<Fixtures>({
-    // Playwright reads the fixtures a fixture needs from this pattern.
-    // eslint-disable-next-line no-empty-pattern
-    server: async ({}, use, testInfo) => {
+    serverEnv: [{}, { option: true }],
+
+    server: async ({ serverEnv }, use, testInfo) => {
         const dataDir = testInfo.outputPath("server-data");
         fs.mkdirSync(dataDir, { recursive: true });
-        const server = await GameServer.start(dataDir, testInfo.outputPath("server.log"));
+        const log = testInfo.outputPath("server.log");
+        const server = await GameServer.start(dataDir, log, serverEnv);
         await use(server);
         await server.dispose();
     },
