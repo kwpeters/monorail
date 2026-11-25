@@ -46,6 +46,41 @@ describe("ExtensionOffer", () => {
     });
 
 
+    it("scrolls itself into view once, when it appears to the decider", () => {
+        const scroll = vi.spyOn(Element.prototype, "scrollIntoView");
+        try {
+            const { rerender } = render(
+                <ExtensionOffer screen={offerFor("Ann")} onDecide={vi.fn()} />
+            );
+            const panel = screen.getByRole("region", { name: "Stop here, or race on to 1,000?" });
+            expect(scroll).toHaveBeenCalledExactlyOnceWith({
+                block:    "nearest",
+                behavior: "instant"
+            });
+            expect(scroll.mock.contexts[0]).toBe(panel);
+            // A later screen of the same offer does not scroll again.
+            rerender(<ExtensionOffer screen={offerFor("Ann")} onDecide={vi.fn()} />);
+            expect(scroll).toHaveBeenCalledTimes(1);
+            expect(document.activeElement).toBe(document.body);
+        }
+        finally {
+            scroll.mockRestore();
+        }
+    });
+
+
+    it("scrolls nothing for anyone else", () => {
+        const scroll = vi.spyOn(Element.prototype, "scrollIntoView");
+        try {
+            render(<ExtensionOffer screen={offerFor("Bob")} onDecide={vi.fn()} />);
+            expect(scroll).not.toHaveBeenCalled();
+        }
+        finally {
+            scroll.mockRestore();
+        }
+    });
+
+
     it("shows nothing to anyone else", () => {
         const { container } = render(<ExtensionOffer screen={offerFor("Bob")} onDecide={vi.fn()} />);
         expect(container).toBeEmptyDOMElement();

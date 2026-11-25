@@ -16,8 +16,9 @@ afterEach(() => {
 
 
 // jsdom has no layout, so it does not scroll; its own `scrollTo` only
-// reports that it is not implemented.
+// reports that it is not implemented, and it has no `scrollIntoView`.
 window.scrollTo = (): void => undefined;
+Element.prototype.scrollIntoView = (): void => undefined;
 
 
 // jsdom has no modal dialogs: `showModal()` and `close()` are missing.  This
