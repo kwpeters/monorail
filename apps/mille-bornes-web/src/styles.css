@@ -783,9 +783,17 @@ svg {
     box-shadow: 0 0.3rem 0.6rem rgb(0 0 0 / 30%);
 }
 
-/* Dimmed, but its words keep at least AA contrast: it can still be tapped. */
+/*
+ * Dimmed, but it can still be tapped, so its words keep AA contrast: over
+ * the hand's grey, the labels and the "mi" unit (in full text color here)
+ * measure 4.55 to 4.74:1 and the big miles number 4.74:1.
+ */
 .card-button.dimmed .card {
     opacity: 0.6;
+}
+
+.card-button.dimmed .card-unit {
+    color: var(--color-text);
 }
 
 /* The answer to a hazard glows, and its badge says so in words. */

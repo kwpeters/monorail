@@ -100,7 +100,12 @@ in its folder under `test-results/`;
 - Card help opens only with a long press;
   there is no way to open it from the keyboard.
 - The synthesized sounds have not been judged by the owner yet.
+- Dimmed cards are marked `aria-disabled`,
+  but they can still be tapped:
+  the tap explains why the card cannot be played
+  and, on the player's own turn, picks it up to discard it.
+  A screen reader therefore announces them as unavailable.
 - On a screen shorter than the table (a 320 x 568 phone, say),
-  the hand stays at the bottom while the rest scrolls under it,
-  so the Discard button on the pile can be under the hand
-  until the player scrolls down.
+  the hand stays at the bottom while the rest scrolls under it.
+  Picking up a card scrolls its Discard and lane buttons out from under the hand,
+  which can scroll the top lane out of view above.

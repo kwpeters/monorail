@@ -3,7 +3,7 @@ import type { Card } from "@repo/mille-bornes-core/card";
 import type { PlayerCommand } from "@repo/mille-bornes-core/commands";
 import type { TeamIndex } from "@repo/mille-bornes-core/ids";
 import type { Screen } from "@repo/mille-bornes-game-server/screens";
-import { useRef, type ReactElement } from "react";
+import { useLayoutEffect, useRef, type ReactElement } from "react";
 import type { Api } from "../api/client.mjs";
 import { voidWire } from "../api/outcomes.mjs";
 import { prefersReducedMotion, useFlyingCards } from "../animation/FlyingCard.js";
@@ -20,6 +20,7 @@ import { playerOnTurn } from "../table/playerOnTurn.mjs";
 import { targetsFor, type Targets } from "../table/playController.mjs";
 import { TeamRow } from "../table/TeamRow.js";
 import { TopBar } from "../table/TopBar.js";
+import { scrollToUncover } from "../table/uncover.mjs";
 import { OverrideContext, useOverrideMessage } from "../table/useOverrideMessage.js";
 import { useSelection } from "../table/useSelection.js";
 import { hazardAlertText, topBarMessage } from "../text/phaseHint.mjs";
@@ -99,6 +100,26 @@ export function GameScreen(props: GameScreenProps): ReactElement {
 
     // Set before the first await: two taps in the same tick send one command.
     const inFlight = useRef(false);
+
+    // On a short screen the hand stays at the bottom and the table scrolls
+    // under it, so a picked-up card's targets (Discard, a lane) could be
+    // under it.  The scroll is instant, so it is the same under reduced
+    // motion.
+    const tableRef = useRef<HTMLElement>(null);
+    const pickedIndex = selection.kind === "Card" ? selection.index : -1;
+    useLayoutEffect(() => {
+        const root = tableRef.current;
+        const handBox = root?.querySelector(".hand")?.getBoundingClientRect();
+        if (pickedIndex < 0 || root === null || handBox === undefined) {
+            return;
+        }
+        const targets = [...root.querySelectorAll(".pile-target, .lane-target")]
+        .map((t) => t.getBoundingClientRect());
+        const by = scrollToUncover(targets, handBox);
+        if (by > 0) {
+            window.scrollBy({ top: by, behavior: "instant" });
+        }
+    }, [pickedIndex]);
 
     const send = async (command: PlayerCommand): Promise<void> => {
         if (inFlight.current) {
@@ -208,6 +229,7 @@ export function GameScreen(props: GameScreenProps): ReactElement {
 
     return (
         <section
+            ref={tableRef}
             className={table ? "screen table" : "screen"}
             // Tapping the table outside any control puts the card back; the
             // banner and the offer are not background.

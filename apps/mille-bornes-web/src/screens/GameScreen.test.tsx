@@ -565,6 +565,54 @@ describe("GameScreen", () => {
         });
 
 
+        it("scrolls the targets of a picked-up card out from under the hand", () => {
+            // jsdom has no layout: the hand covers the bottom of a 568 px
+            // screen, and the Discard button sits under it.
+            const box = (top: number, bottom: number): DOMRect => ({
+                top,
+                bottom,
+                left:   0,
+                right:  0,
+                x:      0,
+                y:      top,
+                width:  0,
+                height: bottom - top,
+                toJSON: () => ({})
+            });
+            const rect = vi.spyOn(Element.prototype, "getBoundingClientRect")
+            .mockImplementation(function rectOf(this: Element) {
+                return this.classList.contains("hand") ? box(330, 552) :
+                    this.classList.contains("pile-target") ? box(480, 524) : box(0, 0);
+            });
+            const scrollBy = vi.spyOn(window, "scrollBy").mockImplementation(() => undefined);
+            try {
+                show(ann());
+                fireEvent.click(card("Roll"));
+                expect(scrollBy).toHaveBeenCalledExactlyOnceWith({
+                    top: 524 + 8 - 330, behavior: "instant"
+                });
+            }
+            finally {
+                rect.mockRestore();
+                scrollBy.mockRestore();
+            }
+        });
+
+
+        it("does not scroll when the targets are clear of the hand", () => {
+            const scrollBy = vi.spyOn(window, "scrollBy").mockImplementation(() => undefined);
+            try {
+                show(ann());
+                fireEvent.click(card("50 miles"));
+                expect(screen.getByRole("button", { name: "Discard" })).toBeInTheDocument();
+                expect(scrollBy).not.toHaveBeenCalled();
+            }
+            finally {
+                scrollBy.mockRestore();
+            }
+        });
+
+
         it("dims a card with no play, explains it and sends nothing", async () => {
             const user = userEvent.setup();
             const { fake } = show(ann());
