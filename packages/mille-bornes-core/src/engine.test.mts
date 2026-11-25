@@ -12,7 +12,7 @@ import { type Points } from "./points.mjs";
 import { describeRejection, type Rejection } from "./rejection.mjs";
 import { contextFromGame } from "./rules.mjs";
 import {
-    buildGame, deckFor, oneOnOne, seatFor, threeByTwo, threeSolo, twoByTwo, type GameParts
+    buildGame, deckFor, deepFreeze, oneOnOne, seatFor, threeByTwo, threeSolo, twoByTwo, type GameParts
 } from "./testHelpers.mjs";
 
 
@@ -30,15 +30,6 @@ const cy = seatFor("Cy").id;
 const di = seatFor("Di").id;
 const team0 = 0 as TeamIndex;
 const team1 = 1 as TeamIndex;
-
-
-function deepFreeze<T>(value: T): T {
-    if (typeof value === "object" && value !== null && !Object.isFrozen(value)) {
-        Object.freeze(value);
-        Object.values(value).forEach(deepFreeze);
-    }
-    return value;
-}
 
 
 /** Unwraps an accepted command, checking the invariants after it. */

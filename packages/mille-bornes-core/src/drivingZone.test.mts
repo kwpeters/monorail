@@ -7,20 +7,12 @@ import {
 } from "./drivingZone.mjs";
 import { type Miles } from "./miles.mjs";
 import { type Rejection } from "./rejection.mjs";
+import { deepFreeze } from "./testHelpers.mjs";
 import { type Result } from "@repo/depot/result";
 
 
 const trip700 = 700 as Miles;
 const trip1000 = 1000 as Miles;
-
-
-function deepFreeze<T>(value: T): T {
-    if (typeof value === "object" && value !== null && !Object.isFrozen(value)) {
-        Object.freeze(value);
-        Object.values(value).forEach(deepFreeze);
-    }
-    return value;
-}
 
 
 function succeeded(result: Result<ZoneChange, Rejection>): ZoneChange {

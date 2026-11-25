@@ -10,10 +10,13 @@ import { applyPlayerCommand, applySystemCommand } from "./engine.mjs";
 import { type Game, type GameConfig, type RaceResult } from "./game.mjs";
 import { PlayerId, type TeamIndex } from "./ids.mjs";
 import { checkInvariants } from "./invariants.mjs";
+import { type Rejection } from "./rejection.mjs";
 import { type GameLength } from "./scoring.mjs";
-import { playGame, seededRandom } from "./simulation.mjs";
-import { oneOnOne, threeByTwo, threeSolo, twoByTwo } from "./testHelpers.mjs";
-import { candidateCommands, legalPlays, viewFor } from "./view.mjs";
+import {
+    commandKey, playGame, seededRandom, simulationPolicySchema, type SimulationPolicy
+} from "./simulation.mjs";
+import { deepFreeze, oneOnOne, threeByTwo, threeSolo, twoByTwo } from "./testHelpers.mjs";
+import { candidateCommands, eventsFor, legalPlays, viewFor } from "./view.mjs";
 
 
 interface Layout {
@@ -30,21 +33,17 @@ const layouts: ReadonlyArray<Layout> = [
 ];
 const extensionLayouts = layouts.filter((l) => l.seats !== 4);
 const lengths: ReadonlyArray<GameLength> = ["Quick", "Short", "Full"];
+const policies = simulationPolicySchema.options;
+
+// Random players waste cards, so their Full games are long; fewer of them
+// keep the suite quick.
+const randomRuns = (length: GameLength): number => length === "Full" ? 100 : 200;
 
 // A fixed batch, so the Extension tests always exercise the same races.
 const extensionSeeds = Array.from({ length: 20 }, (_, i) => i + 1);
 
 // The games whose states the engine properties sample.
 const reachableSeeds = Array.from({ length: 10 }, (_, i) => i + 1);
-
-
-function deepFreeze<T>(value: T): T {
-    if (typeof value === "object" && value !== null && !Object.isFrozen(value)) {
-        Object.freeze(value);
-        Object.values(value).forEach(deepFreeze);
-    }
-    return value;
-}
 
 
 // Throws, so fast-check sees the failure and shrinks it.
@@ -55,32 +54,36 @@ function check(condition: boolean, message: () => string): void {
 }
 
 
-function commandKey(c: PlayerCommand): string {
-    return JSON.stringify([c.type, "card" in c ? c.card : null, "targetTeam" in c ? c.targetTeam : null]);
+/** One simulated game: its layout, length, seed and policy. */
+interface Run {
+    readonly layout:  Layout;
+    readonly length:  GameLength;
+    readonly seed:    number;
+    readonly policy?: SimulationPolicy;
 }
 
 
-function label(layout: Layout, length: GameLength, seed: number): string {
-    return `${layout.seats} seats, ${length}, seed ${seed}`;
+function label(run: Run): string {
+    return `${run.policy ?? "Bot"} policy, ${run.layout.seats} seats, ${run.length}, seed ${run.seed}`;
 }
 
 
 /** Plays a game and unwraps the result. */
-function played(layout: Layout, length: GameLength, seed: number, onStep?: (g: Game) => void): Game {
+function played(run: Run, onStep?: (g: Game) => void): Game {
     const result = playGame(
-        { ...layout.config(), length },
-        seededRandom(seed),
+        { ...run.layout.config(), length: run.length },
+        seededRandom(run.seed),
         undefined,
-        { label: label(layout, length, seed), ...(onStep ? { onStep } : {}) }
+        { label: label(run), policy: run.policy ?? "Bot", ...(onStep ? { onStep } : {}) }
     );
     return result.throwIfFailed().game;
 }
 
 
 /** Every state a game passes through, the dealt game first. */
-function statesOf(layout: Layout, length: GameLength, seed: number): ReadonlyArray<Game> {
+function statesOf(run: Run): ReadonlyArray<Game> {
     const states: Array<Game> = [];
-    played(layout, length, seed, (g) => states.push(g));
+    played(run, (g) => states.push(g));
     return states;
 }
 
@@ -96,14 +99,16 @@ let reachableCache: ReadonlyArray<ReadonlyArray<Game>> | undefined;
 
 
 /**
- * States captured from simulated games, in buckets by what the game waits
- * for, so sampling reaches the rarer phases.  Every state is deep-frozen, so
- * any engine mutation throws a TypeError.
+ * States captured from simulated games under both policies, in buckets by
+ * what the game waits for, so sampling reaches the rarer phases.  Every state
+ * is deep-frozen, so any engine mutation throws a TypeError.
  */
 function reachable(): ReadonlyArray<ReadonlyArray<Game>> {
     if (!reachableCache) {
         const all = layouts
-        .flatMap((layout) => reachableSeeds.flatMap((seed) => statesOf(layout, "Short", seed)))
+        .flatMap((layout) => policies.flatMap((policy) => reachableSeeds.flatMap((seed) => {
+            return statesOf({ layout, length: "Short", seed, policy });
+        })))
         .map(deepFreeze);
         const kind = (g: Game): Game["phase"]["kind"] => g.phase.kind;
         reachableCache = [
@@ -119,10 +124,16 @@ function reachable(): ReadonlyArray<ReadonlyArray<Game>> {
 }
 
 
-/** Samples reachable states evenly across the phases they wait for. */
+// Sampling weights for the buckets of `reachable()`, Turns the heaviest
+// since most rules apply only there.
+const bucketWeights = [4, 2, 2, 1, 1];
+
+
+/** Samples reachable states across the phases they wait for. */
 function reachableState(): fc.Arbitrary<Game> {
-    const buckets = reachable().filter((b) => b.length > 0);
-    return fc.oneof(...buckets.map((b) => fc.constantFrom(...b)));
+    return fc.oneof(...reachable().flatMap((bucket, i) => bucket.length === 0 ?
+        [] :
+        [{ weight: bucketWeights[i]!, arbitrary: fc.constantFrom(...bucket) }]));
 }
 
 
@@ -193,6 +204,70 @@ function anyPlayer(g: Game): fc.Arbitrary<unknown> {
 }
 
 
+/** The players the phase lets act, or everyone when the race is over. */
+function actors(g: Game): ReadonlyArray<PlayerId> {
+    const phase = g.phase;
+    const ids = (pred: (p: Game["players"][number]) => boolean): Array<PlayerId> => {
+        return g.players.filter(pred).map((p) => p.seat.id);
+    };
+    switch (phase.kind) {
+        case "Turn":
+            return [phase.player];
+        case "HazardIncoming":
+            return ids((p) => p.team === phase.target);
+        case "ExtensionOffer":
+            return [phase.decider];
+        case "RaceOver":
+        case "GameOver":
+            return ids(() => true);
+    }
+}
+
+
+/**
+ * Commands a player might plausibly try in the phase: every Coup Fourre in a
+ * hazard window, the decision in an Extension offer, and otherwise every
+ * command for the cards in hand, whether the rules allow it or not.
+ */
+function plausibleCommands(g: Game, by: PlayerId): ReadonlyArray<PlayerCommand> {
+    switch (g.phase.kind) {
+        case "HazardIncoming":
+            return safetyCardSchema.options.map((card) => ({ type: "CoupFourre", card }));
+        case "ExtensionOffer":
+            return [{ type: "CallExtension" }, { type: "DeclineExtension" }];
+        default: {
+            const plays = candidateCommands(viewFor(g, by).throwIfFailed());
+            return plays.length > 0 ? plays : [{ type: "CallExtension" }];
+        }
+    }
+}
+
+
+/**
+ * A player and a well-formed command, weighted so the rules are reached: 70%
+ * from a player the phase lets act (mostly with a plausible command), 30%
+ * from anyone with any well-formed command, for the phase and turn gates.
+ */
+function wellFormedSample(g: Game): fc.Arbitrary<readonly [unknown, PlayerCommand]> {
+    const actor = fc.constantFrom(...actors(g)).chain((by) => fc.tuple(
+        fc.constant(by),
+        fc.oneof(
+            { weight: 4, arbitrary: fc.constantFrom(...plausibleCommands(g, by)) },
+            { weight: 1, arbitrary: wellFormedCommand(g.teams.length) }
+        )
+    ));
+    const anyone = fc.tuple(anyPlayer(g), wellFormedCommand(g.teams.length));
+    return fc.oneof({ weight: 7, arbitrary: actor }, { weight: 3, arbitrary: anyone });
+}
+
+
+// Refusals that come before the rules: the phase, the turn or the shape.
+const gateReasons: ReadonlySet<Rejection["reason"]> = new Set<Rejection["reason"]>([
+    "WrongPhase", "WindowOpen", "ExtensionOfferOpen", "NotYourTurn", "MalformedCommand",
+    "NoWindowOpen", "NoExtensionOffer", "NotOnTargetTeam", "NotTheCaller",
+]);
+
+
 const deckKinds = ["Standard", "Reduced"] as const;
 
 
@@ -230,19 +305,27 @@ function everyCommand(teamCount: number): ReadonlyArray<PlayerCommand> {
 }
 
 
-/** The result of every race in the Extension batch. */
-function extensionBatchResults(): ReadonlyArray<{ seats: number; result: RaceResult }> {
-    const results: Array<{ seats: number; result: RaceResult }> = [];
+/** The result of every race in the Extension batch, under both policies. */
+function extensionBatchResults(): ReadonlyArray<{ run: Run; result: RaceResult }> {
+    const results: Array<{ run: Run; result: RaceResult }> = [];
     for (const layout of extensionLayouts) {
-        for (const seed of extensionSeeds) {
-            played(layout, "Short", seed, (g) => {
-                if (g.phase.kind === "RaceOver" || g.phase.kind === "GameOver") {
-                    results.push({ seats: layout.seats, result: g.phase.result });
-                }
-            });
+        for (const policy of policies) {
+            for (const seed of extensionSeeds) {
+                const run: Run = { layout, length: "Short", seed, policy };
+                played(run, (g) => {
+                    if (g.phase.kind === "RaceOver" || g.phase.kind === "GameOver") {
+                        results.push({ run, result: g.phase.result });
+                    }
+                });
+            }
         }
     }
     return results;
+}
+
+
+function coupFourreCount(g: Game): number {
+    return g.teams.flatMap((t) => t.zone.safeties).filter((s) => s.coupFourre).length;
 }
 
 
@@ -268,20 +351,29 @@ describe("simulation", () => {
 
         for (const layout of layouts) {
             for (const length of lengths) {
-                it(`plays ${layout.seats}-seat ${length} games to GameOver, invariants holding`, () => {
+                it(`plays ${layout.seats}-seat ${length} robot games to GameOver, invariants holding`, () => {
                     fc.assert(fc.property(fc.nat(), (seed) => {
-                        const g = played(layout, length, seed);
-                        check(g.phase.kind === "GameOver", () => `${label(layout, length, seed)}: not over`);
+                        const run: Run = { layout, length, seed };
+                        check(played(run).phase.kind === "GameOver", () => `${label(run)}: not over`);
                     }), { numRuns: 200 });
+                });
+
+
+                it(`plays ${layout.seats}-seat ${length} random-policy games to GameOver, deep-frozen`, () => {
+                    fc.assert(fc.property(fc.nat(), (seed) => {
+                        const run: Run = { layout, length, seed, policy: "Random" };
+                        check(played(run, deepFreeze).phase.kind === "GameOver", () => `${label(run)}: not over`);
+                    }), { numRuns: randomRuns(length) });
                 });
             }
         }
 
 
-        it("fails, naming the label, when the game outlasts maxSteps", () => {
+        it("fails, naming the label, race, phase and last command, when the game outlasts maxSteps", () => {
             const result = playGame(oneOnOne(), seededRandom(1), 3, { label: "seed 1" });
             expect(result.failed).toBeTrue();
-            expect(result.failed && result.error).toMatch(/^seed 1: .*3 steps/);
+            expect(result.failed && result.error)
+            .toMatch(/^seed 1: no GameOver within 3 steps \(race 1, \w+, last command \w+\)$/);
         });
 
 
@@ -303,7 +395,7 @@ describe("simulation", () => {
         it("plays whole games on deep-frozen states without a TypeError", () => {
             for (const layout of layouts) {
                 for (const seed of [1, 2]) {
-                    expect(() => played(layout, "Short", seed, deepFreeze)).not.toThrow();
+                    expect(() => played({ layout, length: "Short", seed }, deepFreeze)).not.toThrow();
                 }
             }
         });
@@ -311,7 +403,7 @@ describe("simulation", () => {
 
         it("reaches an Extension offer and a called Extension in 2-, 3- and 6-seat games", () => {
             for (const layout of extensionLayouts) {
-                const states = extensionSeeds.flatMap((seed) => statesOf(layout, "Short", seed));
+                const states = extensionSeeds.flatMap((seed) => statesOf({ layout, length: "Short", seed }));
                 expect(states.some((g) => g.phase.kind === "ExtensionOffer"))
                 .withContext(`${layout.seats} seats offered`)
                 .toBeTrue();
@@ -325,7 +417,7 @@ describe("simulation", () => {
         it("pays Extension to the caller only when it completes the trip, else to everyone else", () => {
             let callerCompleted = 0;
             let callerFailed = 0;
-            for (const { seats, result } of extensionBatchResults()) {
+            for (const { run, result } of extensionBatchResults()) {
                 const caller = result.outcome.extensionCaller;
                 if (caller === null) {
                     expect(result.scores.every((s) => s.extension === 0)).toBeTrue();
@@ -340,11 +432,31 @@ describe("simulation", () => {
                 }
                 const expected = result.scores.map((_, t) => (completed ? t === caller : t !== caller) ? 200 : 0);
                 expect(result.scores.map((s): number => s.extension))
-                .withContext(`${seats} seats: ${JSON.stringify(result.outcome)}`)
+                .withContext(`${label(run)}: ${JSON.stringify(result.outcome)}`)
                 .toEqual(expected);
             }
             expect(callerCompleted).withContext("races the caller completed").toBeGreaterThan(0);
             expect(callerFailed).withContext("races the caller did not complete").toBeGreaterThan(0);
+        });
+
+
+        it("random players reach a non-caller completing 1,000 and a Coup Fourre on an empty draw pile", () => {
+            let nonCallerCompleted = 0;
+            for (const { result } of extensionBatchResults()) {
+                const o = result.outcome;
+                if (o.kind === "TripCompleted" && o.extensionCaller !== null && o.team !== o.extensionCaller) {
+                    nonCallerCompleted++;
+                }
+            }
+            // A Coup Fourre adds a CF safety to a zone; count those made with
+            // the draw pile already empty.
+            const emptyPileCoupFourres = layouts.flatMap((layout) => extensionSeeds.flatMap((seed) => {
+                const states = statesOf({ layout, length: "Short", seed, policy: "Random" });
+                return states.slice(1).filter((g, i) => states[i]!.drawPile.length === 0 &&
+                    coupFourreCount(g) > coupFourreCount(states[i]!));
+            })).length;
+            expect(nonCallerCompleted).toBeGreaterThan(0);
+            expect(emptyPileCoupFourres).toBeGreaterThan(0);
         });
 
     });
@@ -353,22 +465,26 @@ describe("simulation", () => {
     describe("engine", () => {
 
         it("never throws on well-formed commands from anyone, and a rejection changes nothing", () => {
-            const sample = reachableState().chain((g) => fc.tuple(
-                fc.constant(g),
-                anyPlayer(g),
-                wellFormedCommand(g.teams.length)
-            ));
-            fc.assert(fc.property(sample, ([g, by, cmd]) => {
+            const sample = reachableState().chain((g) => fc.tuple(fc.constant(g), wellFormedSample(g)));
+            let accepted = 0;
+            let ruleRejected = 0;
+            fc.assert(fc.property(sample, ([g, [by, cmd]]) => {
                 const before = structuredClone(g);
                 const result = applyPlayerCommand(g, by as PlayerId, deepFreeze(cmd));
                 if (result.failed) {
                     check(isDeepStrictEqual(g, before), () => "a rejected command changed the game");
+                    ruleRejected += gateReasons.has(result.error.reason) ? 0 : 1;
                 }
                 else {
+                    accepted++;
                     const valid = checkInvariants(result.value.game);
                     check(valid.succeeded, () => `${JSON.stringify(cmd)}: ${valid.failed && valid.error}`);
                 }
             }), { numRuns: 2000 });
+            // So the property cannot quietly stop reaching the rules: a run
+            // observed 425 accepted and 670 refused by a rule.
+            expect(accepted).withContext("accepted").toBeGreaterThanOrEqual(250);
+            expect(ruleRejected).withContext("refused by a rule").toBeGreaterThanOrEqual(400);
         });
 
 
@@ -408,7 +524,15 @@ describe("simulation", () => {
                     const legal = legalPlays(v);
                     const legalKeys = new Set(legal.map(commandKey));
                     for (const cmd of legal) {
-                        check(applyPlayerCommand(g, seat.id, cmd).succeeded, () => `refused ${commandKey(cmd)}`);
+                        const result = applyPlayerCommand(g, seat.id, cmd);
+                        check(result.succeeded, () => `refused ${commandKey(cmd)}`);
+                        const { game, events } = result.throwIfFailed();
+                        const valid = checkInvariants(game);
+                        check(valid.succeeded, () => `${commandKey(cmd)}: ${valid.failed && valid.error}`);
+                        for (const { seat: viewer } of game.players) {
+                            check(viewFor(game, viewer.id).succeeded, () => `no view after ${commandKey(cmd)}`);
+                            check(eventsFor(viewer.id, events).length === events.length, () => "events lost");
+                        }
                     }
                     const others = [...candidateCommands(v), ...everyCommand(g.teams.length)]
                     .filter((cmd) => !legalKeys.has(commandKey(cmd)));

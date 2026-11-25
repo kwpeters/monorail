@@ -40,6 +40,21 @@ export function deckFor(
 
 
 /**
+ * Test support: freezes a value and everything reachable from it, so any
+ * attempt to mutate it throws a TypeError (modules are strict).
+ * @param value - The value to freeze; primitives are returned as they are
+ * @returns The same value, frozen
+ */
+export function deepFreeze<T>(value: T): T {
+    if (typeof value === "object" && value !== null && !Object.isFrozen(value)) {
+        Object.freeze(value);
+        Object.values(value).forEach(deepFreeze);
+    }
+    return value;
+}
+
+
+/**
  * Test support: creates a seat whose id is derived from the name, so the same
  * name always gets the same id.  Ids are unique for names of up to 6 ASCII
  * characters.
