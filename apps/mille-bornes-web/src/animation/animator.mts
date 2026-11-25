@@ -43,7 +43,7 @@ export interface Animator {
     /** @returns A promise that resolves once nothing is playing or queued */
     whenIdle: () => Promise<void>;
 
-    /** Ends the step in flight and drops the queue; later batches are ignored. */
+    /** Ends the step in flight and drops the queue; ignores later batches. */
     stop: () => void;
 }
 
