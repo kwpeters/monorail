@@ -308,6 +308,30 @@ describe("FileSnapshotStore", () => {
         });
 
 
+        describe("quarantine ordering", () => {
+
+            it("runs a quarantine after a running save and before a later save", async () => {
+                const id = GameId.create();
+                const recA = { ...runningRecord(id), seq: 1 };
+                const recB = { ...runningRecord(id), seq: 2 };
+                const [, quarantined] = await Promise.allSettled([
+                    store.saveGame(id, recA),
+                    store.quarantineGame(id),
+                    store.saveGame(id, recB)
+                ]);
+                await store.flush();
+
+                expect(quarantined.status).toBe("fulfilled");
+                const read = async (...parts: Array<string>): Promise<unknown> => {
+                    return JSON.parse(await fs.readFile(path.join(dir, ...parts), "utf8"));
+                };
+                expect(decodeRecord(await read("failed", `${id}.json`)).throwIfFailed()).toEqual(recA);
+                expect(decodeRecord(await read("games", `${id}.json`)).throwIfFailed()).toEqual(recB);
+            });
+
+        });
+
+
         describe("write failures", () => {
 
             it("logs the failure, rejects, and recovers on a later save", async () => {
@@ -318,7 +342,7 @@ describe("FileSnapshotStore", () => {
                 await expectAsync(store.saveGame(id, r)).toBeRejected();
                 const errors = logger.lines.filter((l) => l.startsWith("ERROR"));
                 expect(errors.length).toBe(1);
-                expect(errors[0]).toContain(`${id}.json`);
+                expect(errors[0]).toContain(`save of ${id}.json`);
                 expect(errors[0]).not.toContain(ann.name);
 
                 await fs.rm(path.join(dir, "games"));

@@ -76,6 +76,7 @@ function checkId(id: string): void {
 
 interface Job {
     kind:    "save" | "other";
+    label:   string;
     op:      () => Promise<void>;
     waiters: Array<{ resolve: () => void; reject: (e: unknown) => void }>;
 }
@@ -104,7 +105,7 @@ class CoalescingQueue {
     }
 
 
-    public enqueue(key: string, kind: Job["kind"], op: () => Promise<void>): Promise<void> {
+    public enqueue(key: string, label: "save" | "delete" | "quarantine", op: () => Promise<void>): Promise<void> {
         const done = new Promise<void>((resolve, reject) => {
             let slot = this._slots.get(key);
             if (!slot) {
@@ -112,10 +113,11 @@ class CoalescingQueue {
                 this._slots.set(key, slot);
             }
             const last = slot.queue[slot.queue.length - 1];
+            const kind = label === "save" ? "save" : "other";
             const replaces = kind === "save" && last?.kind === "save";
             const waiters = replaces ? last.waiters : [];
             waiters.push({ resolve, reject });
-            const job: Job = { kind, op, waiters };
+            const job: Job = { kind, label, op, waiters };
             if (replaces) {
                 slot.queue[slot.queue.length - 1] = job;
             }
@@ -148,7 +150,7 @@ class CoalescingQueue {
             catch (err) {
                 // Never the contents; an un-awaited save must not fail silently.
                 const reason = err instanceof Error ? err.message : String(err);
-                this._logger.error(`Writing ${path.basename(key)} failed: ${reason}`);
+                this._logger.error(`The ${job.label} of ${path.basename(key)} failed: ${reason}`);
                 job.waiters.forEach((w) => { w.reject(err); });
             }
         }
@@ -206,14 +208,14 @@ export class FileSnapshotStore implements SnapshotStore {
 
     public deleteGame(id: GameId): Promise<void> {
         return this.guard(id, () => {
-            return this._queue.enqueue(this.gameFile(id), "other", () => fs.rm(this.gameFile(id), { force: true }));
+            return this._queue.enqueue(this.gameFile(id), "delete", () => fs.rm(this.gameFile(id), { force: true }));
         });
     }
 
 
     public quarantineGame(id: GameId): Promise<void> {
         return this.guard(id, () => {
-            return this._queue.enqueue(this.gameFile(id), "other", async () => {
+            return this._queue.enqueue(this.gameFile(id), "quarantine", async () => {
                 await fs.mkdir(this._failedDir, { recursive: true });
                 try {
                     await fs.rename(this.gameFile(id), path.join(this._failedDir, `${id}.json`));
