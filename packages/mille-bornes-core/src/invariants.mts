@@ -3,7 +3,7 @@ import { Card, cardSchema } from "./card.mjs";
 import { cardCounts } from "./deck.mjs";
 import { hasSafety, zoneMiles } from "./drivingZone.mjs";
 import { seatOrder, validateGameConfig, type Game, type PlayerState } from "./game.mjs";
-import { tripDistance, variantForSeatCount, type RaceVariant } from "./variant.mjs";
+import { EXTENSION_MILES, tripDistance, variantForSeatCount, type RaceVariant } from "./variant.mjs";
 
 
 /**
@@ -71,8 +71,15 @@ const checkExtension: Check = (g, v) => {
     if (v.extension && e.kind === "NotApplicable") {
         return `Extension must apply in a ${g.players.length}-player game.`;
     }
-    if (e.kind === "Called" && !isTeam(g, e.caller)) {
-        return `Extension was called by team ${e.caller}, which does not exist.`;
+    if (e.kind === "Called") {
+        if (!isTeam(g, e.caller)) {
+            return `Extension was called by team ${e.caller}, which does not exist.`;
+        }
+        // Only a team that reached 700 can call, and miles never go down.
+        const miles = zoneMiles(g.teams[e.caller]!.zone);
+        if (miles < EXTENSION_MILES) {
+            return `Extension was called by team ${e.caller}, which has only ${miles} miles.`;
+        }
     }
     return null;
 };
@@ -105,9 +112,13 @@ const checkPhase: Check = (g) => {
             if (!decider) {
                 return unknown(phase.decider);
             }
-            return decider.team === phase.team ?
+            if (decider.team !== phase.team) {
+                return `The Extension offer is for team ${phase.team}, but the decider is on team ${decider.team}.`;
+            }
+            const miles = zoneMiles(g.teams[phase.team]!.zone);
+            return miles === EXTENSION_MILES ?
                 null :
-                `The Extension offer is for team ${phase.team}, but the decider is on team ${decider.team}.`;
+                `The Extension offer is for team ${phase.team}, which has ${miles} miles, not ${EXTENSION_MILES}.`;
         }
         case "RaceOver":
             return checkScores(phase.result.scores.length);
@@ -153,6 +164,11 @@ const checkZones: Check = (g) => {
         const miles = zoneMiles(zone);
         if (miles > trip) {
             return `Team ${t} has ${miles} miles, more than the ${trip}-mile trip.`;
+        }
+        // Reaching 700 while Extension is Available opens the offer at once.
+        const inPlay = g.phase.kind === "Turn" || g.phase.kind === "HazardIncoming";
+        if (inPlay && g.extension.kind === "Available" && miles === EXTENSION_MILES) {
+            return `Team ${t} is at ${EXTENSION_MILES} miles while Extension is Available, but no offer is open.`;
         }
         const twoHundreds = zone.distance.filter((c) => c === Card.dist200).length;
         if (twoHundreds > 2) {

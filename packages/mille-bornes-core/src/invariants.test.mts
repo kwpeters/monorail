@@ -20,6 +20,10 @@ function failure(game: Game): string {
 
 
 const rolling: DrivingZone = { ...newZone(), status: { kind: "Rolling" } };
+const at700: DrivingZone = {
+    ...rolling,
+    distance: [Card.dist200, Card.dist200, Card.dist100, Card.dist100, Card.dist100],
+};
 
 
 describe("invariants", () => {
@@ -170,9 +174,41 @@ describe("invariants", () => {
         it("fails on an ExtensionOffer for a team other than the decider's", () => {
             const config = oneOnOne();
             const decider = config.teams[0]![0]!.id;
-            const game = buildGame({ config, phase: { kind: "ExtensionOffer", decider, team: 0 as TeamIndex } });
+            const game = buildGame({
+                config,
+                zones: [at700, newZone()],
+                phase: { kind: "ExtensionOffer", decider, team: 0 as TeamIndex },
+            });
             const phase = { ...game.phase, team: 1 as TeamIndex } as Game["phase"];
             expect(failure({ ...game, phase })).toContain("decider is on team 0");
+        });
+
+
+        it("fails on an ExtensionOffer whose team is not at 700 miles", () => {
+            const config = oneOnOne();
+            const decider = config.teams[0]![0]!.id;
+            const phase = { kind: "ExtensionOffer", decider, team: 0 as TeamIndex } as const;
+            expect(() => buildGame({ config, phase })).toThrowError(/0 miles/);
+        });
+
+
+        it("fails when Extension was called by a team below 700 miles", () => {
+            const extension = { kind: "Called", caller: 1 as TeamIndex } as const;
+            const called = buildGame({ config: oneOnOne(), zones: [newZone(), at700], extension });
+            expect(failure({ ...called, extension: { kind: "Called", caller: 0 as TeamIndex } }))
+            .toContain("0 miles");
+        });
+
+
+        it("fails on a team at 700 miles while Extension is Available and no offer is open", () => {
+            const config = oneOnOne();
+            const decider = config.teams[0]![0]!.id;
+            const offer = buildGame({
+                config,
+                zones: [at700, newZone()],
+                phase: { kind: "ExtensionOffer", decider, team: 0 as TeamIndex },
+            });
+            expect(failure({ ...offer, phase: { kind: "Turn", player: decider } })).toContain("700");
         });
 
 

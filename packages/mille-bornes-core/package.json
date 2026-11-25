@@ -73,6 +73,10 @@
             "types": "./src/rules.mts",
             "default": "./dist/rules.mjs"
         },
+        "./schemas": {
+            "types": "./src/schemas.mts",
+            "default": "./dist/schemas.mjs"
+        },
         "./scoring": {
             "types": "./src/scoring.mts",
             "default": "./dist/scoring.mjs"

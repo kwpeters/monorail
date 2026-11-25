@@ -91,6 +91,14 @@ function rollingAt(...distance: Array<DistanceCard>): DrivingZone {
 }
 
 
+/** 700 miles, as an Extension caller must have. */
+const annAt700 = rollingAt(Card.dist200, Card.dist200, Card.dist100, Card.dist100, Card.dist100);
+/** 700 miles without 200s, so it fits beside another zone's. */
+const bobAt700 = rollingAt(
+    Card.dist75, Card.dist75, Card.dist75, Card.dist75, Card.dist100, Card.dist100, Card.dist100, Card.dist100
+);
+
+
 function resultOf(g: Game): RaceResult {
     if (g.phase.kind !== "RaceOver" && g.phase.kind !== "GameOver") {
         throw new Error(`The race is not over: the phase is ${g.phase.kind}.`);
@@ -330,7 +338,11 @@ describe("engine", () => {
 
         it("resets Extension for the new race", () => {
             const config = oneOnOne();
-            const before = buildGame({ config, extension: { kind: "Called", caller: 0 as TeamIndex } });
+            const before = buildGame({
+                config,
+                zones:     [annAt700, newZone()],
+                extension: { kind: "Called", caller: 0 as TeamIndex },
+            });
             const { game } = dealRace(config, before.players, before.teams, createDeck("Reduced"), 2).throwIfFailed();
             expect(game.extension).toEqual({ kind: "Available" });
         });
@@ -586,9 +598,12 @@ describe("engine", () => {
         it("ends the race with the Extension caller when a team completes 1,000 miles", () => {
             for (const caller of [team0, team1]) {
                 const g = buildGame({
-                    config:    oneOnOne(),
-                    hands:     [[Card.dist100], six(Card.roll)],
-                    zones:     [rollingAt(...Array.from({ length: 9 }, () => Card.dist100)), newZone()],
+                    config: oneOnOne(),
+                    hands:  [[Card.dist100], six(Card.roll)],
+                    zones:  [
+                        rollingAt(...Array.from({ length: 9 }, () => Card.dist100)),
+                        rollingAt(Card.dist200, Card.dist200, Card.dist75, Card.dist75, Card.dist75, Card.dist75),
+                    ],
                     drawPile:  [Card.spareTire],
                     extension: { kind: "Called", caller },
                 });
@@ -600,10 +615,11 @@ describe("engine", () => {
 
 
         it("opens no offer when a team reaches 700 after Extension is called", () => {
-            const { game, events } = play(annAt650({ extension: { kind: "Called", caller: team1 } }), ann, {
-                type: "Drive",
-                card: Card.dist50,
+            const g = annAt650({
+                zones:     [rollingAt(Card.dist200, Card.dist200, Card.dist100, Card.dist100, Card.dist50), bobAt700],
+                extension: { kind: "Called", caller: team1 },
             });
+            const { game, events } = play(g, ann, { type: "Drive", card: Card.dist50 });
             expect(game.phase).toEqual({ kind: "Turn", player: bob });
             expect(events.map((e) => e.type)).toEqual(["DistancePlayed", "TurnStarted", "CardDrawn"]);
         });
@@ -678,7 +694,7 @@ describe("engine", () => {
                 const g = buildGame({
                     config:    oneOnOne(),
                     hands:     [[Card.dist25], []],
-                    zones:     [rollingAt(Card.dist100), newZone()],
+                    zones:     [annAt700, bobAt700],
                     extension: { kind: "Called", caller: team1 },
                 });
                 const { game } = play(g, ann, { type: "Drive", card: Card.dist25 });

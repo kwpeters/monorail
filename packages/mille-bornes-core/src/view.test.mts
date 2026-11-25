@@ -34,6 +34,17 @@ function rollingAt(...distance: Array<DistanceCard>): DrivingZone {
 }
 
 
+// An Extension offer's team is always at exactly 700 miles.
+const at700 = rollingAt(Card.dist200, Card.dist200, Card.dist100, Card.dist100, Card.dist100);
+
+
+function zonesForOffer(teamCount: number, phase: Phase): ReadonlyArray<DrivingZone> {
+    return Array.from({ length: teamCount }, (_, t) => {
+        return phase.kind === "ExtensionOffer" && phase.team === t ? at700 : newZone();
+    });
+}
+
+
 function raceOverPhase(teamCount: number, winner?: TeamIndex): Phase {
     const outcome: RaceOutcome = { kind: "Exhausted", winner: "Tie", extensionCaller: null };
     const zones = Array.from({ length: teamCount }, () => newZone());
@@ -71,6 +82,7 @@ function leakGame(phase: Phase): Game {
             [Card.extraTank, Card.dist50, Card.stop],
             [Card.punctureProof, Card.dist75, Card.repairs],
         ],
+        zones:    zonesForOffer(3, phase),
         drawPile: [Card.rightOfWay, Card.dist100],
         phase,
     });
@@ -131,10 +143,12 @@ function annNeedsRoll(): Game {
 
 
 function offerTo(decider: PlayerId, team: TeamIndex): Game {
+    const phase: Phase = { kind: "ExtensionOffer", decider, team };
     return buildGame({
         config: oneOnOne(),
         hands:  [[Card.roll, Card.dist25], [Card.dist50]],
-        phase:  { kind: "ExtensionOffer", decider, team },
+        zones:  zonesForOffer(2, phase),
+        phase,
     });
 }
 

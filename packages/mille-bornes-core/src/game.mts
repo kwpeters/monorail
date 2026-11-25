@@ -1,8 +1,9 @@
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
+import { unwrapOrAddIssue } from "@repo/depot/zodHelpers";
 import { z } from "zod";
 import { type Card, type HazardCard } from "./card.mjs";
 import { type DrivingZone } from "./drivingZone.mjs";
-import { type GameId, type PlayerId, type TeamIndex } from "./ids.mjs";
+import { PlayerId, type GameId, type TeamIndex } from "./ids.mjs";
 import { PlayerName } from "./playerName.mjs";
 import { type Points } from "./points.mjs";
 import { describeRejection } from "./rejection.mjs";
@@ -34,6 +35,27 @@ export interface Seat {
     readonly name: PlayerName;
     readonly kind: SeatKind;
 }
+
+
+// The name must already be in the normalized form `PlayerName` guarantees:
+// the branded `Seat.name` is stored as given, never silently changed.
+function normalizedName(s: string): Result<PlayerName, string> {
+    return PlayerName.tryCreate(s).bind((name) => name === s ?
+        new SucceededResult(name) :
+        new FailedResult(`The player name "${s}" is not in its normalized form.`));
+}
+
+
+/**
+ * Schema for a seat that `PlayerId` and `PlayerName` could have made: a
+ * canonical id and an already-normalized name.  Extra properties are
+ * stripped; use `seatSchema.strict()` to reject them.
+ */
+export const seatSchema = z.object({
+    id:   z.string().transform((s, ctx) => unwrapOrAddIssue(PlayerId.tryCreate(s), ctx)),
+    name: z.string().transform((s, ctx) => unwrapOrAddIssue(normalizedName(s), ctx)),
+    kind: seatKindSchema,
+}) satisfies z.ZodType<Seat>;
 
 
 /**

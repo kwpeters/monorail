@@ -2,8 +2,8 @@ import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import { type Applied } from "./commands.mjs";
 import { ShuffledDeck } from "./deck.mjs";
 import { createGame } from "./engine.mjs";
-import { gameLengthSchema, seatKindSchema, validateGameConfig, type GameConfig, type Seat } from "./game.mjs";
-import { PlayerId, type GameId } from "./ids.mjs";
+import { gameLengthSchema, seatSchema, validateGameConfig, type GameConfig, type Seat } from "./game.mjs";
+import { type GameId, type PlayerId } from "./ids.mjs";
 import { PlayerName } from "./playerName.mjs";
 import { type Rejection } from "./rejection.mjs";
 import { type GameLength } from "./scoring.mjs";
@@ -110,24 +110,13 @@ function isString(x: unknown): boolean {
 }
 
 
-// The name must already be in the normalized form `PlayerName` guarantees:
-// the branded `Seat.name` is stored as given, never silently changed.
-function isSeatShaped(x: unknown): boolean {
-    const s = x as Partial<Seat> | null | undefined;
-    if (typeof s !== "object" || s === null || !isString(s.id) || !isString(s.name)) {
-        return false;
-    }
-    const normalized = PlayerName.tryCreate(s.name as string).match((n) => n === s.name, () => false);
-    return PlayerId.tryCreate(s.id as string).succeeded && normalized && seatKindSchema.safeParse(s.kind).success;
-}
-
-
-// Commands come from clients, so check what the types promise.
+// Commands come from clients, so check what the types promise.  Extra seat
+// properties are allowed here; `copySeat()` drops them.
 function isWellFormed(c: PendingCommand | null): boolean {
     switch (c?.type) {
         case "AddHuman":
         case "AddRobot":
-            return isSeatShaped(c.seat);
+            return seatSchema.safeParse(c.seat).success;
         case "RemoveSeat":
             return isString(c.id);
         case "SwapSeats":

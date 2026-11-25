@@ -86,7 +86,11 @@ describe("rules", () => {
         it("names the decider of an Extension offer", () => {
             const g = buildGame({
                 config: oneOnOne(),
-                phase:  { kind: "ExtensionOffer", decider: ann.id, team: team0 },
+                zones:  [
+                    { ...newZone(), distance: [Card.dist200, Card.dist200, Card.dist100, Card.dist100, Card.dist100] },
+                    newZone(),
+                ],
+                phase: { kind: "ExtensionOffer", decider: ann.id, team: team0 },
             });
             expect(contextFromGame(g, bob.id).throwIfFailed().phase).toEqual(annDeciding);
         });
