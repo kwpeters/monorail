@@ -1,3 +1,4 @@
+import { type Option } from "@repo/depot/option";
 import { FailedResult, type Result } from "@repo/depot/result";
 import { discriminatedResultSchema } from "@repo/depot/schemaUtility";
 import type { AppRouter } from "@repo/mille-bornes-game-server/router";
@@ -10,7 +11,7 @@ import {
     splitLink
 } from "@trpc/client";
 import { z } from "zod";
-import { authorizationHeader, type CredentialStore } from "./credential.mjs";
+import { authorizationHeader, type Credential, type CredentialStore } from "./credential.mjs";
 import {
     failedMessage,
     malformedMessage,
@@ -27,10 +28,14 @@ export interface ApiDeps {
     baseUrl?:       string;
 
     /** Replaces the global `fetch`; for tests. */
-    fetch?:         Parameters<typeof getFetch>[0];
+    fetch?:         ReturnType<typeof getFetch>;
 
-    /** Called once for each call the server answers with UNAUTHORIZED. */
-    onUnauthorized: () => void;
+    /**
+     * Called once for each call the server answers with UNAUTHORIZED.  It gets
+     * the credential the call started with, so a handler can ignore a late
+     * reply when a newer credential has been saved since.
+     */
+    onUnauthorized: (used: Option<Credential>) => void;
 }
 
 
@@ -54,6 +59,19 @@ export interface Api {
 
 
 /**
+ * The connection parameters (or headers) that carry the stored credential.
+ * Read at every call, so a new sign-in takes effect at once.
+ * @param store - Where the credential is kept
+ * @returns `{ authorization: "Bearer <playerId>.<token>" }`, or `{}` without a
+ * credential
+ */
+export function authorizationParams(store: CredentialStore): Record<string, string> {
+    const credential = store.load();
+    return credential.isSome ? { authorization: authorizationHeader(credential.value) } : {};
+}
+
+
+/**
  * Makes the API: one tRPC client that sends the stored credential on every
  * request (read per request, so a new sign-in takes effect at once).
  * @param deps - The credential store, the unauthorized hook and options
@@ -63,10 +81,7 @@ export function createApi(deps: ApiDeps): Api {
     const url = deps.baseUrl ?? "/trpc";
 
     // The credential is never cached here: sign-in and sign-out change it.
-    const authorization = (): Record<string, string> => {
-        const credential = deps.credentials.load();
-        return credential.isSome ? { authorization: authorizationHeader(credential.value) } : {};
-    };
+    const authorization = (): Record<string, string> => authorizationParams(deps.credentials);
 
     const trpc = createTRPCClient<AppRouter>({
         links: [
@@ -76,7 +91,12 @@ export function createApi(deps: ApiDeps): Api {
                 // The native EventSource cannot set headers.
                 true: httpSubscriptionLink({ url, connectionParams: authorization }),
 
-                false: httpBatchLink({ url, headers: authorization, fetch: getFetch(deps.fetch) })
+                // Without `fetch`, tRPC looks up the global one at request time.
+                false: httpBatchLink({
+                    url,
+                    headers: authorization,
+                    ...(deps.fetch === undefined ? {} : { fetch: deps.fetch })
+                })
             })
         ]
     });
@@ -85,13 +105,14 @@ export function createApi(deps: ApiDeps): Api {
         fn:          (t: Api["trpc"]) => Promise<unknown>,
         valueSchema: z.ZodType<TOut>
     ): Promise<Result<TOut, string>> {
+        const used = deps.credentials.load();
         let wire: unknown;
         try {
             wire = await fn(trpc);
         }
         catch (err) {
             if (isUnauthorized(err)) {
-                deps.onUnauthorized();
+                deps.onUnauthorized(used);
                 return new FailedResult(unauthorizedMessage);
             }
             return new FailedResult(plainMessage(err));
@@ -105,7 +126,12 @@ export function createApi(deps: ApiDeps): Api {
 }
 
 
-function isUnauthorized(err: unknown): boolean {
+/**
+ * Whether a tRPC error is the server saying the credential is not valid.
+ * @param err - Anything a call or subscription threw or reported
+ * @returns True for an UNAUTHORIZED answer
+ */
+export function isUnauthorized(err: unknown): boolean {
     // A TRPCClientError carries the server's error shape in `data`.
     return isTRPCClientError<AppRouter>(err) && err.data?.code === "UNAUTHORIZED";
 }

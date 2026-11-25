@@ -1,8 +1,8 @@
-import { NoneOption, SomeOption } from "@repo/depot/option";
+import { NoneOption, type Option, SomeOption } from "@repo/depot/option";
 import { afterEach, describe, expect, it, vi, type Mock } from "vitest";
 import { z } from "zod";
-import { createApi, type Api, type ApiDeps } from "./client.mjs";
-import { type CredentialStore } from "./credential.mjs";
+import { authorizationParams, createApi, type Api, type ApiDeps } from "./client.mjs";
+import { type Credential, type CredentialStore } from "./credential.mjs";
 import {
     failedMessage,
     malformedMessage,
@@ -43,7 +43,7 @@ type FetchMock = Mock<(input: string, init?: RequestInit) => Promise<Response>>;
 interface Harness {
     api:            Api;
     fetchMock:      FetchMock;
-    onUnauthorized: Mock<() => void>;
+    onUnauthorized: Mock<(used: Option<Credential>) => void>;
 }
 
 
@@ -52,7 +52,7 @@ function makeApi(
     credentials: CredentialStore = storeWith(secretToken)
 ): Harness {
     const fetchMock: FetchMock = vi.fn(respond);
-    const onUnauthorized = vi.fn<() => void>();
+    const onUnauthorized = vi.fn<(used: Option<Credential>) => void>();
     // The mock only inspects the headers, so the narrower signature is enough.
     const fetch = fetchMock as unknown as NonNullable<ApiDeps["fetch"]>;
     const api = createApi({ credentials, fetch, onUnauthorized });
@@ -72,6 +72,38 @@ describe("client", () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        vi.unstubAllGlobals();
+    });
+
+
+    describe("authorizationParams()", () => {
+
+        it("carries the stored credential as a bearer authorization", () => {
+            expect(authorizationParams(storeWith(secretToken))).toEqual({
+                authorization: `Bearer p1.${secretToken}`
+            });
+        });
+
+
+        it("is empty without a credential", () => {
+            expect(authorizationParams(storeWith(undefined))).toEqual({});
+        });
+
+
+        it("picks up a credential that changes between calls", () => {
+            let current: Option<Credential> = NoneOption.get();
+            const store: CredentialStore = {
+                load:  () => current,
+                save:  () => undefined,
+                clear: () => undefined
+            };
+            expect(authorizationParams(store)).toEqual({});
+            current = new SomeOption({ playerId: "p2", token: "t2" });
+            expect(authorizationParams(store)).toEqual({ authorization: "Bearer p2.t2" });
+            current = NoneOption.get();
+            expect(authorizationParams(store)).toEqual({});
+        });
+
     });
 
 
@@ -81,6 +113,41 @@ describe("client", () => {
             const { api, fetchMock } = makeApi(() => Promise.resolve(data({ succeeded: true })));
             await api.call(rename, voidWire);
             expect(sentHeaders(fetchMock).get("authorization")).toBe(`Bearer p1.${secretToken}`);
+        });
+
+
+        it("reads the credential again for every call", async () => {
+            let current: Option<Credential> = new SomeOption({ playerId: "p1", token: "first" });
+            const credentials: CredentialStore = {
+                load:  () => current,
+                save:  () => undefined,
+                clear: () => undefined
+            };
+            const { api, fetchMock } = makeApi(
+                () => Promise.resolve(data({ succeeded: true })),
+                credentials
+            );
+            await api.call(rename, voidWire);
+            current = new SomeOption({ playerId: "p2", token: "second" });
+            await api.call(rename, voidWire);
+            const sent = fetchMock.mock.calls.map((c) => new Headers(c[1]?.headers));
+            expect(sent.map((h) => h.get("authorization"))).toEqual([
+                "Bearer p1.first",
+                "Bearer p2.second"
+            ]);
+        });
+
+
+        it("uses a global fetch that is stubbed after the api was made", async () => {
+            const api = createApi({
+                credentials:    storeWith(secretToken),
+                onUnauthorized: () => undefined
+            });
+            const stub = vi.fn(() => Promise.resolve(data({ succeeded: true })));
+            vi.stubGlobal("fetch", stub);
+            const result = await api.call(rename, voidWire);
+            expect(result.succeeded).toBe(true);
+            expect(stub).toHaveBeenCalledTimes(1);
         });
 
 
@@ -142,6 +209,27 @@ describe("client", () => {
             const result = await api.call(rename, voidWire);
             expect(result.failed && result.error).toBe(unauthorizedMessage);
             expect(onUnauthorized).toHaveBeenCalledTimes(1);
+        });
+
+
+        it("tells onUnauthorized which credential the failing call started with", async () => {
+            let current: Option<Credential> = new SomeOption({ playerId: "p1", token: "old" });
+            const credentials: CredentialStore = {
+                load:  () => current,
+                save:  () => undefined,
+                clear: () => undefined
+            };
+            const { api, onUnauthorized } = makeApi(() => {
+                // A new sign-in lands while the old call is still in flight.
+                current = new SomeOption({ playerId: "p2", token: "new" });
+                return Promise.resolve(batchResponse({
+                    error: { message: "x", code: -32001, data: { code: "UNAUTHORIZED" } }
+                }, 401));
+            }, credentials);
+            await api.call(rename, voidWire);
+            expect(onUnauthorized).toHaveBeenCalledWith(
+                new SomeOption({ playerId: "p1", token: "old" })
+            );
         });
 
 
