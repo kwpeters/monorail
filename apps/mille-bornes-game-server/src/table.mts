@@ -204,11 +204,8 @@ export class Table {
                 this.after("HazardWindow", timings.hazardWindowMs, () => {
                     return this.system(g, { type: "CloseHazardWindow" });
                 });
-                // A robot answers after its usual delay, so its speed does not
-                // give it away, but at least 1,000 ms before the window closes.
-                const latest = Math.max(0, timings.hazardWindowMs - 1000);
                 for (const move of robotMoves(g, this._opts.rand)) {
-                    const ms = Math.min(this.robotDelay(), latest);
+                    const ms = this.answerDelay();
                     this.after("Robot", ms, () => this.player(g, move.by, move.cmd));
                 }
                 break;
@@ -261,6 +258,13 @@ export class Table {
         const span = max - min;
         const r = this._opts.rand();
         return min + (r >= 0 ? Math.min(span, Math.floor(r * (span + 1))) : 0);
+    }
+
+
+    // A robot answers a hazard window after its usual delay, so its speed does
+    // not give it away, but at least 1,000 ms before the window closes.
+    private answerDelay(): number {
+        return Math.min(this.robotDelay(), Math.max(0, this._opts.timings.hazardWindowMs - 1000));
     }
 
 
