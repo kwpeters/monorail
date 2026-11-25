@@ -13,7 +13,7 @@ import { PlayerName } from "@repo/mille-bornes-core/playerName";
 import { type Points } from "@repo/mille-bornes-core/points";
 import { seededRandom } from "@repo/mille-bornes-core/simulation";
 import { initialExtension, variantForSeatCount } from "@repo/mille-bornes-core/variant";
-import { defaultTimings } from "./config.mjs";
+import { defaultTimings, type Timings } from "./config.mjs";
 import { FakeClock } from "./fakeClock.mjs";
 import { collectingLogger } from "./logger.mjs";
 import { Table, type TableOptions, type TableUpdate } from "./table.mjs";
@@ -164,6 +164,7 @@ interface HarnessOptions {
     readonly clock?:       FakeClock;
     readonly seq?:         number;
     readonly rand?:        () => number;
+    readonly timings?:     Timings;
     readonly applySystem?: TableOptions["applySystem"];
     readonly onUpdate?:    (u: TableUpdate, table: Table) => void;
 }
@@ -189,7 +190,7 @@ function harness(game: Game, opts: HarnessOptions = {}): Harness {
         seq:      opts.seq ?? 0,
         clock,
         rand:     opts.rand ?? ((): number => 0),
-        timings:  defaultTimings,
+        timings:  opts.timings ?? defaultTimings,
         logger,
         onUpdate: (u) => {
             updates.push(u);
@@ -344,14 +345,29 @@ describe("Table", () => {
                 });
 
 
-                it("lets a robot holding the counter answer at delay 0", () => {
-                    const h = harness(hazardGame("Robot", [Card.rightOfWay, Card.dist25]));
-                    h.table.submit(ann, attackBob).throwIfFailed();
-                    expect(h.clock.pendingCount()).toEqual(2);
+                // [rand, hazard window, the answer's delay]: the usual robot
+                // delay, but always at least 1,000 ms before the window closes.
+                const answers: ReadonlyArray<[number, number, number]> = [
+                    [0, 5000, 1000], [0.5, 5000, 2000], [1, 5000, 3000],
+                    [1, 1500, 500], [0, 40, 0]
+                ];
+                for (const [r, windowMs, delay] of answers) {
+                    it(`lets a robot holding the counter answer after ${delay} ms ` +
+                        `in a ${windowMs} ms window when rand returns ${r}`, () => {
+                        const timings = { ...defaultTimings, hazardWindowMs: windowMs };
+                        const game = hazardGame("Robot", [Card.rightOfWay, Card.dist25]);
+                        const h = harness(game, { rand: () => r, timings });
+                        h.table.submit(ann, attackBob).throwIfFailed();
+                        expect(h.clock.pendingCount()).toEqual(2);
 
-                    h.clock.advance(0);
-                    expect(eventTypes(h.updates[1])).toContain("CoupFourrePlayed");
-                });
+                        if (delay > 0) {
+                            h.clock.advance(delay - 1);
+                            expect(h.updates.length).toEqual(1);
+                        }
+                        h.clock.advance(delay === 0 ? 0 : 1);
+                        expect(eventTypes(h.updates[1])).toContain("CoupFourrePlayed");
+                    });
+                }
 
 
                 it("schedules nothing for a robot that does not hold the counter", () => {

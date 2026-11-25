@@ -124,8 +124,10 @@ Tests build their own `ServerConfig` with shorter ones.
 | `robotDelayMaxMs`   | 3,000   | The longest wait before a robot plays or answers.           |
 | `disconnectGraceMs` | 3,000   | How long after a dropped connection a player is shown gone. |
 
-A robot answers a Coup Fourre window at once,
-but the window always runs its full length,
+A robot answers a Coup Fourre window after its usual random wait,
+so its speed does not reveal that it is a robot,
+but always at least 1,000 ms before the window closes.
+The window always runs its full length,
 so its length reveals nothing about anyone's hand.
 
 ## Tests
