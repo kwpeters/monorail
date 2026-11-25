@@ -3,12 +3,15 @@
 //
 import { z } from "zod";
 import { NoneOption, SomeOption } from "./option.mjs";
+import { FailedResult, Result, SucceededResult } from "./result.mjs";
 import {
     discriminatedOptionSchema,
+    discriminatedResultSchema,
     fileSystemPathSchema,
     normalizePathSeparators,
     optionalValueToOptionSchema,
-    regexpSchema
+    regexpSchema,
+    resultToWire
 } from "./schemaUtility.mjs";
 
 
@@ -42,6 +45,124 @@ describe("discriminatedOptionSchema()", () => {
         const result = schema.safeParse({ isSome: false, value: "test" });
         expect(result.success).toBe(false);
     });
+});
+
+
+describe("resultToWire()", () => {
+
+    it("encodes a succeeded result as exactly succeeded and value", () => {
+        const wire = resultToWire(new SucceededResult(5));
+        expect(wire).toEqual({ succeeded: true, value: 5 });
+        expect(Object.keys(wire).sort()).toEqual(["succeeded", "value"]);
+    });
+
+
+    it("encodes a failed result as exactly succeeded and error", () => {
+        const wire = resultToWire(new FailedResult("no"));
+        expect(wire).toEqual({ succeeded: false, error: "no" });
+        expect(Object.keys(wire).sort()).toEqual(["error", "succeeded"]);
+    });
+
+});
+
+
+describe("discriminatedResultSchema()", () => {
+
+    function roundTrip<TValue, TError>(r: Result<TValue, TError>): unknown {
+        return JSON.parse(JSON.stringify(resultToWire(r)));
+    }
+
+
+    it("round trips a succeeded result through JSON", () => {
+        const schema = discriminatedResultSchema(z.number(), z.string());
+        const parsed = schema.safeParse(roundTrip(new SucceededResult(5)));
+        expect(parsed.success).toBe(true);
+        const r = parsed.data!;
+        expect(r.succeeded).toBe(true);
+        expect(r.failed).toBe(false);
+        expect(r.value).toBe(5);
+        expect(r.match((v) => `ok ${v}`, (e) => `bad ${e}`)).toBe("ok 5");
+    });
+
+
+    it("round trips a failed result through JSON", () => {
+        const schema = discriminatedResultSchema(z.number(), z.string());
+        const parsed = schema.safeParse(roundTrip(new FailedResult("no")));
+        expect(parsed.success).toBe(true);
+        const r = parsed.data!;
+        expect(r.succeeded).toBe(false);
+        expect(r.failed).toBe(true);
+        expect(r.error).toBe("no");
+        expect(r.match((v) => `ok ${v}`, (e) => `bad ${e}`)).toBe("bad no");
+    });
+
+
+    it("round trips a void success when the value schema is z.void()", () => {
+        const r: Result<void, string> = new SucceededResult(undefined);
+        const json = JSON.stringify(resultToWire(r));
+        expect(json).toBe("{\"succeeded\":true}");
+        const schema = discriminatedResultSchema(z.void(), z.string());
+        const parsed = schema.safeParse(JSON.parse(json));
+        expect(parsed.success).toBe(true);
+        expect(parsed.data).toEqual(new SucceededResult(undefined));
+    });
+
+
+    it("round trips a void success when the value schema is z.undefined()", () => {
+        const schema = discriminatedResultSchema(z.undefined(), z.string());
+        const parsed = schema.safeParse({ succeeded: true });
+        expect(parsed.success).toBe(true);
+        expect(parsed.data).toEqual(new SucceededResult(undefined));
+    });
+
+
+    it("rejects a success with no value when the value schema requires one", () => {
+        const schema = discriminatedResultSchema(z.number(), z.string());
+        expect(schema.safeParse({ succeeded: true }).success).toBe(false);
+    });
+
+
+    it("accepts a failure with no error when the error schema accepts undefined", () => {
+        const schema = discriminatedResultSchema(z.number(), z.undefined());
+        const parsed = schema.safeParse({ succeeded: false });
+        expect(parsed.success).toBe(true);
+        expect(parsed.data).toEqual(new FailedResult(undefined));
+    });
+
+
+    it("rejects a failure with no error when the error schema requires one", () => {
+        const schema = discriminatedResultSchema(z.number(), z.string());
+        expect(schema.safeParse({ succeeded: false }).success).toBe(false);
+    });
+
+
+    it("rejects malformed input", () => {
+        const schema = discriminatedResultSchema(z.number(), z.string());
+        const bad: Array<unknown> = [
+            { succeeded: true, value: 5, extra: 1 },
+            { succeeded: false, error: "no", extra: 1 },
+            {},
+            null,
+            { succeeded: "yes" },
+            { succeeded: true, value: "five" },
+            { succeeded: false, error: 7 },
+            { succeeded: true, error: "x" }
+        ];
+        for (const input of bad) {
+            expect(schema.safeParse(input).success).toBe(false);
+        }
+    });
+
+
+    it("round trips a result whose value is an object with a nested array", () => {
+        const valueSchema = z.object({ name: z.string(), items: z.array(z.object({ n: z.number() })) });
+        const schema = discriminatedResultSchema(valueSchema, z.string());
+        const value = { name: "x", items: [{ n: 1 }, { n: 2 }] };
+        const parsed = schema.safeParse(roundTrip(new SucceededResult(value)));
+        expect(parsed.success).toBe(true);
+        expect(parsed.data!.value).toEqual(value);
+    });
+
 });
 
 

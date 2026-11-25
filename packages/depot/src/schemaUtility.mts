@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Option, NoneOption, SomeOption } from "./option.mjs";
+import { FailedResult, Result, SucceededResult } from "./result.mjs";
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -132,6 +133,65 @@ export function optionalValueToOptionSchema<TValue>(
     return z.optional(valueSchema)
     .transform((val) => {
         return val === undefined ? NoneOption.get() : new SomeOption(val);
+    });
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Result
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * The plain-object form of a Result that survives `JSON.stringify`.  (A Result
+ * is a class, so it cannot be sent over the wire as is.)  A successful
+ * `Result<void, E>` has an undefined `value`, which JSON drops.
+ */
+export type ResultWire<TValue, TError> =
+    | { succeeded: true; value: TValue }
+    | { succeeded: false; error: TError };
+
+
+/**
+ * Converts a Result to its plain-object wire form.
+ *
+ * @param r - The Result to convert
+ * @returns An object with exactly the keys `succeeded` and `value` (success)
+ * or `succeeded` and `error` (failure)
+ */
+export function resultToWire<TValue, TError>(
+    r: Result<TValue, TError>
+): ResultWire<TValue, TError> {
+    return r.succeeded ?
+        { succeeded: true, value: r.value } :
+        { succeeded: false, error: r.error };
+}
+
+
+/**
+ * Creates a Zod schema that validates the wire form of a Result (see
+ * `resultToWire()`) and (upon success) transforms the output to a Result.
+ * A `value` (or `error`) may be absent only when its schema accepts
+ * `undefined`, because JSON drops undefined properties.
+ *
+ * @param valueSchema - The schema of the value of a succeeded Result
+ * @param errorSchema - The schema of the error of a failed Result
+ * @returns A Zod schema that will validate the input and (upon success)
+ * transform the output to a Result.
+ */
+export function discriminatedResultSchema<TValue, TError>(
+    valueSchema: z.ZodType<TValue>,
+    errorSchema: z.ZodType<TError>
+): z.ZodType<Result<TValue, TError>> {
+    const value = valueSchema.safeParse(undefined).success ? valueSchema.optional() : valueSchema;
+    const error = errorSchema.safeParse(undefined).success ? errorSchema.optional() : errorSchema;
+
+    return z.discriminatedUnion("succeeded", [
+        z.object({succeeded: z.literal(true), value}).strict(),    // Don't allow extra properties
+        z.object({succeeded: z.literal(false), error}).strict()    // Don't allow extra properties
+    ]).transform((val): Result<TValue, TError> => {
+        return val.succeeded ?
+            new SucceededResult(val.value as TValue) :
+            new FailedResult(val.error as TError);
     });
 }
 
