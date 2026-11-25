@@ -71,7 +71,8 @@ describe("WaitingScreen", () => {
 
         it("shows the format line and the seats grouped into teams", () => {
             setup(four, { length: "Short" });
-            expect(screen.getByText(/^(?:Quick|Short|Full):/u)).toHaveTextContent(/^Short:.*2,000 points/u);
+            expect(screen.getByText(/^(?:Quick|Short|Full):/u))
+            .toHaveTextContent(/^Short:.*2,000 points/u);
             const team1 = screen.getByRole("region", { name: "Team 1" });
             const team2 = screen.getByRole("region", { name: "Team 2" });
             expect(within(team1).getByText("Ann")).toBeInTheDocument();
@@ -150,15 +151,29 @@ describe("WaitingScreen", () => {
         });
 
 
+        it("marks the selected length with a check mark, not only a color", () => {
+            setup(four, { length: "Short" });
+            const checked = (name: string): boolean => within(screen.getByRole("button", { name }))
+            .queryByText("✓") !== null;
+            expect(checked("Short")).toBe(true);
+            expect(checked("Quick")).toBe(false);
+            expect(checked("Full")).toBe(false);
+            expect(screen.getByRole("button", { name: "Short", pressed: true }))
+            .toBeInTheDocument();
+        });
+
+
         it("words the format line for each length", () => {
             setup(four, { length: "Quick" });
-            expect(screen.getByText(/^(?:Quick|Short|Full):/u)).toHaveTextContent(/^Quick:.*finish the trip/u);
+            expect(screen.getByText(/^(?:Quick|Short|Full):/u))
+            .toHaveTextContent(/^Quick:.*finish the trip/u);
         });
 
 
         it("words the Full format line", () => {
             setup(four, { length: "Full" });
-            expect(screen.getByText(/^(?:Quick|Short|Full):/u)).toHaveTextContent(/^Full:.*5,000 points/u);
+            expect(screen.getByText(/^(?:Quick|Short|Full):/u))
+            .toHaveTextContent(/^Full:.*5,000 points/u);
         });
 
     });
@@ -201,6 +216,14 @@ describe("WaitingScreen", () => {
         it("adds a robot", async () => {
             const { procs, user } = setup();
             await user.click(screen.getByRole("button", { name: "Add a robot" }));
+            expect(procs.addRobot).toHaveBeenCalledTimes(1);
+        });
+
+
+        it("sends one request for two taps in the same tick", () => {
+            const { procs } = setup();
+            procs.addRobot.mockReturnValue(neverSettles());
+            twice(screen.getByRole("button", { name: "Add a robot" }));
             expect(procs.addRobot).toHaveBeenCalledTimes(1);
         });
 
@@ -338,6 +361,33 @@ describe("WaitingScreen", () => {
             expect(dialog()).not.toHaveAttribute("open");
             expect(procs.cancel).not.toHaveBeenCalled();
             expect(trigger).toHaveFocus();
+        });
+
+
+        it("puts the first focus on Keep the game, not the destructive button", async () => {
+            const { user } = setup();
+            await user.click(screen.getByRole("button", { name: "Cancel game" }));
+            expect(within(dialog()).getByRole("button", { name: "Keep the game" })).toHaveFocus();
+        });
+
+
+        it("returns focus to the trigger after a refused cancel", async () => {
+            const { procs, user } = setup();
+            procs.cancel.mockResolvedValue(failWire("Too late."));
+            await user.click(screen.getByRole("button", { name: "Cancel game" }));
+            await user.click(within(dialog()).getByRole("button", { name: "Cancel the game" }));
+            await screen.findByRole("alert");
+            expect(screen.getByRole("button", { name: "Cancel game" })).toHaveFocus();
+        });
+
+
+        it("closes only the dialog on Escape while swapping", async () => {
+            const { user } = setup();
+            await user.click(screen.getByRole("button", { name: "Swap seats" }));
+            await user.click(screen.getByRole("button", { name: "Cancel game" }));
+            await user.keyboard("{Escape}");
+            expect(dialog()).not.toHaveAttribute("open");
+            expect(screen.getByRole("button", { name: "Swap Bob" })).toBeInTheDocument();
         });
 
 

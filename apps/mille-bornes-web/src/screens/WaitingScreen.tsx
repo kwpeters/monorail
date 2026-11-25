@@ -133,6 +133,9 @@ function JoinerRoom(props: RoomProps): ReactElement {
 function OrganizerRoom(props: RoomProps): ReactElement {
     const { pending, busy, run } = props;
     const dialog = useRef<HTMLDialogElement>(null);
+    const cancelTrigger = useRef<HTMLButtonElement>(null);
+    const keepButton = useRef<HTMLButtonElement>(null);
+    const refocusTrigger = useRef(false);
     const dialogTitle = useId();
     const [swapping, setSwapping] = useState(false);
     const [picked, setPicked] = useState<Option<PlayerId>>(NoneOption.get());
@@ -147,12 +150,22 @@ function OrganizerRoom(props: RoomProps): ReactElement {
         setPicked(NoneOption.get());
     };
 
+    // The trigger is disabled while the cancel request is in flight, which
+    // drops focus to the page; a refusal puts it back.
+    useEffect(() => {
+        if (!busy && refocusTrigger.current) {
+            refocusTrigger.current = false;
+            cancelTrigger.current?.focus();
+        }
+    }, [busy]);
+
     useEffect(() => {
         if (!swapping) {
             return undefined;
         }
         const onKeyDown = (e: KeyboardEvent): void => {
-            if (e.key === "Escape") {
+            // Escape closes the dialog first, not swap mode behind it.
+            if (e.key === "Escape" && !dialog.current?.open) {
                 setSwapping(false);
                 setPicked(NoneOption.get());
             }
@@ -211,6 +224,7 @@ function OrganizerRoom(props: RoomProps): ReactElement {
     // Closed first, so a refusal shows in the page and not behind the dialog.
     const confirmCancel = (): void => {
         dialog.current?.close();
+        refocusTrigger.current = true;
         void run((t) => t.pending.cancel.mutate());
     };
 
@@ -231,6 +245,9 @@ function OrganizerRoom(props: RoomProps): ReactElement {
                             }
                         }}
                     >
+                        {length === pending.length ?
+                            <span aria-hidden="true">{"✓ "}</span> :
+                            null}
                         {length}
                     </button>
                 ))}
@@ -279,10 +296,15 @@ function OrganizerRoom(props: RoomProps): ReactElement {
                 Start game
             </button>
             <button
+                ref={cancelTrigger}
                 type="button"
                 className="button danger"
                 disabled={busy}
-                onClick={() => dialog.current?.showModal()}
+                onClick={() => {
+                    dialog.current?.showModal();
+                    // Not the destructive button, which showModal() focuses first.
+                    keepButton.current?.focus();
+                }}
             >
                 Cancel game
             </button>
@@ -293,7 +315,12 @@ function OrganizerRoom(props: RoomProps): ReactElement {
                     <button type="button" className="button danger" onClick={confirmCancel}>
                         Cancel the game
                     </button>
-                    <button type="button" className="button" onClick={() => dialog.current?.close()}>
+                    <button
+                        ref={keepButton}
+                        type="button"
+                        className="button"
+                        onClick={() => dialog.current?.close()}
+                    >
                         Keep the game
                     </button>
                 </div>
