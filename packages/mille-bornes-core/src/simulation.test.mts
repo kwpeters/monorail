@@ -576,9 +576,10 @@ describe("simulation", () => {
                 for (const { seat } of g.players) {
                     const cmd = chooseCommand(viewFor(g, seat.id).throwIfFailed(), () => x);
                     const onTurn = g.phase.kind === "Turn" && g.phase.player === seat.id;
-                    check(cmd !== null || !onTurn, () => "the robot on turn made no play");
-                    if (cmd !== null) {
-                        check(applyPlayerCommand(g, seat.id, cmd).succeeded, () => `refused ${commandKey(cmd)}`);
+                    check(cmd.isSome || !onTurn, () => "the robot on turn made no play");
+                    if (cmd.isSome) {
+                        const played = cmd.value;
+                        check(applyPlayerCommand(g, seat.id, played).succeeded, () => `refused ${commandKey(played)}`);
                     }
                 }
             }), { numRuns: 500 });

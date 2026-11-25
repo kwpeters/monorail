@@ -1,3 +1,4 @@
+import { NoneOption, Option, SomeOption } from "@repo/depot/option";
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import { cardSchema, type Card, type SafetyCard } from "./card.mjs";
 import { type Applied, type PlayerCommand, type SystemCommand } from "./commands.mjs";
@@ -24,17 +25,19 @@ const maxDeckSize = 106;
 // The player draws the top card of the draw pile, unless it is empty.
 function drawCard(g: Game, index: number, events: ReadonlyArray<GameEvent>): Applied {
     const player = g.players[index]!.seat.id;
-    const [drawn, ...drawPile] = g.drawPile;
-    if (drawn === undefined) {
+    const [top, ...drawPile] = g.drawPile;
+    const drawn = Option.fromNullable(top);
+    if (drawn.isNone) {
         return { game: g, events };
     }
+    const card = drawn.value;
     return {
         game: {
             ...g,
-            players: g.players.map((p, i) => i === index ? { ...p, hand: [...p.hand, drawn] } : p),
+            players: g.players.map((p, i) => i === index ? { ...p, hand: [...p.hand, card] } : p),
             drawPile,
         },
-        events: [...events, { type: "CardDrawn", player, card: drawn }],
+        events: [...events, { type: "CardDrawn", player, card }],
     };
 }
 
@@ -72,17 +75,19 @@ function withoutCard(g: Game, index: number, card: Card): ReadonlyArray<PlayerSt
  * @param g - The game
  * @param from - The index in `g.players` to start looking from (inclusive);
  * the search wraps around and checks every player once
- * @returns The player's index, or undefined when nobody holds cards
+ * @returns The player's index, or none when nobody holds cards
  */
-function nextPlayerWithCards(g: Game, from: number): number | undefined {
+function nextPlayerWithCards(g: Game, from: number): Option<number> {
     const n = g.players.length;
-    return Array.from({ length: n }, (_, k) => (from + k) % n)
-    .find((i) => g.players[i]!.hand.length > 0);
+    return Option.fromNullable(
+        Array.from({ length: n }, (_, k) => (from + k) % n)
+        .find((i) => g.players[i]!.hand.length > 0)
+    );
 }
 
 
-function extensionCaller(e: ExtensionState): TeamIndex | null {
-    return e.kind === "Called" ? e.caller : null;
+function extensionCaller(e: ExtensionState): Option<TeamIndex> {
+    return e.kind === "Called" ? new SomeOption(e.caller) : NoneOption.get();
 }
 
 
@@ -93,7 +98,7 @@ function exhausted(g: Game): RaceOutcome {
     return {
         kind:            "Exhausted",
         winner:          leaders.length === 1 ? leaders[0]! : "Tie",
-        extensionCaller: extensionCaller(g.extension),
+        extensionCaller: extensionCaller(g.extension).toNullable(null),
     };
 }
 
@@ -139,7 +144,7 @@ function finishRace(
  */
 function nextTurn(g: Game, from: number, events: ReadonlyArray<GameEvent>): Applied {
     const next = nextPlayerWithCards(g, from);
-    return next === undefined ? finishRace(g, exhausted(g), events) : startTurn(g, next, events);
+    return next.isNone ? finishRace(g, exhausted(g), events) : startTurn(g, next.value, events);
 }
 
 
@@ -160,14 +165,14 @@ function playedEvent(by: PlayerId, team: TeamIndex, cmd: CardPlay): GameEvent {
 }
 
 
-// `change` is null for a Discard, which sends the card to the discard pile.
-function playCard(g: Game, index: number, cmd: CardPlay, change: ZoneChange | null): Applied {
+// `change` is none for a Discard, which sends the card to the discard pile.
+function playCard(g: Game, index: number, cmd: CardPlay, change: Option<ZoneChange>): Applied {
     const { seat, team } = g.players[index]!;
     const game: Game = {
         ...g,
         players:     withoutCard(g, index, cmd.card),
-        teams:       g.teams.map((t, i) => change && i === team ? { ...t, zone: change.zone } : t),
-        discardPile: [...g.discardPile, ...(change ? change.discarded : [cmd.card])],
+        teams:       g.teams.map((t, i) => change.isSome && i === team ? { ...t, zone: change.value.zone } : t),
+        discardPile: [...g.discardPile, ...(change.isSome ? change.value.discarded : [cmd.card])],
     };
     const events = [playedEvent(seat.id, team, cmd)];
 
@@ -194,7 +199,7 @@ function completeTrip(g: Game, team: TeamIndex, events: ReadonlyArray<GameEvent>
         kind:            "TripCompleted",
         team,
         delayedAction:   g.drawPile.length === 0,
-        extensionCaller: extensionCaller(g.extension),
+        extensionCaller: extensionCaller(g.extension).toNullable(null),
     }, events);
 }
 
@@ -302,7 +307,7 @@ export function applyPlayerCommand(
             case "Attack":
                 return new SucceededResult(attack(g, index, cmd));
             case "CoupFourre":
-                return coupFourre(g, index, cmd.card, change!);
+                return coupFourre(g, index, cmd.card, change.throwIfNone());
             case "CallExtension":
             case "DeclineExtension":
                 return decideExtension(g, cmd.type === "CallExtension");

@@ -1,3 +1,4 @@
+import { NoneOption, Option, SomeOption } from "@repo/depot/option";
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import { Card, cardSchema } from "./card.mjs";
 import { cardCounts } from "./deck.mjs";
@@ -30,7 +31,16 @@ export function physicalCards(g: Game): ReadonlyArray<Card> {
 }
 
 
-type Check = (g: Game, v: RaceVariant) => string | null;
+type Check = (g: Game, v: RaceVariant) => Result<void, string>;
+
+
+// A Result is immutable, so the success is shared rather than built on every check.
+const consistent: Result<void, string> = new SucceededResult(undefined);
+
+
+function inconsistent(problem: string): FailedResult<string> {
+    return new FailedResult(problem);
+}
 
 
 function isTeam(g: Game, team: number): boolean {
@@ -41,7 +51,9 @@ function isTeam(g: Game, team: number): boolean {
 const checkPlayers: Check = (g) => {
     const order = seatOrder(g.config.teams);
     if (g.players.length !== order.length) {
-        return `The game has ${g.players.length} players, but its config has ${order.length} seats.`;
+        return inconsistent(
+            `The game has ${g.players.length} players, but its config has ${order.length} seats.`
+        );
     }
     const mismatch = g.players.findIndex(({ seat, team }, i) => {
         const expected = order[i]!;
@@ -49,120 +61,158 @@ const checkPlayers: Check = (g) => {
             seat.kind !== expected.seat.kind || team !== expected.team;
     });
     return mismatch === -1 ?
-        null :
-        `Player ${mismatch} (${g.players[mismatch]!.seat.name}) does not match seat ${mismatch} of the config.`;
+        consistent :
+        inconsistent(
+            `Player ${mismatch} (${g.players[mismatch]!.seat.name}) does not match seat ${mismatch} of the config.`
+        );
 };
 
 
 const checkTeams: Check = (g) => g.teams.length === g.config.teams.length ?
-    null :
-    `The game has ${g.teams.length} teams, but its config has ${g.config.teams.length}.`;
+    consistent :
+    inconsistent(`The game has ${g.teams.length} teams, but its config has ${g.config.teams.length}.`);
 
 
 const checkRaceNumber: Check = (g) => Number.isInteger(g.raceNumber) && g.raceNumber >= 1 ?
-    null :
-    `The race number must be a whole number of at least 1, but is ${g.raceNumber}.`;
+    consistent :
+    inconsistent(`The race number must be a whole number of at least 1, but is ${g.raceNumber}.`);
 
 
 const checkExtension: Check = (g, v) => {
     const e = g.extension;
     if (!v.extension && e.kind !== "NotApplicable") {
-        return `Extension is ${e.kind} in a game without Extension.`;
+        return inconsistent(`Extension is ${e.kind} in a game without Extension.`);
     }
     if (v.extension && e.kind === "NotApplicable") {
-        return `Extension must apply in a ${g.players.length}-player game.`;
+        return inconsistent(`Extension must apply in a ${g.players.length}-player game.`);
     }
     if (e.kind === "Called") {
         if (!isTeam(g, e.caller)) {
-            return `Extension was called by team ${e.caller}, which does not exist.`;
+            return inconsistent(`Extension was called by team ${e.caller}, which does not exist.`);
         }
         // Only a team that reached 700 can call, and miles never go down.
         const miles = zoneMiles(g.teams[e.caller]!.zone);
         if (miles < EXTENSION_MILES) {
-            return `Extension was called by team ${e.caller}, which has only ${miles} miles.`;
+            return inconsistent(`Extension was called by team ${e.caller}, which has only ${miles} miles.`);
         }
     }
-    return null;
+    return consistent;
 };
+
+
+// How an Extension caller reads in a message: the team number, or "null".
+function showCaller(caller: Option<number>): string {
+    return caller.match(String, () => "null");
+}
 
 
 // The race result's teams exist, and its Extension caller is the game's (the
 // Extension state is only reset when the next race is dealt).
-function checkResult(g: Game, { outcome, scores }: RaceResult): string | null {
+function checkResult(g: Game, { outcome, scores }: RaceResult): Result<void, string> {
     if (scores.length !== g.teams.length) {
-        return `The race result has ${scores.length} scores, but the game has ${g.teams.length} teams.`;
+        return inconsistent(
+            `The race result has ${scores.length} scores, but the game has ${g.teams.length} teams.`
+        );
     }
     if (outcome.kind === "TripCompleted" && !isTeam(g, outcome.team)) {
-        return `The race result names team ${outcome.team} as completing the trip, but it does not exist.`;
+        return inconsistent(
+            `The race result names team ${outcome.team} as completing the trip, but it does not exist.`
+        );
     }
     if (outcome.kind === "Exhausted" && outcome.winner !== "Tie" && !isTeam(g, outcome.winner)) {
-        return `The race result names team ${outcome.winner} as the winner, but it does not exist.`;
+        return inconsistent(
+            `The race result names team ${outcome.winner} as the winner, but it does not exist.`
+        );
     }
-    const caller = outcome.extensionCaller;
-    if (caller !== null && !isTeam(g, caller)) {
-        return `The race result names Extension caller team ${caller}, which does not exist.`;
+    const caller = Option.fromNullable(outcome.extensionCaller);
+    if (caller.isSome && !isTeam(g, caller.value)) {
+        return inconsistent(
+            `The race result names Extension caller team ${caller.value}, which does not exist.`
+        );
     }
-    const expected = g.extension.kind === "Called" ? g.extension.caller : null;
-    return caller === expected ?
-        null :
-        `The race result's Extension caller is team ${caller}, but the game's is team ${expected}.`;
+    const expected: Option<number> = g.extension.kind === "Called" ?
+        new SomeOption(g.extension.caller) :
+        NoneOption.get();
+    const same = caller.isSome ?
+        expected.isSome && expected.value === caller.value :
+        expected.isNone;
+    return same ?
+        consistent :
+        inconsistent(
+            `The race result's Extension caller is team ${showCaller(caller)}, ` +
+            `but the game's is team ${showCaller(expected)}.`
+        );
 }
 
 
 const checkPhase: Check = (g) => {
     const phase = g.phase;
-    const player = (id: string): PlayerState | undefined => g.players.find((p) => p.seat.id === id);
-    const unknown = (id: string): string => `The phase names unknown player ${id}.`;
+    const player = (id: string): Option<PlayerState> => {
+        return Option.fromNullable(g.players.find((p) => p.seat.id === id));
+    };
+    const unknown = (id: string): Result<void, string> => {
+        return inconsistent(`The phase names unknown player ${id}.`);
+    };
     switch (phase.kind) {
         case "Turn": {
             const onTurn = player(phase.player);
-            if (!onTurn) {
+            if (onTurn.isNone) {
                 return unknown(phase.player);
             }
             // The engine only gives a turn to a player with cards, so an
             // empty hand on turn would leave the game stuck.
-            return onTurn.hand.length > 0 ? null : `${onTurn.seat.name} has the turn but holds no cards.`;
+            return onTurn.value.hand.length > 0 ?
+                consistent :
+                inconsistent(`${onTurn.value.seat.name} has the turn but holds no cards.`);
         }
         case "HazardIncoming": {
             const attacker = player(phase.attacker);
-            if (!attacker) {
+            if (attacker.isNone) {
                 return unknown(phase.attacker);
             }
-            if (!isTeam(g, phase.target) || phase.target === attacker.team) {
-                return `A hazard cannot be in flight against team ${phase.target}.`;
+            if (!isTeam(g, phase.target) || phase.target === attacker.value.team) {
+                return inconsistent(`A hazard cannot be in flight against team ${phase.target}.`);
             }
             // Nothing changes a zone while the window is open, so a hazard
             // that cannot land now never will, and the game would be stuck.
             const landing = canAttack(g.teams[phase.target]!.zone, phase.hazard);
             return landing.succeeded ?
-                null :
-                `The ${phase.hazard} in flight against team ${phase.target} cannot land: ` +
-                describeRejection(landing.error);
+                consistent :
+                inconsistent(
+                    `The ${phase.hazard} in flight against team ${phase.target} cannot land: ` +
+                    describeRejection(landing.error)
+                );
         }
         case "ExtensionOffer": {
             if (g.extension.kind !== "Available") {
-                return `An Extension offer is open, but Extension is ${g.extension.kind}.`;
+                return inconsistent(`An Extension offer is open, but Extension is ${g.extension.kind}.`);
             }
             const decider = player(phase.decider);
-            if (!decider) {
+            if (decider.isNone) {
                 return unknown(phase.decider);
             }
-            if (decider.team !== phase.team) {
-                return `The Extension offer is for team ${phase.team}, but the decider is on team ${decider.team}.`;
+            if (decider.value.team !== phase.team) {
+                return inconsistent(
+                    `The Extension offer is for team ${phase.team}, ` +
+                    `but the decider is on team ${decider.value.team}.`
+                );
             }
             const miles = zoneMiles(g.teams[phase.team]!.zone);
             return miles === EXTENSION_MILES ?
-                null :
-                `The Extension offer is for team ${phase.team}, which has ${miles} miles, not ${EXTENSION_MILES}.`;
+                consistent :
+                inconsistent(
+                    `The Extension offer is for team ${phase.team}, ` +
+                    `which has ${miles} miles, not ${EXTENSION_MILES}.`
+                );
         }
         case "RaceOver":
             return checkResult(g, phase.result);
         case "GameOver":
             return isTeam(g, phase.winner) ?
                 checkResult(g, phase.result) :
-                `The winner is team ${phase.winner}, which does not exist.`;
+                inconsistent(`The winner is team ${phase.winner}, which does not exist.`);
         default:
-            return `Unknown phase ${String((phase as { kind: unknown }).kind)}.`;
+            return inconsistent(`Unknown phase ${String((phase as { kind: unknown }).kind)}.`);
     }
 };
 
@@ -172,10 +222,10 @@ const checkHands: Check = (g) => {
         // Only the player whose turn it is has drawn a 7th card.
         const limit = g.phase.kind === "Turn" && g.phase.player === seat.id ? 7 : 6;
         if (hand.length > limit) {
-            return `${seat.name} holds ${hand.length} cards, but at most ${limit} are allowed.`;
+            return inconsistent(`${seat.name} holds ${hand.length} cards, but at most ${limit} are allowed.`);
         }
     }
-    return null;
+    return consistent;
 };
 
 
@@ -185,11 +235,15 @@ const checkCards: Check = (g, v) => {
     for (const card of cardSchema.options) {
         const count = cards.filter((c) => c === card).length;
         if (count !== expected[card]) {
-            return `The game has ${count} "${card}" cards, but a ${v.deck} deck has ${expected[card]}.`;
+            return inconsistent(
+                `The game has ${count} "${card}" cards, but a ${v.deck} deck has ${expected[card]}.`
+            );
         }
     }
     const total = cardSchema.options.reduce((sum, card) => sum + expected[card], 0);
-    return cards.length === total ? null : `The game has ${cards.length} cards, but a ${v.deck} deck has ${total}.`;
+    return cards.length === total ?
+        consistent :
+        inconsistent(`The game has ${cards.length} cards, but a ${v.deck} deck has ${total}.`);
 };
 
 
@@ -198,26 +252,30 @@ const checkZones: Check = (g) => {
     for (const [t, { zone }] of g.teams.entries()) {
         const miles = zoneMiles(zone);
         if (miles > trip) {
-            return `Team ${t} has ${miles} miles, more than the ${trip}-mile trip.`;
+            return inconsistent(`Team ${t} has ${miles} miles, more than the ${trip}-mile trip.`);
         }
         // Reaching the trip distance ends the race at once, or (at 700 while
         // Extension is Available) opens the offer for that team alone.
         const over = g.phase.kind === "RaceOver" || g.phase.kind === "GameOver";
         const offered = g.phase.kind === "ExtensionOffer" && g.phase.team === t;
         if (!over && !offered && miles === trip) {
-            return `Team ${t} has reached the ${trip}-mile trip, but the race is not over.`;
+            return inconsistent(`Team ${t} has reached the ${trip}-mile trip, but the race is not over.`);
         }
         const twoHundreds = zone.distance.filter((c) => c === Card.dist200).length;
         if (twoHundreds > 2) {
-            return `Team ${t} has played ${twoHundreds} 200-mile cards, but only 2 are allowed.`;
+            return inconsistent(
+                `Team ${t} has played ${twoHundreds} 200-mile cards, but only 2 are allowed.`
+            );
         }
         const stopped = zone.status.kind === "NeedsRoll" ||
             (zone.status.kind === "Hazard" && zone.status.hazard === Card.stop);
         if (hasSafety(zone, Card.rightOfWay) && (stopped || zone.speedLimit)) {
-            return `Team ${t} has Right of Way, so it cannot need a Roll, be stopped, or be speed limited.`;
+            return inconsistent(
+                `Team ${t} has Right of Way, so it cannot need a Roll, be stopped, or be speed limited.`
+            );
         }
     }
-    return null;
+    return consistent;
 };
 
 
@@ -245,9 +303,9 @@ export function checkInvariants(g: Game): Result<void, string> {
         checkPhase, checkHands, checkCards, checkZones,
     ];
     for (const check of checks) {
-        const problem = check(g, variant.value);
-        if (problem !== null) {
-            return new FailedResult(problem);
+        const verdict = check(g, variant.value);
+        if (verdict.failed) {
+            return verdict;
         }
     }
     return new SucceededResult(undefined);

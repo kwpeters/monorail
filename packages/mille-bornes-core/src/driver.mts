@@ -1,3 +1,4 @@
+import { NoneOption } from "@repo/depot/option";
 import { chooseCommand } from "./bot.mjs";
 import { type PlayerCommand } from "./commands.mjs";
 import { type Game, type PlayerState } from "./game.mjs";
@@ -45,7 +46,7 @@ export function robotMoves(
     .filter((p) => p.seat.kind === "Robot")
     .flatMap(({ seat }) => {
         const view = viewFor(g, seat.id);
-        const cmd = view.succeeded ? chooseCommand(view.value, rand) : null;
-        return cmd === null ? [] : [{ by: seat.id, cmd }];
+        const cmd = view.succeeded ? chooseCommand(view.value, rand) : NoneOption.get();
+        return cmd.isNone ? [] : [{ by: seat.id, cmd: cmd.value }];
     });
 }

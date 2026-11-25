@@ -1,3 +1,4 @@
+import { Option } from "@repo/depot/option";
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import { unwrapOrAddIssue } from "@repo/depot/zodHelpers";
 import { z } from "zod";
@@ -268,10 +269,12 @@ function checkSeats(p: PendingGame): Result<PendingGame, string> {
         if (earlier.some((other) => other.id === seat.id)) {
             return new FailedResult(`Two seats share the player id ${seat.id}.`);
         }
-        const sameName = earlier.find((other) => PlayerName.isSame(other.name, seat.name));
-        if (sameName) {
+        const sameName = Option.fromNullable(
+            earlier.find((other) => PlayerName.isSame(other.name, seat.name))
+        );
+        if (sameName.isSome) {
             return new FailedResult(
-                `The names "${sameName.name}" and "${seat.name}" are too alike.`
+                `The names "${sameName.value.name}" and "${seat.name}" are too alike.`
             );
         }
     }

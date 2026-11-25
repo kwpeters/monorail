@@ -1,3 +1,4 @@
+import { NoneOption, Option, SomeOption } from "@repo/depot/option";
 import { Card, safetyCardSchema } from "./card.mjs";
 import { hasSafety, zoneMiles, type DrivingZone } from "./drivingZone.mjs";
 import { type TeamIndex } from "./ids.mjs";
@@ -80,13 +81,13 @@ export type GameLength = "Quick" | "Short" | "Full";
 /**
  * Gets the points a team must reach to end a game of the given length.
  * @param length - The game length
- * @returns The goal, or null for a Quick game (which lasts one decided race)
+ * @returns The goal, or none for a Quick game (which lasts one decided race)
  */
-export function pointsGoal(length: GameLength): Points | null {
+export function pointsGoal(length: GameLength): Option<Points> {
     switch (length) {
-        case "Quick": return null;
-        case "Short": return 2000 as Points;
-        case "Full": return 5000 as Points;
+        case "Quick": return NoneOption.get();
+        case "Short": return new SomeOption(2000 as Points);
+        case "Full": return new SomeOption(5000 as Points);
     }
 }
 
@@ -104,10 +105,12 @@ function scoreTeam(
     const coupFourreCount = zone.safeties.filter((s) => s.coupFourre).length;
     const hasAllFour = safetyCardSchema.options.every((card) => hasSafety(zone, card));
     const completed = outcome.kind === "TripCompleted" && outcome.team === team;
-    const caller = outcome.extensionCaller;
+    const caller = Option.fromNullable(outcome.extensionCaller);
     // The caller is paid when it completes the trip; otherwise everyone else is.
-    const callerCompleted = outcome.kind === "TripCompleted" && outcome.team === caller;
-    const earnsExtension = caller !== null && (callerCompleted ? team === caller : team !== caller);
+    const earnsExtension = caller.match(
+        (c) => outcome.kind === "TripCompleted" && outcome.team === c ? team === c : team !== c,
+        () => false
+    );
 
     const milestones = miles * rules.perMile;
     const safeties = safetyCount * rules.perSafety + (hasAllFour ? rules.allFourSafeties : 0);
@@ -179,13 +182,13 @@ export function resolveRace(
     outcome: RaceOutcome
 ): RaceResolution {
     const goal = pointsGoal(length);
-    if (goal === null) {
+    if (goal.isNone) {
         const winner = outcome.kind === "TripCompleted" ? outcome.team : outcome.winner;
         return winner === "Tie" ? { kind: "NextRace" } : { kind: "GameOver", winner };
     }
     const best = Math.max(...totalsAfterRace);
     const leaders = totalsAfterRace.flatMap((total, team) => total === best ? [team as TeamIndex] : []);
-    return best >= goal && leaders.length === 1 ?
+    return best >= goal.value && leaders.length === 1 ?
         { kind: "GameOver", winner: leaders[0]! } :
         { kind: "NextRace" };
 }

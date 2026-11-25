@@ -1,3 +1,4 @@
+import { Option } from "@repo/depot/option";
 import { type SeatKind } from "./game.mjs";
 import { type GameId, type PlayerId, type TeamIndex } from "./ids.mjs";
 import { readiness, teamLayout, type PendingGame } from "./pendingGame.mjs";
@@ -61,7 +62,7 @@ export function pendingViewFor(p: PendingGame, viewer: PlayerId): PendingView {
         seats:  p.seats.map((seat) => ({
             id:          seat.id,
             name:        seat.name,
-            team:        teams.succeeded ? teamIndexOf(teams.value, seat.id) : null,
+            team:        teams.succeeded ? teamIndexOf(teams.value, seat.id).toNullable(null) : null,
             isMe:        seat.id === viewer,
             isOrganizer: seat.id === p.organizer,
             kind:        isOrganizer ? seat.kind : null
@@ -71,9 +72,12 @@ export function pendingViewFor(p: PendingGame, viewer: PlayerId): PendingView {
 }
 
 
-function teamIndexOf(teams: ReadonlyArray<ReadonlyArray<{ id: PlayerId }>>, id: PlayerId): TeamIndex | null {
+function teamIndexOf(
+    teams: ReadonlyArray<ReadonlyArray<{ id: PlayerId }>>,
+    id: PlayerId
+): Option<TeamIndex> {
     const t = teams.findIndex((team) => team.some((s) => s.id === id));
-    return t < 0 ? null : t as TeamIndex;
+    return Option.fromBool(t >= 0, t as TeamIndex);
 }
 
 
@@ -83,10 +87,13 @@ function teamIndexOf(teams: ReadonlyArray<ReadonlyArray<{ id: PlayerId }>>, id: 
  * @returns The summary, without seat kinds
  */
 export function pendingSummary(p: PendingGame): PendingSummary {
+    const organizer = Option.fromNullable(p.seats.find((s) => s.id === p.organizer))
+    .mapSome((s) => s.name)
+    .defaultValue("" as PlayerName);
     return {
         id:            p.id,
         length:        p.length,
-        organizerName: p.seats.find((s) => s.id === p.organizer)?.name ?? ("" as PlayerName),
+        organizerName: organizer,
         seatNames:     p.seats.map((s) => s.name),
         isFull:        p.seats.length >= maxSeats
     };

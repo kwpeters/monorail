@@ -1,3 +1,4 @@
+import { NoneOption, Option, SomeOption } from "@repo/depot/option";
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import {
     cardSchema, distanceCardSchema, hazardCardSchema, remedyCardSchema, safetyCardSchema,
@@ -75,10 +76,11 @@ function contextPhase(
  * @returns The context, or NotInGame when `me` is not playing in the game
  */
 export function contextFromGame(g: Game, me: PlayerId): Result<PlayContext, Rejection> {
-    const player = g.players.find((p) => p.seat.id === me);
-    if (!player) {
+    const found = Option.fromNullable(g.players.find((p) => p.seat.id === me));
+    if (found.isNone) {
         return new FailedResult({ reason: "NotInGame" });
     }
+    const player = found.value;
     // The invariants guarantee that a phase names only players in the game.
     const nameOf = (id: PlayerId): PlayerName => g.players.find((p) => p.seat.id === id)!.seat.name;
     return new SucceededResult({
@@ -153,42 +155,58 @@ export function isWellFormed(ctx: PlayContext, cmd: unknown): boolean {
 }
 
 
-function checkPhaseAndTurn(ctx: PlayContext, cmd: PlayerCommand): Rejection | null {
+// A Result is immutable, so these are shared rather than built on every check.
+const passed: Result<void, Rejection> = new SucceededResult(undefined);
+const noChange: Result<Option<ZoneChange>, Rejection> = new SucceededResult(NoneOption.get());
+
+
+function refuse(rejection: Rejection): FailedResult<Rejection> {
+    return new FailedResult(rejection);
+}
+
+
+// A zone change that was worked out, as the Option checkPlay() returns.
+function changed(change: Result<ZoneChange, Rejection>): Result<Option<ZoneChange>, Rejection> {
+    return change.succeeded ? new SucceededResult(new SomeOption(change.value)) : change;
+}
+
+
+function checkPhaseAndTurn(ctx: PlayContext, cmd: PlayerCommand): Result<void, Rejection> {
     const phase = ctx.phase;
     switch (phase.kind) {
         case "Turn":
             if (isExtensionDecision(cmd)) {
-                return { reason: "NoExtensionOffer" };
+                return refuse({ reason: "NoExtensionOffer" });
             }
             if (cmd.type === "CoupFourre") {
-                return { reason: "NoWindowOpen" };
+                return refuse({ reason: "NoWindowOpen" });
             }
             return phase.player === ctx.me ?
-                null :
-                { reason: "NotYourTurn", current: phase.playerName };
+                passed :
+                refuse({ reason: "NotYourTurn", current: phase.playerName });
         case "HazardIncoming":
             // Any member of the target team may answer, whoever's turn it was.
             if (cmd.type !== "CoupFourre") {
-                return { reason: "WindowOpen" };
+                return refuse({ reason: "WindowOpen" });
             }
-            return ctx.myTeam === phase.target ? null : { reason: "NotOnTargetTeam" };
+            return ctx.myTeam === phase.target ? passed : refuse({ reason: "NotOnTargetTeam" });
         case "ExtensionOffer":
             if (!isExtensionDecision(cmd)) {
-                return { reason: "ExtensionOfferOpen", decider: phase.deciderName };
+                return refuse({ reason: "ExtensionOfferOpen", decider: phase.deciderName });
             }
             return phase.decider === ctx.me ?
-                null :
-                { reason: "NotTheCaller", decider: phase.deciderName };
+                passed :
+                refuse({ reason: "NotTheCaller", decider: phase.deciderName });
         case "Over":
-            return { reason: "WrongPhase" };
+            return refuse({ reason: "WrongPhase" });
     }
 }
 
 
-function checkHand(ctx: PlayContext, cmd: PlayerCommand): Rejection | null {
+function checkHand(ctx: PlayContext, cmd: PlayerCommand): Result<void, Rejection> {
     return "card" in cmd && !ctx.hand.includes(cmd.card) ?
-        { reason: "CardNotInHand", card: cmd.card } :
-        null;
+        refuse({ reason: "CardNotInHand", card: cmd.card }) :
+        passed;
 }
 
 
@@ -196,38 +214,39 @@ function checkAttack(
     ctx: PlayContext,
     hazard: HazardCard,
     target: TeamIndex
-): Result<null, Rejection> {
+): Result<Option<ZoneChange>, Rejection> {
     if (target === ctx.myTeam) {
-        return new FailedResult({ reason: "CannotAttackOwnTeam" });
+        return refuse({ reason: "CannotAttackOwnTeam" });
     }
-    return canAttack(ctx.zones[target]!, hazard).mapSuccess(() => null);
+    const attack = canAttack(ctx.zones[target]!, hazard);
+    return attack.failed ? attack : noChange;
 }
 
 
-function checkCoupFourre(ctx: PlayContext, card: SafetyCard): Result<ZoneChange, Rejection> {
+function checkCoupFourre(ctx: PlayContext, card: SafetyCard): Result<Option<ZoneChange>, Rejection> {
     if (ctx.phase.kind !== "HazardIncoming") {
         return new FailedResult({ reason: "NoWindowOpen" });
     }
     const hazard = ctx.phase.hazard;
     return safetyFor(hazard) === card ?
-        new SucceededResult(playCoupFourre(ctx.zones[ctx.myTeam]!, card)) :
+        new SucceededResult(new SomeOption(playCoupFourre(ctx.zones[ctx.myTeam]!, card))) :
         new FailedResult({ reason: "WrongSafetyForHazard", hazard, card });
 }
 
 
-function checkZone(ctx: PlayContext, cmd: PlayerCommand): Result<ZoneChange | null, Rejection> {
+function checkZone(ctx: PlayContext, cmd: PlayerCommand): Result<Option<ZoneChange>, Rejection> {
     const zone = ctx.zones[ctx.myTeam]!;
     switch (cmd.type) {
         case "Drive":
-            return playDistance(zone, cmd.card, ctx.tripDistance);
+            return changed(playDistance(zone, cmd.card, ctx.tripDistance));
         case "Remedy":
-            return playRemedy(zone, cmd.card);
+            return changed(playRemedy(zone, cmd.card));
         case "PlaySafety":
-            return playSafety(zone, cmd.card);
+            return changed(playSafety(zone, cmd.card));
         case "Discard":
         case "CallExtension":
         case "DeclineExtension":
-            return new SucceededResult(null);
+            return noChange;
         case "Attack":
             return checkAttack(ctx, cmd.card, cmd.targetTeam);
         case "CoupFourre":
@@ -243,19 +262,23 @@ function checkZone(ctx: PlayContext, cmd: PlayerCommand): Result<ZoneChange | nu
  * flight is not part of it.
  * @param ctx - The player's context
  * @param cmd - The command
- * @returns The change to the player's zone, null for a command that changes
+ * @returns The change to the player's zone, none for a command that changes
  * no zone now (Attack, Discard, CallExtension, DeclineExtension), or the
  * rejection
  */
 export function checkPlay(
     ctx: PlayContext,
     cmd: PlayerCommand
-): Result<ZoneChange | null, Rejection> {
+): Result<Option<ZoneChange>, Rejection> {
     if (!isWellFormed(ctx, cmd)) {
-        return new FailedResult({ reason: "MalformedCommand" });
+        return refuse({ reason: "MalformedCommand" });
     }
-    const refused = checkPhaseAndTurn(ctx, cmd) ?? checkHand(ctx, cmd);
-    return refused ? new FailedResult(refused) : checkZone(ctx, cmd);
+    const phase = checkPhaseAndTurn(ctx, cmd);
+    if (phase.failed) {
+        return phase;
+    }
+    const hand = checkHand(ctx, cmd);
+    return hand.failed ? hand : checkZone(ctx, cmd);
 }
 
 

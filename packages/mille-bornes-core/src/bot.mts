@@ -1,3 +1,4 @@
+import { Option } from "@repo/depot/option";
 import { getRandom } from "@repo/depot/random";
 import {
     Card, distanceCardSchema, distanceMiles, hazardCardSchema, remedyFor, safetyCardSchema,
@@ -14,9 +15,17 @@ type Command<TType extends PlayerCommand["type"]> = Extract<PlayerCommand, { typ
 // Picks one item at random; callers pass a non-empty list.  A faulty `rand`
 // may return NaN, a negative number or 1 or more, so the index is clamped:
 // NaN and negatives pick the first item, 1 and more the last.
-function pick<TItem>(items: ReadonlyArray<TItem>, rand: () => number): TItem | undefined {
+function pick<TItem>(items: ReadonlyArray<TItem>, rand: () => number): Option<TItem> {
     const r = rand();
-    return items[r >= 0 ? Math.min(items.length - 1, Math.floor(r * items.length)) : 0];
+    return Option.fromNullable(
+        items[r >= 0 ? Math.min(items.length - 1, Math.floor(r * items.length)) : 0]
+    );
+}
+
+
+// The first item, if any.
+function first<TItem>(items: ReadonlyArray<TItem>): Option<TItem> {
+    return Option.fromNullable(items[0]);
 }
 
 
@@ -41,9 +50,9 @@ const extensionLead = 100;
 function discardRank(card: Card, view: PlayerView, legal: ReadonlyArray<PlayerCommand>): number {
     const myZone = view.teams[view.me.team]!.zone;
     // Lookups, not safeParse(): a failed parse builds a costly ZodError.
-    const distance = distanceCardSchema.options.find((c) => c === card);
+    const distance = Option.fromNullable(distanceCardSchema.options.find((c) => c === card));
     // Distance cards by miles, remedies between the 100 and the 200.
-    const keepValue = distance ? distanceMiles(distance) : 125;
+    const keepValue = distance.match(distanceMiles, () => 125);
 
     const cured = hazardCardSchema.options.filter((h) => remedyFor(h) === card);
     if (cured.length > 0 && cured.every((h) => hasSafety(myZone, safetyFor(h)))) {
@@ -53,13 +62,13 @@ function discardRank(card: Card, view: PlayerView, legal: ReadonlyArray<PlayerCo
         !legal.some((c) => c.type === "Attack" && c.card === card)) {
         return 1000 + keepValue;
     }
-    if (distance) {
+    if (distance.isSome) {
         const remaining = view.trip.distance - zoneMiles(myZone);
-        const thirdTwoHundred = distance === Card.dist200 &&
+        const thirdTwoHundred = distance.value === Card.dist200 &&
             myZone.distance.filter((c) => c === Card.dist200).length >= 2;
         // Extension may still raise the trip, so only a fixed trip is certain.
         const overshoots = view.trip.extension.kind !== "Available" &&
-            distanceMiles(distance) > remaining;
+            distanceMiles(distance.value) > remaining;
         if (thirdTwoHundred || overshoots) {
             return 2000;
         }
@@ -98,20 +107,20 @@ function discardRank(card: Card, view: PlayerView, legal: ReadonlyArray<PlayerCo
  * @param rand - Returns a number in [0, 1); breaks ties between equally good
  * plays (default `getRandom`); a fixed `rand` makes the choice deterministic.
  * A value outside [0, 1), or NaN, still gives a legal play
- * @returns The command, or null when the robot has no decision to make (not
+ * @returns The command, or none when the robot has no decision to make (not
  * its turn, no Coup Fourre it can play, no Extension offer for it)
  */
 export function chooseCommand(
     view: PlayerView,
     rand: () => number = getRandom
-): PlayerCommand | null {
+): Option<PlayerCommand> {
     const legal = legalPlays(view);
     const ofType = <TType extends PlayerCommand["type"]>(type: TType): Array<Command<TType>> => {
         return legal.filter((c): c is Command<TType> => c.type === type);
     };
 
-    const coupFourre = ofType("CoupFourre")[0];
-    if (coupFourre) {
+    const coupFourre = first(ofType("CoupFourre"));
+    if (coupFourre.isSome) {
         return coupFourre;
     }
 
@@ -119,12 +128,13 @@ export function chooseCommand(
         const decision = leadOverEveryone(view) >= extensionLead ?
             "CallExtension" :
             "DeclineExtension";
-        return legal.find((c) => c.type === decision) ?? null;
+        return Option.fromNullable(legal.find((c) => c.type === decision));
     }
 
-    const driving = ofType("Drive")
-    .sort((a, b) => distanceMiles(b.card) - distanceMiles(a.card))[0];
-    if (driving) {
+    const driving = first(
+        ofType("Drive").sort((a, b) => distanceMiles(b.card) - distanceMiles(a.card))
+    );
+    if (driving.isSome) {
         return driving;
     }
 
@@ -140,8 +150,8 @@ export function chooseCommand(
     const roll = legal.filter((c) => c.type === "Remedy" && c.card === Card.roll);
     const safeties = ofType("PlaySafety");
     for (const choices of [cures, roll, safeties]) {
-        const choice = choices[0];
-        if (choice) {
+        const choice = first(choices);
+        if (choice.isSome) {
             return choice;
         }
     }
@@ -150,11 +160,11 @@ export function chooseCommand(
     if (attacks.length > 0) {
         const milesOf = (a: Command<"Attack">): number => zoneMiles(view.teams[a.targetTeam]!.zone);
         const mostMiles = Math.max(...attacks.map(milesOf));
-        return pick(attacks.filter((a) => milesOf(a) === mostMiles), rand) ?? null;
+        return pick(attacks.filter((a) => milesOf(a) === mostMiles), rand);
     }
 
     const discards = ofType("Discard");
     const ranks = discards.map((d) => discardRank(d.card, view, legal));
     const least = Math.min(...ranks);
-    return pick(discards.filter((_, i) => ranks[i] === least), rand) ?? null;
+    return pick(discards.filter((_, i) => ranks[i] === least), rand);
 }

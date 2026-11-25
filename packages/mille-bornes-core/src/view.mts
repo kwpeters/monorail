@@ -1,3 +1,4 @@
+import { Option } from "@repo/depot/option";
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import {
     distanceCardSchema, hazardCardSchema, remedyCardSchema, safetyCardSchema, type Card,
@@ -128,10 +129,11 @@ function viewPhase(g: Game): ViewPhase {
  * @returns The view, or NotInGame when the viewer is not playing in the game
  */
 export function viewFor(g: Game, player: PlayerId): Result<PlayerView, Rejection> {
-    const me = g.players.find((p) => p.seat.id === player);
-    if (!me) {
+    const found = Option.fromNullable(g.players.find((p) => p.seat.id === player));
+    if (found.isNone) {
         return new FailedResult({ reason: "NotInGame" });
     }
+    const me = found.value;
     return new SucceededResult({
         gameId:     g.config.id,
         raceNumber: g.raceNumber,
@@ -179,25 +181,25 @@ export function eventsFor(
 // hot spot of every robot decision.
 function commandsFor(card: Card, v: PlayerView): ReadonlyArray<PlayerCommand> {
     const plays: Array<PlayerCommand> = [];
-    const distance = distanceCardSchema.options.find((c) => c === card);
-    const remedy = remedyCardSchema.options.find((c) => c === card);
-    const safety = safetyCardSchema.options.find((c) => c === card);
-    const hazard = hazardCardSchema.options.find((c) => c === card);
-    if (distance) {
-        plays.push({ type: "Drive", card: distance });
+    const distance = Option.fromNullable(distanceCardSchema.options.find((c) => c === card));
+    const remedy = Option.fromNullable(remedyCardSchema.options.find((c) => c === card));
+    const safety = Option.fromNullable(safetyCardSchema.options.find((c) => c === card));
+    const hazard = Option.fromNullable(hazardCardSchema.options.find((c) => c === card));
+    if (distance.isSome) {
+        plays.push({ type: "Drive", card: distance.value });
     }
-    if (remedy) {
-        plays.push({ type: "Remedy", card: remedy });
+    if (remedy.isSome) {
+        plays.push({ type: "Remedy", card: remedy.value });
     }
-    if (safety) {
+    if (safety.isSome) {
         plays.push(
-            { type: "PlaySafety", card: safety },
-            { type: "CoupFourre", card: safety }
+            { type: "PlaySafety", card: safety.value },
+            { type: "CoupFourre", card: safety.value }
         );
     }
-    if (hazard) {
+    if (hazard.isSome) {
         for (const { index } of v.teams.filter((t) => t.index !== v.me.team)) {
-            plays.push({ type: "Attack", card: hazard, targetTeam: index });
+            plays.push({ type: "Attack", card: hazard.value, targetTeam: index });
         }
     }
     return [...plays, { type: "Discard", card }];

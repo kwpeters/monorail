@@ -1,3 +1,4 @@
+import { NoneOption, Option } from "@repo/depot/option";
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import { z } from "zod";
 import { chooseCommand } from "./bot.mjs";
@@ -97,14 +98,14 @@ interface Decision {
 }
 
 
-// A uniformly random legal play; null for no play, or (in a hazard window)
+// A uniformly random legal play; none for no play, or (in a hazard window)
 // for letting the window close half the time.
-function randomChoice(view: PlayerView, rand: () => number): PlayerCommand | null {
+function randomChoice(view: PlayerView, rand: () => number): Option<PlayerCommand> {
     const legal = legalPlays(view);
     if (legal.length === 0 || (view.phase.kind === "HazardIncoming" && rand() >= 0.5)) {
-        return null;
+        return NoneOption.get();
     }
-    return legal[Math.min(legal.length - 1, Math.floor(rand() * legal.length))]!;
+    return Option.fromNullable(legal[Math.min(legal.length - 1, Math.floor(rand() * legal.length))]);
 }
 
 
@@ -123,15 +124,16 @@ function decisions(
         const cmd = policy === "Bot" ?
             chooseCommand(view.value, rand) :
             randomChoice(view.value, rand);
-        if (cmd === null) {
+        if (cmd.isNone) {
             continue;
         }
-        if (!legalPlays(view.value).some((c) => commandKey(c) === commandKey(cmd))) {
+        const chosen = cmd.value;
+        if (!legalPlays(view.value).some((c) => commandKey(c) === commandKey(chosen))) {
             return new FailedResult(
-                `The ${policy} player ${seat.name} chose ${commandKey(cmd)}, which is not legal.`
+                `The ${policy} player ${seat.name} chose ${commandKey(chosen)}, which is not legal.`
             );
         }
-        asked.push({ by: seat.id, cmd });
+        asked.push({ by: seat.id, cmd: chosen });
     }
     return new SucceededResult(asked);
 }
@@ -149,11 +151,12 @@ function step(
 ): Result<Stepped, string> {
     const phase = g.phase;
     return decisions(g, rand, policy).bind((asked): Result<Stepped, string> => {
-        const first = asked[0];
-        if (first) {
-            return applyPlayerCommand(g, first.by, first.cmd)
-            .mapSuccess((a) => ({ ...a, command: first.cmd.type }))
-            .mapError((r) => `${commandKey(first.cmd)} was rejected: ${describeRejection(r)}`);
+        const first = Option.fromNullable(asked[0]);
+        if (first.isSome) {
+            const { by, cmd } = first.value;
+            return applyPlayerCommand(g, by, cmd)
+            .mapSuccess((a) => ({ ...a, command: cmd.type }))
+            .mapError((r) => `${commandKey(cmd)} was rejected: ${describeRejection(r)}`);
         }
         switch (phase.kind) {
             case "HazardIncoming":

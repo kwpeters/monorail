@@ -1,3 +1,4 @@
+import { NoneOption } from "@repo/depot/option";
 import { Card, type DistanceCard, type SafetyCard } from "./card.mjs";
 import { newZone, type DrivingZone } from "./drivingZone.mjs";
 import { type TeamIndex } from "./ids.mjs";
@@ -289,10 +290,10 @@ describe("scoring", () => {
 
     describe("pointsGoal()", () => {
 
-        it("is null for Quick, 2000 for Short and 5000 for Full", () => {
-            expect(pointsGoal("Quick")).toBeNull();
-            expect(pointsGoal("Short") as number).toBe(2000);
-            expect(pointsGoal("Full") as number).toBe(5000);
+        it("is none for Quick, 2000 for Short and 5000 for Full", () => {
+            expect(pointsGoal("Quick")).toBe(NoneOption.get());
+            expect(pointsGoal("Short").toNullable(null) as number | null).toBe(2000);
+            expect(pointsGoal("Full").toNullable(null) as number | null).toBe(5000);
         });
 
     });

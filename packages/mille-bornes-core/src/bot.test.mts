@@ -1,3 +1,4 @@
+import { NoneOption, SomeOption } from "@repo/depot/option";
 import { Card, type DistanceCard } from "./card.mjs";
 import { type PlayerCommand } from "./commands.mjs";
 import { newZone, type DrivingZone } from "./drivingZone.mjs";
@@ -14,6 +15,12 @@ const bob = seatFor("Bob");
 const team0 = 0 as TeamIndex;
 const team1 = 1 as TeamIndex;
 const team2 = 2 as TeamIndex;
+
+
+/** `chooseCommand()` with the Option unwrapped, so tests compare commands or null. */
+function choose(v: PlayerView, rand?: () => number): PlayerCommand | null {
+    return chooseCommand(v, rand).toNullable(null);
+}
 
 
 function view(g: Game, player: PlayerId): PlayerView {
@@ -37,7 +44,7 @@ function annToPlay(
 
 /** Ann's choice in a 2-seat game on her turn. */
 function annChooses(hand: ReadonlyArray<Card>, zones?: ReadonlyArray<DrivingZone>): PlayerCommand | null {
-    return chooseCommand(view(annToPlay(hand, zones), ann.id), () => 0);
+    return choose(view(annToPlay(hand, zones), ann.id), () => 0);
 }
 
 
@@ -56,7 +63,7 @@ PlayerCommand | null {
         zones,
         phase: { kind: "ExtensionOffer", decider, team: team0 },
     });
-    return chooseCommand(view(g, to), () => 0);
+    return choose(view(g, to), () => 0);
 }
 
 
@@ -100,11 +107,11 @@ describe("bot", () => {
                 zones:  [rollingAt(Card.dist50), newZone()],
                 phase,
             });
-            expect(chooseCommand(view(game([Card.punctureProof, Card.dist25]), ann.id), () => 0))
+            expect(choose(view(game([Card.punctureProof, Card.dist25]), ann.id), () => 0))
             .toEqual({ type: "CoupFourre", card: Card.punctureProof });
-            expect(chooseCommand(view(game([Card.dist25]), ann.id), () => 0)).toBeNull();
+            expect(choose(view(game([Card.dist25]), ann.id), () => 0)).toBeNull();
             // The attacker's team has no say.
-            expect(chooseCommand(view(game([Card.punctureProof]), bob.id), () => 0)).toBeNull();
+            expect(choose(view(game([Card.punctureProof]), bob.id), () => 0)).toBeNull();
         });
 
 
@@ -150,7 +157,7 @@ describe("bot", () => {
                 hands:  [[Card.stop], [Card.dist25], [Card.dist25]],
                 zones:  [rollingAt(), rollingAt(Card.dist100), rollingAt(Card.dist100, Card.dist200)],
             });
-            expect(chooseCommand(view(g, ann.id), () => 0))
+            expect(choose(view(g, ann.id), () => 0))
             .toEqual({ type: "Attack", card: Card.stop, targetTeam: team2 });
         });
 
@@ -165,7 +172,7 @@ describe("bot", () => {
                 hands:  [[Card.stop], [Card.dist25], [Card.dist25]],
                 zones:  [rollingAt(), protectedLeader, rollingAt(Card.dist100)],
             });
-            expect(chooseCommand(view(g, ann.id), () => 0))
+            expect(choose(view(g, ann.id), () => 0))
             .toEqual({ type: "Attack", card: Card.stop, targetTeam: team2 });
         });
 
@@ -177,8 +184,8 @@ describe("bot", () => {
                 zones:  [rollingAt(), rollingAt(Card.dist100), rollingAt(Card.dist100)],
             });
             const v = view(g, ann.id);
-            expect(chooseCommand(v, () => 0)).toEqual({ type: "Attack", card: Card.stop, targetTeam: team1 });
-            expect(chooseCommand(v, () => 0.99))
+            expect(choose(v, () => 0)).toEqual({ type: "Attack", card: Card.stop, targetTeam: team1 });
+            expect(choose(v, () => 0.99))
             .toEqual({ type: "Attack", card: Card.stop, targetTeam: team2 });
         });
 
@@ -222,7 +229,7 @@ describe("bot", () => {
                     zones:     [zone, newZone()],
                     extension: { kind: "Called", caller: team0 },
                 });
-                return chooseCommand(view(g, ann.id), () => 0);
+                return choose(view(g, ann.id), () => 0);
             };
             const discard200 = { type: "Discard", card: Card.dist200 };
             // A third 200, and a 200 that overshoots the 1,000-mile trip.
@@ -235,7 +242,15 @@ describe("bot", () => {
 
 
         it("returns null when it is not the robot's turn", () => {
-            expect(chooseCommand(view(annToPlay([Card.dist25]), bob.id), () => 0)).toBeNull();
+            expect(choose(view(annToPlay([Card.dist25]), bob.id), () => 0)).toBeNull();
+        });
+
+
+        it("returns a some option holding the command, or a none option", () => {
+            const v = view(annToPlay([Card.dist25], [rollingAt(), newZone()]), ann.id);
+            const drive: PlayerCommand = { type: "Drive", card: Card.dist25 };
+            expect(chooseCommand(v, () => 0)).toEqual(new SomeOption(drive));
+            expect(chooseCommand(view(annToPlay([Card.dist25]), bob.id), () => 0)).toBe(NoneOption.get());
         });
 
 
@@ -283,9 +298,9 @@ describe("bot", () => {
 
         it("is deterministic for a fixed rand", () => {
             const v = view(annToPlay([Card.dist25, Card.dist50, Card.spareTire]), ann.id);
-            const first = chooseCommand(v, () => 0.5);
+            const first = choose(v, () => 0.5);
             for (let i = 0; i < 5; i++) {
-                expect(chooseCommand(v, () => 0.5)).toEqual(first);
+                expect(choose(v, () => 0.5)).toEqual(first);
             }
         });
 
@@ -299,7 +314,7 @@ describe("bot", () => {
             const views = [view(attackTie, ann.id), view(annToPlay([Card.dist25, Card.dist50]), ann.id)];
             for (const v of views) {
                 for (const rand of [(): number => NaN, (): number => -1, (): number => 1]) {
-                    const choice = chooseCommand(v, rand);
+                    const choice = choose(v, rand);
                     expect(choice).not.toBeNull();
                     expect(legalPlays(v)).toContain(choice!);
                 }

@@ -1,3 +1,4 @@
+import { Option } from "@repo/depot/option";
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import { type Applied } from "./commands.mjs";
 import { ShuffledDeck } from "./deck.mjs";
@@ -95,12 +96,12 @@ function removeSeat(p: PendingGame, by: PlayerId, id: PlayerId): Result<PendingG
 
 
 function swapSeats(p: PendingGame, a: PlayerId, b: PlayerId): Result<PendingGame, Rejection> {
-    const seatA = p.seats.find((s) => s.id === a);
-    const seatB = p.seats.find((s) => s.id === b);
-    if (!seatA || !seatB) {
+    const seatA = Option.fromNullable(p.seats.find((s) => s.id === a));
+    const seatB = Option.fromNullable(p.seats.find((s) => s.id === b));
+    if (seatA.isNone || seatB.isNone) {
         return reject({ reason: "NoSuchSeat" });
     }
-    const seats = p.seats.map((s) => s === seatA ? seatB : s === seatB ? seatA : s);
+    const seats = p.seats.map((s) => s === seatA.value ? seatB.value : s === seatB.value ? seatA.value : s);
     return new SucceededResult({ ...p, seats });
 }
 
@@ -112,8 +113,8 @@ function isString(x: unknown): boolean {
 
 // Commands come from clients, so check what the types promise.  Extra seat
 // properties are allowed here; `copySeat()` drops them.
-function isWellFormed(c: PendingCommand | null): boolean {
-    switch (c?.type) {
+function isWellFormed(c: PendingCommand): boolean {
+    switch (c.type) {
         case "AddHuman":
         case "AddRobot":
             return seatSchema.safeParse(c.seat).success;
@@ -142,11 +143,13 @@ export function applyPendingCommand(
     by:  PlayerId,
     cmd: PendingCommand
 ): Result<PendingGame, Rejection> {
-    const c = cmd as PendingCommand | null;
-    if (!isWellFormed(c)) {
+    // The static type promises a command, but a client may send null.
+    const received = Option.fromNullable<PendingCommand>(cmd);
+    if (received.isNone || !isWellFormed(received.value)) {
         return reject({ reason: "MalformedCommand" });
     }
-    switch (c?.type) {
+    const c = received.value;
+    switch (c.type) {
         case "AddHuman":
             return by === c.seat.id ? addSeat(p, c.seat, "Human") : reject({ reason: "NotOrganizer" });
         case "AddRobot":

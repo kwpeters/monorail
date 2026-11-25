@@ -1,3 +1,4 @@
+import { Option } from "@repo/depot/option";
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import { unwrapOrAddIssue } from "@repo/depot/zodHelpers";
 import { z } from "zod";
@@ -105,10 +106,12 @@ export function validateGameConfig(c: GameConfig): Result<GameConfig, string> {
     }
     for (const [i, seat] of seats.entries()) {
         const earlier = seats.slice(0, i);
-        const sameName = earlier.find((other) => PlayerName.isSame(other.name, seat.name));
-        if (sameName) {
+        const sameName = Option.fromNullable(
+            earlier.find((other) => PlayerName.isSame(other.name, seat.name))
+        );
+        if (sameName.isSome) {
             return new FailedResult(
-                `The names "${sameName.name}" and "${seat.name}" are too alike. Each player needs a different name.`
+                `The names "${sameName.value.name}" and "${seat.name}" are too alike. Each player needs a different name.`
             );
         }
         if (earlier.some((other) => other.id === seat.id)) {

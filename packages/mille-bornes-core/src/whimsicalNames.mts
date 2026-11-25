@@ -1,3 +1,4 @@
+import { Option } from "@repo/depot/option";
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import { getRandom } from "@repo/depot/random";
 import { PlayerName } from "./playerName.mjs";
@@ -73,9 +74,9 @@ export function pickWhimsicalName(
     const r = rand();
     const scaled = Number.isNaN(r) ? 0 : Math.floor(r * available.length);
     const index = Math.min(available.length - 1, Math.max(0, scaled));
-    const name = available[index];
-    // Undefined only when nothing is available.
-    return name === undefined ?
-        new FailedResult("Every whimsical name is already taken.") :
-        new SucceededResult(name);
+    // None only when nothing is available.
+    return Option.fromNullable(available[index]).match(
+        (name): Result<PlayerName, string> => new SucceededResult(name),
+        () => new FailedResult("Every whimsical name is already taken.")
+    );
 }
