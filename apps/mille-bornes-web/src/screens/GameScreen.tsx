@@ -6,6 +6,7 @@ import type { Screen } from "@repo/mille-bornes-game-server/screens";
 import { useRef, type ReactElement } from "react";
 import type { Api } from "../api/client.mjs";
 import { voidWire } from "../api/outcomes.mjs";
+import { EndGameDialog } from "../table/EndGameDialog.js";
 import { ExtensionOffer } from "../table/ExtensionOffer.js";
 import { Hand } from "../table/Hand.js";
 import { HazardBanner } from "../table/HazardBanner.js";
@@ -18,6 +19,8 @@ import { TopBar } from "../table/TopBar.js";
 import { OverrideContext, useOverrideMessage } from "../table/useOverrideMessage.js";
 import { useSelection } from "../table/useSelection.js";
 import { hazardAlertText, topBarMessage } from "../text/phaseHint.mjs";
+import { GameOverScreen } from "./GameOverScreen.js";
+import { RaceSummary } from "./RaceSummary.js";
 
 
 /** The server's `Playing` screen. */
@@ -121,66 +124,78 @@ export function GameScreen(props: GameScreenProps): ReactElement {
         return Option.fromNullable(found).mapSome((c) => sender(c.command));
     });
 
-    const table = (
+    const tableBody = (
         <OverrideContext.Provider value={setOverride}>
-            <section
-                className="screen table"
-                // Tapping the table outside any control puts the card back; the
-                // banner and the offer are not background.
-                onClick={(e) => {
-                    const keep = "button, dialog, .hazard-banner, .extension-offer";
-                    if (!(e.target instanceof Element && e.target.closest(keep))) {
-                        dispatch({ type: "Cancel" });
-                    }
+            <HazardBanner screen={screen} alert={hazardAlertText(view)} />
+            <ExtensionOffer screen={screen} onDecide={(command) => void send(command)} />
+            <div className="scoreboard">
+                {view.teams.map((team) => (
+                    <TeamRow
+                        key={team.index}
+                        view={view}
+                        team={team}
+                        onTurn={onTurn}
+                        robots={robots}
+                        connected={connected}
+                        onPlayHere={laneTarget(team.index)}
+                    />
+                ))}
+            </div>
+            <LastMove events={screen.events} view={view} />
+            <Piles
+                drawPileCount={view.drawPileCount}
+                discardTop={Option.fromNullable(view.discardTop)}
+                onDiscard={discard}
+            />
+            <Hand
+                cards={view.me.hand}
+                selected={selection.kind === "Card" ?
+                    new SomeOption(selection.index) :
+                    NoneOption.get()}
+                playable={(card) => targetsFor(view, card).targets.kind !== "None"}
+                counter={(card) => {
+                    const { targets } = targetsFor(view, card);
+                    return targets.kind === "Immediate" && targets.command.type === "CoupFourre";
                 }}
-            >
-                <TopBar text={message.text} tone={message.tone} />
-                <HazardBanner screen={screen} alert={hazardAlertText(view)} />
-                <ExtensionOffer screen={screen} onDecide={(command) => void send(command)} />
-                <div className="scoreboard">
-                    {view.teams.map((team) => (
-                        <TeamRow
-                            key={team.index}
-                            view={view}
-                            team={team}
-                            onTurn={onTurn}
-                            robots={robots}
-                            connected={connected}
-                            onPlayHere={laneTarget(team.index)}
-                        />
-                    ))}
-                </div>
-                <LastMove events={screen.events} view={view} />
-                <Piles
-                    drawPileCount={view.drawPileCount}
-                    discardTop={Option.fromNullable(view.discardTop)}
-                    onDiscard={discard}
-                />
-                <Hand
-                    cards={view.me.hand}
-                    selected={selection.kind === "Card" ?
-                        new SomeOption(selection.index) :
-                        NoneOption.get()}
-                    playable={(card) => targetsFor(view, card).targets.kind !== "None"}
-                    counter={(card) => {
-                        const { targets } = targetsFor(view, card);
-                        return targets.kind === "Immediate" && targets.command.type === "CoupFourre";
-                    }}
-                    onPlay={play}
-                    onTap={tapCard}
-                />
-            </section>
+                onPlay={play}
+                onTap={tapCard}
+            />
         </OverrideContext.Provider>
     );
 
-    // The one place that depends on the phase.  Task 9 gives RaceOver and
-    // GameOver their own screens here; until then every phase shows the table.
-    switch (view.phase.kind) {
-        case "Turn":
-        case "HazardIncoming":
-        case "ExtensionOffer":
-        case "RaceOver":
-        case "GameOver":
-            return table;
-    }
+    // The one place that depends on the phase.  The frame (and with it the
+    // top bar's live region) stays mounted as the phase changes.
+    const table = view.phase.kind !== "RaceOver" && view.phase.kind !== "GameOver";
+    const body = ((): ReactElement => {
+        switch (view.phase.kind) {
+            case "Turn":
+            case "HazardIncoming":
+            case "ExtensionOffer":
+                return tableBody;
+            case "RaceOver":
+                return <RaceSummary screen={screen} />;
+            case "GameOver":
+                return <GameOverScreen screen={screen} api={api} />;
+        }
+    })();
+
+    return (
+        <section
+            className={table ? "screen table" : "screen"}
+            // Tapping the table outside any control puts the card back; the
+            // banner and the offer are not background.
+            onClick={(e) => {
+                const keep = "button, dialog, .hazard-banner, .extension-offer";
+                if (!(e.target instanceof Element && e.target.closest(keep))) {
+                    dispatch({ type: "Cancel" });
+                }
+            }}
+        >
+            <TopBar text={message.text} tone={message.tone} />
+            {screen.isOrganizer && view.phase.kind !== "GameOver" ?
+                <EndGameDialog api={api} /> :
+                null}
+            {body}
+        </section>
+    );
 }

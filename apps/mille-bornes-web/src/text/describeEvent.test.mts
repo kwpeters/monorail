@@ -3,7 +3,7 @@ import { type GameEvent } from "@repo/mille-bornes-core/events";
 import { PlayerId } from "@repo/mille-bornes-core/ids";
 import { describe, expect, it } from "vitest";
 import { idOf, team, viewForSeats } from "../testing/viewFixtures.mjs";
-import { describeEvent, describeRaceResult } from "./describeEvent.mjs";
+import { describeEvent, describeRaceResult, raceWinner } from "./describeEvent.mjs";
 
 
 describe("describeEvent", () => {
@@ -204,6 +204,30 @@ describe("describeEvent", () => {
             const outcome = { kind: "Exhausted", winner: "Tie", extensionCaller: null } as const;
             expect(describeRaceResult({ outcome, scores: [] }, team(0)))
             .toBe("The cards ran out, and it is a tie.");
+        });
+
+    });
+
+
+    describe("raceWinner", () => {
+
+        it("is the team that completed the trip", () => {
+            const outcome = {
+                kind: "TripCompleted", team: team(2), delayedAction: false, extensionCaller: null,
+            } as const;
+            expect(raceWinner({ outcome, scores: [] }).toNullable(null)).toBe(2);
+        });
+
+
+        it("is the team farthest ahead when the cards ran out", () => {
+            const outcome = { kind: "Exhausted", winner: team(1), extensionCaller: null } as const;
+            expect(raceWinner({ outcome, scores: [] }).toNullable(null)).toBe(1);
+        });
+
+
+        it("is nobody in a tie", () => {
+            const outcome = { kind: "Exhausted", winner: "Tie", extensionCaller: null } as const;
+            expect(raceWinner({ outcome, scores: [] }).toNullable(null)).toBeNull();
         });
 
     });

@@ -886,3 +886,122 @@ svg {
         transition: transform 0.15s;
     }
 }
+
+
+/* Race summary, score sheet, game over. */
+
+/* The portal target of ShellControls: it adds no box of its own. */
+.shell-slot {
+    display: contents;
+}
+
+.shell-button {
+    padding-block: var(--space-1);
+    font-size: 0.85rem;
+}
+
+.race-outcome {
+    font-weight: 600;
+}
+
+.winner-heading {
+    font-size: 1.5rem;
+    overflow-wrap: anywhere;
+}
+
+/* The table scrolls sideways inside its region, not the page. */
+.score-scroll {
+    overflow-x: auto;
+    max-inline-size: 100%;
+    border: 2px solid var(--color-border);
+    border-radius: 0.75rem;
+    background: var(--color-surface);
+}
+
+.score-scroll:focus-visible {
+    outline: 3px solid var(--color-text);
+    outline-offset: 2px;
+}
+
+.score-sheet {
+    inline-size: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.score-sheet th,
+.score-sheet td {
+    padding: var(--space-1) var(--space-2);
+    border-block-end: 1px solid var(--color-border);
+}
+
+/* The row headings stay in view while the teams scroll under them. */
+.score-sheet tbody th {
+    position: sticky;
+    inset-inline-start: 0;
+    background: var(--color-surface);
+    font-weight: 600;
+    text-align: start;
+    white-space: nowrap;
+}
+
+.score-sheet thead th {
+    vertical-align: bottom;
+}
+
+.score-team {
+    min-inline-size: 5.5rem;
+    text-align: end;
+}
+
+/* Long names end in an ellipsis; the full name is the text. */
+.score-team-name {
+    display: block;
+    max-inline-size: 7rem;
+    margin-inline-start: auto;
+}
+
+.score-winner {
+    color: #1d6b2e;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.score-team.winning {
+    background: #d3f9d8;
+}
+
+.score-sheet .num {
+    text-align: end;
+}
+
+.score-sheet tr.total th,
+.score-sheet tr.total td {
+    border-block-start: 2px solid var(--color-text);
+    font-weight: 700;
+}
+
+.reveal {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.reveal li {
+    display: flex;
+    min-inline-size: 0;
+}
+
+.reveal-name {
+    flex: 0 1 auto;
+    font-weight: 600;
+}
+
+.reveal-kind {
+    flex-shrink: 0;
+    white-space: pre;
+}

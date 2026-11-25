@@ -1,3 +1,4 @@
+import { Option } from "@repo/depot/option";
 import { type Card } from "@repo/mille-bornes-core/card";
 import { type GameEvent } from "@repo/mille-bornes-core/events";
 import { type RaceResult } from "@repo/mille-bornes-core/game";
@@ -28,6 +29,20 @@ export function describeRaceResult(result: RaceResult, viewerTeam: TeamIndex): s
     return outcome.winner === viewerTeam ?
         "The cards ran out, and your team was farthest ahead!" :
         `The cards ran out, and ${teamLabel(outcome.winner)} was farthest ahead.`;
+}
+
+
+/**
+ * Gets the team that won a race.
+ * @param result - The race's result
+ * @returns The team that completed the trip, or was farthest ahead when the
+ * cards ran out; none for a tie
+ */
+export function raceWinner(result: RaceResult): Option<TeamIndex> {
+    const { outcome } = result;
+    return outcome.kind === "TripCompleted" ?
+        Option.fromNullable(outcome.team) :
+        Option.fromNullable(outcome.winner === "Tie" ? null : outcome.winner);
 }
 
 

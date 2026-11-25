@@ -44,6 +44,10 @@ export interface FakeProcedures {
     setLength:  Mock<(input: { length: string }) => Promise<unknown>>;
     start:      Mock<() => Promise<unknown>>;
     play:       Mock<(input: PlayerCommand) => Promise<unknown>>;
+    /** `game.end` */
+    endGame:    Mock<() => Promise<unknown>>;
+    /** `game.leave` (`leave` is the waiting room's). */
+    leaveGame:  Mock<() => Promise<unknown>>;
 }
 
 
@@ -76,7 +80,9 @@ export function createFakeApi(): FakeApi {
         swapSeats:  vi.fn(() => Promise.resolve(okWire(undefined))),
         setLength:  vi.fn(() => Promise.resolve(okWire(undefined))),
         start:      vi.fn(() => Promise.resolve(okWire(undefined))),
-        play:       vi.fn(() => Promise.resolve(okWire(undefined)))
+        play:       vi.fn(() => Promise.resolve(okWire(undefined))),
+        endGame:    vi.fn(() => Promise.resolve(okWire(undefined))),
+        leaveGame:  vi.fn(() => Promise.resolve(okWire(undefined)))
     };
 
     const trpc = {
@@ -99,7 +105,9 @@ export function createFakeApi(): FakeApi {
             start:      { mutate: procs.start }
         },
         game: {
-            play: { mutate: procs.play }
+            play:  { mutate: procs.play },
+            end:   { mutate: procs.endGame },
+            leave: { mutate: procs.leaveGame }
         }
     } as unknown as Api["trpc"];
 

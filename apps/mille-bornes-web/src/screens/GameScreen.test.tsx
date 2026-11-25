@@ -4,6 +4,7 @@ import { applySystemCommand } from "@repo/mille-bornes-core/engine";
 import { describeRejection } from "@repo/mille-bornes-core/rejection";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
+import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
     annPlays, extensionOffer, flatTireWindow, midRace, viewOf
@@ -18,7 +19,9 @@ import {
 import {
     blockedZone, rollingZone, speedLimitedZone, withSafety
 } from "../testing/zoneFixtures.mjs";
+import { finishedGame, screenOf } from "../testing/finishedGames.mjs";
 import { GameScreen, type PlayingData } from "./GameScreen.js";
+import { Shell } from "./Shell.js";
 
 
 const hostile = "<img src=x onerr=1>";
@@ -698,6 +701,142 @@ describe("GameScreen", () => {
             expect(screen.queryByRole("button", { name: "Call Extension" })).not.toBeInTheDocument();
             expect(screen.queryByRole("button", { name: "Stop here" })).not.toBeInTheDocument();
             expect(bar()).toHaveTextContent("Ann is deciding whether to go for 1,000");
+        });
+
+    });
+
+
+    describe("the end of a race and of the game", () => {
+
+        const robot = "Sir Honks-a-Lot";
+        const finished = finishedGame(2, {
+            seed: 4, length: "Short", names: ["Ann", robot], robots: [robot],
+        });
+        const raceOver = finished.raceOvers[0]!;
+        const gameOver = finished.gameOver;
+        const next = { kind: "NextRace", remainingMs: 20000 } as const;
+
+
+        function inShell(data: PlayingData, fake: FakeApi = createFakeApi()) {
+            const ui = (d: PlayingData): ReactElement => (
+                <Shell><GameScreen screen={d} api={fake.api} /></Shell>
+            );
+            const rendered = render(ui(data));
+            return { ...rendered, again: (d: PlayingData) => rendered.rerender(ui(d)), fake };
+        }
+
+
+        function endGameControl(): HTMLElement | null {
+            return within(screen.getByRole("banner")).queryByRole("button", { name: "End game" });
+        }
+
+
+        it("shows the race summary instead of the table when a race is over", () => {
+            const data = screenOf(raceOver, "Ann", { timer: next });
+            show(data);
+            expect(screen.getByRole("region", { name: "Score sheet" })).toBeInTheDocument();
+            expect(screen.getByRole("timer")).toHaveTextContent("Next race in 20 s");
+            expect(bar()).toHaveTextContent(topBarMessage(data.view).text);
+            expect(document.querySelectorAll("[data-anim-anchor]")).toHaveLength(0);
+            expect(screen.queryByRole("region", { name: "Your hand" })).not.toBeInTheDocument();
+        });
+
+
+        it("shows the game over screen with the reveal when the game is over", () => {
+            const data = screenOf(gameOver, "Ann");
+            show(data);
+            expect(screen.getByRole("list", { name: "Who was who" })).toHaveTextContent(
+                `Ann was... a human!${robot} was... a robot!`
+            );
+            expect(screen.getByRole("button", { name: "Back to lobby" })).toBeInTheDocument();
+            expect(bar()).toHaveTextContent(topBarMessage(data.view).text);
+        });
+
+
+        it("keeps the top bar's live region mounted across the phases", () => {
+            const { again } = show(playingScreen(viewOf(midRace, "Ann")));
+            const live = bar();
+            again(screenOf(raceOver, "Ann", { timer: next }));
+            expect(bar()).toBe(live);
+            expect(live).toHaveTextContent("Race over!");
+            again(screenOf(gameOver, "Ann"));
+            expect(bar()).toBe(live);
+            expect(live).toHaveTextContent("Game over!");
+        });
+
+
+        it("reveals no seat's kind before the game is over", () => {
+            const bobId = idOf(viewOf(midRace, "Ann"), "Bob");
+            const screens = [
+                playingScreen(viewOf(midRace, "Ann")),
+                playingScreen(viewOf(midRace, "Ann"), { isOrganizer: true, robots: [bobId] }),
+                screenOf(raceOver, "Ann", { timer: next }),
+                screenOf(raceOver, "Ann", { timer: next, isOrganizer: true }),
+                screenOf(raceOver, robot, { timer: next }),
+            ];
+            for (const data of screens) {
+                const { container, unmount } = show(data);
+                if (data.view.phase.kind === "RaceOver") {
+                    expect(container).not.toHaveTextContent(/was\.\.\.|human|robot/iu);
+                }
+                expect(screen.queryByRole("list", { name: "Who was who" })).toBeNull();
+                expect(JSON.stringify(data.view.phase)).not.toContain("reveal");
+                unmount();
+            }
+        });
+
+
+        it("keeps the table for a race still on", () => {
+            show(playingScreen(viewOf(midRace, "Ann")));
+            expect(screen.getByRole("region", { name: "Your hand" })).toBeInTheDocument();
+            expect(screen.queryByRole("region", { name: "Score sheet" })).not.toBeInTheDocument();
+        });
+
+
+        it("gives the organizer an End game control in the header while playing", () => {
+            inShell(playingScreen(viewOf(midRace, "Ann"), { isOrganizer: true }));
+            expect(endGameControl()).toBeInTheDocument();
+        });
+
+
+        it("gives the organizer the control between races too", () => {
+            inShell(screenOf(raceOver, "Ann", { timer: next, isOrganizer: true }));
+            expect(endGameControl()).toBeInTheDocument();
+        });
+
+
+        it("gives the organizer no control once the game is over", () => {
+            const { again } = inShell(screenOf(raceOver, "Ann", { isOrganizer: true }));
+            expect(endGameControl()).toBeInTheDocument();
+            again(screenOf(gameOver, "Ann", { isOrganizer: true }));
+            expect(screen.queryByRole("button", { name: "End game" })).not.toBeInTheDocument();
+        });
+
+
+        it("gives everyone else no control", () => {
+            for (const data of [
+                playingScreen(viewOf(midRace, "Bob")),
+                screenOf(raceOver, "Ann", { timer: next }),
+                screenOf(gameOver, "Ann"),
+            ]) {
+                const { unmount } = inShell(data);
+                expect(screen.queryByRole("button", { name: "End game" })).not.toBeInTheDocument();
+                unmount();
+            }
+        });
+
+
+        it("ends the game on confirmation and shows a refusal in the page", async () => {
+            const fake = createFakeApi();
+            fake.procs.endGame.mockResolvedValueOnce(failWire("The game already ended."));
+            inShell(screenOf(raceOver, "Ann", { timer: next, isOrganizer: true }), fake);
+            const user = userEvent.setup();
+            await user.click(endGameControl()!);
+            const dialog = document.querySelector("dialog")!;
+            await user.click(within(dialog).getByRole("button", { name: "End game" }));
+            expect(fake.procs.endGame).toHaveBeenCalledOnce();
+            expect(await screen.findByRole("alert")).toHaveTextContent("The game already ended.");
+            expect(within(screen.getByRole("main")).getByRole("alert")).toBeInTheDocument();
         });
 
     });
