@@ -656,12 +656,24 @@ svg {
     border-style: solid;
 }
 
+/*
+ * At the bottom of the table, and on a screen too short for the whole table
+ * it stays in view while the rest scrolls under it.
+ */
+/* The CSS linter does not know env() yet. */
+/* eslint-disable css/no-invalid-properties */
 .hand {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
     margin-block-start: auto;
     padding: var(--space-2);
+    padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
     border-radius: 0.75rem;
     background: #e9ecef;
+    box-shadow: 0 -0.25rem 0.75rem rgb(0 0 0 / 12%);
 }
+/* eslint-enable css/no-invalid-properties */
 
 .hand-label {
     margin-block-end: var(--space-2);
@@ -771,8 +783,9 @@ svg {
     box-shadow: 0 0.3rem 0.6rem rgb(0 0 0 / 30%);
 }
 
+/* Dimmed, but its words keep at least AA contrast: it can still be tapped. */
 .card-button.dimmed .card {
-    opacity: 0.45;
+    opacity: 0.6;
 }
 
 /* The answer to a hazard glows, and its badge says so in words. */
@@ -880,6 +893,21 @@ svg {
     margin: 0 0 var(--space-3);
 }
 
+/* A short screen packs the table tighter; cards stay above the target size. */
+@media (max-height: 700px) {
+    .screen.table {
+        gap: var(--space-2);
+    }
+
+    .pile {
+        min-block-size: 4rem;
+    }
+
+    .card {
+        min-block-size: 3.75rem;
+    }
+}
+
 /* Movement only when the reader has not asked for less; the states still show. */
 @media (prefers-reduced-motion: no-preference) {
     .card-button {
@@ -948,14 +976,16 @@ svg {
     border-block-end: 1px solid var(--color-border);
 }
 
-/* The row headings stay in view while the teams scroll under them. */
+/*
+ * The row headings stay in view while the teams scroll under them, and wrap
+ * on a narrow screen so that two teams fit beside them.
+ */
 .score-sheet tbody th {
     position: sticky;
     inset-inline-start: 0;
     background: var(--color-surface);
     font-weight: 600;
     text-align: start;
-    white-space: nowrap;
 }
 
 .score-sheet thead th {
@@ -963,14 +993,14 @@ svg {
 }
 
 .score-team {
-    min-inline-size: 5.5rem;
+    min-inline-size: 5rem;
     text-align: end;
 }
 
 /* Long names end in an ellipsis; the full name is the text. */
 .score-team-name {
     display: block;
-    max-inline-size: 7rem;
+    max-inline-size: 5rem;
     margin-inline-start: auto;
 }
 
