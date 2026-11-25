@@ -13,6 +13,10 @@
         "soak": "tsx ./src/soak.mts"
     },
     "exports": {
+        "./bot": {
+            "types": "./src/bot.mts",
+            "default": "./dist/bot.mjs"
+        },
         "./card": {
             "types": "./src/card.mts",
             "default": "./dist/card.mjs"
