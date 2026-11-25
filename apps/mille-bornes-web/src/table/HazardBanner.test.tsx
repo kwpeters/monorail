@@ -56,6 +56,15 @@ describe("HazardBanner", () => {
         expect(countdown()).toHaveTextContent("1 second left");
         tick(5000);
         expect(countdown()).toHaveTextContent("0 seconds left");
+        // No interval is left running once it has reached zero.
+        expect(vi.getTimerCount()).toBe(0);
+    });
+
+
+    it("starts no clock for a timer that has already run out", () => {
+        render(<HazardBanner alert={alert} screen={windowFor("Bob", 0)} />);
+        expect(countdown()).toHaveTextContent("0 seconds left");
+        expect(vi.getTimerCount()).toBe(0);
     });
 
 

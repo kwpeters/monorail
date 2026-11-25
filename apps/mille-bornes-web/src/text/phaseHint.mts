@@ -36,7 +36,8 @@ const defaultWindowSeconds = 5;
  * which safety could answer, and everyone else hears only what was played,
  * so the text never hints at who holds a counter.
  * @param view - The viewer's view
- * @param windowSeconds - The hazard window length (default 5)
+ * @param windowSeconds - The hazard window length (default 5); under 1, the
+ * text states no time
  * @returns The text and its tone
  */
 export function topBarMessage(
@@ -58,11 +59,13 @@ export function topBarMessage(
                     tone: "Info",
                 };
             }
-            const seconds = `${windowSeconds} ${windowSeconds === 1 ? "second" : "seconds"}`;
             const safety = cardFace(safetyFor(phase.hazard)).label;
+            // With less than a second left there is no time to state.
+            const time = windowSeconds < 1 ?
+                "" :
+                ` You have ${windowSeconds} ${windowSeconds === 1 ? "second" : "seconds"}.`;
             return {
-                text: `${hazard}! You have ${seconds}. ` +
-                    `If anyone on your team holds ${safety}, play it now.`,
+                text: `${hazard}!${time} If anyone on your team holds ${safety}, play it now.`,
                 tone: "Alert",
             };
         }
@@ -87,4 +90,16 @@ export function topBarMessage(
                 tone: "Info",
             };
     }
+}
+
+
+/**
+ * Gets what the hazard banner says to the target team: the top bar's alert
+ * without its "You have N seconds." clause, because the banner's countdown
+ * is the one live number.
+ * @param view - The viewer's view, in a hazard window aimed at their team
+ * @returns The alert text
+ */
+export function hazardAlertText(view: PlayerView): string {
+    return topBarMessage(view, 0).text;
 }

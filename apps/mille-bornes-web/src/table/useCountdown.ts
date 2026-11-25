@@ -44,12 +44,17 @@ export function useCountdown(screen: PlayingData, kind: TimerKind): Option<numbe
 
     useEffect(() => {
         const ms = timerOf(screen, kind);
-        if (ms.isNone) {
+        // A timer that has run out shows 0 and needs no clock.
+        if (ms.isNone || ms.value <= 0) {
             return undefined;
         }
         const deadline = Date.now() + ms.value;
         const id = window.setInterval(() => {
-            setTick(new SomeOption({ screen, seconds: wholeSeconds(deadline - Date.now()) }));
+            const seconds = wholeSeconds(deadline - Date.now());
+            setTick(new SomeOption({ screen, seconds }));
+            if (seconds === 0) {
+                window.clearInterval(id);
+            }
         }, tickMs);
         return () => window.clearInterval(id);
     }, [screen, kind]);

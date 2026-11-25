@@ -2,7 +2,17 @@ import { NoneOption, SomeOption } from "@repo/depot/option";
 import { Card } from "@repo/mille-bornes-core/card";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { Piles } from "./Piles.js";
+import { Piles, type PilesProps } from "./Piles.js";
+
+
+const noDiscard = NoneOption.get();
+
+
+function showPiles(props: Partial<PilesProps> = {}) {
+    return render(
+        <Piles drawPileCount={10} discardTop={NoneOption.get()} onDiscard={noDiscard} {...props} />
+    );
+}
 
 
 describe("Piles", () => {
@@ -10,7 +20,7 @@ describe("Piles", () => {
     describe("the draw pile", () => {
 
         it("shows the count and says it in its label", () => {
-            render(<Piles drawPileCount={62} discardTop={NoneOption.get()} onDiscard={NoneOption.get()} />);
+            showPiles({ drawPileCount: 62 });
             const pile = screen.getByRole("img", { name: "Draw pile, 62 cards" });
             expect(pile).toHaveTextContent("62");
             expect(pile).toHaveAttribute("data-anim-anchor", "draw-pile");
@@ -18,7 +28,7 @@ describe("Piles", () => {
 
 
         it("says one card in the singular", () => {
-            render(<Piles drawPileCount={1} discardTop={NoneOption.get()} onDiscard={NoneOption.get()} />);
+            showPiles({ drawPileCount: 1 });
             expect(screen.getByRole("img", { name: "Draw pile, 1 card" })).toBeInTheDocument();
         });
 
@@ -28,7 +38,7 @@ describe("Piles", () => {
     describe("the discard pile", () => {
 
         it("shows an empty state when nothing was discarded", () => {
-            render(<Piles drawPileCount={10} discardTop={NoneOption.get()} onDiscard={NoneOption.get()} />);
+            showPiles();
             const pile = screen.getByRole("group", { name: "Discard pile, empty" });
             expect(pile).toHaveTextContent("Discard");
             expect(pile).toHaveAttribute("data-anim-anchor", "discard-pile");
@@ -37,7 +47,7 @@ describe("Piles", () => {
 
 
         it("shows the top card face", () => {
-            render(<Piles drawPileCount={10} discardTop={new SomeOption(Card.roll)} onDiscard={NoneOption.get()} />);
+            showPiles({ discardTop: new SomeOption(Card.roll) });
             const pile = screen.getByRole("group", { name: "Discard pile" });
             expect(within(pile).getByText("Roll")).toBeInTheDocument();
             expect(pile.querySelector("[data-card]")).toHaveAttribute("data-card", "Roll");

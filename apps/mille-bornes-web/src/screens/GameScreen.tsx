@@ -17,7 +17,7 @@ import { TeamRow } from "../table/TeamRow.js";
 import { TopBar } from "../table/TopBar.js";
 import { OverrideContext, useOverrideMessage } from "../table/useOverrideMessage.js";
 import { useSelection } from "../table/useSelection.js";
-import { topBarMessage } from "../text/phaseHint.mjs";
+import { hazardAlertText, topBarMessage } from "../text/phaseHint.mjs";
 
 
 /** The server's `Playing` screen. */
@@ -37,10 +37,11 @@ const reasonMs = 3000;
 
 // The hazard window's length as the top bar states it: what was left when
 // the screen was sent.  Fixed per screen, because the top bar is a live
-// region and must not be re-announced every second.
+// region and must not be re-announced every second.  Under a second it is 0,
+// and the top bar then states no time.
 function windowSeconds(screen: PlayingData): Option<number> {
     return Option.fromNullable(screen.timer?.kind === "HazardWindow" ? screen.timer : null)
-    .mapSome((t) => Math.max(1, Math.ceil(t.remainingMs / 1000)));
+    .mapSome((t) => t.remainingMs < 1000 ? 0 : Math.ceil(t.remainingMs / 1000));
 }
 
 
@@ -124,15 +125,17 @@ export function GameScreen(props: GameScreenProps): ReactElement {
         <OverrideContext.Provider value={setOverride}>
             <section
                 className="screen table"
-                // Tapping the table outside any control puts the card back.
+                // Tapping the table outside any control puts the card back; the
+                // banner and the offer are not background.
                 onClick={(e) => {
-                    if (!(e.target instanceof Element && e.target.closest("button, dialog"))) {
+                    const keep = "button, dialog, .hazard-banner, .extension-offer";
+                    if (!(e.target instanceof Element && e.target.closest(keep))) {
                         dispatch({ type: "Cancel" });
                     }
                 }}
             >
                 <TopBar text={message.text} tone={message.tone} />
-                <HazardBanner screen={screen} alert={phaseMessage.text} />
+                <HazardBanner screen={screen} alert={hazardAlertText(view)} />
                 <ExtensionOffer screen={screen} onDecide={(command) => void send(command)} />
                 <div className="scoreboard">
                     {view.teams.map((team) => (

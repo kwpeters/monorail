@@ -28,8 +28,11 @@ export type Targets =
         readonly discard: Option<PlayerCommand>;
     }
     | {
-        readonly kind:    "Choose";
-        readonly teams:   ReadonlyArray<{ readonly team: TeamIndex; readonly command: AttackCommand }>;
+        readonly kind:  "Choose";
+        readonly teams:   ReadonlyArray<{
+            readonly team:    TeamIndex;
+            readonly command: AttackCommand;
+        }>;
         readonly discard: Option<PlayerCommand>;
     };
 

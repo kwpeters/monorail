@@ -59,7 +59,10 @@ export function useSelection(view: PlayerView, setOverride: SetOverride): Select
             if (message.isSome) {
                 setOverride(message.value, "Info", staleMessageMs);
             }
-            setHeld({ selection: reduceSelection(held.selection, { type: "ScreenChanged" }), at: view });
+            setHeld({
+                selection: reduceSelection(held.selection, { type: "ScreenChanged" }),
+                at:        view,
+            });
         }
     }, [stale, held, view, setOverride]);
 

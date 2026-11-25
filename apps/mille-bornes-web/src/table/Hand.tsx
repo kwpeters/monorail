@@ -1,6 +1,8 @@
 import { NoneOption, SomeOption, type Option } from "@repo/depot/option";
 import type { Card } from "@repo/mille-bornes-core/card";
-import { useEffect, useId, useRef, useState, type ReactElement } from "react";
+import {
+    useEffect, useId, useRef, useState, type MutableRefObject, type ReactElement
+} from "react";
 import { CardHelp } from "./CardHelp.js";
 import { CardView } from "./CardView.js";
 
@@ -27,6 +29,13 @@ const moveTolerancePx = 10;
 
 interface HandCardProps {
     card:        Card;
+    /**
+     * Set when a long press fires, so the click that follows the release is
+     * not also a tap.  Shared by the hand, which clears it when the help
+     * closes: a mouse release can land on the help, and that click never
+     * reaches the card.
+     */
+    longPressed: MutableRefObject<boolean>;
     selected:    boolean;
     playable:    boolean;
     counter:     boolean;
@@ -38,13 +47,9 @@ interface HandCardProps {
 // One card as a toggle button.  A press held for 500 ms without moving opens
 // the help instead of tapping; it works with a mouse, a pen and a finger.
 function HandCard(props: HandCardProps): ReactElement {
-    const { card, selected, playable, counter, onTap, onLongPress } = props;
+    const { card, longPressed, selected, playable, counter, onTap, onLongPress } = props;
     const timer = useRef<number | undefined>(undefined);
     const start = useRef({ x: 0, y: 0 });
-    // Set when the long press fires, so the click that follows the release
-    // is not also a tap.  Reset by every press: with a mouse the release can
-    // land on the dialog, and that click never reaches the card.
-    const longPressed = useRef(false);
 
     const cancel = (): void => {
         window.clearTimeout(timer.current);
@@ -120,8 +125,10 @@ export function Hand(props: HandProps): ReactElement {
     const { cards, selected, playable, counter, onPlay, onTap } = props;
     const labelId = useId();
     const [help, setHelp] = useState<Option<Help>>(NoneOption.get());
+    const longPressed = useRef(false);
 
     const closeHelp = (): void => {
+        longPressed.current = false;
         if (help.isSome) {
             help.value.button.focus();
         }
@@ -137,6 +144,7 @@ export function Hand(props: HandProps): ReactElement {
                     <li key={`${i}-${card}`}>
                         <HandCard
                             card={card}
+                            longPressed={longPressed}
                             selected={selected.isSome && selected.value === i}
                             playable={playable(card)}
                             counter={counter(card)}

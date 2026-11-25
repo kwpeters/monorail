@@ -116,7 +116,9 @@ describe("Hand", () => {
             const onPlay = vi.fn();
             const { rerender, props } = showHand([Card.dist25]);
             expect(screen.queryByRole("button", { name: "Play" })).not.toBeInTheDocument();
-            rerender(<Hand {...props} selected={new SomeOption(0)} onPlay={new SomeOption(onPlay)} />);
+            rerender(
+                <Hand {...props} selected={new SomeOption(0)} onPlay={new SomeOption(onPlay)} />
+            );
             fireEvent.click(screen.getByRole("button", { name: "Play" }));
             expect(onPlay).toHaveBeenCalledOnce();
         });
@@ -216,6 +218,16 @@ describe("Hand", () => {
             fireEvent.click(screen.getByRole("button", { name: "Close" }));
             fireEvent.pointerDown(cardButton("Flat Tire"));
             fireEvent.pointerUp(cardButton("Flat Tire"));
+            fireEvent.click(cardButton("Flat Tire"));
+            expect(props.onTap).toHaveBeenCalledOnce();
+        });
+
+
+        it("does not eat a keystroke after the help closes", () => {
+            // A key press clicks the button with no pointer events before it.
+            const { props } = showHand([Card.flatTire]);
+            press(cardButton("Flat Tire"), 500, false);
+            fireEvent.click(screen.getByRole("button", { name: "Close" }));
             fireEvent.click(cardButton("Flat Tire"));
             expect(props.onTap).toHaveBeenCalledOnce();
         });

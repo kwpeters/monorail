@@ -2,7 +2,7 @@ import { Card } from "@repo/mille-bornes-core/card";
 import { PlayerId } from "@repo/mille-bornes-core/ids";
 import { describe, expect, it } from "vitest";
 import { idOf, team, viewForSeats, withPhase } from "../testing/viewFixtures.mjs";
-import { topBarMessage } from "./phaseHint.mjs";
+import { hazardAlertText, topBarMessage } from "./phaseHint.mjs";
 
 
 describe("phaseHint", () => {
@@ -55,6 +55,19 @@ describe("phaseHint", () => {
             it("uses the window length it is given", () => {
                 expect(topBarMessage(incoming, 8).text).toContain("You have 8 seconds.");
                 expect(topBarMessage(incoming, 1).text).toContain("You have 1 second.");
+            });
+
+
+            it("leaves the seconds out when less than a second is left", () => {
+                const late = "Flat Tire! If anyone on your team holds Puncture Proof, play it now.";
+                expect(topBarMessage(incoming, 0).text).toBe(late);
+            });
+
+
+            it("gives the banner the alert without any seconds clause", () => {
+                expect(hazardAlertText(incoming))
+                .toBe("Flat Tire! If anyone on your team holds Puncture Proof, play it now.");
+                expect(hazardAlertText(incoming)).not.toMatch(/second/u);
             });
 
 

@@ -10,7 +10,7 @@ import {
 } from "../testing/engineBatches.mjs";
 import { createFakeApi, failWire, neverSettles, type FakeApi } from "../testing/fakeApi.mjs";
 import { cardFace } from "../text/cardFace.mjs";
-import { topBarMessage } from "../text/phaseHint.mjs";
+import { hazardAlertText, topBarMessage } from "../text/phaseHint.mjs";
 import {
     gameForSeats, idOf, playingScreen, team, viewForSeats, withPhase, withZone,
     type SeatCount
@@ -596,7 +596,7 @@ describe("GameScreen", () => {
 
         it("keeps what to do in the banner while the top bar explains a tap", () => {
             show(windowFor("Bob"));
-            expect(banner()).toHaveTextContent(topBarMessage(viewOf(flatTireWindow, "Bob")).text);
+            expect(banner()).toHaveTextContent(hazardAlertText(viewOf(flatTireWindow, "Bob")));
             fireEvent.click(card("75 miles"));
             expect(bar()).toHaveTextContent(describeRejection({ reason: "WindowOpen" }));
             expect(banner()).toHaveTextContent(
@@ -615,6 +615,40 @@ describe("GameScreen", () => {
             expect(screen.queryByRole("region", { name: "Flat Tire!" })).not.toBeInTheDocument();
             expect(pressedCards()).toHaveLength(0);
             expect(bar()).toHaveTextContent("That window closed.");
+        });
+
+
+        it("shows one number: the banner's alert has no seconds, the countdown does", () => {
+            show(windowFor("Bob", 2500));
+            const alert = banner().querySelector(".hazard-alert")!;
+            expect(alert).not.toHaveTextContent(/second/u);
+            expect(alert).toHaveTextContent("If anyone on your team holds Puncture Proof");
+            expect(within(banner()).getByRole("timer")).toHaveTextContent("3 seconds left");
+            expect(banner()).not.toHaveTextContent("5 seconds");
+        });
+
+
+        it("keeps a half-finished selection when the banner is tapped", () => {
+            show(windowFor("Di"));
+            fireEvent.click(card("Puncture Proof Blocks it!"));
+            expect(pressedCards()).toHaveLength(1);
+            fireEvent.click(banner().querySelector(".hazard-alert")!);
+            fireEvent.click(within(banner()).getByRole("heading"));
+            expect(pressedCards()).toHaveLength(1);
+            fireEvent.click(screen.getByRole("status"));
+            expect(pressedCards()).toHaveLength(0);
+        });
+
+
+        it("leaves the seconds out of the top bar once less than a second is left", () => {
+            for (const remainingMs of [0, 600]) {
+                const { unmount } = show(windowFor("Bob", remainingMs));
+                expect(bar()).toHaveTextContent("Flat Tire! If anyone on your team holds");
+                expect(bar()).not.toHaveTextContent(/You have/u);
+                unmount();
+            }
+            show(windowFor("Bob", 1000));
+            expect(bar()).toHaveTextContent("You have 1 second.");
         });
 
 
