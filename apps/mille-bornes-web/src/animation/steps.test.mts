@@ -94,12 +94,13 @@ const discardPile: Anchor = { kind: "DiscardPile" };
 const ours: Anchor = { kind: "Team", team: team(0) };
 const theirs: Anchor = { kind: "Team", team: team(1) };
 
-const fly = (card: Card | undefined, from: Anchor, to: Anchor): Step => ({
+const fly = (card: Card | undefined, from: Anchor, to: Anchor, lingers = false): Step => ({
     kind: "Fly",
     card: card === undefined ? NoneOption.get() : new SomeOption(card),
     from,
     to,
-    ms:   350
+    ms:   350,
+    ...(lingers ? { lingers } : {})
 });
 const pulse = (target: Anchor, tone: "Good" | "Bad" | "Gold" | "Info"): Step => (
     { kind: "Pulse", target, tone, big: false, ms: 450 }
@@ -117,9 +118,10 @@ const table: Record<GameEvent["type"], readonly [GameEvent, ReadonlyArray<Step>]
     HazardPlayed:   [
         eventOf(attack.events, "HazardPlayed"),
         [
-            fly("Stop", hand, theirs),
-            pulse(theirs, "Bad"),
-            { kind: "Hold", card: "Stop", at: theirs, ms: 6000 }
+            // The card stays visible from the flight into the hold, where
+            // the red pulse plays beside it.
+            fly("Stop", hand, theirs, true),
+            { kind: "Hold", card: "Stop", at: theirs, tone: "Bad", ms: 6000 }
         ]
     ],
     HazardLanded: [eventOf(landed, "HazardLanded"), [pulse(theirs, "Bad")]],
@@ -161,7 +163,10 @@ describe("stepsFor", () => {
 
     it("shows the face of the viewer's own draw, into the hand", () => {
         const drawn = eventOf(bobDrives, "CardDrawn");
-        expect(drawn.type === "CardDrawn" && drawn.card).not.toBeNull();
+        if (drawn.type !== "CardDrawn") {
+            throw new Error("Not a CardDrawn.");
+        }
+        expect(drawn.card).not.toBeNull();
         const steps = stepsFor(drawn, view);
         expect(steps).toHaveLength(1);
         expect(steps[0]).toMatchObject({ kind: "Fly", from: drawPile, to: hand });
@@ -172,6 +177,14 @@ describe("stepsFor", () => {
     it("keeps another player's draw face down", () => {
         const [step] = stepsFor(eventOf(drive, "CardDrawn"), view);
         expect(step!.kind === "Fly" && step!.card.isNone).toBe(true);
+    });
+
+
+    it("never fades a hazard's card out between its flight and its hold", () => {
+        const steps = stepsFor(eventOf(attack.events, "HazardPlayed"), view);
+        expect(steps.map((s) => s.kind)).toEqual(["Fly", "Hold"]);
+        expect(steps[0]).toMatchObject({ lingers: true });
+        expect(steps[1]).toMatchObject({ tone: "Bad", at: theirs });
     });
 
 

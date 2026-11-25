@@ -144,6 +144,38 @@ describe("createAnimator", () => {
         });
 
 
+        it("keeps playing when a batch's onDone throws", async () => {
+            const h = harness();
+            const animator = createAnimator(h.deps);
+            animator.enqueue(h.batch("drive", drive.events), view, () => {
+                throw new Error("consume failed");
+            });
+            animator.enqueue(h.batch("discard", discard.events), view, h.done("discard"));
+            await vi.runAllTimersAsync();
+            expect(h.log).toEqual([
+                "batch drive", ...playedSteps,
+                "batch discard", ...playedSteps, "done discard"
+            ]);
+            await expect(animator.whenIdle()).resolves.toBeUndefined();
+        });
+
+
+        it("keeps playing when the onDone of a skipped batch throws", async () => {
+            const h = harness();
+            const animator = createAnimator(h.deps);
+            animator.enqueue(h.batch("b0", drive.events), view, h.done("b0"));
+            await vi.advanceTimersByTimeAsync(10);
+            animator.enqueue(h.batch("b1", drive.events), view, () => {
+                throw new Error("consume failed");
+            });
+            for (let i = 2; i <= 7; i++) {
+                animator.enqueue(h.batch(`b${i}`, drive.events), view, h.done(`b${i}`));
+            }
+            await vi.runAllTimersAsync();
+            expect(h.log.at(-1)).toBe("done b7");
+        });
+
+
         it("skips the steps of the oldest batches of a backlog but still starts them", async () => {
             const h = harness();
             const animator = createAnimator(h.deps);
@@ -193,11 +225,26 @@ describe("createAnimator", () => {
         });
 
 
+        it("ends when endHold() is called, and endHold() with none is harmless", async () => {
+            const h = harness();
+            const animator = createAnimator(h.deps);
+            animator.endHold();
+            animator.enqueue(h.batch("attack", attack.events), view, h.done("attack"));
+            await vi.advanceTimersByTimeAsync(1000);
+            expect(h.log.at(-1)).toBe("start Hold");
+            animator.endHold();
+            await vi.advanceTimersByTimeAsync(0);
+            expect(h.log.slice(-2)).toEqual(["end Hold", "done attack"]);
+            expect(vi.getTimerCount()).toBe(0);
+            animator.endHold();
+        });
+
+
         it("ends after a cap of 6 s", async () => {
             const h = harness();
             const animator = createAnimator(h.deps);
             animator.enqueue(h.batch("attack", attack.events), view, h.done("attack"));
-            await vi.advanceTimersByTimeAsync(800 + 5999);
+            await vi.advanceTimersByTimeAsync(350 + 5999);
             expect(h.log.at(-1)).toBe("start Hold");
             await vi.advanceTimersByTimeAsync(1);
             expect(h.log.slice(-2)).toEqual(["end Hold", "done attack"]);

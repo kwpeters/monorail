@@ -2,7 +2,7 @@ import { Option, SomeOption } from "@repo/depot/option";
 import { distanceCardSchema, distanceMiles, type Card } from "@repo/mille-bornes-core/card";
 import { useCallback, useRef, type ReactElement } from "react";
 import { cardFace } from "../text/cardFace.mjs";
-import type { Anchor, Step } from "./steps.mjs";
+import type { Anchor, PulseTone, Step } from "./steps.mjs";
 import "./animations.css";
 
 
@@ -29,7 +29,8 @@ interface Point {
 const dropPx = 48;
 
 
-const holdFadeMs = 150;
+// How long the pulse beside a held card lasts.
+const holdPulseMs = 450;
 
 
 function anchorName(anchor: Anchor): string {
@@ -154,7 +155,7 @@ async function fly(
         await animate(card, [
             { transform: at(start, 0.7), opacity: 0 },
             { transform: at(end), opacity: 1, offset: 0.8 },
-            { transform: at(end), opacity: 0 }
+            { transform: at(end), opacity: step.lingers === true ? 1 : 0 }
         ], step.ms, signal);
     }
     finally {
@@ -172,8 +173,20 @@ async function pulse(
     if (target.isNone) {
         return;
     }
-    const glow = sprite(layer, `pulse tone-${step.tone.toLowerCase()}`);
-    const { left, top, width, height } = target.value;
+    return glowAt(layer, target.value, step.tone, step.big, step.ms, signal);
+}
+
+
+async function glowAt(
+    layer: HTMLElement,
+    rect: DOMRect,
+    tone: PulseTone,
+    big: boolean,
+    ms: number,
+    signal: AbortSignal
+): Promise<void> {
+    const glow = sprite(layer, `pulse tone-${tone.toLowerCase()}`);
+    const { left, top, width, height } = rect;
     Object.assign(glow.style, {
         left:   `${left}px`,
         top:    `${top}px`,
@@ -181,7 +194,7 @@ async function pulse(
         height: `${height}px`
     });
     // A big pulse flashes twice in 900 ms: under three flashes a second.
-    const keyframes: Keyframe[] = step.big ?
+    const keyframes: Keyframe[] = big ?
         [
             { transform: "scale(1)", opacity: 0 },
             { transform: "scale(1.08)", opacity: 1, offset: 0.25 },
@@ -195,7 +208,7 @@ async function pulse(
             { transform: "scale(1)", opacity: 0 }
         ];
     try {
-        await animate(glow, keyframes, step.ms, signal);
+        await animate(glow, keyframes, ms, signal);
     }
     finally {
         glow.remove();
@@ -203,7 +216,9 @@ async function pulse(
 }
 
 
-// The card stays pinned over the lane until the animator ends the step.
+// The card stays pinned over the lane until the animator ends the step.  It
+// is simply there (the flight before it ended with the card visible); a pulse
+// plays beside it.
 async function hold(
     layer: HTMLElement,
     step: Extract<Step, { kind: "Hold" }>,
@@ -218,7 +233,7 @@ async function hold(
     card.style.transform = place;
     try {
         await Promise.all([
-            animate(card, [{ opacity: 0 }, { opacity: 1 }], holdFadeMs, signal),
+            glowAt(layer, target.value, step.tone, false, holdPulseMs, signal),
             untilAborted(signal)
         ]);
     }

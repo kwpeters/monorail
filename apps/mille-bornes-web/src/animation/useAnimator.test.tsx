@@ -3,6 +3,7 @@ import { StrictMode, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EventBatch } from "../state/screenStore.mjs";
 import { annPlays } from "../testing/engineBatches.mjs";
+import { team } from "../testing/viewFixtures.mjs";
 import type { AnimatorDeps } from "./animator.mjs";
 import type { Step } from "./steps.mjs";
 import { useAnimator } from "./useAnimator.js";
@@ -11,6 +12,7 @@ import { useAnimator } from "./useAnimator.js";
 // Real engine batches: three steps each (Fly 350, Pause 150, Fly 350 ms).
 const drove = annPlays({ type: "Drive", card: "50" });
 const discarded = annPlays({ type: "Discard", card: "25" });
+const attacked = annPlays({ type: "Attack", card: "Stop", targetTeam: team(1) });
 const { view } = drove;
 const batchMs = 850;
 
@@ -21,7 +23,10 @@ interface Props {
 
 
 // A fake play that takes each step's time; it ends early when aborted.
-function fakeDeps(): AnimatorDeps & { play: ReturnType<typeof vi.fn<AnimatorDeps["play"]>> } {
+function fakeDeps(): AnimatorDeps & {
+    play:         ReturnType<typeof vi.fn<AnimatorDeps["play"]>>;
+    onBatchStart: ReturnType<typeof vi.fn<NonNullable<AnimatorDeps["onBatchStart"]>>>;
+} {
     const play = vi.fn((step: Step, signal: AbortSignal) => new Promise<void>((resolve) => {
         const timer = window.setTimeout(resolve, step.ms);
         signal.addEventListener("abort", () => {
@@ -29,7 +34,7 @@ function fakeDeps(): AnimatorDeps & { play: ReturnType<typeof vi.fn<AnimatorDeps
             resolve();
         }, { once: true });
     }));
-    return { play, reducedMotion: () => false };
+    return { play, reducedMotion: () => false, onBatchStart: vi.fn() };
 }
 
 
@@ -94,12 +99,51 @@ describe("useAnimator", () => {
     });
 
 
-    it("animates nothing for a reconnect snapshot", async () => {
-        const { deps, consume, rerender } = setup([]);
+    it("enqueues nothing new for a reconnect snapshot that lands mid batch", async () => {
+        const { deps, consume, result, rerender } = setup([first]);
+        await advance(100);
+        expect(deps.play).toHaveBeenCalledTimes(1);
+        // The snapshot replaces the queue with an empty list.
         rerender({ pending: [] });
         await advance(5000);
-        expect(deps.play).not.toHaveBeenCalled();
+        expect(consume).toHaveBeenCalledExactlyOnceWith(1);
+        // The batch in flight finished its three steps; nothing came after.
+        expect(deps.play).toHaveBeenCalledTimes(3);
+        expect(deps.onBatchStart).toHaveBeenCalledOnce();
+        expect(result.current.isSome && result.current.value.events).toBe(drove.events);
+    });
+
+
+    it("ends a Hold when the snapshot drops the batch that holds", async () => {
+        const hazard: EventBatch = { id: 7, events: attacked.events };
+        const { deps, consume, rerender } = setup([hazard]);
+        // The hazard's flight, then its Hold, which would last 6 s.
+        await advance(400);
+        expect(deps.play).toHaveBeenLastCalledWith(
+            expect.objectContaining({ kind: "Hold" }), expect.any(AbortSignal)
+        );
         expect(consume).not.toHaveBeenCalled();
+        rerender({ pending: [] });
+        await advance(0);
+        expect(consume).toHaveBeenCalledExactlyOnceWith(7);
+        expect(vi.getTimerCount()).toBe(0);
+    });
+
+
+    it("does not end a Hold when a played batch is consumed", async () => {
+        const hazard: EventBatch = { id: 7, events: attacked.events };
+        const { deps, consume, rerender } = setup([first, hazard]);
+        // The first batch plays and is consumed; the store then drops it.
+        await advance(batchMs + 400);
+        expect(consume).toHaveBeenCalledExactlyOnceWith(1);
+        expect(deps.play).toHaveBeenLastCalledWith(
+            expect.objectContaining({ kind: "Hold" }), expect.any(AbortSignal)
+        );
+        rerender({ pending: [hazard] });
+        await advance(1000);
+        expect(consume).toHaveBeenCalledOnce();
+        await advance(5000);
+        expect(consume).toHaveBeenCalledTimes(2);
     });
 
 

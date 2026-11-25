@@ -75,11 +75,18 @@ export function useAnimator(
             if (!ids.has(id)) {
                 drop();
                 enqueued.delete(id);
+                // The store dropped a batch we did not finish (a snapshot or
+                // a screen that is not Playing): the hazard window it showed
+                // is over.  A batch we finished is gone from `enqueued`.
+                animator.endHold();
             }
         }
         for (const { id, events } of pending) {
             if (!enqueued.has(id)) {
-                enqueued.set(id, animator.enqueue(events, view, () => latest.current.consume(id)));
+                enqueued.set(id, animator.enqueue(events, view, () => {
+                    enqueued.delete(id);
+                    latest.current.consume(id);
+                }));
             }
         }
     }, [pending, view]);

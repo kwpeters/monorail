@@ -19,22 +19,28 @@ export type Anchor =
 
 /** The color of a pulse: a fix, a hit, a safety, or news. */
 export const pulseToneSchema = z.enum(["Good", "Bad", "Gold", "Info"]);
+
+
+/** One of the colors a pulse can have (see `pulseToneSchema`). */
 export type PulseTone = z.infer<typeof pulseToneSchema>;
 
 
 /**
  * One thing to show, played one at a time.  A `Fly` moves a card (face down
- * when it is none); a `Pulse` glows a lane once (twice when `big`); a `Hold`
- * keeps a card pinned at a lane until the animator ends it (the next batch
- * arrives, or `ms` passes).
+ * when it is none) and fades it out at the end unless it `lingers`, because
+ * a `Hold` takes it over; a `Pulse` glows a lane once (twice when `big`); a
+ * `Hold` keeps a card pinned at a lane, with a pulse of its `tone` beside it,
+ * until the animator ends it (the next batch arrives, a snapshot shows the
+ * window is over, or `ms` passes).
  */
 export type Step =
     | {
-        readonly kind: "Fly";
-        readonly card: Option<Card>;
-        readonly from: Anchor;
-        readonly to:   Anchor;
-        readonly ms:   number;
+        readonly kind:     "Fly";
+        readonly card:     Option<Card>;
+        readonly from:     Anchor;
+        readonly to:       Anchor;
+        readonly ms:       number;
+        readonly lingers?: boolean;
     }
     | {
         readonly kind:   "Pulse";
@@ -44,7 +50,13 @@ export type Step =
         readonly ms:     number;
     }
     | { readonly kind: "Pause"; readonly ms: number }
-    | { readonly kind: "Hold"; readonly card: Card; readonly at: Anchor; readonly ms: number };
+    | {
+        readonly kind: "Hold";
+        readonly card: Card;
+        readonly at:   Anchor;
+        readonly tone: PulseTone;
+        readonly ms:   number;
+    };
 
 
 const flyMs = 350;
@@ -66,8 +78,8 @@ function lane(team: TeamIndex): Anchor {
 }
 
 
-function fly(card: Option<Card>, from: Anchor, to: Anchor): Step {
-    return { kind: "Fly", card, from, to, ms: flyMs };
+function fly(card: Option<Card>, from: Anchor, to: Anchor, lingers = false): Step {
+    return { kind: "Fly", card, from, to, ms: flyMs, ...(lingers ? { lingers } : {}) };
 }
 
 
@@ -117,10 +129,10 @@ export function stepsFor(event: GameEvent, view: PlayerView): ReadonlyArray<Step
             return [onLane(event.player, event.card, event.team)];
         case "HazardPlayed": {
             const target = lane(event.targetTeam);
+            // The card flies in and stays: the hold shows it with its red pulse.
             return [
-                fly(card(event.card), seatAnchor(view, event.player, event.targetTeam), target),
-                pulse(target, "Bad"),
-                { kind: "Hold", card: event.card, at: target, ms: holdCapMs }
+                fly(card(event.card), seatAnchor(view, event.player, event.targetTeam), target, true),
+                { kind: "Hold", card: event.card, at: target, tone: "Bad", ms: holdCapMs }
             ];
         }
         case "HazardLanded":

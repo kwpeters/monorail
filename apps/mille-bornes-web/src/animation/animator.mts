@@ -40,6 +40,12 @@ export interface Animator {
         onDone?: () => void
     ) => () => void;
 
+    /**
+     * Ends the Hold in flight, if any, for a hazard window that is known to
+     * be over (a reconnect snapshot shows it); the batch then finishes.
+     */
+    endHold: () => void;
+
     /** @returns A promise that resolves once nothing is playing or queued */
     whenIdle: () => Promise<void>;
 
@@ -77,7 +83,7 @@ export function createAnimator(deps: AnimatorDeps): Animator {
 
     // Ends the step in flight; ends the Hold in flight (and its cap timer).
     let endStep = noop;
-    let endHold = noop;
+    let endCurrentHold = noop;
 
     // A call, so the loop below sees a stop() made while it awaited.
     const isStopped = (): boolean => stopped;
@@ -98,6 +104,16 @@ export function createAnimator(deps: AnimatorDeps): Animator {
         }
     };
 
+    // The store's consume (and its listeners) must not stall the queue.
+    const finish = (batch: Queued): void => {
+        try {
+            batch.onDone();
+        }
+        catch {
+            // The batch was played; a failing hook only loses its own work.
+        }
+    };
+
     const runStep = async (s: Step): Promise<void> => {
         const controller = new AbortController();
         const aborted = new Promise<void>((resolve) => {
@@ -111,7 +127,7 @@ export function createAnimator(deps: AnimatorDeps): Animator {
             controller.abort();
         };
         endStep = end;
-        endHold = s.kind === "Hold" ? end : noop;
+        endCurrentHold = s.kind === "Hold" ? end : noop;
         try {
             // Raced with the signal: a `play` that never settles cannot stall.
             await Promise.race([deps.play(s, controller.signal), aborted]);
@@ -122,7 +138,7 @@ export function createAnimator(deps: AnimatorDeps): Animator {
         finally {
             window.clearTimeout(timer);
             endStep = noop;
-            endHold = noop;
+            endCurrentHold = noop;
             controller.abort();
         }
     };
@@ -135,7 +151,7 @@ export function createAnimator(deps: AnimatorDeps): Animator {
             if (waiting.length > maxWaiting) {
                 for (const old of waiting.splice(0, waiting.length - playInFull)) {
                     start(old);
-                    old.onDone();
+                    finish(old);
                 }
             }
             const batch = waiting.shift()!;
@@ -153,7 +169,7 @@ export function createAnimator(deps: AnimatorDeps): Animator {
             if (isStopped()) {
                 return;
             }
-            batch.onDone();
+            finish(batch);
         }
         becomeIdle();
     };
@@ -165,7 +181,7 @@ export function createAnimator(deps: AnimatorDeps): Animator {
             }
             const entry: Queued = { events, view, onDone };
             waiting.push(entry);
-            endHold();
+            endCurrentHold();
             if (!running) {
                 running = true;
                 void run();
@@ -177,6 +193,8 @@ export function createAnimator(deps: AnimatorDeps): Animator {
                 }
             };
         },
+
+        endHold: () => endCurrentHold(),
 
         whenIdle: () => running ?
             new Promise<void>((resolve) => {

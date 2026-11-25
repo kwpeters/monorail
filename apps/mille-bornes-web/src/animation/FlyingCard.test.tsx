@@ -67,7 +67,7 @@ function keyframesOf(animate: ReturnType<typeof vi.fn>): Keyframe[] {
 }
 
 
-const flight = (card: Option<Card>, to: Anchor = lane0): Step => (
+const flight = (card: Option<Card>, to: Anchor = lane0): Extract<Step, { kind: "Fly" }> => (
     { kind: "Fly", card, from: hand, to, ms: 350 }
 );
 
@@ -163,7 +163,7 @@ describe("useFlyingCards", () => {
             const { play, layer } = show();
             const controller = new AbortController();
             let over = false;
-            const pinned: Step = { kind: "Hold", card: "Stop", at: lane1, ms: 6000 };
+            const pinned: Step = { kind: "Hold", card: "Stop", at: lane1, tone: "Bad", ms: 6000 };
             const done = play(pinned, controller.signal).then(() => {
                 over = true;
             });
@@ -173,6 +173,36 @@ describe("useFlyingCards", () => {
             controller.abort();
             await done;
             expect(layer()).toBeEmptyDOMElement();
+        });
+
+
+        it("pulses beside a held card, in its tone, and never fades the card", async () => {
+            const stub = stubAnimations(true);
+            const { play, layer } = show();
+            const controller = new AbortController();
+            const pinned: Step = { kind: "Hold", card: "Stop", at: lane1, tone: "Bad", ms: 6000 };
+            const done = play(pinned, controller.signal);
+            await Promise.resolve();
+            expect(layer().querySelectorAll(".pulse.tone-bad")).toHaveLength(1);
+            expect(layer().querySelectorAll(".flying-card")).toHaveLength(1);
+            // Only the glow animates: the card is simply there, fully visible.
+            expect(stub.animate).toHaveBeenCalledOnce();
+            expect(layer().querySelector(".flying-card")).not.toHaveStyle({ opacity: "0" });
+            controller.abort();
+            await done;
+            expect(layer()).toBeEmptyDOMElement();
+        });
+
+
+        it("ends a lingering flight fully visible, and any other flight faded out", async () => {
+            const stub = stubAnimations(false);
+            const { play } = show();
+            const signal = new AbortController().signal;
+            await play({ ...flight(fifty), lingers: true }, signal);
+            await play(flight(fifty), signal);
+            const lastOpacity = stub.animate.mock.calls
+            .map(([frames]) => (frames as Keyframe[]).at(-1)!.opacity);
+            expect(lastOpacity).toEqual([1, 0]);
         });
 
 
