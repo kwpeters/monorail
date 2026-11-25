@@ -35,9 +35,11 @@ const extensionLayouts = layouts.filter((l) => l.seats !== 4);
 const lengths: ReadonlyArray<GameLength> = ["Quick", "Short", "Full"];
 const policies = simulationPolicySchema.options;
 
-// Random players waste cards, so their Full games are long; fewer of them
-// keep the suite quick.
-const randomRuns = (length: GameLength): number => length === "Full" ? 100 : 200;
+// Few whole games per layout keep the suite quick; the soak script
+// (`npm run soak`) plays thousands more.  Random players waste cards, so their
+// Full games are the longest.
+const robotRuns = 100;
+const randomRuns = (length: GameLength): number => length === "Full" ? 25 : 50;
 
 // A fixed batch, so the Extension tests always exercise the same races.
 const extensionSeeds = Array.from({ length: 20 }, (_, i) => i + 1);
@@ -263,7 +265,7 @@ function wellFormedSample(g: Game): fc.Arbitrary<readonly [unknown, PlayerComman
 
 // Refusals that come before the rules: the phase, the turn or the shape.
 const gateReasons: ReadonlySet<Rejection["reason"]> = new Set<Rejection["reason"]>([
-    "WrongPhase", "WindowOpen", "ExtensionOfferOpen", "NotYourTurn", "MalformedCommand",
+    "WrongPhase", "NotInGame", "WindowOpen", "ExtensionOfferOpen", "NotYourTurn", "MalformedCommand",
     "NoWindowOpen", "NoExtensionOffer", "NotOnTargetTeam", "NotTheCaller",
 ]);
 
@@ -355,7 +357,7 @@ describe("simulation", () => {
                     fc.assert(fc.property(fc.nat(), (seed) => {
                         const run: Run = { layout, length, seed };
                         check(played(run).phase.kind === "GameOver", () => `${label(run)}: not over`);
-                    }), { numRuns: 200 });
+                    }), { numRuns: robotRuns });
                 });
 
 

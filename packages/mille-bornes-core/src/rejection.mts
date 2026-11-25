@@ -25,6 +25,7 @@ export type Rejection =
     | { reason: "NotYourTurn"; current: PlayerName }
     | { reason: "CardNotInHand"; card: Card }
     | { reason: "WrongPhase" }
+    | { reason: "NotInGame" }
     | { reason: "WindowOpen" }
     | { reason: "NoWindowOpen" }
     | { reason: "NotOnTargetTeam" }
@@ -96,6 +97,8 @@ export function describeRejection(r: Rejection): string {
             return `You don't have that card (${r.card}) in your hand.`;
         case "WrongPhase":
             return "You can't do that right now.";
+        case "NotInGame":
+            return "You are not part of this game.";
         // Shown to every player, so it must not hint at whether anyone can
         // answer the hazard.
         case "WindowOpen":

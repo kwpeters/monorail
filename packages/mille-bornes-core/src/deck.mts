@@ -53,6 +53,11 @@ export function cardCounts(kind: DeckKind): Readonly<Record<Card, number>> {
 }
 
 
+// 106 and 101.
+const deckSizes: ReadonlyArray<number> = (["Standard", "Reduced"] as const)
+.map((kind) => Object.values(cardCounts(kind)).reduce((sum, n) => sum + n, 0));
+
+
 function countsMatch(cards: ReadonlyArray<Card>, kind: DeckKind): boolean {
     const expected = cardCounts(kind);
     const actual = new Map<Card, number>();
@@ -81,6 +86,10 @@ export namespace ShuffledDeck {
      * result containing an error message
      */
     export function tryCreate(cards: ReadonlyArray<Card>): Result<ShuffledDeck, string> {
+        // The length first, so a huge or sparse array is never walked.
+        if (!deckSizes.includes(cards.length)) {
+            return new FailedResult(`A deck must have ${deckSizes.join(" or ")} cards, not ${cards.length}.`);
+        }
         if (!cards.every((card) => cardSchema.safeParse(card).success)) {
             return new FailedResult("A deck may contain only valid cards.");
         }
@@ -128,7 +137,10 @@ export function createDeck(kind: DeckKind = "Standard"): ShuffledDeck {
 export function shuffleDeck(kind: DeckKind = "Standard", rand: () => number = getRandom): ShuffledDeck {
     const cards = cardsInStandardOrder(kind);
     for (let i = cards.length - 1; i > 0; i--) {
-        const j = Math.floor(rand() * (i + 1));
+        // An injected rand may return NaN, a negative number or 1 or more;
+        // clamp the index so the result is always a permutation.
+        const r = rand();
+        const j = r >= 0 ? Math.min(i, Math.floor(r * (i + 1))) : 0;
         [cards[i], cards[j]] = [cards[j]!, cards[i]!];
     }
     return cards as unknown as ShuffledDeck;

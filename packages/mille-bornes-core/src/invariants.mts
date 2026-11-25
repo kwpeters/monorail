@@ -1,8 +1,9 @@
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import { Card, cardSchema } from "./card.mjs";
 import { cardCounts } from "./deck.mjs";
-import { hasSafety, zoneMiles } from "./drivingZone.mjs";
+import { canAttack, hasSafety, zoneMiles } from "./drivingZone.mjs";
 import { seatOrder, validateGameConfig, type Game, type PlayerState, type RaceResult } from "./game.mjs";
+import { describeRejection } from "./rejection.mjs";
 import { EXTENSION_MILES, tripDistance, variantForSeatCount, type RaceVariant } from "./variant.mjs";
 
 
@@ -127,9 +128,16 @@ const checkPhase: Check = (g) => {
             if (!attacker) {
                 return unknown(phase.attacker);
             }
-            return isTeam(g, phase.target) && phase.target !== attacker.team ?
+            if (!isTeam(g, phase.target) || phase.target === attacker.team) {
+                return `A hazard cannot be in flight against team ${phase.target}.`;
+            }
+            // Nothing changes a zone while the window is open, so a hazard
+            // that cannot land now never will, and the game would be stuck.
+            const landing = canAttack(g.teams[phase.target]!.zone, phase.hazard);
+            return landing.succeeded ?
                 null :
-                `A hazard cannot be in flight against team ${phase.target}.`;
+                `The ${phase.hazard} in flight against team ${phase.target} cannot land: ` +
+                describeRejection(landing.error);
         }
         case "ExtensionOffer": {
             if (g.extension.kind !== "Available") {
@@ -192,10 +200,12 @@ const checkZones: Check = (g) => {
         if (miles > trip) {
             return `Team ${t} has ${miles} miles, more than the ${trip}-mile trip.`;
         }
-        // Reaching 700 while Extension is Available opens the offer at once.
-        const inPlay = g.phase.kind === "Turn" || g.phase.kind === "HazardIncoming";
-        if (inPlay && g.extension.kind === "Available" && miles === EXTENSION_MILES) {
-            return `Team ${t} is at ${EXTENSION_MILES} miles while Extension is Available, but no offer is open.`;
+        // Reaching the trip distance ends the race at once, or (at 700 while
+        // Extension is Available) opens the offer for that team alone.
+        const over = g.phase.kind === "RaceOver" || g.phase.kind === "GameOver";
+        const offered = g.phase.kind === "ExtensionOffer" && g.phase.team === t;
+        if (!over && !offered && miles === trip) {
+            return `Team ${t} has reached the ${trip}-mile trip, but the race is not over.`;
         }
         const twoHundreds = zone.distance.filter((c) => c === Card.dist200).length;
         if (twoHundreds > 2) {
@@ -213,9 +223,10 @@ const checkZones: Check = (g) => {
 
 /**
  * Checks that a game is consistent: it matches its config and variant, the
- * phase and Extension state make sense, hands are not too big, zones are
- * legal, and the cards are exactly the variant's deck.  Never throws, so it is
- * safe on decoded (untrusted) games.
+ * phase and Extension state make sense (a hazard in flight can land, and no
+ * team is at the trip distance while the race is on), hands are not too big,
+ * zones are legal, and the cards are exactly the variant's deck.  Never
+ * throws, so it is safe on decoded (untrusted) games.
  * @param g - The game
  * @returns A successful result, or a failed result describing the first
  * problem found

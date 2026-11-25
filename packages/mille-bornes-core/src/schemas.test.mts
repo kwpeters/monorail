@@ -11,7 +11,7 @@ import {
     playerCommandSchema
 } from "./schemas.mjs";
 import {
-    buildGame, oneOnOne, seatFor, threeByTwo, threeSolo, twoByTwo
+    buildGame, oneOnOne, seatFor, threeByTwo, threeSolo, twoByTwo, unlandableHazard
 } from "./testHelpers.mjs";
 
 
@@ -372,6 +372,21 @@ describe("schemas", () => {
                 discardPile: [...(g.discardPile as Array<string>), ...players[0]!.hand],
             };
             expect(decodeGame(emptied).error).toContain("holds no cards");
+        });
+
+
+        it("rejects a game that could never move on", () => {
+            expect(decodeGame(wire(unlandableHazard("TargetNotMoving"))).error).toContain("cannot land");
+            // Team 0 has reached the 1,000-mile trip, but the race is still on.
+            const at900 = rollingAt(
+                Card.dist200, Card.dist200, Card.dist100, Card.dist100, Card.dist100, Card.dist100, Card.dist100
+            );
+            const g = wire(buildGame({ config: twoByTwo(), zones: [at900, newZone()] }));
+            const discardPile = [...(g.discardPile as Array<string>)];
+            discardPile.splice(discardPile.indexOf(Card.dist100), 1);
+            const at1000 = withValue(g, ["teams", 0, "zone", "distance"], [...at900.distance, Card.dist100]);
+            expect(decodeGame(g).succeeded).toBeTrue();
+            expect(decodeGame({ ...(at1000 as Json), discardPile }).error).toContain("1000-mile trip");
         });
 
 

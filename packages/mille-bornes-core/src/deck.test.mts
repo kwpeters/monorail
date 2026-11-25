@@ -118,6 +118,15 @@ describe("deck", () => {
             expect(ShuffledDeck.tryCreate(cards).failed).toBeTrue();
         });
 
+
+        it("rejects a huge or sparse array before visiting its elements", () => {
+            for (const length of [4_294_967_295, 1e7]) {
+                const start = Date.now();
+                expect(ShuffledDeck.tryCreate(new Array<Card>(length)).failed).withContext(`${length}`).toBeTrue();
+                expect(Date.now() - start).withContext(`${length}`).toBeLessThan(1000);
+            }
+        });
+
     });
 
 
@@ -152,6 +161,14 @@ describe("deck", () => {
             const deck = shuffleDeck("Reduced", seededRand(3));
             expect(deck.length).toBe(101);
             expect(ShuffledDeck.kind(deck)).toBe("Reduced");
+        });
+
+
+        it("returns a valid deck whatever rand returns", () => {
+            for (const x of [1, NaN, -1, 1.5, Infinity]) {
+                const deck = shuffleDeck("Standard", () => x);
+                expect(ShuffledDeck.tryCreate(deck).succeeded).withContext(`${x}`).toBeTrue();
+            }
         });
 
 

@@ -18,6 +18,7 @@ import {
 
 
 const handSize = 6;
+const maxDeckSize = 106;
 
 
 // The player draws the top card of the draw pile, unless it is empty.
@@ -311,24 +312,27 @@ export function applyPlayerCommand(
 
 
 // Lands the hazard in flight, then play passes to the player after the
-// attacker.
+// attacker.  The timer must always move the game on, so a hazard that cannot
+// land (only in a hostile snapshot: nothing changes a zone while the window
+// is open) goes to the discard pile instead.
 function closeHazardWindow(g: Game): Result<Applied, Rejection> {
     const phase = g.phase;
     if (phase.kind !== "HazardIncoming") {
         return new FailedResult({ reason: "NoWindowOpen" });
     }
-    const target = g.teams[phase.target]!;
-    // Nothing changes a zone while the window is open, so this re-check holds.
-    return landHazard(target.zone, phase.hazard).mapSuccess((change) => {
-        const attacker = g.players.findIndex((p) => p.seat.id === phase.attacker);
-        const game: Game = {
-            ...g,
-            teams: g.teams.map((t, i) => i === phase.target ? { ...t, zone: change.zone } : t),
-        };
-        const landed: GameEvent = { type: "HazardLanded", card: phase.hazard, targetTeam: phase.target };
-        // nextTurn() replaces the phase, so the hazard is not counted twice.
-        return nextTurn(game, attacker + 1, [landed]);
-    });
+    const attacker = g.players.findIndex((p) => p.seat.id === phase.attacker);
+    const landing = landHazard(g.teams[phase.target]!.zone, phase.hazard);
+    if (landing.failed) {
+        const discarded: Game = { ...g, discardPile: [...g.discardPile, phase.hazard] };
+        return new SucceededResult(nextTurn(discarded, attacker + 1, []));
+    }
+    const game: Game = {
+        ...g,
+        teams: g.teams.map((t, i) => i === phase.target ? { ...t, zone: landing.value.zone } : t),
+    };
+    const landed: GameEvent = { type: "HazardLanded", card: phase.hazard, targetTeam: phase.target };
+    // nextTurn() replaces the phase, so the hazard is not counted twice.
+    return new SucceededResult(nextTurn(game, attacker + 1, [landed]));
 }
 
 
@@ -353,12 +357,15 @@ function isSystemCommand(cmd: unknown): boolean {
 
 /**
  * Deals the next race.  The shape is checked first (a deck that is not an
- * array of valid cards is MalformedCommand), then the phase (WrongPhase unless
- * RaceOver), then the deck: a list of valid cards that is not a whole Standard
- * or Reduced deck is WrongDeck, as is a deck of the wrong kind for the variant.
+ * array of at most 106 valid cards is MalformedCommand), then the phase
+ * (WrongPhase unless RaceOver), then the deck: a list of valid cards that is
+ * not a whole Standard or Reduced deck is WrongDeck, as is a deck of the
+ * wrong kind for the variant.
  */
 function startNextRace(g: Game, deck: unknown): Result<Applied, Rejection> {
-    if (!Array.isArray(deck) || !deck.every((c) => cardSchema.safeParse(c).success)) {
+    // The length first, so a huge or sparse array is never walked.
+    if (!Array.isArray(deck) || deck.length > maxDeckSize ||
+        !deck.every((c) => cardSchema.safeParse(c).success)) {
         return new FailedResult({ reason: "MalformedCommand" });
     }
     if (g.phase.kind !== "RaceOver") {
@@ -372,19 +379,21 @@ function startNextRace(g: Game, deck: unknown): Result<Applied, Rejection> {
 
 
 /**
- * Applies a command issued by the server.  CloseExtensionOffer (the timeout)
- * declines Extension.  StartNextRace deals the next race from the given deck
- * (see `dealRace()`): only in phase RaceOver, so the scoreboard stays up
- * until the server asks for the next race.
+ * Applies a command issued by the server.  CloseHazardWindow (the timeout)
+ * lands the hazard in flight, or discards it if it cannot land, and always
+ * moves play on.  CloseExtensionOffer (the timeout) declines Extension.
+ * StartNextRace deals the next race from the given deck (see `dealRace()`):
+ * only in phase RaceOver, so the scoreboard stays up until the server asks
+ * for the next race.
  * @param g - The game
  * @param cmd - The command
  * @returns The new game and its events, or the reason the command is refused:
  * MalformedCommand for anything that is not a system command (or a
- * StartNextRace whose deck is not an array of valid cards), NoWindowOpen for
- * a CloseHazardWindow with no hazard in flight, NoExtensionOffer for a
- * CloseExtensionOffer with no offer open, WrongPhase for a StartNextRace
- * outside RaceOver, WrongDeck for a StartNextRace whose deck is not a whole
- * deck of the variant's kind
+ * StartNextRace whose deck is not an array of at most 106 valid cards),
+ * NoWindowOpen for a CloseHazardWindow with no hazard in flight,
+ * NoExtensionOffer for a CloseExtensionOffer with no offer open, WrongPhase
+ * for a StartNextRace outside RaceOver, WrongDeck for a StartNextRace whose
+ * deck is not a whole deck of the variant's kind
  */
 export function applySystemCommand(g: Game, cmd: SystemCommand): Result<Applied, Rejection> {
     if (!isSystemCommand(cmd)) {
@@ -406,13 +415,16 @@ export function applySystemCommand(g: Game, cmd: SystemCommand): Result<Applied,
  * cards to each player (`players[i]` gets `deck[6i]` to `deck[6i + 5]`), and
  * starts the first player's turn with a draw.  Race n's first player is
  * `players[(n - 1) % players.length]`.  Team points are kept.
+ * @internal Exported for `engine.test.mts`; use `createGame()` and
+ * `applySystemCommand()` instead.
  * @param config - The game's config (assumed valid)
  * @param players - The players in turn order; their hands are replaced
  * @param teams - The teams; their zones are reset and points kept
  * @param deck - The deck to deal from
  * @param raceNumber - The number of the race being dealt (1 for the first)
  * @returns The dealt game and its events, or WrongDeck if the deck's kind is
- * not the variant's (or UnsupportedPlayerCount)
+ * not the variant's (or UnsupportedPlayerCount, or MalformedCommand for a race
+ * number that is not a whole number of at least 1)
  */
 export function dealRace(
     config: GameConfig,
@@ -427,6 +439,9 @@ export function dealRace(
     }
     if (ShuffledDeck.kind(deck) !== variant.value.deck) {
         return new FailedResult({ reason: "WrongDeck" });
+    }
+    if (!Number.isInteger(raceNumber) || raceNumber < 1) {
+        return new FailedResult({ reason: "MalformedCommand" });
     }
     const first = (raceNumber - 1) % players.length;
     const dealtCount = players.length * handSize;

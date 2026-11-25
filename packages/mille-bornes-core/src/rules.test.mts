@@ -111,7 +111,7 @@ describe("rules", () => {
         it("rejects a player who is not in the game", () => {
             const g = buildGame({ config: oneOnOne() });
             expect(contextFromGame(g, seatFor("Zed").id).throwIfSucceeded())
-            .toEqual({ reason: "WrongPhase" });
+            .toEqual({ reason: "NotInGame" });
         });
 
     });

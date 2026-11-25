@@ -72,12 +72,12 @@ function contextPhase(
  * Builds a player's play context from a full game.
  * @param g - The game
  * @param me - The player issuing commands
- * @returns The context, or WrongPhase when `me` is not playing in the game
+ * @returns The context, or NotInGame when `me` is not playing in the game
  */
 export function contextFromGame(g: Game, me: PlayerId): Result<PlayContext, Rejection> {
     const player = g.players.find((p) => p.seat.id === me);
     if (!player) {
-        return new FailedResult({ reason: "WrongPhase" });
+        return new FailedResult({ reason: "NotInGame" });
     }
     // The invariants guarantee that a phase names only players in the game.
     const nameOf = (id: PlayerId): PlayerName => g.players.find((p) => p.seat.id === id)!.seat.name;

@@ -12,7 +12,8 @@ import { type Points } from "./points.mjs";
 import { describeRejection, type Rejection } from "./rejection.mjs";
 import { contextFromGame } from "./rules.mjs";
 import {
-    buildGame, deckFor, deepFreeze, oneOnOne, seatFor, threeByTwo, threeSolo, twoByTwo, type GameParts
+    buildGame, deckFor, deepFreeze, oneOnOne, seatFor, threeByTwo, threeSolo, twoByTwo, unlandableHazard,
+    type GameParts
 } from "./testHelpers.mjs";
 
 
@@ -369,6 +370,20 @@ describe("engine", () => {
             const { game } = dealRace(config, first.players, first.teams, deck, 2).throwIfFailed();
             expect(game.players[0]!.hand).toEqual(hands[0]!);
             expect(game.players[1]!.hand).toEqual([...hands[1]!, Card.roll]);
+        });
+
+
+        it("refuses a race number that is not a whole number of at least 1, never throwing", () => {
+            const config = oneOnOne();
+            const { game: first } = createGame(config, createDeck("Reduced")).throwIfFailed();
+            for (const race of [0, -1, 1.5, NaN, Infinity]) {
+                expect(() => dealRace(config, first.players, first.teams, createDeck("Reduced"), race))
+                .withContext(`${race}`)
+                .not.toThrow();
+                expect(dealRace(config, first.players, first.teams, createDeck("Reduced"), race).error)
+                .withContext(`${race}`)
+                .toEqual({ reason: "MalformedCommand" });
+            }
         });
 
 
@@ -1039,6 +1054,21 @@ describe("engine", () => {
         });
 
 
+        it("CloseHazardWindow discards a hazard that cannot land and still moves the game on", () => {
+            for (const why of ["TargetNotMoving", "TargetProtected", "TargetAlreadySpeedLimited"] as const) {
+                const stuck = unlandableHazard(why);
+                expect(checkInvariants(stuck).succeeded).withContext(why).toBeFalse();
+                const hazard = why === "TargetAlreadySpeedLimited" ? Card.speedLimit : Card.stop;
+                // close() checks the invariants of the result.
+                const { game, events } = close(stuck);
+                expect(game.teams).withContext(why).toEqual(stuck.teams);
+                expect(game.discardPile).withContext(why).toEqual([...stuck.discardPile, hazard]);
+                expect(game.phase).withContext(why).toEqual({ kind: "Turn", player: bob });
+                expect(events).withContext(why).toEqual([{ type: "TurnStarted", player: bob }]);
+            }
+        });
+
+
         describe("StartNextRace", () => {
 
             it("deals race 2 from the front of the deck onto the same teams, keeping points", () => {
@@ -1216,8 +1246,8 @@ describe("engine", () => {
             it("refuses a card list that is not a whole deck with WrongDeck", () => {
                 const over = annWinsRace();
                 const short = createDeck("Reduced").slice(1) as unknown as ShuffledDeck;
-                const doubled = [...createDeck("Reduced"), ...createDeck("Reduced")] as unknown as ShuffledDeck;
-                for (const deck of [short, doubled, [] as unknown as ShuffledDeck]) {
+                const extra = [...createDeck("Standard"), Card.roll].slice(1) as unknown as ShuffledDeck;
+                for (const deck of [short, extra, [] as unknown as ShuffledDeck]) {
                     expect(refuseSystem(over, startRace(deck))).withContext(String(deck.length))
                     .toEqual({ reason: "WrongDeck" });
                 }
@@ -1234,6 +1264,7 @@ describe("engine", () => {
                     ["a string", "Roll"],
                     ["an object with a length", { length: 101 }],
                     ["a deck with an unknown card", unknownCard],
+                    ["two whole decks", [...createDeck("Reduced"), ...createDeck("Reduced")]],
                 ];
                 for (const [name, deck] of badDecks) {
                     const cmd = { type: "StartNextRace", deck } as unknown as SystemCommand;
@@ -1244,6 +1275,18 @@ describe("engine", () => {
                 // The shape is checked before the phase.
                 expect(refuseSystem(annReaches700(), noDeck)).toEqual({ reason: "MalformedCommand" });
                 expect(over).toEqual(snapshot);
+            });
+
+
+            it("refuses a deck longer than a whole deck before visiting its cards", () => {
+                const over = annWinsRace();
+                for (const length of [4_294_967_295, 1e7]) {
+                    const cmd = { type: "StartNextRace", deck: new Array(length) } as unknown as SystemCommand;
+                    const start = Date.now();
+                    expect(applySystemCommand(over, cmd).error).withContext(`${length}`)
+                    .toEqual({ reason: "MalformedCommand" });
+                    expect(Date.now() - start).withContext(`${length}`).toBeLessThan(1000);
+                }
             });
 
 

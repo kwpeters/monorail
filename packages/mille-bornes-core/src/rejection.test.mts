@@ -52,6 +52,7 @@ describe("rejection", () => {
                 { reason: "NotYourTurn", current: ann },
                 ...cardSchema.options.map((card): Rejection => ({ reason: "CardNotInHand", card })),
                 { reason: "WrongPhase" },
+                { reason: "NotInGame" },
                 { reason: "WindowOpen" },
                 { reason: "NoWindowOpen" },
                 { reason: "NotOnTargetTeam" },
@@ -115,6 +116,11 @@ describe("rejection", () => {
             .toBe("You have already joined this game.");
             expect(describeRejection({ reason: "OrganizerCannotLeave" }))
             .toBe("You started this game, so you can't leave it.");
+        });
+
+
+        it("explains a player who is not in the game", () => {
+            expect(describeRejection({ reason: "NotInGame" })).toBe("You are not part of this game.");
         });
 
 

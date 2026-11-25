@@ -67,7 +67,8 @@ const secretOf: ReadonlyMap<PlayerId, Card> = new Map([
 ]);
 const leakPhases: ReadonlyArray<Phase> = [
     { kind: "Turn", player: ann.id },
-    { kind: "HazardIncoming", attacker: bob.id, hazard: Card.stop, target: team0 },
+    // A Speed Limit, since it can land on Ann's car, which needs a Roll.
+    { kind: "HazardIncoming", attacker: bob.id, hazard: Card.speedLimit, target: team0 },
     { kind: "ExtensionOffer", decider: cy.id, team: team2 },
     raceOverPhase(3),
     raceOverPhase(3, team1),
@@ -308,7 +309,7 @@ describe("view", () => {
 
         it("refuses a player who is not in the game", () => {
             expect(viewFor(leakGame(leakPhases[0]!), seatFor("Zed").id).throwIfSucceeded())
-            .toEqual({ reason: "WrongPhase" });
+            .toEqual({ reason: "NotInGame" });
         });
 
     });

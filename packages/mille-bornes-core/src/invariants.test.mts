@@ -7,7 +7,9 @@ import { PlayerId, type TeamIndex } from "./ids.mjs";
 import { checkInvariants } from "./invariants.mjs";
 import { Points } from "./points.mjs";
 import { scoreRace, standardScoring, type RaceOutcome } from "./scoring.mjs";
-import { buildGame, oneOnOne, threeByTwo, threeSolo, twoByTwo } from "./testHelpers.mjs";
+import {
+    buildGame, oneOnOne, threeByTwo, threeSolo, twoByTwo, unlandableHazard
+} from "./testHelpers.mjs";
 import { type ExtensionState } from "./variant.mjs";
 
 
@@ -26,6 +28,12 @@ const rolling: DrivingZone = { ...newZone(), status: { kind: "Rolling" } };
 const at700: DrivingZone = {
     ...rolling,
     distance: [Card.dist200, Card.dist200, Card.dist100, Card.dist100, Card.dist100],
+};
+
+
+const at1000: DrivingZone = {
+    ...at700,
+    distance: [...at700.distance, Card.dist100, Card.dist100, Card.dist100],
 };
 
 
@@ -159,11 +167,11 @@ describe("invariants", () => {
             const phase = {
                 kind:     "HazardIncoming",
                 attacker: game.players[0]!.seat.id,
-                hazard:   Card.stop,
+                hazard:   Card.speedLimit,
                 target:   1 as TeamIndex,
             } as const;
-            // The in-flight Stop is an extra card unless one is taken away.
-            expect(failure({ ...game, players, phase, discardPile: [card!] })).toContain("Stop");
+            // The in-flight Speed Limit is an extra card unless one is taken away.
+            expect(failure({ ...game, players, phase, discardPile: [card!] })).toContain("Speed Limit");
         });
 
 
@@ -187,10 +195,25 @@ describe("invariants", () => {
             const attacker = config.teams[0]![0]!.id;
             const game = buildGame({
                 config,
+                zones: [rolling, rolling],
                 phase: { kind: "HazardIncoming", attacker, hazard: Card.stop, target: 1 as TeamIndex },
             });
             const phase = { ...game.phase, target: 0 as TeamIndex } as Game["phase"];
             expect(failure({ ...game, phase })).toContain("cannot be in flight");
+        });
+
+
+        it("fails on a hazard in flight that can never land", () => {
+            const cases = [
+                ["TargetNotMoving", "not moving"],
+                ["TargetProtected", "Right of Way"],
+                ["TargetAlreadySpeedLimited", "already has a Speed Limit"],
+            ] as const;
+            for (const [why, explained] of cases) {
+                const problem = failure(unlandableHazard(why));
+                expect(problem).withContext(why).toContain("cannot land");
+                expect(problem).withContext(why).toContain(explained);
+            }
         });
 
 
@@ -233,6 +256,46 @@ describe("invariants", () => {
                 phase: { kind: "ExtensionOffer", decider, team: 0 as TeamIndex },
             });
             expect(failure({ ...offer, phase: { kind: "Turn", player: decider } })).toContain("700");
+        });
+
+
+        it("fails on a team at the trip distance while the race is in play", () => {
+            expect(() => buildGame({ config: twoByTwo(), zones: [at1000, newZone()] }))
+            .toThrowError(/1000-mile trip/);
+            expect(() => buildGame({
+                config:    oneOnOne(),
+                zones:     [at1000, newZone()],
+                extension: { kind: "Called", caller: 0 as TeamIndex },
+            })).toThrowError(/1000-mile trip/);
+        });
+
+
+        it("fails on an Extension offer while another team is also at 700 miles", () => {
+            const config = oneOnOne();
+            const decider = config.teams[0]![0]!.id;
+            const phase = { kind: "ExtensionOffer", decider, team: 0 as TeamIndex } as const;
+            expect(checkInvariants(buildGame({ config, zones: [at700, newZone()], phase })).succeeded).toBeTrue();
+            expect(() => buildGame({ config, zones: [at700, at700], phase })).toThrowError(/Team 1/);
+        });
+
+
+        it("allows a team at 700 after Extension is called, and at the trip distance once the race is over", () => {
+            const called = buildGame({
+                config:    oneOnOne(),
+                zones:     [at700, at700],
+                extension: { kind: "Called", caller: 0 as TeamIndex },
+            });
+            expect(checkInvariants(called).succeeded).toBeTrue();
+            const outcome: RaceOutcome = {
+                kind:            "TripCompleted",
+                team:            0 as TeamIndex,
+                delayedAction:   false,
+                extensionCaller: null,
+            };
+            const zones = [at1000, newZone()];
+            const scores = scoreRace(standardScoring, zones, outcome, [Points.zero, Points.zero]);
+            const phase = { kind: "RaceOver", result: { outcome, scores } } as const;
+            expect(checkInvariants(buildGame({ config: twoByTwo(), zones, phase })).succeeded).toBeTrue();
         });
 
 

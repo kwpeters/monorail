@@ -4,7 +4,7 @@ import { newZone, type DrivingZone } from "./drivingZone.mjs";
 import {
     seatOrder, type Game, type GameConfig, type Phase, type Seat, type SeatKind
 } from "./game.mjs";
-import { GameId, PlayerId } from "./ids.mjs";
+import { GameId, PlayerId, type TeamIndex } from "./ids.mjs";
 import { checkInvariants, physicalCards } from "./invariants.mjs";
 import { PlayerName } from "./playerName.mjs";
 import { type Points } from "./points.mjs";
@@ -188,4 +188,50 @@ export function buildGame(parts: GameParts): Game {
         throw new Error(`buildGame: ${valid.error}`);
     }
     return game;
+}
+
+
+/** Why a hazard in flight cannot land; see `unlandableHazard()`. */
+export type Unlandable = "TargetNotMoving" | "TargetProtected" | "TargetAlreadySpeedLimited";
+
+
+/**
+ * Test support: a 2-seat game in which Ann's hazard in flight can never land
+ * on Bob's zone, as a hostile snapshot might hold.  Both players hold a Roll.
+ * The cards are exactly the deck, so the only broken invariant is the one
+ * that a hazard in flight can land.
+ * @param why - Bob needs a Roll (against a Stop), has Right of Way (against a
+ * Stop), or is already speed limited (against a Speed Limit)
+ * @returns The game, which fails `checkInvariants()`
+ */
+export function unlandableHazard(why: Unlandable): Game {
+    const config = oneOnOne();
+    const hazard = why === "TargetAlreadySpeedLimited" ? Card.speedLimit : Card.stop;
+    const landable = buildGame({
+        config,
+        hands: [[Card.roll], [Card.roll]],
+        zones: [newZone(), { ...newZone(), status: { kind: "Rolling" } }],
+        phase: { kind: "HazardIncoming", attacker: config.teams[0]![0]!.id, hazard, target: 1 as TeamIndex },
+    });
+    const target = landable.teams[1]!.zone;
+    // The card now showing on the zone (if any) comes off the discard pile.
+    const [zone, moved] = ((): [DrivingZone, Card | null] => {
+        switch (why) {
+            case "TargetNotMoving":
+                return [{ ...target, status: { kind: "NeedsRoll" } }, null];
+            case "TargetProtected":
+                return [{ ...target, safeties: [{ card: Card.rightOfWay, coupFourre: false }] }, Card.rightOfWay];
+            case "TargetAlreadySpeedLimited":
+                return [{ ...target, speedLimit: true }, Card.speedLimit];
+        }
+    })();
+    const discardPile = [...landable.discardPile];
+    if (moved) {
+        discardPile.splice(discardPile.indexOf(moved), 1);
+    }
+    return {
+        ...landable,
+        teams: landable.teams.map((t, i) => i === 1 ? { ...t, zone } : t),
+        discardPile,
+    };
 }

@@ -2,7 +2,9 @@ import { Card } from "./card.mjs";
 import { newZone, type DrivingZone } from "./drivingZone.mjs";
 import { type TeamIndex } from "./ids.mjs";
 import { checkInvariants } from "./invariants.mjs";
-import { buildGame, oneOnOne, threeByTwo, threeSolo, twoByTwo } from "./testHelpers.mjs";
+import {
+    buildGame, oneOnOne, threeByTwo, threeSolo, twoByTwo, unlandableHazard
+} from "./testHelpers.mjs";
 
 
 const rolling: DrivingZone = { ...newZone(), status: { kind: "Rolling" } };
@@ -46,6 +48,7 @@ describe("testHelpers", () => {
                 buildGame({
                     config: oneOnOne(),
                     hands:  [[Card.dist25], [Card.punctureProof]],
+                    zones:  [newZone(), rolling],
                     phase:  {
                         kind:     "HazardIncoming",
                         attacker: oneOnOne().teams[0]![0]!.id,
@@ -97,6 +100,19 @@ describe("testHelpers", () => {
             const sevenRolls = Array.from({ length: 7 }, () => Card.roll);
             expect(() => buildGame({ config: twoByTwo(), hands: [[Card.roll], sevenRolls] }))
             .toThrowError(/Bob/u);
+        });
+
+    });
+
+
+    describe("unlandableHazard()", () => {
+
+        it("builds a game whose only problem is a hazard that cannot land", () => {
+            for (const why of ["TargetNotMoving", "TargetProtected", "TargetAlreadySpeedLimited"] as const) {
+                const game = unlandableHazard(why);
+                expect(game.phase.kind).withContext(why).toBe("HazardIncoming");
+                expect(checkInvariants(game).error).withContext(why).toContain("cannot land");
+            }
         });
 
     });

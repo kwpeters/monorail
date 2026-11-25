@@ -125,12 +125,12 @@ function viewPhase(g: Game): ViewPhase {
  * Builds what one player may see of a game.
  * @param g - The game
  * @param player - The viewer
- * @returns The view, or WrongPhase when the viewer is not playing in the game
+ * @returns The view, or NotInGame when the viewer is not playing in the game
  */
 export function viewFor(g: Game, player: PlayerId): Result<PlayerView, Rejection> {
     const me = g.players.find((p) => p.seat.id === player);
     if (!me) {
-        return new FailedResult({ reason: "WrongPhase" });
+        return new FailedResult({ reason: "NotInGame" });
     }
     return new SucceededResult({
         gameId:     g.config.id,
