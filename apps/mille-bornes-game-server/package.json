@@ -27,10 +27,12 @@
     "devDependencies": {
         "@repo/eslint-config": "*",
         "@repo/typescript-config": "*",
+        "@trpc/client": "^11.31.3",
         "@types/express": "^5.0.6",
         "@types/jasmine": "^6.0.0",
         "@types/qrcode": "^1.5.5",
         "eslint": "^10.0.1",
+        "eventsource": "^5.1.5",
         "jasmine": "^6.1.0"
     }
 }
