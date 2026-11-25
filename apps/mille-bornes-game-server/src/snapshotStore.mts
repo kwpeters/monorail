@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
 import { GameId } from "@repo/mille-bornes-core/ids";
 import { type Logger } from "./logger.mjs";
 import {
@@ -18,7 +19,8 @@ export interface LoadedSnapshots {
  * Persists game records and player sessions.  Operations on one game run in
  * call order.  A save queued behind another waiting save replaces it (the
  * latest state wins); a delete or quarantine is never dropped or replaced, and
- * a later save queues behind it.
+ * a later save queues behind it.  A failed write rejects without logging; the
+ * caller logs it once, with its own context.
  */
 export interface SnapshotStore {
 
@@ -93,16 +95,12 @@ interface Slot {
  * right behind another waiting "save" replaces it (the replaced job's callers
  * settle with the job that replaced it); any other job, such as a delete or a
  * quarantine, is never dropped or replaced and later jobs queue behind it.
- * A failed job is logged and rejects its callers; the next job still runs.
+ * A failed job rejects its callers; the next job still runs.
  */
 class CoalescingQueue {
 
     private readonly _slots = new Map<string, Slot>();
     private readonly _outstanding = new Set<Promise<void>>();
-
-
-    public constructor(private readonly _logger: Logger) {
-    }
 
 
     public enqueue(key: string, label: "save" | "delete" | "quarantine", op: () => Promise<void>): Promise<void> {
@@ -148,9 +146,6 @@ class CoalescingQueue {
                 job.waiters.forEach((w) => { w.resolve(); });
             }
             catch (err) {
-                // Never the contents; an un-awaited save must not fail silently.
-                const reason = err instanceof Error ? err.message : String(err);
-                this._logger.error(`The ${job.label} of ${path.basename(key)} failed: ${reason}`);
                 job.waiters.forEach((w) => { w.reject(err); });
             }
         }
@@ -165,6 +160,22 @@ function isMissing(err: unknown): boolean {
 }
 
 
+/** Options for a `FileSnapshotStore`. */
+export interface FileSnapshotStoreOptions {
+    /**
+     * Test hook: replaces `fs.rename` for the rename that completes each
+     * write, so a test can make it fail.
+     */
+    readonly rename?: (from: string, to: string) => Promise<void>;
+}
+
+
+// Waits before the second and third rename attempts.  Windows antivirus and
+// indexers briefly lock a file that was just written.
+const renameRetryDelaysMs = [10, 30];
+const lockedCodes = new Set(["EPERM", "EBUSY", "EACCES"]);
+
+
 /**
  * Stores records as JSON files: `<dataDir>/games/<gameId>.json`,
  * `<dataDir>/failed/` and `<dataDir>/sessions.json`.  Each write goes to a
@@ -176,6 +187,7 @@ export class FileSnapshotStore implements SnapshotStore {
     private readonly _failedDir:    string;
     private readonly _sessionsFile: string;
     private readonly _queue:        CoalescingQueue;
+    private readonly _rename:       NonNullable<FileSnapshotStoreOptions["rename"]>;
     private _writeCount = 0;
 
 
@@ -183,9 +195,15 @@ export class FileSnapshotStore implements SnapshotStore {
      * Creates a store.  Directories are created by `loadAll()` and as needed.
      * @param dataDir - The directory that holds all stored data
      * @param _logger - Receives a warning for each damaged file
+     * @param options - Test hooks
      */
-    public constructor(dataDir: string, private readonly _logger: Logger) {
-        this._queue = new CoalescingQueue(_logger);
+    public constructor(
+        dataDir:                  string,
+        private readonly _logger: Logger,
+        options:                  FileSnapshotStoreOptions = {}
+    ) {
+        this._queue = new CoalescingQueue();
+        this._rename = options.rename ?? fs.rename;
         this._gamesDir = path.join(dataDir, "games");
         this._failedDir = path.join(dataDir, "failed");
         this._sessionsFile = path.join(dataDir, "sessions.json");
@@ -292,8 +310,27 @@ export class FileSnapshotStore implements SnapshotStore {
         finally {
             await handle.close();
         }
-        await fs.rename(tmp, file);
+        await this.renameOver(tmp, file);
         this._writeCount++;
+    }
+
+
+    // Renames, retrying while the file is locked; other errors fail at once.
+    private async renameOver(tmp: string, file: string): Promise<void> {
+        for (let attempt = 0; ; attempt++) {
+            try {
+                await this._rename(tmp, file);
+                return;
+            }
+            catch (err) {
+                const delay = renameRetryDelaysMs[attempt];
+                const code = (err as NodeJS.ErrnoException | undefined)?.code ?? "";
+                if (delay === undefined || !lockedCodes.has(code)) {
+                    throw err;
+                }
+                await sleep(delay);
+            }
+        }
     }
 
 
@@ -339,7 +376,9 @@ export class FileSnapshotStore implements SnapshotStore {
             text = await fs.readFile(this._sessionsFile, "utf8");
         }
         catch (err) {
-            return isMissing(err) ? [] : this.setAsideSessions(`it cannot be read (${String(err)}).`);
+            return isMissing(err) ?
+                [] :
+                this.setAsideSessions(`it cannot be read (${String(err)}).`);
         }
         let json: unknown;
         try {
@@ -362,7 +401,7 @@ export class FileSnapshotStore implements SnapshotStore {
 
     // Moves an unusable sessions.json to sessions.json.bad (replacing an older
     // one), so the next save does not destroy the evidence.  Best effort.
-    private async setAsideSessions(reason: string): Promise<ReadonlyArray<SessionRecord>> {
+    private async setAsideSessions(reason: string): Promise<Array<SessionRecord>> {
         this._logger.warn(`Ignoring sessions.json, moved to sessions.json.bad: ${reason}`);
         await fs.rename(this._sessionsFile, `${this._sessionsFile}.bad`).catch((err: unknown) => {
             this._logger.warn(`Could not move sessions.json to sessions.json.bad: ${String(err)}`);

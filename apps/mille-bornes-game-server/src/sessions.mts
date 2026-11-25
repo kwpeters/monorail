@@ -3,6 +3,7 @@ import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import { PlayerId } from "@repo/mille-bornes-core/ids";
 import { PlayerName } from "@repo/mille-bornes-core/playerName";
 import { pickWhimsicalName } from "@repo/mille-bornes-core/whimsicalNames";
+import { type Logger } from "./logger.mjs";
 import { type SessionRecord } from "./records.mjs";
 import { type SnapshotStore } from "./snapshotStore.mjs";
 
@@ -22,6 +23,9 @@ export interface SessionRegistryOptions {
 
     /** The sessions already read with `store.loadAll()`; default: read them now. */
     saved?: ReadonlyArray<SessionRecord>;
+
+    /** Receives an error for each failed save; default: none. */
+    logger?: Logger;
 
 }
 
@@ -73,7 +77,9 @@ export class SessionRegistry {
         options?: SessionRegistryOptions
     ): Promise<SessionRegistry> {
         const sessions = options?.saved ?? (await store.loadAll()).sessions;
-        return new SessionRegistry(store, rand, options?.newToken ?? defaultToken, sessions);
+        return new SessionRegistry(
+            store, rand, options?.newToken ?? defaultToken, sessions, options?.logger
+        );
     }
 
 
@@ -85,7 +91,8 @@ export class SessionRegistry {
         private readonly _store:    SnapshotStore,
         private readonly _rand:     () => number,
         private readonly _newToken: () => string,
-        sessions:                   ReadonlyArray<SessionRecord>
+        sessions:                   ReadonlyArray<SessionRecord>,
+        private readonly _logger:   Logger | undefined
     ) {
         this._sessions = new Map(sessions.map((s) => [s.playerId, s]));
     }
@@ -180,12 +187,15 @@ export class SessionRegistry {
 
 
     // Saves the sessions as they would be, and adopts them only once saved, so
-    // a failed save leaves nothing behind.  The store logs the failure.
+    // a failed save leaves nothing behind.
     private async commit(next: Map<PlayerId, SessionRecord>): Promise<boolean> {
         try {
             await this._store.saveSessions([...next.values()]);
         }
-        catch {
+        catch (err) {
+            // The store's error names the file, never the tokens in it.
+            const why = err instanceof Error ? err.message : String(err);
+            this._logger?.error(`Saving the sessions failed: ${why}`);
             return false;
         }
         this._sessions = next;

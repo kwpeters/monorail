@@ -1,6 +1,7 @@
 import { PlayerId } from "@repo/mille-bornes-core/ids";
 import { PlayerName } from "@repo/mille-bornes-core/playerName";
 import { whimsicalNames } from "@repo/mille-bornes-core/whimsicalNames";
+import { collectingLogger } from "./logger.mjs";
 import { parseBearer, SessionRegistry } from "./sessions.mjs";
 import { MemorySnapshotStore } from "./snapshotStore.mjs";
 
@@ -291,6 +292,23 @@ describe("SessionRegistry", () => {
                 expect(result.failed).toBeTrue();
                 expect(result.failed && result.error).toBe("The new name could not be saved.");
                 expect(registry.nameOf(made.playerId)).toBe(name("Ann"));
+            });
+
+
+            it("logs one error, without the token, when the save fails", async () => {
+                const store = new MemorySnapshotStore();
+                const logger = collectingLogger();
+                const options = { newToken: () => "tok", logger };
+                const registry = await SessionRegistry.load(store, rand, options);
+                const made = (await registry.create("Ann")).throwIfFailed();
+                failSaves(store);
+
+                await registry.rename(made.playerId, "Annie");
+
+                const errors = logger.lines.filter((l) => l.startsWith("ERROR"));
+                expect(errors.length).toBe(1);
+                expect(errors[0]).toContain("disk full");
+                expect(errors[0]).not.toContain("tok");
             });
 
         });

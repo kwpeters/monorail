@@ -49,7 +49,7 @@ export interface RunningGamesOptions {
     readonly logger:       Logger;
     readonly tableFactory: (opts: TableOptions) => Table;
     readonly isConnected:  (player: PlayerId) => boolean;
-    /** Runs a store call and turns its failure into a plain message. */
+    /** Runs a store call; a failure is logged and never returned. */
     readonly persist:      (
         write: () => Promise<void>,
         id:    GameId

@@ -46,7 +46,6 @@ export interface HubOptions {
 export { type AdminEntry } from "./runningGames.mjs";
 
 
-const saveFailed = "Something went wrong saving the game. Please try again.";
 const notInGame = "You are not in a game.";
 
 
@@ -61,11 +60,11 @@ const ok = new SucceededResult<void>(undefined);
 /**
  * Holds every game and decides what each player's screen shows.  A player is
  * in at most one game.  Every change is applied at once, shown to the players
- * it affects, and then saved.  If a save fails the change stays in memory and
- * the failure is logged and returned.  The next change to that game saves its
- * whole state again, but a failed `deleteGame` is not retried: the game is
- * gone from memory and its snapshot comes back after a restart.  No method
- * throws.
+ * it affects, and then saved.  If a save fails the change stays in memory, the
+ * failure is logged, and the method still succeeds, because the change has
+ * happened.  The next change to that game saves its whole state again, but a
+ * failed `deleteGame` is not retried: the game is gone from memory and its
+ * snapshot comes back after a restart.  No method throws.
  *
  * A one-time notice (for example "You were removed from the game.") is cleared
  * when a Lobby screen carrying it is yielded to a watcher, so a watch that
@@ -531,17 +530,17 @@ export class Hub {
 
 
     // The store call has been made before the first await, so saves go out in
-    // the order the changes were made.
+    // the order the changes were made.  A failure is logged, not returned: the
+    // change was applied and shown, so the player must not be told to retry.
     private async persist(write: () => Promise<void>, id: GameId): Promise<Result<void, string>> {
         try {
             await write();
-            return ok;
         }
         catch (e) {
             const why = e instanceof Error ? e.message : String(e);
             this._logger.error(`Saving game ${id} failed: ${why}`);
-            return fail(saveFailed);
         }
+        return ok;
     }
 
 

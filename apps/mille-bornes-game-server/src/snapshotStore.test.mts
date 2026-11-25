@@ -334,20 +334,73 @@ describe("FileSnapshotStore", () => {
 
         describe("write failures", () => {
 
-            it("logs the failure, rejects, and recovers on a later save", async () => {
+            it("rejects without logging (the caller logs), then recovers", async () => {
                 const r = pendingRecord();
                 const id = recordId(r);
                 await fs.writeFile(path.join(dir, "games"), "not a directory");
 
                 await expectAsync(store.saveGame(id, r)).toBeRejected();
-                const errors = logger.lines.filter((l) => l.startsWith("ERROR"));
-                expect(errors.length).toBe(1);
-                expect(errors[0]).toContain(`save of ${id}.json`);
-                expect(errors[0]).not.toContain(ann.name);
+                expect(logger.lines.filter((l) => l.startsWith("ERROR"))).toEqual([]);
 
                 await fs.rm(path.join(dir, "games"));
                 await store.saveGame(id, r);
                 expect((await store.loadAll()).games).toEqual([{ id, record: r }]);
+            });
+
+        });
+
+
+        describe("rename retry", () => {
+
+            // A rename that fails with `codes` in turn, then works.
+            function flakyRename(codes: ReadonlyArray<string>): {
+                rename: (from: string, to: string) => Promise<void>;
+                calls:  () => number;
+            } {
+                let calls = 0;
+                return {
+                    rename: async (from, to) => {
+                        const code = codes[calls++];
+                        if (code !== undefined) {
+                            throw Object.assign(new Error(`${code}: locked`), { code });
+                        }
+                        await fs.rename(from, to);
+                    },
+                    calls: () => calls
+                };
+            }
+
+
+            it("retries a locked rename and then succeeds", async () => {
+                const flaky = flakyRename(["EPERM", "EBUSY"]);
+                const s = new FileSnapshotStore(dir, logger, { rename: flaky.rename });
+                const r = pendingRecord();
+
+                await s.saveGame(recordId(r), r);
+
+                expect(flaky.calls()).toBe(3);
+                expect((await s.loadAll()).games).toEqual([{ id: recordId(r), record: r }]);
+            });
+
+
+            it("gives up after three locked attempts", async () => {
+                const flaky = flakyRename(["EACCES", "EACCES", "EACCES", "EACCES"]);
+                const s = new FileSnapshotStore(dir, logger, { rename: flaky.rename });
+
+                await expectAsync(s.saveSessions([session])).toBeRejected();
+
+                expect(flaky.calls()).toBe(3);
+            });
+
+
+            it("does not retry other errors", async () => {
+                const flaky = flakyRename(["ENOSPC"]);
+                const s = new FileSnapshotStore(dir, logger, { rename: flaky.rename });
+                const r = pendingRecord();
+
+                await expectAsync(s.saveGame(recordId(r), r)).toBeRejected();
+
+                expect(flaky.calls()).toBe(1);
             });
 
         });

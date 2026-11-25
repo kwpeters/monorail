@@ -891,7 +891,7 @@ describe("Hub", () => {
             });
 
 
-            it("fails when the save fails, but the game goes on", async () => {
+            it("succeeds and logs one error when the save fails; the move stands", async () => {
                 const h = await openHub();
                 const players = await startedGame(h, ["Ann", "Bob"]);
                 const before = playing(h.hub.screenFor(players[0]!)).view;
@@ -900,9 +900,11 @@ describe("Hub", () => {
 
                 const r = await h.hub.play(move.by, move.cmd);
 
-                expect(errorOf(r)).toBe("Something went wrong saving the game. Please try again.");
+                expect(r.succeeded).toBeTrue();
                 expect(playing(h.hub.screenFor(players[0]!)).view).not.toEqual(before);
-                expect(h.logger.lines.some((l) => l.includes("disk full"))).toBeTrue();
+                const errors = h.logger.lines.filter((l) => l.startsWith("ERROR"));
+                expect(errors.length).toBe(1);
+                expect(errors[0]).toContain("disk full");
             });
 
 
@@ -1604,20 +1606,19 @@ describe("Hub", () => {
             });
 
 
-            it("fails but keeps the change when a save fails, and logs it", async () => {
+            it("succeeds and keeps the change when a save fails, and logs one error", async () => {
                 const h = await openHub();
                 const ann = await newPlayer(h, "Ann");
                 h.store.saveGame = () => Promise.reject(new Error("disk full"));
 
                 const r = await h.hub.createGame(ann);
 
-                expect(errorOf(r)).toBe(
-                    "Something went wrong saving the game. Please try again."
-                );
+                expect(r.succeeded).toBeTrue();
                 expect(h.hub.screenFor(ann).kind).toBe("Waiting");
-                const logged = h.logger.lines
-                .some((l) => l.startsWith("ERROR") && l.includes("disk full"));
-                expect(logged).toBeTrue();
+                expect((await h.hub.addRobot(ann)).succeeded).toBeTrue();
+                const errors = h.logger.lines.filter((l) => l.startsWith("ERROR"));
+                expect(errors.length).toBe(2);
+                expect(errors.every((l) => l.includes("disk full"))).toBeTrue();
             });
 
 
