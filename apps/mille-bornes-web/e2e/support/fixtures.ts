@@ -9,6 +9,7 @@ import {
 } from "@playwright/test";
 import { GameServer } from "./gameServer.js";
 import { phone } from "./phones.js";
+import { Relay } from "./relay.js";
 
 
 /** What every spec gets. */
@@ -24,6 +25,12 @@ export interface Fixtures {
      * @returns The page, showing name entry
      */
     openPhone: (options?: BrowserContextOptions, url?: string) => Promise<Page>;
+
+    /**
+     * A relay in front of this test's server, closed after the test
+     * whatever its outcome; made only for a test that asks for it.
+     */
+    relay:     Relay;
 }
 
 
@@ -63,6 +70,16 @@ export const test = base.extend<Fixtures>({
         });
         await Promise.all(contexts.map(async (c) => c.close()));
         expect(errors, "no page may throw").toEqual([]);
+    },
+
+    relay: async ({ server }, use) => {
+        const relay = await Relay.open(server.port);
+        try {
+            await use(relay);
+        }
+        finally {
+            await relay.close();
+        }
     }
 });
 

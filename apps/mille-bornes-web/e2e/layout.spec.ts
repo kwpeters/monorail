@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import {
-    createGame, enterName, fillWithRobots, hand, joinGame, startGame
+    createGame, enterName, fillWithRobots, hand, joinGame, playToGameOver, startGame, untilMyTurn
 } from "./support/game.js";
 import { expect, test } from "./support/fixtures.js";
 import { smallPhone } from "./support/phones.js";
@@ -72,4 +72,94 @@ test("at 320 x 568: no sideways scroll, big enough buttons, the hand in view", a
         expect(where.bottom, `${who}: the hand sits at the bottom`)
         .toBeGreaterThanOrEqual(where.viewport - 40);
     }
+});
+
+
+/** What one look at a picked-up card's targets found. */
+interface TargetCheck {
+    /** The targets on screen that the hand (or anything) covers, or too small. */
+    readonly problems: ReadonlyArray<string>;
+    /** How many lane targets were on screen and checked. */
+    readonly lanes:    number;
+}
+
+
+/**
+ * Checks that the Discard button is on screen, on top at its centre and at
+ * least 44 x 44, and that every lane button on screen is on top too.
+ * @param page - A phone with a card picked up
+ * @returns What was found
+ */
+async function checkTargets(page: Page): Promise<TargetCheck> {
+    return page.evaluate((min) => {
+        const problems: Array<string> = [];
+        let lanes = 0;
+        const onTop = (b: Element): boolean => {
+            const r = b.getBoundingClientRect();
+            const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+            return hit !== null && b.contains(hit);
+        };
+        const discard = document.querySelector(".pile-target");
+        if (discard === null) {
+            problems.push("no Discard button");
+        }
+        else {
+            const r = discard.getBoundingClientRect();
+            if (r.top < 0 || r.bottom > window.innerHeight || !onTop(discard)) {
+                problems.push(`Discard is covered or off screen at ${r.top.toString()}`);
+            }
+            if (r.width < min - 0.5 || r.height < min - 0.5) {
+                problems.push(`Discard is ${r.width.toString()} x ${r.height.toString()}`);
+            }
+        }
+        for (const lane of document.querySelectorAll(".lane-target")) {
+            const r = lane.getBoundingClientRect();
+            if (r.bottom > 0 && r.top < window.innerHeight) {
+                lanes++;
+                if (!onTop(lane)) {
+                    problems.push(`${lane.textContent} is covered at ${r.top.toString()}`);
+                }
+            }
+        }
+        return { problems, lanes };
+    }, minTarget);
+}
+
+
+test("at 320 x 568 a picked-up card's Discard and lane buttons are never under the hand", async ({
+    openPhone
+}) => {
+    // Three seats make three teams, the tallest table with lane buttons.
+    const ann = await openPhone(smallPhone);
+    await enterName(ann, "Ann");
+    await createGame(ann);
+    await fillWithRobots(ann, 3);
+    await startGame(ann);
+    await untilMyTurn(ann);
+
+    // A dimmed card still answers a tap: it says why, and can be discarded.
+    const dimmed = hand(ann).locator("button.card-button[aria-disabled='true']").first();
+    await dimmed.tap({ force: true });
+    await expect(ann.locator(".top-bar")).not.toHaveText(/^Your turn/u);
+    await expect(ann.getByRole("button", { name: "Discard", exact: true })).toBeVisible();
+    await dimmed.tap({ force: true });
+    await expect(dimmed).toHaveAttribute("aria-pressed", "false");
+
+    const problems: Array<string> = [];
+    let picks = 0;
+    let lanes = 0;
+    await playToGameOver(ann, "Ann", {
+        onPicked: async (page) => {
+            const found = await checkTargets(page);
+            picks++;
+            lanes += found.lanes;
+            problems.push(...found.problems);
+        }
+    });
+    test.info().annotations.push({
+        type:        "targets checked",
+        description: `${picks.toString()} picks, ${lanes.toString()} lane buttons on screen`
+    });
+    expect(picks, "cards were picked up").toBeGreaterThan(5);
+    expect(problems, "no target under the hand").toEqual([]);
 });

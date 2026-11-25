@@ -1,21 +1,10 @@
 import type { Page } from "@playwright/test";
 import {
-    createGame, enterName, fillWithRobots, hand, handCards, joinGame, playToGameOver, startGame
+    createGame, enterName, fillWithRobots, hand, handCards, joinGame, playToGameOver, startGame,
+    untilMyTurn
 } from "./support/game.js";
 import { expect, test } from "./support/fixtures.js";
 import { phone } from "./support/phones.js";
-import { Relay } from "./support/relay.js";
-
-
-/**
- * Waits until it is the phone's turn: with only robots to wait for, its hand
- * then stays as it is until it plays.
- * @param page - A phone at the table
- * @returns Once the top bar says it is its turn
- */
-async function untilMyTurn(page: Page): Promise<void> {
-    await expect(page.locator(".top-bar")).toHaveText(/^Your turn/u, { timeout: 20_000 });
-}
 
 
 /**
@@ -65,8 +54,7 @@ test.describe("a phone that loses its page or its connection", () => {
 
 
     test("going offline shows Reconnecting... and coming back shows the current table without " +
-        "replaying what was missed", async ({ openPhone, server }) => {
-        const relay = await Relay.open(server.port);
+        "replaying what was missed", async ({ openPhone, relay }) => {
         const ann = await openPhone(phone, relay.url);
         const bea = await openPhone();
         await enterName(ann, "Ann");
@@ -110,7 +98,6 @@ test.describe("a phone that loses its page or its connection", () => {
             "data-card", (await discardPile.getAttribute("data-card")) ?? ""
         );
         await expect(hand(ann).locator("[data-card]")).toHaveCount(7);
-        await relay.close();
     });
 
 

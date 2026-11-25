@@ -100,13 +100,29 @@ async function topBarText(page: Page): Promise<string> {
 
 
 /**
+ * Waits until it is the phone's turn.  With only robots to wait for, its hand
+ * then stays as it is until it plays.
+ * @param page - A phone at the table
+ * @returns Once the top bar says it is its turn
+ */
+export async function untilMyTurn(page: Page): Promise<void> {
+    await expect(page.locator(".top-bar")).toHaveText(/^Your turn/u, { timeout: 20_000 });
+}
+
+
+/** Looks at the table while a card is picked up, before it is played. */
+export type OnPicked = (page: Page) => Promise<void>;
+
+
+/**
  * Takes one turn through the visible UI: the first card that is not dimmed,
  * then its Play or lane button, else Discard; with every card dimmed, the
  * first card is discarded.
  * @param page - A phone whose top bar says it is its turn
+ * @param onPicked - Called once the card is picked up
  * @returns Once the play has been sent
  */
-async function takeTurn(page: Page): Promise<void> {
+async function takeTurn(page: Page, onPicked: OnPicked): Promise<void> {
     const before = await topBarText(page);
     const handBefore = await handCards(page);
     const cards = hand(page).locator("button.card-button");
@@ -120,6 +136,7 @@ async function takeTurn(page: Page): Promise<void> {
     // card tappable on purpose: it explains itself and can be discarded.
     await card.tap({ force: discardOnly, timeout: 2000 });
     await expect(card).toHaveAttribute("aria-pressed", "true", { timeout: 2000 });
+    await onPicked(page);
 
     const play = hand(page).getByRole("button", { name: "Play", exact: true });
     const lanes = page.getByRole("button", { name: /^Play on Team \d$/u });
@@ -141,17 +158,21 @@ async function takeTurn(page: Page): Promise<void> {
 /**
  * Plays a phone through to the end of the game using only what is on its
  * screen: it takes its turns (see `takeTurn`), stops at an Extension offer,
- * and waits out hazard windows and other players' turns.
+ * and waits out hazard windows and other players' turns.  A step that fails
+ * because the screen moved on is tried again, so `onPicked` should record
+ * what it finds rather than throw.
  * @param page - A phone at the table
  * @param label - Names the phone in a failure message
- * @param timeoutMs - How long the game may take
+ * @param options - How long the game may take (default `gameTimeoutMs`), and
+ * what to do each time a card is picked up
  * @returns Once the phone shows Back to lobby
  */
 export async function playToGameOver(
-    page:      Page,
-    label:     string,
-    timeoutMs: number = gameTimeoutMs
+    page:    Page,
+    label:   string,
+    options: { timeoutMs?: number; onPicked?: OnPicked } = {}
 ): Promise<void> {
+    const { timeoutMs = gameTimeoutMs, onPicked = async () => Promise.resolve() } = options;
     const deadline = Date.now() + timeoutMs;
     const backToLobby = page.getByRole("button", { name: "Back to lobby" });
     const stopHere = page.getByRole("button", { name: "Stop here" });
@@ -168,7 +189,7 @@ export async function playToGameOver(
                 await stopHere.tap({ timeout: 2000 });
             }
             else if ((await topBarText(page)).startsWith("Your turn")) {
-                await takeTurn(page);
+                await takeTurn(page, onPicked);
                 turns++;
             }
             else {

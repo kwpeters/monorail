@@ -151,7 +151,12 @@ export class GameServer {
     public async stop(): Promise<void> {
         const child = this._child;
         this._child = undefined;
-        if (child?.exitCode !== null) {
+        if (child === undefined) {
+            return;
+        }
+        // A child that has exited (by itself, or killed by a signal) emits
+        // no more "exit", so waiting for one would hang.
+        if (child.exitCode !== null || child.signalCode !== null) {
             return;
         }
         const exited = new Promise((resolve) => {
