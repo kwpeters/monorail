@@ -346,6 +346,64 @@ describe("schemas", () => {
         });
 
 
+        it("rejects a race result naming a team that does not exist", () => {
+            const raceOver = wire(play(extensionOffer(), ann.id, { type: "DeclineExtension" }));
+            const outcome = ["phase", "result", "outcome"];
+            const cases: ReadonlyArray<[unknown, string]> = [
+                [withValue(raceOver, [...outcome, "team"], 2), "completing the trip"],
+                [withValue(raceOver, outcome, { kind: "Exhausted", winner: 2, extensionCaller: null }), "winner"],
+                [withValue(raceOver, [...outcome, "extensionCaller"], 2), "Extension caller team 2"],
+            ];
+            expect(decodeGame(raceOver).succeeded).toBeTrue();
+            for (const [json, problem] of cases) {
+                const error = decodeGame(json).error ?? "";
+                expect(error).withContext(problem).toContain("team 2");
+                expect(error).withContext(problem).toContain(problem);
+            }
+        });
+
+
+        it("rejects a turn for a player who holds no cards", () => {
+            const g = wire(fresh(oneOnOne(), "Reduced"));
+            const players = g.players as Array<{ hand: Array<string> }>;
+            const emptied = {
+                ...g,
+                players:     players.map((p, i) => i === 0 ? { ...p, hand: [] } : p),
+                discardPile: [...(g.discardPile as Array<string>), ...players[0]!.hand],
+            };
+            expect(decodeGame(emptied).error).toContain("holds no cards");
+        });
+
+
+        it("keeps the failure message short for huge hostile strings and keys", () => {
+            const g = wire(fresh(oneOnOne(), "Reduced"));
+            const tenMegabytes = 10_000_000;
+            const manyKeys = Object.fromEntries(Array.from({ length: 200_000 }, (_, i) => [`k${i}`, 1]));
+            const hostile: ReadonlyArray<[string, () => { error: string | undefined; succeeded: boolean }]> = [
+                ["a 10 MB id", () => decodeGame(withValue(g, ["config", "id"], "x".repeat(tenMegabytes)))],
+                [
+                    "a 10 MB padded name",
+                    () => decodeGame(withValue(g, ["players", 0, "seat", "name"], `${" ".repeat(tenMegabytes)}Ann`)),
+                ],
+                ["200,000 extra keys", () => decodeGame({ ...g, ...manyKeys })],
+                [
+                    "a 10 MB pending organizer",
+                    () => decodePendingGame({
+                        ...(encodePendingGame(createPending(GameId.create(), ann)) as Json),
+                        organizer: "y".repeat(tenMegabytes),
+                    }),
+                ],
+            ];
+            for (const [label, decode] of hostile) {
+                const start = Date.now();
+                const result = decode();
+                expect(result.succeeded).withContext(label).toBeFalse();
+                expect(result.error!.length).withContext(label).toBeLessThan(1000);
+                expect(Date.now() - start).withContext(label).toBeLessThan(1000);
+            }
+        });
+
+
         it("rejects bad miles and counts in a race result", () => {
             const raceOver = wire(play(extensionOffer(), ann.id, { type: "DeclineExtension" }));
             const score = ["phase", "result", "scores", 0];

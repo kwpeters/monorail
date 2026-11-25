@@ -68,8 +68,9 @@ describe("testHelpers", () => {
         it("places every unplaced card on the discard pile", () => {
             const game = buildGame({ config: twoByTwo(), drawPile: [Card.roll] });
             expect(game.drawPile).toEqual([Card.roll]);
-            expect(game.discardPile.length).toBe(105);
-            expect(game.players.every((p) => p.hand.length === 0)).toBeTrue();
+            expect(game.discardPile.length).toBe(104);
+            // The player on turn must hold a card; nobody else holds any.
+            expect(game.players.map((p) => p.hand)).toEqual([[Card.roll], [], [], []]);
         });
 
 
@@ -93,7 +94,8 @@ describe("testHelpers", () => {
 
 
         it("throws when the parts break an invariant", () => {
-            expect(() => buildGame({ config: twoByTwo(), hands: [[], Array.from({ length: 7 }, () => Card.roll)] }))
+            const sevenRolls = Array.from({ length: 7 }, () => Card.roll);
+            expect(() => buildGame({ config: twoByTwo(), hands: [[Card.roll], sevenRolls] }))
             .toThrowError(/Bob/u);
         });
 

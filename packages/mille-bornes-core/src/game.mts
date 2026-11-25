@@ -52,8 +52,9 @@ function normalizedName(s: string): Result<PlayerName, string> {
  * stripped; use `seatSchema.strict()` to reject them.
  */
 export const seatSchema = z.object({
-    id:   z.string().transform((s, ctx) => unwrapOrAddIssue(PlayerId.tryCreate(s), ctx)),
-    name: z.string().transform((s, ctx) => unwrapOrAddIssue(normalizedName(s), ctx)),
+    // The length caps run first, so a huge string is never echoed in an error.
+    id:   z.string().max(36).transform((s, ctx) => unwrapOrAddIssue(PlayerId.tryCreate(s), ctx)),
+    name: z.string().max(100).transform((s, ctx) => unwrapOrAddIssue(normalizedName(s), ctx)),
     kind: seatKindSchema,
 }) satisfies z.ZodType<Seat>;
 

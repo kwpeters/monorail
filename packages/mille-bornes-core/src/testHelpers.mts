@@ -1,4 +1,4 @@
-import { type Card, cardSchema } from "./card.mjs";
+import { Card, cardSchema } from "./card.mjs";
 import { cardCounts, type DeckKind, type ShuffledDeck } from "./deck.mjs";
 import { newZone, type DrivingZone } from "./drivingZone.mjs";
 import {
@@ -108,7 +108,10 @@ export function threeByTwo(): GameConfig {
 /** The parts of a game a test may specify; see `buildGame()`. */
 export interface GameParts {
     readonly config:      GameConfig;
-    /** Hands in turn order (default: empty). */
+    /**
+     * Hands in turn order (default: empty, except that a player on turn holds
+     * one Roll, since the engine never gives a turn to an empty hand).
+     */
     readonly hands?:      ReadonlyArray<ReadonlyArray<Card>>;
     /** Zones by team (default: `newZone()`). */
     readonly zones?:      ReadonlyArray<DrivingZone>;
@@ -139,8 +142,16 @@ export function buildGame(parts: GameParts): Game {
     if (variant.failed) {
         throw new Error(`buildGame: ${describeRejection(variant.error)}`);
     }
-    const players = seatOrder(config.teams)
-    .map(({ seat, team }, i) => ({ seat, team, hand: parts.hands?.[i] ?? [] }));
+    const order = seatOrder(config.teams);
+    const phase = parts.phase ?? { kind: "Turn", player: order[0]!.seat.id };
+    const defaultHand = (id: string): ReadonlyArray<Card> => {
+        return phase.kind === "Turn" && phase.player === id ? [Card.roll] : [];
+    };
+    const players = order.map(({ seat, team }, i) => ({
+        seat,
+        team,
+        hand: parts.hands ? parts.hands[i] ?? [] : defaultHand(seat.id),
+    }));
     const placed: Game = {
         config,
         players,
@@ -152,7 +163,7 @@ export function buildGame(parts: GameParts): Game {
         discardPile: [],
         raceNumber:  parts.raceNumber ?? 1,
         extension:   parts.extension ?? initialExtension(variant.value),
-        phase:       parts.phase ?? { kind: "Turn", player: players[0]!.seat.id },
+        phase,
     };
     const cards = physicalCards(placed);
     const unplaced = deckFor([cards], [], variant.value.deck).slice(cards.length);

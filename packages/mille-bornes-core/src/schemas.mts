@@ -1,5 +1,5 @@
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
-import { safeParse, unwrapOrAddIssue } from "@repo/depot/zodHelpers";
+import { unwrapOrAddIssue } from "@repo/depot/zodHelpers";
 import { z } from "zod";
 import {
     blockingHazardSchema, cardSchema, distanceCardSchema, hazardCardSchema, remedyCardSchema,
@@ -50,7 +50,7 @@ function branded<TIn, TOut>(
 
 
 const playerIdSchema = seatSchema.shape.id;
-const gameIdSchema = branded(z.string(), GameId.tryCreate);
+const gameIdSchema = branded(z.string().max(36), GameId.tryCreate);
 const teamIndexSchema = branded(z.number(), TeamIndex.tryCreate);
 const milesSchema = branded(z.number(), Miles.tryCreate);
 const pointsSchema = branded(z.number(), Points.tryCreate);
@@ -184,13 +184,37 @@ const pendingGameSchema: z.ZodType<PendingGame> = z.strictObject({
 });
 
 
+// Hostile input can make messages huge (e.g. thousands of unknown keys), so
+// each issue and the whole message are clipped.
+const maxIssueLength = 200;
+const maxMessageLength = 500;
+
+
+function clip(s: string, max: number): string {
+    return s.length <= max ? s : `${s.slice(0, max)}...`;
+}
+
+
+function parse<T>(schema: z.ZodType<T>, json: unknown): Result<T, string> {
+    const result = schema.safeParse(json);
+    if (result.success) {
+        return new SucceededResult(result.data);
+    }
+    const issues = result.error.issues.map((issue) => {
+        const where = issue.path.length > 0 ? `${issue.path.join(".")}: ` : "";
+        return clip(`${where}${issue.message}`, maxIssueLength);
+    });
+    return new FailedResult(issues.join("; "));
+}
+
+
 // Decoding must never throw, even on input whose getters throw.
 function guarded<T>(decode: () => Result<T, string>): Result<T, string> {
     try {
-        return decode();
+        return decode().mapError((e) => clip(e, maxMessageLength));
     }
     catch (err) {
-        return new FailedResult(`The input could not be decoded: ${String(err)}`);
+        return new FailedResult(clip(`The input could not be decoded: ${String(err)}`, maxMessageLength));
     }
 }
 
@@ -219,7 +243,7 @@ export function encodeGame(g: Game): unknown {
  * @returns The game, or a plain-English reason it was refused
  */
 export function decodeGame(json: unknown): Result<Game, string> {
-    return guarded(() => safeParse(gameSchema, json).bind((g) => {
+    return guarded(() => parse(gameSchema, json).bind((g) => {
         return validateGameConfig(g.config)
         .bind(() => checkInvariants(g))
         .mapSuccess(() => g);
@@ -263,5 +287,5 @@ function checkSeats(p: PendingGame): Result<PendingGame, string> {
  * @returns The pending game, or a plain-English reason it was refused
  */
 export function decodePendingGame(json: unknown): Result<PendingGame, string> {
-    return guarded(() => safeParse(pendingGameSchema, json).bind(checkSeats));
+    return guarded(() => parse(pendingGameSchema, json).bind(checkSeats));
 }

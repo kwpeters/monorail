@@ -5,7 +5,10 @@ import { createGame } from "./engine.mjs";
 import { type Game, type GameConfig } from "./game.mjs";
 import { PlayerId, type TeamIndex } from "./ids.mjs";
 import { checkInvariants } from "./invariants.mjs";
+import { Points } from "./points.mjs";
+import { scoreRace, standardScoring, type RaceOutcome } from "./scoring.mjs";
 import { buildGame, oneOnOne, threeByTwo, threeSolo, twoByTwo } from "./testHelpers.mjs";
+import { type ExtensionState } from "./variant.mjs";
 
 
 function fresh(config: GameConfig): Game {
@@ -24,6 +27,26 @@ const at700: DrivingZone = {
     ...rolling,
     distance: [Card.dist200, Card.dist200, Card.dist100, Card.dist100, Card.dist100],
 };
+
+
+/** A valid 2-seat RaceOver, then the same game with `outcome` in its result. */
+function raceOverWith(outcome: RaceOutcome, extension?: ExtensionState): [Game, Game] {
+    const valid: RaceOutcome = {
+        kind:            "TripCompleted",
+        team:            0 as TeamIndex,
+        delayedAction:   false,
+        extensionCaller: extension?.kind === "Called" ? extension.caller : null,
+    };
+    const zones = [at700, newZone()];
+    const scores = scoreRace(standardScoring, zones, valid, [Points.zero, Points.zero]);
+    const game = buildGame({
+        config: oneOnOne(),
+        zones,
+        phase:  { kind: "RaceOver", result: { outcome: valid, scores } },
+        ...(extension ? { extension } : {}),
+    });
+    return [game, { ...game, phase: { kind: "RaceOver", result: { outcome, scores } } }];
+}
 
 
 describe("invariants", () => {
@@ -205,10 +228,52 @@ describe("invariants", () => {
             const decider = config.teams[0]![0]!.id;
             const offer = buildGame({
                 config,
+                hands: [[Card.roll], []],
                 zones: [at700, newZone()],
                 phase: { kind: "ExtensionOffer", decider, team: 0 as TeamIndex },
             });
             expect(failure({ ...offer, phase: { kind: "Turn", player: decider } })).toContain("700");
+        });
+
+
+        it("fails on a race result naming a team that does not exist", () => {
+            const team2 = 2 as TeamIndex;
+            const cases: ReadonlyArray<[RaceOutcome, string]> = [
+                [{ kind: "TripCompleted", team: team2, delayedAction: false, extensionCaller: null }, "trip"],
+                [{ kind: "Exhausted", winner: team2, extensionCaller: null }, "winner"],
+                [
+                    { kind: "TripCompleted", team: 0 as TeamIndex, delayedAction: false, extensionCaller: team2 },
+                    "Extension caller team 2",
+                ],
+            ];
+            for (const [outcome, problem] of cases) {
+                const [valid, hostile] = raceOverWith(outcome);
+                expect(checkInvariants(valid).succeeded).toBeTrue();
+                expect(failure(hostile)).withContext(problem).toContain("team 2");
+                expect(failure(hostile)).withContext(problem).toContain(problem);
+            }
+        });
+
+
+        it("fails on a race result whose Extension caller differs from the game's", () => {
+            const caller = 0 as TeamIndex;
+            const noCaller: RaceOutcome = { kind: "Exhausted", winner: "Tie", extensionCaller: null };
+            const team1Called: RaceOutcome = { ...noCaller, extensionCaller: 1 as TeamIndex };
+            expect(failure(raceOverWith(noCaller, { kind: "Called", caller })[1])).toContain("Extension caller");
+            expect(failure(raceOverWith(team1Called)[1])).toContain("Extension caller");
+            expect(checkInvariants(raceOverWith({ ...noCaller, extensionCaller: caller }, {
+                kind: "Called",
+                caller,
+            })[1]).succeeded).toBeTrue();
+        });
+
+
+        it("fails when the player on turn holds no cards", () => {
+            const game = fresh(oneOnOne());
+            const hand = game.players[0]!.hand;
+            const players = game.players.map((p, i) => i === 0 ? { ...p, hand: [] } : p);
+            expect(failure({ ...game, players, discardPile: [...game.discardPile, ...hand] }))
+            .toContain("holds no cards");
         });
 
 

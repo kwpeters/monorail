@@ -2,7 +2,7 @@ import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import { Card, cardSchema } from "./card.mjs";
 import { cardCounts } from "./deck.mjs";
 import { hasSafety, zoneMiles } from "./drivingZone.mjs";
-import { seatOrder, validateGameConfig, type Game, type PlayerState } from "./game.mjs";
+import { seatOrder, validateGameConfig, type Game, type PlayerState, type RaceResult } from "./game.mjs";
 import { EXTENSION_MILES, tripDistance, variantForSeatCount, type RaceVariant } from "./variant.mjs";
 
 
@@ -85,16 +85,43 @@ const checkExtension: Check = (g, v) => {
 };
 
 
+// The race result's teams exist, and its Extension caller is the game's (the
+// Extension state is only reset when the next race is dealt).
+function checkResult(g: Game, { outcome, scores }: RaceResult): string | null {
+    if (scores.length !== g.teams.length) {
+        return `The race result has ${scores.length} scores, but the game has ${g.teams.length} teams.`;
+    }
+    if (outcome.kind === "TripCompleted" && !isTeam(g, outcome.team)) {
+        return `The race result names team ${outcome.team} as completing the trip, but it does not exist.`;
+    }
+    if (outcome.kind === "Exhausted" && outcome.winner !== "Tie" && !isTeam(g, outcome.winner)) {
+        return `The race result names team ${outcome.winner} as the winner, but it does not exist.`;
+    }
+    const caller = outcome.extensionCaller;
+    if (caller !== null && !isTeam(g, caller)) {
+        return `The race result names Extension caller team ${caller}, which does not exist.`;
+    }
+    const expected = g.extension.kind === "Called" ? g.extension.caller : null;
+    return caller === expected ?
+        null :
+        `The race result's Extension caller is team ${caller}, but the game's is team ${expected}.`;
+}
+
+
 const checkPhase: Check = (g) => {
     const phase = g.phase;
     const player = (id: string): PlayerState | undefined => g.players.find((p) => p.seat.id === id);
     const unknown = (id: string): string => `The phase names unknown player ${id}.`;
-    const checkScores = (count: number): string | null => count === g.teams.length ?
-        null :
-        `The race result has ${count} scores, but the game has ${g.teams.length} teams.`;
     switch (phase.kind) {
-        case "Turn":
-            return player(phase.player) ? null : unknown(phase.player);
+        case "Turn": {
+            const onTurn = player(phase.player);
+            if (!onTurn) {
+                return unknown(phase.player);
+            }
+            // The engine only gives a turn to a player with cards, so an
+            // empty hand on turn would leave the game stuck.
+            return onTurn.hand.length > 0 ? null : `${onTurn.seat.name} has the turn but holds no cards.`;
+        }
         case "HazardIncoming": {
             const attacker = player(phase.attacker);
             if (!attacker) {
@@ -121,10 +148,10 @@ const checkPhase: Check = (g) => {
                 `The Extension offer is for team ${phase.team}, which has ${miles} miles, not ${EXTENSION_MILES}.`;
         }
         case "RaceOver":
-            return checkScores(phase.result.scores.length);
+            return checkResult(g, phase.result);
         case "GameOver":
             return isTeam(g, phase.winner) ?
-                checkScores(phase.result.scores.length) :
+                checkResult(g, phase.result) :
                 `The winner is team ${phase.winner}, which does not exist.`;
         default:
             return `Unknown phase ${String((phase as { kind: unknown }).kind)}.`;
