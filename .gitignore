@@ -14,6 +14,11 @@ node_modules/
 
 # Testing
 coverage
+# Playwright output; the end-to-end tests keep each server's data and log
+# in the test's own folder under test-results.
+test-results/
+playwright-report/
+blob-report/
 
 # Log files
 *.log

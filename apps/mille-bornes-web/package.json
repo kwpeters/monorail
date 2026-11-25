@@ -10,7 +10,7 @@
         "lint": "eslint .",
         "type-check": "tsc --project tsconfig.json --noEmit",
         "depcheck": "depcheck",
-        "e2e": "echo End-to-end tests arrive in Task 12"
+        "e2e": "turbo run build --filter=@repo/mille-bornes-web... --output-logs=errors-only && playwright test"
     },
     "dependencies": {
         "@repo/depot": "*",
@@ -21,6 +21,7 @@
         "zod": "^4.3.6"
     },
     "devDependencies": {
+        "@playwright/test": "^1.65.1",
         "@repo/eslint-config": "*",
         "@repo/mille-bornes-game-server": "*",
         "@repo/typescript-config": "*",

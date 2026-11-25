@@ -10,7 +10,10 @@
     "build": {
       "description": "Build all packages and applications",
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*", "!README.md", "!**/*.test.mts"],
+      "inputs": [
+        "$TURBO_DEFAULT$", ".env*", "!README.md", "!**/*.test.mts", "!**/*.test.tsx",
+        "!e2e/**", "!playwright.config.ts"
+      ],
       "outputs": ["dist"]
     },
     "lint": {
