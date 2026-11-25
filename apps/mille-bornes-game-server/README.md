@@ -36,7 +36,8 @@ An empty variable counts as unset.
 The default data directory belongs to the package,
 so the server finds its games wherever it is started from;
 a relative `MB_DATA_DIR` is taken from the current directory.
-The web app is found the same way once it is built
+The web app is found the same way once it is built,
+that is, once `apps/mille-bornes-web/dist/index.html` exists
 (`npm run build` at the repository root builds both).
 If `MB_WEB_ROOT` is unset and the web app has not been built,
 `/` shows a short notice instead.
@@ -131,7 +132,8 @@ mainly for tests:
 the browser end-to-end tests of the web app use them to play whole games in seconds.
 A value is a whole number of milliseconds,
 at least 1 for the window, the offer and the pause
-and at least 0 for the robot delays and the grace;
+and at least 0 for the robot delays and the grace,
+and at most 2,147,483,647 (the longest wait a Node timer can make);
 the robot delay minimum must not be more than the maximum.
 The server refuses to start with a bad value and says which variable is wrong.
 

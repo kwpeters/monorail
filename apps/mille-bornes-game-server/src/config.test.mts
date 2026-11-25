@@ -59,9 +59,12 @@ describe("config", () => {
         });
 
 
-        it("defaults the web root to the built web app when it exists", () => {
+        it("defaults the web root to the built web app when its index.html exists", () => {
             const expected = fileURLToPath(new URL("../../mille-bornes-web/dist", import.meta.url));
             expect(packageWebRoot).toBe(expected);
+            expect(path.isAbsolute(packageWebRoot)).toBeTrue();
+            expect(path.basename(packageWebRoot)).toBe("dist");
+            expect(path.basename(path.dirname(packageWebRoot))).toBe("mille-bornes-web");
             const checked: Array<string> = [];
             const exists = (p: string): boolean => {
                 checked.push(p);
@@ -69,7 +72,8 @@ describe("config", () => {
             };
             const result = loadConfig({}, cwd, pkgData, exists);
             expect(result.value?.webRoot).toEqual(new SomeOption(expected));
-            expect(checked).toEqual([expected]);
+            // A dist that is empty (or a file) does not count as built.
+            expect(checked).toEqual([path.join(expected, "index.html")]);
         });
 
 
@@ -115,6 +119,26 @@ describe("config", () => {
                 const result = loadConfig({ MB_RACE_OVER_PAUSE_MS: bad }, cwd, pkgData, noWebApp);
                 expect(result.failed).withContext(bad).toBeTrue();
                 expect(result.error).toContain("MB_RACE_OVER_PAUSE_MS");
+            }
+        });
+
+
+        it("accepts 2147483647 ms and refuses 2147483648, which setTimeout cannot wait", () => {
+            const names = [
+                "MB_HAZARD_WINDOW_MS", "MB_EXTENSION_OFFER_MS", "MB_RACE_OVER_PAUSE_MS",
+                "MB_ROBOT_DELAY_MIN_MS", "MB_ROBOT_DELAY_MAX_MS", "MB_DISCONNECT_GRACE_MS"
+            ];
+            for (const name of names) {
+                // The minimum stays at or under the maximum, whichever one is set.
+                const pair = name === "MB_ROBOT_DELAY_MIN_MS" ?
+                    { MB_ROBOT_DELAY_MAX_MS: "2147483647" } :
+                    {};
+                const ok = loadConfig({ ...pair, [name]: "2147483647" }, cwd, pkgData, noWebApp);
+                expect(ok.succeeded).withContext(name).toBeTrue();
+                const big = loadConfig({ ...pair, [name]: "2147483648" }, cwd, pkgData, noWebApp);
+                expect(big.failed).withContext(name).toBeTrue();
+                expect(big.error).toContain(`${name} must be a whole number from `);
+                expect(big.error).toContain(" to 2147483647");
             }
         });
 

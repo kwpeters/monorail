@@ -51,6 +51,10 @@ export const packageWebRoot =
     fileURLToPath(new URL("../../mille-bornes-web/dist", import.meta.url));
 
 
+/** The longest wait `setTimeout` can make; a longer one fires at once. */
+const maxTimerMs = 2147483647;
+
+
 /** Each timing's environment variable and its smallest allowed value. */
 const timingVariables: ReadonlyArray<[keyof Timings, string, number]> = [
     ["hazardWindowMs",    "MB_HAZARD_WINDOW_MS",    1],
@@ -72,10 +76,11 @@ function nonEmpty(value: string | undefined): Option<string> {
  * Reads the server configuration from environment variables.
  * `PORT` (1-65535, default 3000), `MB_DATA_DIR` (default the package's
  * `data` directory; a relative path is taken from `cwd`), `MB_WEB_ROOT`
- * (default the built web app when it exists, otherwise none), and the
- * timings `MB_HAZARD_WINDOW_MS`, `MB_EXTENSION_OFFER_MS`,
+ * (default the built web app when its `index.html` exists, otherwise none),
+ * and the timings `MB_HAZARD_WINDOW_MS`, `MB_EXTENSION_OFFER_MS`,
  * `MB_RACE_OVER_PAUSE_MS`, `MB_ROBOT_DELAY_MIN_MS`, `MB_ROBOT_DELAY_MAX_MS`
- * and `MB_DISCONNECT_GRACE_MS` (default `defaultTimings`).
+ * and `MB_DISCONNECT_GRACE_MS` (default `defaultTimings`; at most
+ * 2,147,483,647 ms, the longest `setTimeout` wait).
  * @param env - The environment variables
  * @param cwd - The working directory a relative `MB_DATA_DIR` is resolved from
  * @param defaultDataDir - The data directory when `MB_DATA_DIR` is unset
@@ -104,10 +109,10 @@ export function loadConfig(
         const text = nonEmpty(env[name]);
         if (text.isSome) {
             const ms = /^\d+$/.test(text.value) ? Number(text.value) : NaN;
-            if (!(ms >= min && Number.isSafeInteger(ms))) {
+            if (!(ms >= min && ms <= maxTimerMs)) {
                 return new FailedResult(
-                    `${name} must be a whole number of at least ${min.toString()}, ` +
-                    `but was "${text.value}".`
+                    `${name} must be a whole number from ${min.toString()} to ` +
+                    `${maxTimerMs.toString()}, but was "${text.value}".`
                 );
             }
             timings[key] = ms;
@@ -120,8 +125,11 @@ export function loadConfig(
         );
     }
 
+    // Built means an index.html: an empty `dist` gets the placeholder page.
     const webRoot = nonEmpty(env.MB_WEB_ROOT).bindNone(() => {
-        return exists(packageWebRoot) ? new SomeOption(packageWebRoot) : NoneOption.get();
+        return exists(path.join(packageWebRoot, "index.html")) ?
+            new SomeOption(packageWebRoot) :
+            NoneOption.get();
     });
 
     return new SucceededResult({
