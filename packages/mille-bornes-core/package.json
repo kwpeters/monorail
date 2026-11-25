@@ -69,6 +69,10 @@
             "types": "./src/pendingGame.mts",
             "default": "./dist/pendingGame.mjs"
         },
+        "./pendingView": {
+            "types": "./src/pendingView.mts",
+            "default": "./dist/pendingView.mjs"
+        },
         "./playerName": {
             "types": "./src/playerName.mts",
             "default": "./dist/playerName.mjs"
