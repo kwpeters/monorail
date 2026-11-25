@@ -16,7 +16,8 @@ const maxTrpcBodyBytes = 16 * 1024;
 const placeholder = "Mille Bornes server is running. The web app has not been built yet.";
 const hostOnlyMessage = "This page is only available on the computer that runs the server.";
 const hostPageSecurityPolicy =
-    "default-src 'none'; style-src 'unsafe-inline'; img-src data:; form-action 'self'";
+    "default-src 'none'; style-src 'unsafe-inline'; img-src data:; form-action 'self'; " +
+    "frame-ancestors 'none'";
 
 
 /**
@@ -32,6 +33,47 @@ export function isLoopbackAddress(remoteAddress: string | undefined): boolean {
 }
 
 
+/**
+ * Tells whether a `Host` header names this computer.  A web page that rebinds
+ * its own name to 127.0.0.1 still sends its own name here.
+ * @param host - The raw `Host` header value (may carry a port)
+ * @returns True for `localhost`, `127.0.0.1` or `[::1]`, with or without a port
+ */
+export function isLocalHostHeader(host: string | undefined): boolean {
+    return host !== undefined && /^(?:localhost|127\.0\.0\.1|\[::1\])(?::\d{1,5})?$/iu.test(host);
+}
+
+
+/**
+ * Tells whether a state-changing request was made by this server's own page.
+ * A request with neither `Origin` nor `Sec-Fetch-Site` (curl, an address bar)
+ * is allowed; otherwise the browser must say it is same-origin (or user
+ * initiated), and `Origin` must name the same host as `Host`.
+ * @param request - The request's `Host`, `Origin` and `Sec-Fetch-Site` headers
+ * @returns True when the request is not cross-site
+ */
+export function isSameOriginRequest(request: {
+    host?:         string | undefined;
+    origin?:       string | undefined;
+    secFetchSite?: string | undefined;
+}): boolean {
+    const site = request.secFetchSite;
+    if (site !== undefined && site !== "same-origin" && site !== "none") {
+        return false;
+    }
+    if (request.origin === undefined) {
+        return true;
+    }
+    try {
+        return request.host?.toLowerCase() === new URL(request.origin).host.toLowerCase();
+    }
+    catch {
+        // "null" and other unparseable origins.
+        return false;
+    }
+}
+
+
 /** What the host page handlers need. */
 export interface HostHandlerDeps {
     hub:       Hub;
@@ -44,7 +86,8 @@ export interface HostHandlerDeps {
 
 /**
  * Makes the handlers of the host page.  Both answer 403 unless the request's
- * socket is on this computer.
+ * socket is on this computer and its `Host` names this computer (against DNS
+ * rebinding); ending a game also answers 403 to a cross-site request.
  * @param deps - The hub, the player URLs and the port
  * @returns The handler that shows the page and the one that ends a game
  */
@@ -55,10 +98,13 @@ export function createHostHandlers(deps: HostHandlerDeps): {
     const refuse = (res: Response): void => {
         res.status(403).type("text/plain").send(hostOnlyMessage);
     };
+    const fromThisComputer = (req: Request): boolean => {
+        return isLoopbackAddress(req.socket.remoteAddress) && isLocalHostHeader(req.headers.host);
+    };
 
     return {
         showHost: async (req, res) => {
-            if (!isLoopbackAddress(req.socket.remoteAddress)) {
+            if (!fromThisComputer(req)) {
                 refuse(res);
                 return;
             }
@@ -71,7 +117,11 @@ export function createHostHandlers(deps: HostHandlerDeps): {
         },
 
         endGame: async (req, res) => {
-            if (!isLoopbackAddress(req.socket.remoteAddress)) {
+            if (!fromThisComputer(req) || !isSameOriginRequest({
+                host:         req.headers.host,
+                origin:       req.headers.origin,
+                secFetchSite: req.headers["sec-fetch-site"]
+            })) {
                 refuse(res);
                 return;
             }
@@ -128,6 +178,24 @@ export function createApp(deps: AppDeps): Express {
         app.get("/", (_req, res) => { res.type("text/plain").send(placeholder); });
     }
     else {
+        // Static serving already stays inside the root; refusing these outright
+        // keeps the index fallback from answering 200 to a traversal attempt.
+        app.use((req, res, next) => {
+            let decoded: string;
+            try {
+                decoded = decodeURIComponent(req.path);
+            }
+            catch {
+                res.status(400).type("text/plain").send("Bad request.");
+                return;
+            }
+            if (decoded.split("/").includes("..") ||
+                decoded.includes("\\") || decoded.includes("\0")) {
+                res.status(403).type("text/plain").send("Forbidden.");
+                return;
+            }
+            next();
+        });
         app.use(express.static(webRoot, { dotfiles: "ignore" }));
         app.get(/^(?!\/(?:trpc|host)(?:\/|$))/u, (_req, res) => {
             res.sendFile("index.html", { root: webRoot });

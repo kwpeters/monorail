@@ -5,7 +5,9 @@ import * as path from "node:path";
 import { type Request, type Response } from "express";
 import { type GameId } from "@repo/mille-bornes-core/ids";
 import { seededRandom } from "@repo/mille-bornes-core/simulation";
-import { createApp, createHostHandlers, isLoopbackAddress } from "./app.mjs";
+import {
+    createApp, createHostHandlers, isLocalHostHeader, isLoopbackAddress, isSameOriginRequest
+} from "./app.mjs";
 import { defaultTimings, type ServerConfig } from "./config.mjs";
 import { FakeClock } from "./fakeClock.mjs";
 import { Hub } from "./hub.mjs";
@@ -85,12 +87,39 @@ function fakeResponse(): { res: Response; out: FakeRes } {
 }
 
 
-function fakeRequest(remoteAddress: string, gameId?: string): Request {
+function fakeRequest(
+    remoteAddress: string,
+    gameId?:       string,
+    headers:       Array<[string, string]> = [["host", "localhost:3000"]]
+): Request {
     return {
         socket:  { remoteAddress },
-        headers: Object.fromEntries([["x-forwarded-for", "127.0.0.1"]]),
+        headers: Object.fromEntries([["x-forwarded-for", "127.0.0.1"], ...headers]),
         params:  { gameId }
     } as unknown as Request;
+}
+
+
+// fetch() sets and normalises things a hostile client would not, so this sends
+// the request line and headers exactly as given.
+async function rawRequest(
+    base:    string,
+    method:  string,
+    rawPath: string,
+    headers: Record<string, string> = {}
+): Promise<{ status: number; body: string }> {
+    const { hostname, port } = new URL(base);
+    return new Promise((resolve, reject) => {
+        const req = http.request({ hostname, port, method, path: rawPath, headers }, (res) => {
+            const chunks: Array<Buffer> = [];
+            res.on("data", (c: Buffer) => { chunks.push(c); });
+            res.on("end", () => {
+                resolve({ status: res.statusCode ?? 0, body: Buffer.concat(chunks).toString() });
+            });
+        });
+        req.on("error", reject);
+        req.end();
+    });
 }
 
 
@@ -123,6 +152,63 @@ describe("app", () => {
     });
 
 
+    describe("isLocalHostHeader()", () => {
+
+        it("accepts localhost, 127.0.0.1 and [::1], with or without a port", () => {
+            for (const h of [
+                "localhost", "localhost:3000", "LOCALHOST:3000", "127.0.0.1:3000", "[::1]", "[::1]:3000"
+            ]) {
+                expect(isLocalHostHeader(h)).withContext(h).toBeTrue();
+            }
+        });
+
+
+        it("rejects every other name", () => {
+            for (const h of [
+                undefined, "", "evil.example", "evil.example:3000", "localhost.evil.example",
+                "evil.example#localhost", "192.168.1.5:3000", "::1", "[::1", "localhost:",
+                "localhost:99999x", "127.0.0.1.evil.example", "localhost@evil.example"
+            ]) {
+                expect(isLocalHostHeader(h)).withContext(String(h)).toBeFalse();
+            }
+        });
+
+    });
+
+
+    describe("isSameOriginRequest()", () => {
+
+        const host = "localhost:3000";
+
+
+        it("allows a request with neither Origin nor Sec-Fetch-Site", () => {
+            expect(isSameOriginRequest({ host })).toBeTrue();
+        });
+
+
+        it("allows same-origin and user-initiated requests", () => {
+            expect(isSameOriginRequest({ host, origin: "http://localhost:3000" })).toBeTrue();
+            expect(isSameOriginRequest({ host, secFetchSite: "same-origin" })).toBeTrue();
+            expect(isSameOriginRequest({ host, secFetchSite: "none" })).toBeTrue();
+        });
+
+
+        it("rejects a cross-site or same-site request", () => {
+            expect(isSameOriginRequest({ host, secFetchSite: "cross-site" })).toBeFalse();
+            expect(isSameOriginRequest({ host, secFetchSite: "same-site" })).toBeFalse();
+        });
+
+
+        it("rejects an Origin that is not the Host", () => {
+            expect(isSameOriginRequest({ host, origin: "http://evil.example" })).toBeFalse();
+            expect(isSameOriginRequest({ host, origin: "http://localhost:4000" })).toBeFalse();
+            expect(isSameOriginRequest({ host, origin: "null" })).toBeFalse();
+            expect(isSameOriginRequest({ origin: "http://localhost:3000" })).toBeFalse();
+        });
+
+    });
+
+
     describe("createHostHandlers()", () => {
 
         it("refuses a non-loopback page request, whatever X-Forwarded-For says", async () => {
@@ -132,6 +218,56 @@ describe("app", () => {
             .showHost(fakeRequest("192.168.1.9"), res);
             expect(out.statusCode).toBe(403);
             expect(out.body).toContain("only");
+        });
+
+
+        it("refuses a spoofed Host on a loopback socket, for both handlers", async () => {
+            const h = await startApp();
+            const id = await newPendingGame(h, "Ann");
+            const handlers = createHostHandlers({ hub: h.hub, addresses: () => [], port: 3000 });
+            const spoofed: Array<[string, string]> = [["host", "evil.example"]];
+            const page = fakeResponse();
+            await handlers.showHost(fakeRequest("127.0.0.1", undefined, spoofed), page.res);
+            const end = fakeResponse();
+            await handlers.endGame(fakeRequest("127.0.0.1", id, spoofed), end.res);
+            expect(page.out.statusCode).toBe(403);
+            expect(end.out.statusCode).toBe(403);
+            expect(h.hub.adminList().length).toBe(1);
+        });
+
+
+        it("refuses a cross-site end request and ends nothing", async () => {
+            const h = await startApp();
+            const id = await newPendingGame(h, "Ann");
+            const handlers = createHostHandlers({ hub: h.hub, addresses: () => [], port: 3000 });
+            const attempts: Array<Array<[string, string]>> = [
+                [["host", "localhost:3000"], ["sec-fetch-site", "cross-site"]],
+                [["host", "localhost:3000"], ["origin", "http://evil.example"]]
+            ];
+            for (const headers of attempts) {
+                const { res, out } = fakeResponse();
+                await handlers.endGame(fakeRequest("127.0.0.1", id, headers), res);
+                expect(out.statusCode).toBe(403);
+            }
+            expect(h.hub.adminList().length).toBe(1);
+        });
+
+
+        it("ends a game for the own page form post and for a bare request", async () => {
+            const h = await startApp();
+            const handlers = createHostHandlers({ hub: h.hub, addresses: () => [], port: 3000 });
+            const sameOrigin: Array<[string, string]> = [
+                ["host", "localhost:3000"], ["origin", "http://localhost:3000"],
+                ["sec-fetch-site", "same-origin"]
+            ];
+            const bare: Array<[string, string]> = [["host", "[::1]:3000"]];
+            for (const [i, headers] of [sameOrigin, bare].entries()) {
+                const id = await newPendingGame(h, `Ann${i.toString()}`);
+                const { res, out } = fakeResponse();
+                await handlers.endGame(fakeRequest("::1", id, headers), res);
+                expect(out.statusCode).toBe(303);
+                expect(h.hub.adminList().some((g) => g.id === id)).toBeFalse();
+            }
         });
 
 
@@ -158,6 +294,7 @@ describe("app", () => {
             expect(res.status).toBe(200);
             expect(res.headers.get("content-type")).toContain("text/html");
             expect(res.headers.get("content-security-policy")).toContain("default-src 'none'");
+            expect(res.headers.get("content-security-policy")).toContain("frame-ancestors 'none'");
             expect(html).toContain(lanUrl);
             expect(html).toContain("<svg");
             expect(html).toContain("Ann");
@@ -180,6 +317,29 @@ describe("app", () => {
             expect(res.status).toBe(303);
             expect(res.headers.get("location")).toBe("/host");
             expect(h.hub.adminList()).toEqual([]);
+        });
+
+
+        it("answers 403 to a rebound host name, even from a loopback socket", async () => {
+            const h = await startApp();
+            const id = await newPendingGame(h, "Ann");
+            const page = await rawRequest(h.base, "GET", "/host", { host: "evil.example" });
+            const end = await rawRequest(h.base, "POST", `/host/end/${id}`, { host: "evil.example" });
+            expect(page.status).toBe(403);
+            expect(page.body).not.toContain("Ann");
+            expect(end.status).toBe(403);
+            expect(h.hub.adminList().length).toBe(1);
+        });
+
+
+        it("answers 403 to a cross-site form post", async () => {
+            const h = await startApp();
+            const id = await newPendingGame(h, "Ann");
+            const end = await rawRequest(h.base, "POST", `/host/end/${id}`, Object.fromEntries([
+                ["sec-fetch-site", "cross-site"], ["origin", "http://evil.example"]
+            ]));
+            expect(end.status).toBe(403);
+            expect(h.hub.adminList().length).toBe(1);
         });
 
 
@@ -267,10 +427,15 @@ describe("app", () => {
 
         it("never leaves the web root", async () => {
             const h = await startApp(webRootWithIndex());
-            for (const p of ["/..%2foutside.txt", "/..%2f..%2fpackage.json", "/%2e%2e/outside.txt"]) {
-                const body = await (await fetch(`${h.base}${p}`)).text();
+            // Raw paths: fetch() would normalise the dot segments away.
+            const paths = [
+                "/../outside.txt", "/..%2foutside.txt", "/..%2f..%2foutside.txt",
+                "/%2e%2e/outside.txt", "/..%5coutside.txt", "/%2e%2e%2foutside.txt"
+            ];
+            for (const p of paths) {
+                const { status, body } = await rawRequest(h.base, "GET", p);
                 expect(body).withContext(p).not.toContain("OUTSIDE");
-                expect(body).withContext(p).not.toContain("\"name\"");
+                expect(status).withContext(p).not.toBe(200);
             }
         });
 
