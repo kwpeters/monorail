@@ -5,7 +5,7 @@ import { applyPlayerCommand } from "@repo/mille-bornes-core/engine";
 import type { GameEvent } from "@repo/mille-bornes-core/events";
 import type { Game } from "@repo/mille-bornes-core/game";
 import { eventsFor, viewFor, type PlayerView } from "@repo/mille-bornes-core/view";
-import { gameForSeats } from "./viewFixtures.mjs";
+import { gameForSeats, type SeatCount } from "./viewFixtures.mjs";
 import { rollingZone } from "./zoneFixtures.mjs";
 
 
@@ -72,4 +72,55 @@ export interface AnnsScreen {
 export function annPlays(command: PlayerCommand): AnnsScreen {
     const { game, events } = applyPlayerCommand(midRace, annId, command).throwIfFailed();
     return { view: viewFor(game, annId).throwIfFailed(), events: eventsFor(annId, events) };
+}
+
+
+/** Hands by seat name, for `arrange()`. */
+export type Hands = ReadonlyArray<readonly [string, ReadonlyArray<Card>]>;
+
+
+/**
+ * Sets some hands and the zones of a fresh fixture game of any size.
+ * @param seatCount - The number of seats (2, 3, 4 or 6)
+ * @param hands - Hands by seat name; seats not named keep their dealt hand
+ * @param zones - Every team's zone, by team index
+ * @returns The game on the first seat's turn
+ */
+export function arrange(
+    seatCount: SeatCount,
+    hands: Hands,
+    zones: ReadonlyArray<DrivingZone>
+): Game {
+    const g = gameForSeats(seatCount);
+    const byName = new Map(hands);
+    return {
+        ...g,
+        players: g.players.map((p) => ({ ...p, hand: byName.get(p.seat.name) ?? p.hand })),
+        teams:   g.teams.map((t, i) => ({ ...t, zone: zones[i]! })),
+    };
+}
+
+
+/**
+ * Gets the view one seat of a game has.
+ * @param game - The game
+ * @param name - The seat's name
+ * @returns That player's view
+ */
+export function viewOf(game: Game, name: string): PlayerView {
+    const seat = game.players.find((p) => p.seat.name === name)!.seat;
+    return viewFor(game, seat.id).throwIfFailed();
+}
+
+
+/**
+ * Has a seat make a move.
+ * @param game - The game
+ * @param name - The seat's name
+ * @param command - The move
+ * @returns The game after the move
+ */
+export function play(game: Game, name: string, command: PlayerCommand): Game {
+    const seat = game.players.find((p) => p.seat.name === name)!.seat;
+    return applyPlayerCommand(game, seat.id, command).throwIfFailed().game;
 }
