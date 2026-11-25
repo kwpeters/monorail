@@ -16,3 +16,15 @@ export const failedMessage = "Something went wrong. Please try again.";
 
 /** The value schema for mutations that return `Result<void, string>`. */
 export const voidWire: z.ZodType<void> = z.void();
+
+
+/** What `session.create` answers with; the credential plus the name given. */
+export const sessionCreatedSchema = z.object({
+    playerId: z.string(),
+    token:    z.string(),
+    name:     z.string()
+});
+
+
+/** What `session.me` answers with; only the name is used. */
+export const meSchema = z.object({ name: z.string() });

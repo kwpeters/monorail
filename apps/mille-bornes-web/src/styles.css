@@ -87,3 +87,250 @@ svg {
 }
 
 /* eslint-enable css/no-invalid-properties */
+
+/* Screens. Mobile first: a single column that works down to 320px. */
+
+/* The CSS linter does not know env() yet. */
+/* eslint-disable css/no-invalid-properties */
+
+.shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+}
+
+.shell-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding-top: calc(var(--space-2) + env(safe-area-inset-top));
+    padding-right: calc(var(--space-3) + env(safe-area-inset-right));
+    padding-bottom: var(--space-2);
+    padding-left: calc(var(--space-3) + env(safe-area-inset-left));
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+}
+
+.shell-title {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.shell-controls {
+    display: flex;
+    flex-shrink: 0;
+    gap: var(--space-2);
+}
+
+.shell-main {
+    flex: 1;
+    container-type: inline-size;
+    padding-top: var(--space-3);
+    padding-right: calc(var(--space-3) + env(safe-area-inset-right));
+    padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
+    padding-left: calc(var(--space-3) + env(safe-area-inset-left));
+}
+
+/* eslint-enable css/no-invalid-properties */
+
+/* Long names end in an ellipsis instead of widening anything. */
+.truncate {
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.banner {
+    margin: 0;
+    padding: var(--space-2) var(--space-3);
+    background: #fff3bf;
+    color: var(--color-text);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.screen {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    max-inline-size: 32rem;
+    margin-inline: auto;
+}
+
+.screen h2,
+.screen h3,
+.screen h4,
+.screen p {
+    margin: 0;
+}
+
+.screen h3 {
+    color: var(--color-text-soft);
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.field-label {
+    font-weight: 600;
+}
+
+.text-field {
+    min-height: var(--target-size);
+    padding: var(--space-2);
+    border: 2px solid var(--color-border);
+    border-radius: 0.5rem;
+    background: var(--color-surface);
+}
+
+.button {
+    padding: var(--space-2) var(--space-3);
+    border: 2px solid var(--color-border);
+    border-radius: 0.5rem;
+    background: var(--color-surface);
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.button.primary {
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+}
+
+.button.big {
+    min-height: 3.25rem;
+    font-size: 1.1rem;
+}
+
+.button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.button:focus-visible,
+.text-field:focus-visible {
+    outline: 3px solid var(--color-text);
+    outline-offset: 2px;
+}
+
+.button-row {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.error {
+    color: var(--color-danger);
+    font-weight: 600;
+}
+
+.notice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid #ffe066;
+    border-radius: 0.5rem;
+    background: #fff3bf;
+}
+
+.notice-text {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+}
+
+.my-name {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+}
+
+.my-name p {
+    flex: 1;
+    min-inline-size: 0;
+}
+
+.empty {
+    color: var(--color-text-soft);
+}
+
+.game-list,
+.seat-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.game-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.game {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border: 2px solid var(--color-border);
+    border-radius: 0.75rem;
+    background: var(--color-surface);
+}
+
+.game-info {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-inline-size: 0;
+}
+
+.game-title {
+    font-size: 1rem;
+}
+
+.seat-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+}
+
+.seat {
+    max-inline-size: 100%;
+    padding: 0 var(--space-2);
+    border-radius: 1rem;
+    background: var(--color-bg);
+    font-size: 0.85rem;
+}
+
+.game-meta {
+    color: var(--color-text-soft);
+    font-size: 0.85rem;
+}
+
+.chip {
+    padding: 0 var(--space-2);
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    color: var(--color-text);
+    font-weight: 600;
+}
+
+/* A very narrow row puts Join under the game instead of squeezing the names. */
+@container (max-width: 20rem) {
+    .game {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
