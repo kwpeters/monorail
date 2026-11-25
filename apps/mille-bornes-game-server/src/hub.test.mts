@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { NoneOption, type Option, SomeOption } from "@repo/depot/option";
 import { FailedResult, type Result } from "@repo/depot/result";
 import { chooseCommand } from "@repo/mille-bornes-core/bot";
 import { Card } from "@repo/mille-bornes-core/card";
@@ -130,14 +131,14 @@ function nextMove(
     h:      Harness,
     humans: ReadonlyArray<PlayerId>,
     rand:   () => number
-): { by: PlayerId; cmd: PlayerCommand } | null {
+): Option<{ by: PlayerId; cmd: PlayerCommand }> {
     for (const by of humans) {
         const cmd = chooseCommand(playing(h.hub.screenFor(by)).view, rand);
-        if (cmd) {
-            return { by, cmd };
+        if (cmd.isSome) {
+            return new SomeOption({ by, cmd: cmd.value });
         }
     }
-    return null;
+    return NoneOption.get();
 }
 
 
@@ -155,8 +156,8 @@ async function playUntil(
             return moves;
         }
         const move = nextMove(h, humans, rand);
-        if (move) {
-            (await h.hub.play(move.by, move.cmd)).throwIfFailed();
+        if (move.isSome) {
+            (await h.hub.play(move.value.by, move.value.cmd)).throwIfFailed();
             ++moves;
         }
         else {
@@ -365,9 +366,9 @@ describe("Hub", () => {
                 for (const p of [loud, spaced]) {
                     const r = await h.hub.join(p, gameId);
 
-                    expect(errorOf(r)).toBe(
-                        describeRejection({ reason: "NameTaken", name: h.sessions.nameOf(p)! })
-                    );
+                    const name = h.sessions.nameOf(p).throwIfNone();
+
+                    expect(errorOf(r)).toBe(describeRejection({ reason: "NameTaken", name }));
                 }
             });
 
@@ -822,7 +823,7 @@ describe("Hub", () => {
                 await nextScreen(bobWatch);
                 // Bob connecting is shown to Ann.
                 expect(playing(await nextScreen(annWatch)).events).toEqual([]);
-                const move = nextMove(h, [ann!, bob!], seededRandom(1))!;
+                const move = nextMove(h, [ann!, bob!], seededRandom(1)).throwIfNone();
 
                 (await h.hub.play(move.by, move.cmd)).throwIfFailed();
 
@@ -862,7 +863,7 @@ describe("Hub", () => {
             it("refuses the same command sent twice and changes nothing", async () => {
                 const h = await openHub();
                 const players = await startedGame(h, ["Ann", "Bob"]);
-                const move = nextMove(h, players, seededRandom(1))!;
+                const move = nextMove(h, players, seededRandom(1)).throwIfNone();
                 (await h.hub.play(move.by, move.cmd)).throwIfFailed();
                 const { seq } = await runningRecord(h);
                 const before = h.hub.screenFor(move.by);
@@ -892,7 +893,7 @@ describe("Hub", () => {
                 const h = await openHub();
                 const players = await startedGame(h, ["Ann", "Bob"]);
                 const carol = await newPlayer(h, "Carol");
-                const move = nextMove(h, players, seededRandom(1))!;
+                const move = nextMove(h, players, seededRandom(1)).throwIfNone();
                 const before = h.hub.screenFor(move.by);
 
                 const r = await h.hub.play(carol, move.cmd);
@@ -920,7 +921,7 @@ describe("Hub", () => {
                 const players = await startedGame(h, ["Ann", "Bob"]);
                 const before = playing(h.hub.screenFor(players[0]!)).view;
                 h.store.saveGame = () => Promise.reject(new Error("disk full"));
-                const move = nextMove(h, players, seededRandom(1))!;
+                const move = nextMove(h, players, seededRandom(1)).throwIfNone();
 
                 const r = await h.hub.play(move.by, move.cmd);
 
@@ -941,7 +942,7 @@ describe("Hub", () => {
                     }
                 });
                 const players = await startedGame(h, ["Ann", "Bob"]);
-                const move = nextMove(h, players, seededRandom(1))!;
+                const move = nextMove(h, players, seededRandom(1)).throwIfNone();
 
                 const r = await h.hub.play(move.by, move.cmd);
 
@@ -972,12 +973,12 @@ describe("Hub", () => {
                 const annWatch = watcher(h.hub, ann!);
                 await nextScreen(annWatch);
                 const rand = seededRandom(1);
-                const first = nextMove(h, [ann!, bob!], rand)!;
+                const first = nextMove(h, [ann!, bob!], rand).throwIfNone();
                 nest = () => {
                     for (const p of [ann!, bob!]) {
                         const cmd = chooseCommand(viewFor(table!.game, p).throwIfFailed(), rand);
-                        if (cmd) {
-                            return table!.submit(p, cmd);
+                        if (cmd.isSome) {
+                            return table!.submit(p, cmd.value);
                         }
                     }
                     return new FailedResult("No second move.");
@@ -1132,7 +1133,7 @@ describe("Hub", () => {
                 await nextScreen(second);
                 h.clock.advance(10000);
                 expect(h.clock.pendingCount()).toBe(0);
-                const move = nextMove(h, players, seededRandom(1))!;
+                const move = nextMove(h, players, seededRandom(1)).throwIfNone();
                 (await h.hub.play(move.by, move.cmd)).throwIfFailed();
 
                 // Ann sees the play next, so no presence screen came first.
@@ -1152,7 +1153,7 @@ describe("Hub", () => {
                 const tab2 = watcher(h.hub, bob!);
                 await nextScreen(tab1);
                 await nextScreen(tab2);
-                const move = nextMove(h, players, seededRandom(1))!;
+                const move = nextMove(h, players, seededRandom(1)).throwIfNone();
                 (await h.hub.play(move.by, move.cmd)).throwIfFailed();
                 expect(playing(await nextScreen(tab1)).events.length).toBeGreaterThan(0);
                 expect(playing(await nextScreen(tab2)).events.length).toBeGreaterThan(0);
@@ -1237,7 +1238,7 @@ describe("Hub", () => {
                 h.clock.advance(3000);
                 const second = watcher(h.hub, ann!);
                 await nextScreen(second);
-                const move = nextMove(h, players, seededRandom(1))!;
+                const move = nextMove(h, players, seededRandom(1)).throwIfNone();
                 (await h.hub.play(move.by, move.cmd)).throwIfFailed();
 
                 // Bob sees the play next, so no presence screen came first.
@@ -1451,7 +1452,7 @@ describe("Hub", () => {
                 });
                 const players = await startedGame(h, ["Ann", "Bob"]);
                 const others = await startedGame(h, ["Cy", "Dee"]);
-                const move = nextMove(h, players, seededRandom(1))!;
+                const move = nextMove(h, players, seededRandom(1)).throwIfNone();
                 const gameId = playing(h.hub.screenFor(players[0]!)).view.gameId;
                 broken = tables[0]!;
                 const quarantine = spyOn(h.store, "quarantineGame").and.callThrough();
@@ -1731,7 +1732,7 @@ describe("Hub", () => {
 
                 expect(players.map((p) => second.hub.screenFor(p))).toEqual(before);
                 expect((await runningRecord(second)).seq).toBe(seq);
-                const move = nextMove(second, players, seededRandom(1))!;
+                const move = nextMove(second, players, seededRandom(1)).throwIfNone();
                 (await second.hub.play(move.by, move.cmd)).throwIfFailed();
                 expect((await runningRecord(second)).seq).toBe(seq + 1);
             });

@@ -1,3 +1,4 @@
+import { NoneOption } from "@repo/depot/option";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -15,7 +16,7 @@ describe("startServer()", () => {
         const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "mb-start-test-"));
         try {
             const running = await startServer({
-                config:    { port: 0, dataDir, webRoot: null, timings: defaultTimings },
+                config:    { port: 0, dataDir, webRoot: NoneOption.get(), timings: defaultTimings },
                 clock:     new FakeClock(),
                 rand:      seededRandom(7),
                 logger:    collectingLogger(),
@@ -48,7 +49,7 @@ describe("startServer()", () => {
         fs.writeFileSync(path.join(dataDir, "games", bad), "{");
         const logger = collectingLogger();
         const running = await startServer({
-            config:    { port: 0, dataDir, webRoot: null, timings: defaultTimings },
+            config:    { port: 0, dataDir, webRoot: NoneOption.get(), timings: defaultTimings },
             clock:     new FakeClock(),
             rand:      seededRandom(7),
             logger,
@@ -75,11 +76,15 @@ describe("startServer()", () => {
             addresses: () => new Map<string, string>()
         };
         const first = await startServer({
-            ...deps, config: { port: 0, dataDir, webRoot: null, timings: defaultTimings }
+            ...deps,
+            config: { port: 0, dataDir, webRoot: NoneOption.get(), timings: defaultTimings }
         });
         try {
             await expectAsync(startServer({
-                ...deps, config: { port: first.port, dataDir, webRoot: null, timings: defaultTimings }
+                ...deps,
+                config: {
+                    port: first.port, dataDir, webRoot: NoneOption.get(), timings: defaultTimings
+                }
             })).toBeRejectedWith(jasmine.objectContaining({ code: "EADDRINUSE" }));
         }
         finally {

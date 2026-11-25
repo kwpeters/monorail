@@ -1,3 +1,4 @@
+import { NoneOption, Option, SomeOption } from "@repo/depot/option";
 import { PlayerId } from "@repo/mille-bornes-core/ids";
 import { PlayerName } from "@repo/mille-bornes-core/playerName";
 import { whimsicalNames } from "@repo/mille-bornes-core/whimsicalNames";
@@ -54,14 +55,14 @@ describe("SessionRegistry", () => {
                 const second = await SessionRegistry.load(store, rand);
 
                 expect(second.authenticate({ playerId: made.playerId, token: made.token })).toBeTrue();
-                expect(second.nameOf(made.playerId)).toEqual(made.name);
+                expect(second.nameOf(made.playerId)).toEqual(new SomeOption(made.name));
             });
 
 
             it("starts empty when nothing was saved", async () => {
                 const registry = await SessionRegistry.load(new MemorySnapshotStore(), rand);
 
-                expect(registry.nameOf(PlayerId.create())).toBeNull();
+                expect(registry.nameOf(PlayerId.create())).toEqual(NoneOption.get());
             });
 
         });
@@ -81,7 +82,7 @@ describe("SessionRegistry", () => {
                 expect(PlayerId.tryCreate(made.playerId).succeeded).toBeTrue();
                 expect(made.token).toMatch(/^[A-Za-z0-9_-]{32}$/u);
                 expect(made.name).toBe(name("Ann"));
-                expect(registry.nameOf(made.playerId)).toBe(name("Ann"));
+                expect(registry.nameOf(made.playerId)).toEqual(new SomeOption(name("Ann")));
             });
 
 
@@ -104,10 +105,10 @@ describe("SessionRegistry", () => {
             });
 
 
-            it("picks a whimsical name for null", async () => {
+            it("picks a whimsical name when none is given", async () => {
                 const registry = await SessionRegistry.load(new MemorySnapshotStore(), rand);
 
-                const made = (await registry.create(null)).throwIfFailed();
+                const made = (await registry.create()).throwIfFailed();
 
                 expect(whimsicalNames).toContain(made.name);
             });
@@ -131,7 +132,7 @@ describe("SessionRegistry", () => {
                 const registry = await SessionRegistry.load(new MemorySnapshotStore(), rand);
 
                 for (let i = 0; i < whimsicalNames.length + 10; i++) {
-                    expect((await registry.create(null)).succeeded).withContext(String(i)).toBeTrue();
+                    expect((await registry.create()).succeeded).withContext(String(i)).toBeTrue();
                 }
             });
 
@@ -212,7 +213,7 @@ describe("SessionRegistry", () => {
                 const renamed = (await registry.rename(made.playerId, " Annie ")).throwIfFailed();
 
                 expect(renamed).toBe(name("Annie"));
-                expect(registry.nameOf(made.playerId)).toBe(name("Annie"));
+                expect(registry.nameOf(made.playerId)).toEqual(new SomeOption(name("Annie")));
                 expect((await store.loadAll()).sessions[0]?.name).toBe(name("Annie"));
             });
 
@@ -224,7 +225,7 @@ describe("SessionRegistry", () => {
                 const result = await registry.rename(made.playerId, "   ");
 
                 expect(result.failed).toBeTrue();
-                expect(registry.nameOf(made.playerId)).toBe(name("Ann"));
+                expect(registry.nameOf(made.playerId)).toEqual(new SomeOption(name("Ann")));
             });
 
 
@@ -245,7 +246,7 @@ describe("SessionRegistry", () => {
 
                 await Promise.all([registry.rename(made.playerId, "One"), registry.rename(made.playerId, "Two")]);
 
-                expect(registry.nameOf(made.playerId)).toBe(name("Two"));
+                expect(registry.nameOf(made.playerId)).toEqual(new SomeOption(name("Two")));
                 expect(await storedNames(store)).toEqual(["Two"]);
             });
 
@@ -263,7 +264,7 @@ describe("SessionRegistry", () => {
 
                 expect(one.failed).toBeTrue();
                 expect(two.succeeded).toBeTrue();
-                expect(registry.nameOf(made.playerId)).toBe(name("Two"));
+                expect(registry.nameOf(made.playerId)).toEqual(new SomeOption(name("Two")));
                 expect(await storedNames(store)).toEqual(["Two"]);
             });
 
@@ -276,7 +277,7 @@ describe("SessionRegistry", () => {
 
                 await Promise.all([registry.rename(made.playerId, "One"), registry.rename(made.playerId, "Two")]);
 
-                expect(registry.nameOf(made.playerId)).toBe(name("One"));
+                expect(registry.nameOf(made.playerId)).toEqual(new SomeOption(name("One")));
                 expect(await storedNames(store)).toEqual(["One"]);
             });
 
@@ -291,7 +292,7 @@ describe("SessionRegistry", () => {
 
                 expect(result.failed).toBeTrue();
                 expect(result.failed && result.error).toBe("The new name could not be saved.");
-                expect(registry.nameOf(made.playerId)).toBe(name("Ann"));
+                expect(registry.nameOf(made.playerId)).toEqual(new SomeOption(name("Ann")));
             });
 
 
@@ -316,10 +317,10 @@ describe("SessionRegistry", () => {
 
         describe("nameOf()", () => {
 
-            it("is null for an unknown player", async () => {
+            it("is none for an unknown player", async () => {
                 const registry = await SessionRegistry.load(new MemorySnapshotStore(), rand);
 
-                expect(registry.nameOf(PlayerId.create())).toBeNull();
+                expect(registry.nameOf(PlayerId.create())).toEqual(NoneOption.get());
             });
 
         });
@@ -370,7 +371,8 @@ describe("parseBearer()", () => {
 
 
     it("accepts the exact form", () => {
-        expect(parseBearer(`Bearer ${id}.${token}`)).toEqual({ playerId: id, token });
+        expect(parseBearer(Option.fromNullable(`Bearer ${id}.${token}`)))
+        .toEqual(new SomeOption({ playerId: id, token }));
     });
 
 
@@ -379,8 +381,8 @@ describe("parseBearer()", () => {
         const exact = `${prefix}${"a".repeat(200 - prefix.length)}`;
 
         expect(exact.length).toBe(200);
-        expect(parseBearer(exact)).not.toBeNull();
-        expect(parseBearer(`${exact}a`)).toBeNull();
+        expect(parseBearer(Option.fromNullable(exact)).isSome).toBeTrue();
+        expect(parseBearer(Option.fromNullable(`${exact}a`))).toEqual(NoneOption.get());
     });
 
 
@@ -407,7 +409,9 @@ describe("parseBearer()", () => {
 
         expect(long.length).toBeGreaterThan(200);
         for (const header of bad) {
-            expect(parseBearer(header)).withContext(String(header)).toBeNull();
+            expect(parseBearer(Option.fromNullable(header)))
+            .withContext(String(header))
+            .toEqual(NoneOption.get());
         }
     });
 

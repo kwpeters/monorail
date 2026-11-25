@@ -1,4 +1,5 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { NoneOption, Option } from "@repo/depot/option";
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import { PlayerId } from "@repo/mille-bornes-core/ids";
 import { PlayerName } from "@repo/mille-bornes-core/playerName";
@@ -37,15 +38,18 @@ const bearerPattern = /^Bearer (?<id>[^. ]+)\.(?<token>[A-Za-z0-9_-]+)$/u;
 /**
  * Reads a credential from an `Authorization` header or connection parameter.
  * @param header - The raw value, expected to be `Bearer <playerId>.<token>`
- * @returns The credential, or null when the value is missing or malformed
+ * @returns The credential, or none when the value is missing or malformed
  */
-export function parseBearer(header: string | undefined): Credential | null {
-    if (header === undefined || header.length > maxHeaderLength) {
-        return null;
-    }
-    const { id, token } = bearerPattern.exec(header)?.groups ?? {};
-    const playerId = id === undefined ? undefined : PlayerId.tryCreate(id);
-    return playerId?.succeeded && token !== undefined ? { playerId: playerId.value, token } : null;
+export function parseBearer(header: Option<string>): Option<Credential> {
+    return header
+    .bind((h) => h.length > maxHeaderLength ?
+        NoneOption.get() :
+        Option.fromNullable(bearerPattern.exec(h)?.groups))
+    .bind(({ id, token }) => {
+        return Option.fromNullable(id)
+        .bind((i) => PlayerId.tryCreate(i).toOption())
+        .bind((playerId) => Option.fromNullable(token).mapSome((t) => ({ playerId, token: t })));
+    });
 }
 
 
@@ -78,7 +82,8 @@ export class SessionRegistry {
     ): Promise<SessionRegistry> {
         const sessions = options?.saved ?? (await store.loadAll()).sessions;
         return new SessionRegistry(
-            store, rand, options?.newToken ?? defaultToken, sessions, options?.logger
+            store, rand, options?.newToken ?? defaultToken, sessions,
+            Option.fromNullable(options?.logger)
         );
     }
 
@@ -92,7 +97,7 @@ export class SessionRegistry {
         private readonly _rand:     () => number,
         private readonly _newToken: () => string,
         sessions:                   ReadonlyArray<SessionRecord>,
-        private readonly _logger:   Logger | undefined
+        private readonly _logger:   Option<Logger>
     ) {
         this._sessions = new Map(sessions.map((s) => [s.playerId, s]));
     }
@@ -101,14 +106,14 @@ export class SessionRegistry {
     /**
      * Issues a new credential.  Nothing is issued when the name is invalid or
      * the session cannot be saved.
-     * @param name - The player's name, or null to be given a whimsical one
+     * @param name - The player's name; when omitted, a whimsical one is given
      * @returns The credential and the player's name, or a plain-English reason
      */
     public async create(
-        name: string | null
+        name?: string
     ): Promise<Result<Credential & { name: PlayerName }, string>> {
         // Names are unique only within a game, so a surprise name avoids no one.
-        const named = name === null ?
+        const named = name === undefined ?
             pickWhimsicalName([], this._rand) :
             PlayerName.tryCreate(name);
         if (named.failed) {
@@ -145,11 +150,11 @@ export class SessionRegistry {
             return named;
         }
         return this.exclusive(async () => {
-            const old = this._sessions.get(id);
-            if (!old) {
+            const old = Option.fromNullable(this._sessions.get(id));
+            if (old.isNone) {
                 return new FailedResult("That player has no session.");
             }
-            const next = new Map(this._sessions).set(id, { ...old, name: named.value });
+            const next = new Map(this._sessions).set(id, { ...old.value, name: named.value });
             return await this.commit(next) ?
                 named :
                 new FailedResult("The new name could not be saved.");
@@ -160,10 +165,10 @@ export class SessionRegistry {
     /**
      * Gets a player's name.
      * @param id - The player
-     * @returns The name, or null when the player has no session
+     * @returns The name, or none when the player has no session
      */
-    public nameOf(id: PlayerId): PlayerName | null {
-        return this._sessions.get(id)?.name ?? null;
+    public nameOf(id: PlayerId): Option<PlayerName> {
+        return Option.fromNullable(this._sessions.get(id)).mapSome((r) => r.name);
     }
 
 
@@ -173,8 +178,10 @@ export class SessionRegistry {
      * @returns Whether the token belongs to that player
      */
     public authenticate(c: Credential): boolean {
-        const record = this._sessions.get(c.playerId);
-        return record !== undefined && sameToken(record.token, c.token);
+        return Option.fromNullable(this._sessions.get(c.playerId)).match(
+            (record) => sameToken(record.token, c.token),
+            () => false
+        );
     }
 
 
@@ -195,7 +202,7 @@ export class SessionRegistry {
         catch (err) {
             // The store's error names the file, never the tokens in it.
             const why = err instanceof Error ? err.message : String(err);
-            this._logger?.error(`Saving the sessions failed: ${why}`);
+            this._logger.mapSome((l) => { l.error(`Saving the sessions failed: ${why}`); });
             return false;
         }
         this._sessions = next;

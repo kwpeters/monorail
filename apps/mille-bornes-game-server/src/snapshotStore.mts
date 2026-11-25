@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
+import { NoneOption, Option, SomeOption } from "@repo/depot/option";
 import { GameId } from "@repo/mille-bornes-core/ids";
 import { type Logger } from "./logger.mjs";
 import {
@@ -104,18 +105,20 @@ class CoalescingQueue {
 
     public enqueue(key: string, label: "save" | "delete" | "quarantine", op: () => Promise<void>): Promise<void> {
         const done = new Promise<void>((resolve, reject) => {
-            let slot = this._slots.get(key);
-            if (!slot) {
-                slot = { running: false, queue: [] };
-                this._slots.set(key, slot);
-            }
-            const last = slot.queue[slot.queue.length - 1];
+            const slot = Option.fromNullable(this._slots.get(key)).defaultWith(() => {
+                const created: Slot = { running: false, queue: [] };
+                this._slots.set(key, created);
+                return created;
+            });
+            const last = Option.fromNullable(slot.queue[slot.queue.length - 1]);
             const kind = label === "save" ? "save" : "other";
-            const replaces = kind === "save" && last?.kind === "save";
-            const waiters = replaces ? last.waiters : [];
+            const replaced = kind === "save" ?
+                last.bind((l) => l.kind === "save" ? new SomeOption(l) : NoneOption.get()) :
+                NoneOption.get();
+            const waiters = replaced.match((l) => l.waiters, (): Job["waiters"] => []);
             waiters.push({ resolve, reject });
             const job: Job = { kind, op, waiters };
-            if (replaces) {
+            if (replaced.isSome) {
                 slot.queue[slot.queue.length - 1] = job;
             }
             else {
@@ -139,7 +142,12 @@ class CoalescingQueue {
 
     private async drain(key: string, slot: Slot): Promise<void> {
         slot.running = true;
-        for (let job = slot.queue.shift(); job; job = slot.queue.shift()) {
+        for (
+            let next = Option.fromNullable(slot.queue.shift());
+            next.isSome;
+            next = Option.fromNullable(slot.queue.shift())
+        ) {
+            const job = next.value;
             try {
                 await job.op();
                 job.waiters.forEach((w) => { w.resolve(); });
@@ -155,7 +163,8 @@ class CoalescingQueue {
 
 
 function isMissing(err: unknown): boolean {
-    return (err as NodeJS.ErrnoException | undefined)?.code === "ENOENT";
+    return Option.fromNullable(err as NodeJS.ErrnoException | undefined)
+    .match((e) => e.code === "ENOENT", () => false);
 }
 
 
@@ -268,8 +277,8 @@ export class FileSnapshotStore implements SnapshotStore {
         for (const name of names) {
             try {
                 const loaded = await this.loadGame(name);
-                if (loaded) {
-                    games.push(loaded);
+                if (loaded.isSome) {
+                    games.push(loaded.value);
                 }
             }
             catch (err) {
@@ -322,30 +331,34 @@ export class FileSnapshotStore implements SnapshotStore {
                 return;
             }
             catch (err) {
-                const delay = renameRetryDelaysMs[attempt];
-                const code = (err as NodeJS.ErrnoException | undefined)?.code ?? "";
-                if (delay === undefined || !lockedCodes.has(code)) {
+                const delay = Option.fromNullable(renameRetryDelaysMs[attempt]);
+                const code = Option.fromNullable(err as NodeJS.ErrnoException | undefined)
+                .bind((e) => Option.fromNullable(e.code))
+                .defaultValue("");
+                if (delay.isNone || !lockedCodes.has(code)) {
                     throw err;
                 }
-                await sleep(delay);
+                await sleep(delay.value);
             }
         }
     }
 
 
-    private async loadGame(name: string): Promise<{ id: GameId; record: GameRecord } | undefined> {
+    private async loadGame(name: string): Promise<Option<{ id: GameId; record: GameRecord }>> {
         const file = path.join(this._gamesDir, name);
         if (name.endsWith(".tmp")) {
             this._logger.info(`Removing the unfinished write ${name}.`);
             await fs.rm(file, { force: true }).catch((err: unknown) => {
                 this._logger.warn(`Could not remove ${name}: ${String(err)}`);
             });
-            return undefined;
+            return NoneOption.get();
         }
-        const id = name.endsWith(".json") ? GameId.tryCreate(name.slice(0, -".json".length)) : undefined;
-        if (!id || id.failed) {
+        const id = name.endsWith(".json") ?
+            GameId.tryCreate(name.slice(0, -".json".length)).toOption() :
+            NoneOption.get();
+        if (id.isNone) {
             this._logger.warn(`Skipping ${name}: the file name is not a game id.`);
-            return undefined;
+            return NoneOption.get();
         }
 
         let json: unknown;
@@ -354,18 +367,18 @@ export class FileSnapshotStore implements SnapshotStore {
         }
         catch (err) {
             this._logger.warn(`Skipping ${name}: it cannot be read (${String(err)}).`);
-            return undefined;
+            return NoneOption.get();
         }
         const record = decodeRecord(json);
         if (record.failed) {
             this._logger.warn(`Skipping ${name}: ${record.error}`);
-            return undefined;
+            return NoneOption.get();
         }
         if (recordGameId(record.value) !== id.value) {
             this._logger.warn(`Skipping ${name}: it holds game ${recordGameId(record.value)}.`);
-            return undefined;
+            return NoneOption.get();
         }
-        return { id: id.value, record: record.value };
+        return new SomeOption({ id: id.value, record: record.value });
     }
 
 

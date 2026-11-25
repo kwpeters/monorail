@@ -1,3 +1,4 @@
+import { NoneOption, Option, SomeOption } from "@repo/depot/option";
 import { discriminatedResultSchema } from "@repo/depot/schemaUtility";
 import { type PlayerCommand } from "@repo/mille-bornes-core/commands";
 import { GameId, PlayerId } from "@repo/mille-bornes-core/ids";
@@ -58,7 +59,10 @@ async function openHarness(): Promise<Harness> {
 
 // A caller takes its abort signal when it is made, not per call.
 function callerFor(h: Harness, header: string | undefined, signal?: AbortSignal): Caller {
-    return createCaller(createContextFromHeader(h, header), signal ? { signal } : undefined);
+    return createCaller(
+        createContextFromHeader(h, Option.fromNullable(header)),
+        signal ? { signal } : undefined
+    );
 }
 
 
@@ -132,8 +136,10 @@ describe("router", () => {
             it("returns a credential that createContextFromHeader accepts", async () => {
                 const h = await openHarness();
                 const ann = await signUp(h, "Ann");
-                expect(createContextFromHeader(h, ann.header).player).toBe(ann.id);
-                expect(createContextFromHeader(h, `Bearer ${ann.id}.nope`).player).toBeNull();
+                expect(createContextFromHeader(h, Option.fromNullable(ann.header)).player)
+                .toEqual(new SomeOption(ann.id));
+                const wrong = Option.fromNullable(`Bearer ${ann.id}.nope`);
+                expect(createContextFromHeader(h, wrong).player).toEqual(NoneOption.get());
             });
 
 
@@ -143,7 +149,7 @@ describe("router", () => {
                 const created = credentialSchema.parse(wire).throwIfFailed();
                 expect(created.name.length).toBeGreaterThan(0);
                 const id = PlayerId.tryCreate(created.playerId).throwIfFailed();
-                expect(h.sessions.nameOf(id)).toBe(created.name as never);
+                expect(h.sessions.nameOf(id)).toEqual(new SomeOption(created.name as never));
             });
 
 
@@ -249,10 +255,12 @@ describe("router", () => {
             const both = contextFromRequest(
                 h, { authorization: ann.header }, { authorization: bob.header }
             );
-            expect(both.player).toBe(ann.id);
-            expect(contextFromRequest(h, {}, { authorization: bob.header }).player).toBe(bob.id);
-            expect(contextFromRequest(h, {}, undefined).player).toBeNull();
-            expect(contextFromRequest(h, {}, { authorization: "Bearer x" }).player).toBeNull();
+            expect(both.player).toEqual(new SomeOption(ann.id));
+            expect(contextFromRequest(h, {}, { authorization: bob.header }).player)
+            .toEqual(new SomeOption(bob.id));
+            expect(contextFromRequest(h, {}, undefined).player).toEqual(NoneOption.get());
+            expect(contextFromRequest(h, {}, { authorization: "Bearer x" }).player)
+            .toEqual(NoneOption.get());
         });
 
     });
@@ -406,7 +414,9 @@ describe("router", () => {
                     headers
                 }),
                 router:        appRouter,
-                createContext: () => createContextFromHeader({ ...h, hub: broken }, ann.header)
+                createContext: () => createContextFromHeader(
+                    { ...h, hub: broken }, Option.fromNullable(ann.header)
+                )
             });
             const text = await response.text();
             expect(response.status).toBe(500);

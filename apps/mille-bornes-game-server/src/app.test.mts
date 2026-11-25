@@ -3,6 +3,7 @@ import * as http from "node:http";
 import * as os from "node:os";
 import * as path from "node:path";
 import { type Request, type Response } from "express";
+import { Option } from "@repo/depot/option";
 import { type GameId } from "@repo/mille-bornes-core/ids";
 import { seededRandom } from "@repo/mille-bornes-core/simulation";
 import {
@@ -34,7 +35,7 @@ const open: Array<http.Server> = [];
 const tempDirs: Array<string> = [];
 
 
-async function startApp(webRoot: string | null = null): Promise<Harness> {
+async function startApp(webRoot?: string): Promise<Harness> {
     const store = new MemorySnapshotStore();
     const rand = seededRandom(7);
     const sessions = await SessionRegistry.load(store, rand);
@@ -42,7 +43,12 @@ async function startApp(webRoot: string | null = null): Promise<Harness> {
     const hub = await Hub.open({
         store, sessions, clock: new FakeClock(), rand, timings: defaultTimings, logger
     });
-    const config: ServerConfig = { port: 3000, dataDir: "unused", webRoot, timings: defaultTimings };
+    const config: ServerConfig = {
+        port:    3000,
+        dataDir: "unused",
+        webRoot: Option.fromNullable(webRoot),
+        timings: defaultTimings
+    };
     const app = createApp({ hub, sessions, config, logger, addresses: () => [lanUrl], port: 3000 });
     const server = await new Promise<http.Server>((resolve) => {
         const s = app.listen(0, "127.0.0.1", () => { resolve(s); });
@@ -138,14 +144,16 @@ describe("app", () => {
 
         it("accepts the loopback forms", () => {
             for (const a of ["127.0.0.1", "::1", "::ffff:127.0.0.1"]) {
-                expect(isLoopbackAddress(a)).withContext(a).toBeTrue();
+                expect(isLoopbackAddress(Option.fromNullable(a))).withContext(a).toBeTrue();
             }
         });
 
 
         it("rejects everything else", () => {
             for (const a of [undefined, "", "192.168.1.5", "::ffff:192.168.1.5", "127.0.0.2"]) {
-                expect(isLoopbackAddress(a)).withContext(String(a)).toBeFalse();
+                expect(isLoopbackAddress(Option.fromNullable(a)))
+                .withContext(String(a))
+                .toBeFalse();
             }
         });
 
@@ -158,7 +166,7 @@ describe("app", () => {
             for (const h of [
                 "localhost", "localhost:3000", "LOCALHOST:3000", "127.0.0.1:3000", "[::1]", "[::1]:3000"
             ]) {
-                expect(isLocalHostHeader(h)).withContext(h).toBeTrue();
+                expect(isLocalHostHeader(Option.fromNullable(h))).withContext(h).toBeTrue();
             }
         });
 
@@ -169,7 +177,9 @@ describe("app", () => {
                 "evil.example#localhost", "192.168.1.5:3000", "::1", "[::1", "localhost:",
                 "localhost:99999x", "127.0.0.1.evil.example", "localhost@evil.example"
             ]) {
-                expect(isLocalHostHeader(h)).withContext(String(h)).toBeFalse();
+                expect(isLocalHostHeader(Option.fromNullable(h)))
+                .withContext(String(h))
+                .toBeFalse();
             }
         });
 
@@ -181,29 +191,43 @@ describe("app", () => {
         const host = "localhost:3000";
 
 
+        /** Wraps optional header values the way `createHostHandlers()` does. */
+        function isSameOrigin(parts: {
+            host?:         string;
+            origin?:       string;
+            secFetchSite?: string;
+        }): boolean {
+            return isSameOriginRequest({
+                host:         Option.fromNullable(parts.host),
+                origin:       Option.fromNullable(parts.origin),
+                secFetchSite: Option.fromNullable(parts.secFetchSite)
+            });
+        }
+
+
         it("allows a request with neither Origin nor Sec-Fetch-Site", () => {
-            expect(isSameOriginRequest({ host })).toBeTrue();
+            expect(isSameOrigin({ host })).toBeTrue();
         });
 
 
         it("allows same-origin and user-initiated requests", () => {
-            expect(isSameOriginRequest({ host, origin: "http://localhost:3000" })).toBeTrue();
-            expect(isSameOriginRequest({ host, secFetchSite: "same-origin" })).toBeTrue();
-            expect(isSameOriginRequest({ host, secFetchSite: "none" })).toBeTrue();
+            expect(isSameOrigin({ host, origin: "http://localhost:3000" })).toBeTrue();
+            expect(isSameOrigin({ host, secFetchSite: "same-origin" })).toBeTrue();
+            expect(isSameOrigin({ host, secFetchSite: "none" })).toBeTrue();
         });
 
 
         it("rejects a cross-site or same-site request", () => {
-            expect(isSameOriginRequest({ host, secFetchSite: "cross-site" })).toBeFalse();
-            expect(isSameOriginRequest({ host, secFetchSite: "same-site" })).toBeFalse();
+            expect(isSameOrigin({ host, secFetchSite: "cross-site" })).toBeFalse();
+            expect(isSameOrigin({ host, secFetchSite: "same-site" })).toBeFalse();
         });
 
 
         it("rejects an Origin that is not the Host", () => {
-            expect(isSameOriginRequest({ host, origin: "http://evil.example" })).toBeFalse();
-            expect(isSameOriginRequest({ host, origin: "http://localhost:4000" })).toBeFalse();
-            expect(isSameOriginRequest({ host, origin: "null" })).toBeFalse();
-            expect(isSameOriginRequest({ origin: "http://localhost:3000" })).toBeFalse();
+            expect(isSameOrigin({ host, origin: "http://evil.example" })).toBeFalse();
+            expect(isSameOrigin({ host, origin: "http://localhost:4000" })).toBeFalse();
+            expect(isSameOrigin({ host, origin: "null" })).toBeFalse();
+            expect(isSameOrigin({ origin: "http://localhost:3000" })).toBeFalse();
         });
 
     });
@@ -448,7 +472,7 @@ describe("app", () => {
 
 
         it("shows a placeholder when there is no web root", async () => {
-            const h = await startApp(null);
+            const h = await startApp();
             const res = await fetch(`${h.base}/`);
             expect(res.status).toBe(200);
             expect(await res.text()).toBe(placeholder);

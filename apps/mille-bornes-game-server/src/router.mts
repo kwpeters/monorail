@@ -34,10 +34,10 @@ export const t = initTRPC.context<Context>().create({
 
 // Every procedure but `session.create` runs for a verified player only.
 const authed = t.procedure.use(({ ctx, next }) => {
-    if (ctx.player === null) {
+    if (ctx.player.isNone) {
         throw new TRPCError({ code: "UNAUTHORIZED", message: notValid });
     }
-    return next({ ctx: { ...ctx, player: ctx.player } });
+    return next({ ctx: { ...ctx, player: ctx.player.value } });
 });
 
 
@@ -54,7 +54,7 @@ const sessionRouter = t.router({
         { playerId: string; token: string; name: string },
         string
     >> => {
-        const created = await ctx.sessions.create(input.name);
+        const created = await ctx.sessions.create(input.name ?? undefined);
         return resultToWire(created.mapSuccess((c) => {
             return { playerId: c.playerId, token: c.token, name: c.name };
         }));
@@ -68,7 +68,7 @@ const sessionRouter = t.router({
     }),
 
     me: authed.query(({ ctx }) => {
-        return { playerId: ctx.player, name: ctx.sessions.nameOf(ctx.player) ?? "" };
+        return { playerId: ctx.player, name: ctx.sessions.nameOf(ctx.player).defaultValue("") };
     })
 });
 

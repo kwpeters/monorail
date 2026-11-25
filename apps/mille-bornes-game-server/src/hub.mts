@@ -1,4 +1,5 @@
 import { EventEmitter, on } from "node:events";
+import { Option, SomeOption } from "@repo/depot/option";
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import { type PlayerCommand } from "@repo/mille-bornes-core/commands";
 import { shuffleDeck } from "@repo/mille-bornes-core/deck";
@@ -209,11 +210,11 @@ export class Hub {
         if (seated.failed) {
             return seated;
         }
-        const game = this._pending.get(gameId);
-        if (!game) {
+        const game = Option.fromNullable(this._pending.get(gameId));
+        if (game.isNone) {
             return fail("That game is no longer open.");
         }
-        return this.change(player, game, { type: "AddHuman", seat: seated.value }, () => {
+        return this.change(player, game.value, { type: "AddHuman", seat: seated.value }, () => {
             this._notices.delete(player);
         });
     }
@@ -272,9 +273,9 @@ export class Hub {
      */
     public async removeSeat(player: PlayerId, seat: PlayerId): Promise<Result<void, string>> {
         return this.inGame(player, (game) => {
-            const removed = game.seats.find((s) => s.id === seat);
+            const removed = Option.fromNullable(game.seats.find((s) => s.id === seat));
             return this.change(player, game, { type: "RemoveSeat", id: seat }, () => {
-                if (removed?.kind === "Human" && seat !== player) {
+                if (removed.match((s) => s.kind === "Human", () => false) && seat !== player) {
                     this._notices.set(seat, "You were removed from the game.");
                 }
             });
@@ -340,7 +341,7 @@ export class Hub {
             this.publish(this.lobbyWatchers());
             const saved = this._running.accepted(running.value, begun.value.events);
             // Showing the first screens may have tripped the stuck guard.
-            return this._running.get(pending.id) === running.value ?
+            return this._running.get(pending.id).match((g) => g === running.value, () => false) ?
                 saved :
                 fail(stuckNotice);
         });
@@ -369,7 +370,8 @@ export class Hub {
             if (r.organizer !== player) {
                 return Promise.resolve(fail(describeRejection({ reason: "NotOrganizer" })));
             }
-            return this._running.end(r, "The organizer ended the game.", humansOf(r), player);
+            const notice = new SomeOption("The organizer ended the game.");
+            return this._running.end(r, notice, humansOf(r), new SomeOption(player));
         });
     }
 
@@ -397,15 +399,15 @@ export class Hub {
     public async adminEnd(gameId: GameId): Promise<Result<void, string>> {
         const notice = "The game was ended on the host computer.";
         const running = this._running.get(gameId);
-        if (running) {
-            return this._running.end(running, notice);
+        if (running.isSome) {
+            return this._running.end(running.value, new SomeOption(notice));
         }
-        const pending = this._pending.get(gameId);
-        if (!pending) {
+        const pending = Option.fromNullable(this._pending.get(gameId));
+        if (pending.isNone) {
             return fail("There is no such game.");
         }
-        const humans = pending.seats.filter((s) => s.kind === "Human").map((s) => s.id);
-        return this.endPending(pending, notice, humans);
+        const humans = pending.value.seats.filter((s) => s.kind === "Human").map((s) => s.id);
+        return this.endPending(pending.value, notice, humans);
     }
 
 
@@ -445,27 +447,27 @@ export class Hub {
     }
 
 
-    // Where a player is: the id of their game, or null.  A player who left a
+    // Where a player is: the id of their game, or none.  A player who left a
     // finished game is in none.
-    private gameOf(player: PlayerId): GameId | null {
+    private gameOf(player: PlayerId): Option<GameId> {
         for (const game of this._pending.values()) {
             if (game.seats.some((s) => s.id === player)) {
-                return game.id;
+                return new SomeOption(game.id);
             }
         }
-        return this._running.of(player)?.game.config.id ?? null;
+        return this._running.of(player).mapSome((r) => r.game.config.id);
     }
 
 
     private seatFor(player: PlayerId): Result<Seat, string> {
         const name = this._sessions.nameOf(player);
-        if (name === null) {
+        if (name.isNone) {
             return fail("You need to enter your name first.");
         }
-        if (this.gameOf(player) !== null) {
+        if (this.gameOf(player).isSome) {
             return fail("You are already in a game.");
         }
-        return new SucceededResult({ id: player, name, kind: "Human" });
+        return new SucceededResult({ id: player, name: name.value, kind: "Human" });
     }
 
 
@@ -474,11 +476,11 @@ export class Hub {
         act:    (game: PendingGame) => Promise<Result<void, string>> | Result<void, string>
     ): Promise<Result<void, string>> {
         const gameId = this.gameOf(player);
-        const game = gameId === null ? undefined : this._pending.get(gameId);
-        if (game) {
-            return Promise.resolve(act(game));
+        const game = gameId.bind((id) => Option.fromNullable(this._pending.get(id)));
+        if (game.isSome) {
+            return Promise.resolve(act(game.value));
         }
-        return Promise.resolve(fail(gameId === null ? notInGame : "The game has already started."));
+        return Promise.resolve(fail(gameId.isNone ? notInGame : "The game has already started."));
     }
 
 
@@ -487,10 +489,10 @@ export class Hub {
         act:    (r: RunningGame) => Promise<Result<void, string>>
     ): Promise<Result<void, string>> {
         const r = this._running.of(player);
-        if (r) {
-            return act(r);
+        if (r.isSome) {
+            return act(r.value);
         }
-        const why = this.gameOf(player) === null ? notInGame : "The game has not started yet.";
+        const why = this.gameOf(player).isNone ? notInGame : "The game has not started yet.";
         return Promise.resolve(fail(why));
     }
 
@@ -556,8 +558,9 @@ export class Hub {
     private presenceChanged(player: PlayerId): void {
         try {
             const r = this._running.of(player);
-            if (r && r.organizer !== player && humansOf(r).includes(r.organizer)) {
-                this.publish([r.organizer]);
+            if (r.isSome && r.value.organizer !== player &&
+                humansOf(r.value).includes(r.value.organizer)) {
+                this.publish([r.value.organizer]);
             }
         }
         catch (e) {
@@ -570,15 +573,14 @@ export class Hub {
     // `deliver()`.
     private build(player: PlayerId): Screen {
         const shown = this._running.screenFor(player);
-        if (shown) {
-            return shown;
+        if (shown.isSome) {
+            return shown.value;
         }
-        const gameId = this.gameOf(player);
-        const game = gameId === null ? undefined : this._pending.get(gameId);
-        if (game) {
-            return waitingScreen(game, player);
+        const game = this.gameOf(player).bind((id) => Option.fromNullable(this._pending.get(id)));
+        if (game.isSome) {
+            return waitingScreen(game.value, player);
         }
-        const notice = this._notices.get(player) ?? null;
+        const notice = Option.fromNullable(this._notices.get(player));
         return lobbyScreen(this._pending.values(), notice);
     }
 
@@ -589,7 +591,7 @@ export class Hub {
         // `events.on` also listens for "error", which is not a player.
         const watched = (this._emitter.eventNames() as Array<string>)
         .filter((name) => PlayerId.tryCreate(name).succeeded) as Array<PlayerId>;
-        return watched.filter((p) => this.gameOf(p) === null);
+        return watched.filter((p) => this.gameOf(p).isNone);
     }
 
 
@@ -602,7 +604,10 @@ export class Hub {
     ): void {
         for (const player of new Set(affected)) {
             if (this._emitter.listenerCount(player) > 0) {
-                this._emitter.emit(player, screens.get(player) ?? this.build(player));
+                this._emitter.emit(
+                    player,
+                    Option.fromNullable(screens.get(player)).defaultWith(() => this.build(player))
+                );
             }
         }
     }

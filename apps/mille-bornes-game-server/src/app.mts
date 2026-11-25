@@ -1,4 +1,5 @@
 import * as path from "node:path";
+import { Option } from "@repo/depot/option";
 import { GameId } from "@repo/mille-bornes-core/ids";
 import * as trpcExpress from "@trpc/server/adapters/express";
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
@@ -26,10 +27,11 @@ const hostPageSecurityPolicy =
  * cannot be spoofed by the client)
  * @returns True for `127.0.0.1`, `::1` and `::ffff:127.0.0.1`
  */
-export function isLoopbackAddress(remoteAddress: string | undefined): boolean {
-    return remoteAddress === "127.0.0.1" ||
-        remoteAddress === "::1" ||
-        remoteAddress === "::ffff:127.0.0.1";
+export function isLoopbackAddress(remoteAddress: Option<string>): boolean {
+    return remoteAddress.match(
+        (a) => a === "127.0.0.1" || a === "::1" || a === "::ffff:127.0.0.1",
+        () => false
+    );
 }
 
 
@@ -39,8 +41,11 @@ export function isLoopbackAddress(remoteAddress: string | undefined): boolean {
  * @param host - The raw `Host` header value (may carry a port)
  * @returns True for `localhost`, `127.0.0.1` or `[::1]`, with or without a port
  */
-export function isLocalHostHeader(host: string | undefined): boolean {
-    return host !== undefined && /^(?:localhost|127\.0\.0\.1|\[::1\])(?::\d{1,5})?$/iu.test(host);
+export function isLocalHostHeader(host: Option<string>): boolean {
+    return host.match(
+        (h) => /^(?:localhost|127\.0\.0\.1|\[::1\])(?::\d{1,5})?$/iu.test(h),
+        () => false
+    );
 }
 
 
@@ -53,19 +58,24 @@ export function isLocalHostHeader(host: string | undefined): boolean {
  * @returns True when the request is not cross-site
  */
 export function isSameOriginRequest(request: {
-    host?:         string | undefined;
-    origin?:       string | undefined;
-    secFetchSite?: string | undefined;
+    host:         Option<string>;
+    origin:       Option<string>;
+    secFetchSite: Option<string>;
 }): boolean {
     const site = request.secFetchSite;
-    if (site !== undefined && site !== "same-origin" && site !== "none") {
+    if (site.isSome && site.value !== "same-origin" && site.value !== "none") {
         return false;
     }
-    if (request.origin === undefined) {
+    if (request.origin.isNone) {
         return true;
     }
+    const origin = request.origin.value;
     try {
-        return request.host?.toLowerCase() === new URL(request.origin).host.toLowerCase();
+        // A missing Host header never matches an origin's host.
+        return request.host.match(
+            (h) => h.toLowerCase() === new URL(origin).host.toLowerCase(),
+            () => false
+        );
     }
     catch {
         // "null" and other unparseable origins.
@@ -99,7 +109,8 @@ export function createHostHandlers(deps: HostHandlerDeps): {
         res.status(403).type("text/plain").send(hostOnlyMessage);
     };
     const fromThisComputer = (req: Request): boolean => {
-        return isLoopbackAddress(req.socket.remoteAddress) && isLocalHostHeader(req.headers.host);
+        return isLoopbackAddress(Option.fromNullable(req.socket.remoteAddress)) &&
+            isLocalHostHeader(Option.fromNullable(req.headers.host));
     };
 
     return {
@@ -118,9 +129,9 @@ export function createHostHandlers(deps: HostHandlerDeps): {
 
         endGame: async (req, res) => {
             if (!fromThisComputer(req) || !isSameOriginRequest({
-                host:         req.headers.host,
-                origin:       req.headers.origin,
-                secFetchSite: req.headers["sec-fetch-site"]
+                host:         Option.fromNullable(req.headers.host),
+                origin:       Option.fromNullable(req.headers.origin),
+                secFetchSite: Option.fromNullable(req.headers["sec-fetch-site"])
             })) {
                 refuse(res);
                 return;
@@ -173,11 +184,12 @@ export function createApp(deps: AppDeps): Express {
     app.get("/host", host.showHost);
     app.post("/host/end/:gameId", host.endGame);
 
-    const webRoot = deps.config.webRoot === null ? null : path.resolve(deps.config.webRoot);
-    if (webRoot === null) {
+    const webRootOption = deps.config.webRoot.mapSome((r) => path.resolve(r));
+    if (webRootOption.isNone) {
         app.get("/", (_req, res) => { res.type("text/plain").send(placeholder); });
     }
     else {
+        const webRoot = webRootOption.value;
         // Static serving already stays inside the root; refusing these outright
         // keeps the index fallback from answering 200 to a traversal attempt.
         app.use((req, res, next) => {

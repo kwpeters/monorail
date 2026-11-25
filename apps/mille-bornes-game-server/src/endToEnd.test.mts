@@ -1,3 +1,4 @@
+import { NoneOption, SomeOption } from "@repo/depot/option";
 import * as fs from "node:fs";
 import * as http from "node:http";
 import * as os from "node:os";
@@ -57,7 +58,7 @@ function newDataDir(): string {
 async function serve(dataDir: string = newDataDir(), seed = 1): Promise<TestServer> {
     const logger = collectingLogger();
     const running = await startServer({
-        config:    { port: 0, dataDir, webRoot: null, timings: tinyTimings },
+        config:    { port: 0, dataDir, webRoot: NoneOption.get(), timings: tinyTimings },
         clock:     realClock,
         rand:      seededRandom(seed),
         logger,
@@ -82,7 +83,7 @@ function track(p: ScriptedPlayer): ScriptedPlayer {
 
 
 async function signUp(s: TestServer, name: string, seed = 1): Promise<ScriptedPlayer> {
-    return track(await createScriptedPlayer(s.base, name, seededRandom(seed)));
+    return track(await createScriptedPlayer(s.base, new SomeOption(name), seededRandom(seed)));
 }
 
 

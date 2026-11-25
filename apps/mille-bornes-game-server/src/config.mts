@@ -1,5 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { NoneOption, Option } from "@repo/depot/option";
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 
 
@@ -29,7 +30,7 @@ export const defaultTimings: Timings = {
 export interface ServerConfig {
     port:    number;
     dataDir: string;
-    webRoot: string | null;
+    webRoot: Option<string>;
     timings: Timings;
 }
 
@@ -42,8 +43,8 @@ export const packageDataDir = fileURLToPath(new URL("../data", import.meta.url))
 
 
 /** Treats an empty environment variable as unset. */
-function nonEmpty(value: string | undefined): string | undefined {
-    return value === "" ? undefined : value;
+function nonEmpty(value: string | undefined): Option<string> {
+    return value === "" ? NoneOption.get() : Option.fromNullable(value);
 }
 
 
@@ -63,17 +64,20 @@ export function loadConfig(
     defaultDataDir: string = packageDataDir
 ): Result<ServerConfig, string> {
     let port = 3000;
-    if (env.PORT !== undefined && env.PORT !== "") {
-        port = /^\d+$/.test(env.PORT) ? Number(env.PORT) : NaN;
+    const portText = nonEmpty(env.PORT);
+    if (portText.isSome) {
+        port = /^\d+$/.test(portText.value) ? Number(portText.value) : NaN;
         if (!(port >= 1 && port <= 65535)) {
-            return new FailedResult(`PORT must be a whole number from 1 to 65535, but was "${env.PORT}".`);
+            return new FailedResult(
+                `PORT must be a whole number from 1 to 65535, but was "${portText.value}".`
+            );
         }
     }
 
     return new SucceededResult({
         port,
-        dataDir: path.resolve(cwd, nonEmpty(env.MB_DATA_DIR) ?? defaultDataDir),
-        webRoot: nonEmpty(env.MB_WEB_ROOT) ?? null,
+        dataDir: path.resolve(cwd, nonEmpty(env.MB_DATA_DIR).defaultValue(defaultDataDir)),
+        webRoot: nonEmpty(env.MB_WEB_ROOT),
         timings: defaultTimings
     });
 }

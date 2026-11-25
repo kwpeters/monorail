@@ -1,3 +1,4 @@
+import { Option } from "@repo/depot/option";
 import { type Clock } from "./clock.mjs";
 
 
@@ -45,12 +46,13 @@ export class FakeClock implements Clock {
     public advance(ms: number): void {
         const target = this._now + ms;
         for (;;) {
-            const next = this._timers
+            const found = Option.fromNullable(this._timers
             .filter((t) => t.due <= target)
-            .sort((a, b) => a.due - b.due || a.id - b.id)[0];
-            if (next === undefined) {
+            .sort((a, b) => a.due - b.due || a.id - b.id)[0]);
+            if (found.isNone) {
                 break;
             }
+            const next = found.value;
             this._timers = this._timers.filter((t) => t !== next);
             this._now = Math.max(this._now, next.due);
             next.fn();

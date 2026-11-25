@@ -1,5 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { NoneOption, SomeOption } from "@repo/depot/option";
 import { defaultTimings, loadConfig, packageDataDir } from "./config.mjs";
 
 
@@ -33,7 +34,7 @@ describe("config", () => {
             expect(result.value).toEqual({
                 port:    3000,
                 dataDir: pkgData,
-                webRoot: null,
+                webRoot: NoneOption.get(),
                 timings: defaultTimings
             });
         });
@@ -53,7 +54,7 @@ describe("config", () => {
             expect(result.succeeded).toBeTrue();
             expect(result.value?.port).toBe(8080);
             expect(result.value?.dataDir).toBe(path.resolve("/x/data"));
-            expect(result.value?.webRoot).toBe("/x/web");
+            expect(result.value?.webRoot).toEqual(new SomeOption("/x/web"));
         });
 
 

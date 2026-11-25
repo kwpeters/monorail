@@ -1,3 +1,4 @@
+import { Option } from "@repo/depot/option";
 import { type PlayerId } from "@repo/mille-bornes-core/ids";
 import { type Clock } from "./clock.mjs";
 
@@ -51,9 +52,9 @@ export class Presence {
         }
         const count = this._open.get(player) ?? 0;
         this._open.set(player, count + 1);
-        const cancel = this._leaving.get(player);
-        if (cancel) {
-            cancel();
+        const cancel = Option.fromNullable(this._leaving.get(player));
+        if (cancel.isSome) {
+            cancel.value();
             this._leaving.delete(player);
         }
         else if (count === 0) {

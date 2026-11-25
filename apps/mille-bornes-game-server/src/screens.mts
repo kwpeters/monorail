@@ -1,3 +1,4 @@
+import { type Option } from "@repo/depot/option";
 import { type Result } from "@repo/depot/result";
 import { broadcast } from "@repo/mille-bornes-core/broadcast";
 import { type GameEvent } from "@repo/mille-bornes-core/events";
@@ -46,11 +47,16 @@ export type Screen =
 /**
  * Builds the lobby screen.
  * @param games - The open games, oldest first
- * @param notice - A one-time message for the player, or null
- * @returns The Lobby screen; it carries no seat kinds
+ * @param notice - A one-time message for the player, if any
+ * @returns The Lobby screen (its `notice` is null when there is none); it
+ * carries no seat kinds
  */
-export function lobbyScreen(games: Iterable<PendingGame>, notice: string | null): Screen {
-    return { kind: "Lobby", notice, games: [...games].map(pendingSummary) };
+export function lobbyScreen(games: Iterable<PendingGame>, notice: Option<string>): Screen {
+    return {
+        kind:   "Lobby",
+        notice: notice.toNullable(null),
+        games:  [...games].map(pendingSummary)
+    };
 }
 
 
@@ -68,7 +74,7 @@ export function waitingScreen(game: PendingGame, viewer: PlayerId): Screen {
 /** What a Playing screen shows besides the game itself. */
 export interface PlayingContext {
     readonly organizer:   PlayerId;
-    readonly timer:       PlayingTimer | null;
+    readonly timer:       Option<PlayingTimer>;
     /** Whether a human has a connection open; the viewer always counts. */
     readonly isConnected: (player: PlayerId) => boolean;
 }
@@ -100,7 +106,7 @@ export function playingScreens(
             view:      u.view,
             events:    u.events,
             connected: isOrganizer ? connected : null,
-            timer:     ctx.timer,
+            timer:     ctx.timer.toNullable(null),
             isOrganizer,
             robots:    isOrganizer ? robots : null
         };

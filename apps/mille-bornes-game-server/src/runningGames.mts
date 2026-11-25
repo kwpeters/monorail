@@ -1,3 +1,4 @@
+import { NoneOption, Option, SomeOption } from "@repo/depot/option";
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import { type PlayerCommand } from "@repo/mille-bornes-core/commands";
 import { type GameEvent } from "@repo/mille-bornes-core/events";
@@ -105,20 +106,22 @@ export class RunningGames {
     /**
      * Gets a game by id.
      * @param id - The game's id
-     * @returns The game, if it is running
+     * @returns The game, or none if it is not running
      */
-    public get(id: GameId): RunningGame | undefined {
-        return this._games.get(id);
+    public get(id: GameId): Option<RunningGame> {
+        return Option.fromNullable(this._games.get(id));
     }
 
 
     /**
      * Finds the game a player is in.
      * @param player - The player
-     * @returns The game, unless the player is in none or has left it
+     * @returns The game, or none if the player is in none or has left it
      */
-    public of(player: PlayerId): RunningGame | undefined {
-        return [...this._games.values()].find((r) => humansOf(r).includes(player));
+    public of(player: PlayerId): Option<RunningGame> {
+        return Option.fromNullable(
+            [...this._games.values()].find((r) => humansOf(r).includes(player))
+        );
     }
 
 
@@ -167,8 +170,8 @@ export class RunningGames {
     ): Promise<Result<void, string>> {
         r.saved = this.save(r);
         const screens = this.screensOf(r, events);
-        if (screens) {
-            this._opts.publish(humansOf(r), screens);
+        if (screens.isSome) {
+            this._opts.publish(humansOf(r), screens.value);
         }
         return r.saved;
     }
@@ -177,11 +180,12 @@ export class RunningGames {
     /**
      * Builds a player's Playing screen; it carries no events.
      * @param player - The player
-     * @returns The screen, or null if the player is in no running game
+     * @returns The screen, or none if the player is in no running game
      */
-    public screenFor(player: PlayerId): Screen | null {
-        const r = this.of(player);
-        return (r && this.screensOf(r, [])?.get(player)) ?? null;
+    public screenFor(player: PlayerId): Option<Screen> {
+        return this.of(player)
+        .bind((r) => this.screensOf(r, []))
+        .bind((screens) => Option.fromNullable(screens.get(player)));
     }
 
 
@@ -209,7 +213,7 @@ export class RunningGames {
             return Promise.resolve(played);
         }
         // Showing the change may have tripped the stuck guard.
-        return this._games.get(r.game.config.id) === r ?
+        return this.get(r.game.config.id).match((g) => g === r, () => false) ?
             r.saved :
             Promise.resolve(new FailedResult(stuckNotice));
     }
@@ -228,7 +232,7 @@ export class RunningGames {
             this._opts.publish([player]);
             return this.save(r);
         }
-        return this.end(r, null, [player]);
+        return this.end(r, NoneOption.get(), [player]);
     }
 
 
@@ -237,16 +241,16 @@ export class RunningGames {
      * no timer fires afterwards.  Its humans return to the Lobby, each but
      * `except` with the notice.
      * @param r - The game
-     * @param notice - The notice, or null for none
+     * @param notice - The notice, if any
      * @param humans - Who returns to the Lobby (default: the game's humans)
      * @param except - Who gets no notice
      * @returns The delete's outcome
      */
     public end(
         r:      RunningGame,
-        notice: string | null,
+        notice: Option<string>,
         humans: ReadonlyArray<PlayerId> = humansOf(r),
-        except: PlayerId | null = null
+        except: Option<PlayerId> = NoneOption.get()
     ): Promise<Result<void, string>> {
         const id = r.game.config.id;
         return this.finish(id, humans, () => this._opts.store.deleteGame(id), notice, except);
@@ -303,7 +307,7 @@ export class RunningGames {
 
 
     private forget(id: GameId): void {
-        this._games.get(id)?.table.dispose();
+        this.get(id).mapSome((r) => { r.table.dispose(); });
         this._games.delete(id);
     }
 
@@ -313,11 +317,11 @@ export class RunningGames {
     // dropped.
     private onUpdate(id: GameId, u: TableUpdate): void {
         try {
-            const r = this._games.get(id);
-            if (r && u.seq > r.seq) {
-                r.game = u.game;
-                r.seq = u.seq;
-                void this.accepted(r, u.events);
+            const r = this.get(id);
+            if (r.isSome && u.seq > r.value.seq) {
+                r.value.game = u.game;
+                r.value.seq = u.seq;
+                void this.accepted(r.value, u.events);
             }
         }
         catch (e) {
@@ -337,11 +341,11 @@ export class RunningGames {
 
 
     // Builds every seat's Playing screen.  A failure trips the stuck guard and
-    // gives null.
+    // gives none.
     private screensOf(
         r:      RunningGame,
         events: ReadonlyArray<GameEvent>
-    ): ReadonlyMap<PlayerId, Screen> | null {
+    ): Option<ReadonlyMap<PlayerId, Screen>> {
         const id = r.game.config.id;
         try {
             const built = playingScreens(r.game, events, {
@@ -350,21 +354,21 @@ export class RunningGames {
                 isConnected: this._opts.isConnected
             });
             if (built.succeeded) {
-                return built.value;
+                return new SomeOption(built.value);
             }
             this.stuck(id, describeRejection(built.error));
         }
         catch (e) {
             this.stuck(id, `building a screen threw: ${String(e)}`);
         }
-        return null;
+        return NoneOption.get();
     }
 
 
     private stuck(id: GameId, reason: string): void {
-        const r = this._games.get(id);
-        if (r) {
-            this.quarantine(id, humansOf(r), reason);
+        const r = this.get(id);
+        if (r.isSome) {
+            this.quarantine(id, humansOf(r.value), reason);
         }
     }
 
@@ -374,7 +378,7 @@ export class RunningGames {
         try {
             this._opts.logger.error(`Game ${id} is stuck and was ended: ${reason}`);
             const write = (): Promise<void> => this._opts.store.quarantineGame(id);
-            void this.finish(id, humans, write, stuckNotice, null);
+            void this.finish(id, humans, write, new SomeOption(stuckNotice), NoneOption.get());
         }
         catch (e) {
             this._opts.logger.error(`Ending game ${id} threw: ${String(e)}`);
@@ -386,12 +390,15 @@ export class RunningGames {
         id:     GameId,
         humans: ReadonlyArray<PlayerId>,
         write:  () => Promise<void>,
-        notice: string | null,
-        except: PlayerId | null
+        notice: Option<string>,
+        except: Option<PlayerId>
     ): Promise<Result<void, string>> {
         this.forget(id);
-        if (notice !== null) {
-            humans.filter((p) => p !== except).forEach((p) => { this._opts.notify(p, notice); });
+        if (notice.isSome) {
+            const text = notice.value;
+            humans
+            .filter((p) => except.match((e) => p !== e, () => true))
+            .forEach((p) => { this._opts.notify(p, text); });
         }
         this._opts.publish(humans);
         return this._opts.persist(write, id);

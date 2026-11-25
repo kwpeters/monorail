@@ -1,3 +1,4 @@
+import { NoneOption, Option, SomeOption } from "@repo/depot/option";
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import {
     type Applied, type PlayerCommand, type SystemCommand
@@ -112,16 +113,17 @@ export class Table {
     /**
      * Gets the countdown the players can see.
      * @returns The hazard window, Extension offer or pause after a race and
-     * the milliseconds left, or null when none is running (a robot's delay is
+     * the milliseconds left, or none when none is running (a robot's delay is
      * never reported)
      */
-    public timer(): VisibleTimer | null {
+    public timer(): Option<VisibleTimer> {
         for (const { kind, due } of this._timers) {
             if (kind !== "Robot") {
-                return { kind, remainingMs: Math.max(0, due - this._opts.clock.now()) };
+                const remainingMs = Math.max(0, due - this._opts.clock.now());
+                return new SomeOption({ kind, remainingMs });
             }
         }
-        return null;
+        return NoneOption.get();
     }
 
 
@@ -237,15 +239,19 @@ export class Table {
     // The robot deciding the turn or Extension offer, if any, plays after a
     // random delay.
     private robotTurn(g: Game): void {
-        const robot = deciders(g).find((p) => p.seat.kind === "Robot");
-        if (robot === undefined) {
+        const found = Option.fromNullable(deciders(g).find((p) => p.seat.kind === "Robot"));
+        if (found.isNone) {
             return;
         }
+        const robot = found.value;
         this.after("Robot", this.robotDelay(), () => {
-            const move = robotMoves(g, this._opts.rand)[0];
-            return move ?
-                this.player(g, move.by, move.cmd) :
-                new FailedResult(`The robot ${robot.seat.name} has no move (${g.phase.kind}).`);
+            const move = Option.fromNullable(robotMoves(g, this._opts.rand)[0]);
+            if (move.isNone) {
+                return new FailedResult(
+                    `The robot ${robot.seat.name} has no move (${g.phase.kind}).`
+                );
+            }
+            return this.player(g, move.value.by, move.value.cmd);
         });
     }
 

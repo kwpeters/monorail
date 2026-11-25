@@ -1,3 +1,4 @@
+import { NoneOption, Option } from "@repo/depot/option";
 import { type Result } from "@repo/depot/result";
 import { discriminatedResultSchema } from "@repo/depot/schemaUtility";
 import { chooseCommand } from "@repo/mille-bornes-core/bot";
@@ -74,9 +75,9 @@ export interface ScriptedPlayer {
 }
 
 
-function clientFor(baseUrl: string, authorization: string | null): TRPCClient<AppRouter> {
+function clientFor(baseUrl: string, authorization: Option<string>): TRPCClient<AppRouter> {
     const url = new URL("trpc", baseUrl).toString();
-    const auth = authorization === null ? {} : { authorization };
+    const auth = authorization.match((a) => ({ authorization: a }), () => ({}));
     // EventSource cannot set headers, so a subscription sends the credential
     // as a connection parameter.
     const subscriptions = httpSubscriptionLink({
@@ -98,16 +99,17 @@ function clientFor(baseUrl: string, authorization: string | null): TRPCClient<Ap
 /**
  * Signs up a new player and connects it.
  * @param baseUrl - The server, for example `http://127.0.0.1:3000/`
- * @param name - The player's name, or null for a whimsical one
+ * @param name - The player's name, or none for a whimsical one
  * @param rand - Breaks ties in `chooseCommand()` (default: its own)
  * @returns The connected player, once its first screen has arrived
  */
 export async function createScriptedPlayer(
     baseUrl: string,
-    name:    string | null,
+    name:    Option<string>,
     rand?:   () => number
 ): Promise<ScriptedPlayer> {
-    const wire = await clientFor(baseUrl, null).session.create.mutate({ name });
+    const client = clientFor(baseUrl, NoneOption.get());
+    const wire = await client.session.create.mutate({ name: name.toNullable(null) });
     const { playerId, token } = credentialResultSchema.parse(wire).throwIfFailed();
     return connectScriptedPlayer(baseUrl, `Bearer ${playerId}.${token}`, rand);
 }
@@ -126,7 +128,7 @@ export async function connectScriptedPlayer(
     authorization: string,
     rand?:         () => number
 ): Promise<ScriptedPlayer> {
-    const client = clientFor(baseUrl, authorization);
+    const client = clientFor(baseUrl, Option.fromNullable(authorization));
     const me = await client.session.me.query();
     const playerId = PlayerId.tryCreate(me.playerId).throwIfFailed();
     const name = PlayerName.tryCreate(me.name).throwIfFailed();
@@ -135,23 +137,25 @@ export async function connectScriptedPlayer(
     const problems: Array<string> = [];
     const listeners = new Set<() => void>();
     let playing = false;
-    let lastPlayed: string | null = null;
+    let lastPlayed: Option<string> = NoneOption.get();
 
     const act = (screen: Screen): void => {
         if (!playing || screen.kind !== "Playing") {
             return;
         }
         const key = JSON.stringify(screen.view);
-        const cmd = key === lastPlayed ? null : chooseCommand(screen.view, rand);
-        if (cmd === null) {
+        const repeated = lastPlayed.match((k) => k === key, () => false);
+        const cmd = repeated ? NoneOption.get() : chooseCommand(screen.view, rand);
+        if (cmd.isNone) {
             return;
         }
-        lastPlayed = key;
-        client.game.play.mutate(cmd)
+        const command = cmd.value;
+        lastPlayed = Option.fromNullable(key);
+        client.game.play.mutate(command)
         .then((wire) => {
             const played = voidResultSchema.parse(wire);
             if (played.failed) {
-                problems.push(`play ${JSON.stringify(cmd)} refused: ${played.error}`);
+                problems.push(`play ${JSON.stringify(command)} refused: ${played.error}`);
             }
         })
         .catch((err: unknown) => { problems.push(`play threw: ${String(err)}`); });
@@ -177,11 +181,11 @@ export async function connectScriptedPlayer(
         let from = Math.max(0, screens.length - 1);
         return new Promise((resolve, reject) => {
             const check = (): void => {
-                const found = screens.slice(from).find(pred);
+                const found = Option.fromNullable(screens.slice(from).find(pred));
                 from = Math.max(from, screens.length);
-                if (found) {
+                if (found.isSome) {
                     done();
-                    resolve(found);
+                    resolve(found.value);
                 }
             };
             const timer = setTimeout(() => {
@@ -215,9 +219,9 @@ export async function connectScriptedPlayer(
         waitFor,
         autoPlay:   () => {
             playing = true;
-            const current = screens.at(-1);
-            if (current) {
-                act(current);
+            const current = Option.fromNullable(screens.at(-1));
+            if (current.isSome) {
+                act(current.value);
             }
         },
         close: () => { subscription.unsubscribe(); }

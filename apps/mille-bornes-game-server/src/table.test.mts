@@ -1,3 +1,4 @@
+import { NoneOption, SomeOption } from "@repo/depot/option";
 import { FailedResult, type Result } from "@repo/depot/result";
 import { Card, cardSchema } from "@repo/mille-bornes-core/card";
 import { type PlayerCommand } from "@repo/mille-bornes-core/commands";
@@ -16,7 +17,7 @@ import { initialExtension, variantForSeatCount } from "@repo/mille-bornes-core/v
 import { defaultTimings, type Timings } from "./config.mjs";
 import { FakeClock } from "./fakeClock.mjs";
 import { collectingLogger } from "./logger.mjs";
-import { Table, type TableOptions, type TableUpdate } from "./table.mjs";
+import { Table, type TableOptions, type TableUpdate, type VisibleTimer } from "./table.mjs";
 
 
 // Test helpers copied (cut down) from core's testHelpers.mts, which core does
@@ -408,7 +409,7 @@ describe("Table", () => {
                     const h = harness(turnGame("Human", [Card.dist25]));
 
                     expect(h.clock.pendingCount()).toEqual(0);
-                    expect(h.table.timer()).toBeNull();
+                    expect(h.table.timer()).toEqual(NoneOption.get());
                 });
 
             });
@@ -478,7 +479,7 @@ describe("Table", () => {
 
                     expect(h.table.game.phase.kind).toEqual("GameOver");
                     expect(h.clock.pendingCount()).toEqual(0);
-                    expect(h.table.timer()).toBeNull();
+                    expect(h.table.timer()).toEqual(NoneOption.get());
                 });
 
             });
@@ -491,7 +492,10 @@ describe("Table", () => {
                     clock.advance(7000);
                     const h = harness(hazardInFlight(), { clock });
 
-                    expect(h.table.timer()).toEqual({ kind: "HazardWindow", remainingMs: 5000 });
+                    expect(h.table.timer())
+                    .toEqual(new SomeOption<VisibleTimer>({
+                        kind: "HazardWindow", remainingMs: 5000
+                    }));
                     h.clock.advance(4999);
                     expect(h.updates.length).toEqual(0);
 
@@ -575,7 +579,7 @@ describe("Table", () => {
                         expect(problems).toEqual([]);
                         expect(h.stuck).toEqual([]);
                         expect(h.clock.pendingCount()).toEqual(0);
-                        expect(h.table.timer()).toBeNull();
+                        expect(h.table.timer()).toEqual(NoneOption.get());
                         expect(h.updates.map((u) => u.seq))
                         .toEqual(h.updates.map((_, i) => 101 + i));
 
@@ -612,14 +616,18 @@ describe("Table", () => {
                 h.table.submit(ann, attackBob).throwIfFailed();
                 h.clock.advance(1000);
 
-                expect(h.table.timer()).toEqual({ kind: "HazardWindow", remainingMs: 4000 });
+                expect(h.table.timer())
+                .toEqual(new SomeOption<VisibleTimer>({ kind: "HazardWindow", remainingMs: 4000 }));
             });
 
 
             it("reports the Extension offer, not the robot's delay", () => {
                 const h = harness(extensionGame("Robot"), { rand: () => 1 });
 
-                expect(h.table.timer()).toEqual({ kind: "ExtensionOffer", remainingMs: 30000 });
+                expect(h.table.timer())
+                .toEqual(new SomeOption<VisibleTimer>(
+                    { kind: "ExtensionOffer", remainingMs: 30000 }
+                ));
             });
 
 
@@ -627,7 +635,8 @@ describe("Table", () => {
                 const h = harness(extensionGame("Human"));
                 h.clock.advance(35000);
 
-                expect(h.table.timer()).toEqual({ kind: "NextRace", remainingMs: 15000 });
+                expect(h.table.timer())
+                .toEqual(new SomeOption<VisibleTimer>({ kind: "NextRace", remainingMs: 15000 }));
             });
 
         });
@@ -768,7 +777,7 @@ describe("Table", () => {
 
                 expect(h.updates).toEqual([]);
                 expect(h.clock.pendingCount()).toEqual(0);
-                expect(h.table.timer()).toBeNull();
+                expect(h.table.timer()).toEqual(NoneOption.get());
                 expect(h.table.submit(bob, coupFourre).error).toEqual("This game has ended.");
             });
 

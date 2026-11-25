@@ -1,3 +1,4 @@
+import { NoneOption } from "@repo/depot/option";
 import { SucceededResult } from "@repo/depot/result";
 import { shuffleDeck } from "@repo/mille-bornes-core/deck";
 import { type Game, type Seat } from "@repo/mille-bornes-core/game";
@@ -84,8 +85,8 @@ describe("RunningGames", () => {
 
                 h.games.start(game, ann.id).throwIfFailed();
 
-                expect(h.games.of(ann.id)?.game).toBe(game);
-                expect(h.games.of(robot.id)).toBeUndefined();
+                expect(h.games.of(ann.id).mapSome((r) => r.game).toNullable(null)).toBe(game);
+                expect(h.games.of(robot.id)).toEqual(NoneOption.get());
                 expect(h.games.list().map((e) => [e.state, e.organizerName]))
                 .toEqual([["Running", ann.name]]);
             });
@@ -124,7 +125,7 @@ describe("RunningGames", () => {
                 r.table.dispose();
                 h.tableOpts().onStuck("broken");
 
-                expect(h.games.get(game.config.id)).toBeUndefined();
+                expect(h.games.get(game.config.id)).toEqual(NoneOption.get());
                 expect(h.notices.get(ann.id)).toBe(stuckNotice);
                 expect((await h.store.loadAll()).games).toEqual([]);
                 expect(h.logger.lines.some((l) => l.startsWith("ERROR") && l.includes("broken")))
