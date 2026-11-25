@@ -20,14 +20,23 @@ export function isPrivateIpv4(addr: string): boolean {
 }
 
 
+// Home routers use 192.168.x.x; virtual adapters (WSL, Docker, VPNs) favour
+// 172.16-31.x.x and 10.x.x.x, so the likeliest real one comes first.
+function rank(ip: string): number {
+    return ip.startsWith("192.168.") ? 0 : ip.startsWith("10.") ? 1 : 2;
+}
+
+
 /**
  * Makes the URLs a phone on the local network can use.
  * @param addresses - Network interface names mapped to their IPv4 addresses
  * @param port - The port the server listens on
- * @returns `http://<ip>:<port>/` for each private address
+ * @returns `http://<ip>:<port>/` for each private address: 192.168.x.x
+ * first, then 10.x.x.x, then 172.16-31.x.x, each group by interface name
  */
 export function lanUrls(addresses: Map<string, string>, port: number): ReadonlyArray<string> {
-    return [...addresses.values()]
-    .filter(isPrivateIpv4)
-    .map((ip) => `http://${ip}:${port.toString()}/`);
+    return [...addresses]
+    .filter(([, ip]) => isPrivateIpv4(ip))
+    .sort(([nameA, a], [nameB, b]) => rank(a) - rank(b) || nameA.localeCompare(nameB))
+    .map(([, ip]) => `http://${ip}:${port.toString()}/`);
 }

@@ -68,9 +68,12 @@ const shutdown = createShutdown({
 
 process.on("SIGINT", () => { void shutdown(); });
 process.on("SIGTERM", () => { void shutdown(); });
+// Closing the console window sends SIGHUP on Windows (which kills the process
+// about 10 s later) and a hang-up elsewhere; every platform supports it.
+process.on("SIGHUP", () => { void shutdown(); });
 
-// Windows sends SIGBREAK when the console window is closed; elsewhere the
-// signal is not supported, so it is registered on Windows only.
+// Windows sends SIGBREAK for Ctrl+Break; elsewhere it cannot be sent, so it
+// is registered on Windows only.
 if (process.platform === "win32") {
     process.on("SIGBREAK", () => { void shutdown(); });
 }

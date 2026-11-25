@@ -19,7 +19,7 @@ export function escapeHtml(text: string): string {
 const css = `
 body { font-family: sans-serif; margin: 1.5rem; }
 .qr svg { width: 120px; height: 120px; }
-.qr:first-child svg { width: 320px; height: 320px; }
+.qr-large svg { width: 320px; height: 320px; }
 table { border-collapse: collapse; }
 th, td { border: 1px solid #999; padding: 0.3rem 0.6rem; text-align: left; }
 `;
@@ -48,7 +48,9 @@ export function renderHostPage(info: {
     games: ReadonlyArray<AdminEntry>;
 }): string {
     const links = info.urls.map((u) => `<li>${escapeHtml(u)}</li>`).join("");
-    const qrs = info.qrSvg.map((svg) => `<div class="qr">${svg}</div>`).join("");
+    const qrs = info.qrSvg
+    .map((svg, i) => `<div class="${i === 0 ? "qr qr-large" : "qr"}">${svg}</div>`)
+    .join("");
     const games = info.games.length === 0 ?
         "<p>No games.</p>" :
         `<table><tr><th>State</th><th>Phase</th><th>Organizer</th><th>Players</th><th></th></tr>` +

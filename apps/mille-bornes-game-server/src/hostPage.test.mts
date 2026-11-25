@@ -47,6 +47,18 @@ describe("hostPage", () => {
         });
 
 
+        it("makes only the first QR code large", () => {
+            const html = renderHostPage({
+                urls:  ["http://192.168.1.5:3000/", "http://10.0.0.2:3000/"],
+                qrSvg: ["<svg id=\"one\"></svg>", "<svg id=\"two\"></svg>"],
+                games: []
+            });
+            expect(html).toContain("<div class=\"qr qr-large\"><svg id=\"one\">");
+            expect(html).toContain("<div class=\"qr\"><svg id=\"two\">");
+            expect(html).toMatch(/\.qr-large svg \{[^}]*width: 320px/u);
+        });
+
+
         it("lists each game with an End game form", () => {
             const html = renderHostPage({ urls: [], qrSvg: [], games: [entry()] });
             expect(html).toContain("Ann, Bob");
