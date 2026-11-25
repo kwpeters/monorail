@@ -43,13 +43,17 @@ const ok = new SucceededResult<void>(undefined);
 /**
  * Holds every game and decides what each player's screen shows.  A player is
  * in at most one game.  Every change is applied at once, shown to the players
- * it affects, and then saved; if the save fails the change stays in memory
- * and the next change saves it again.  No method throws.
+ * it affects, and then saved.  If a save fails the change stays in memory and
+ * the failure is logged and returned.  The next change to that game saves its
+ * whole state again, but a failed `deleteGame` is not retried: the game is
+ * gone from memory and its snapshot comes back after a restart.  No method
+ * throws.
  *
- * A one-time notice (for example "You were removed from the game.") goes on
- * the next Lobby screen a `watch()` delivers to that player, and is then
- * cleared.  A player with no open watch keeps it until their next `watch()`.
- * `screenFor()` shows a notice but never clears it.
+ * A one-time notice (for example "You were removed from the game.") is cleared
+ * when a Lobby screen carrying it is yielded to a watcher, so a watch that
+ * ends first leaves it for the next `watch()`.  With several watches of one
+ * player only the first to read it shows it.  `screenFor()` shows a notice
+ * but never clears it.
  */
 export class Hub {
 
@@ -98,7 +102,7 @@ export class Hub {
      * the Lobby
      */
     public screenFor(player: PlayerId): Screen {
-        return this.build(player, false);
+        return this.build(player);
     }
 
 
@@ -118,7 +122,7 @@ export class Hub {
         // Listen before building the first screen; the iterator queues any
         // screen emitted until it is read.
         const later = on(this._emitter, player, { signal: stop });
-        return this.stream(this.build(player, true), later, stop);
+        return this.stream(player, this.build(player), later, stop);
     }
 
 
@@ -244,8 +248,14 @@ export class Hub {
      * @param b - The other seat's player id
      * @returns Success, or a plain-English reason
      */
-    public async swapSeats(player: PlayerId, a: PlayerId, b: PlayerId): Promise<Result<void, string>> {
-        return this.inGame(player, (game) => this.change(player, game, { type: "SwapSeats", a, b }));
+    public async swapSeats(
+        player: PlayerId,
+        a:      PlayerId,
+        b:      PlayerId
+    ): Promise<Result<void, string>> {
+        return this.inGame(player, (game) => {
+            return this.change(player, game, { type: "SwapSeats", a, b });
+        });
     }
 
 
@@ -255,8 +265,13 @@ export class Hub {
      * @param length - The length
      * @returns Success, or a plain-English reason
      */
-    public async setLength(player: PlayerId, length: GameLength): Promise<Result<void, string>> {
-        return this.inGame(player, (game) => this.change(player, game, { type: "SetLength", length }));
+    public async setLength(
+        player: PlayerId,
+        length: GameLength
+    ): Promise<Result<void, string>> {
+        return this.inGame(player, (game) => {
+            return this.change(player, game, { type: "SetLength", length });
+        });
     }
 
 
@@ -347,23 +362,22 @@ export class Hub {
             return ok;
         }
         catch (e) {
-            this._logger.error(`Saving game ${id} failed: ${e instanceof Error ? e.message : String(e)}`);
+            const why = e instanceof Error ? e.message : String(e);
+            this._logger.error(`Saving game ${id} failed: ${why}`);
             return fail(saveFailed);
         }
     }
 
 
-    // Builds a player's screen.  With `consume`, a notice is cleared.
-    private build(player: PlayerId, consume: boolean): Screen {
+    // Builds a player's screen.  A notice is shown but not cleared; see
+    // `deliver()`.
+    private build(player: PlayerId): Screen {
         const gameId = this.gameOf(player);
         const game = gameId === null ? undefined : this._pending.get(gameId);
         if (game) {
             return waitingScreen(game, player);
         }
         const notice = this._notices.get(player) ?? null;
-        if (consume) {
-            this._notices.delete(player);
-        }
         return lobbyScreen(this._pending.values(), notice);
     }
 
@@ -378,31 +392,50 @@ export class Hub {
         const audience = new Set([...affected, ...watched.filter((p) => this.gameOf(p) === null)]);
         for (const player of audience) {
             if (this._emitter.listenerCount(player) > 0) {
-                this._emitter.emit(player, this.build(player, true));
+                this._emitter.emit(player, this.build(player));
             }
         }
     }
 
 
+    // Clears a notice as its screen reaches a watcher.  A screen built earlier
+    // may carry a notice that another screen has since delivered; it is not
+    // shown twice.
+    private deliver(player: PlayerId, screen: Screen): Screen {
+        if (screen.kind !== "Lobby" || screen.notice === null) {
+            return screen;
+        }
+        return this._notices.delete(player) ? screen : { ...screen, notice: null };
+    }
+
+
     private async *stream(
-        first: Screen,
-        later: AsyncIterable<Array<unknown>>,
-        stop:  AbortSignal
+        player: PlayerId,
+        first:  Screen,
+        later:  AsyncIterableIterator<Array<unknown>>,
+        stop:   AbortSignal
     ): AsyncGenerator<Screen> {
         try {
             // Task 8 starts presence here, and ends it in the finally.
-            yield first;
+            if (!stop.aborted) {
+                yield this.deliver(player, first);
+            }
             for await (const [screen] of later) {
                 if (stop.aborted) {
                     return;
                 }
-                yield screen as Screen;
+                yield this.deliver(player, screen as Screen);
             }
         }
         catch (e) {
             if (!(e instanceof Error && e.name === "AbortError")) {
                 throw e;
             }
+        }
+        finally {
+            // A consumer that stops after the first screen never enters the
+            // loop above, so close the listener here.
+            await later.return?.();
         }
     }
 

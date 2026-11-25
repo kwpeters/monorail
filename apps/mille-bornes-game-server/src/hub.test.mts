@@ -1,4 +1,5 @@
-import { type PlayerId } from "@repo/mille-bornes-core/ids";
+import { type Result } from "@repo/depot/result";
+import { PlayerId } from "@repo/mille-bornes-core/ids";
 import { describeRejection } from "@repo/mille-bornes-core/rejection";
 import { seededRandom } from "@repo/mille-bornes-core/simulation";
 import { defaultTimings } from "./config.mjs";
@@ -53,6 +54,11 @@ async function nextScreen(w: ReturnType<typeof watcher>): Promise<Screen> {
 }
 
 
+function errorOf(r: Result<void, string>): string {
+    return r.failed ? r.error : "";
+}
+
+
 function waiting(s: Screen): Extract<Screen, { kind: "Waiting" }>["pending"] {
     if (s.kind !== "Waiting") {
         throw new Error(`Expected Waiting but got ${s.kind}.`);
@@ -69,6 +75,10 @@ function lobby(s: Screen): Extract<Screen, { kind: "Lobby" }> {
 }
 
 
+const tooMany = describeRejection({ reason: "TooManyPlayers" });
+const notOrganizer = describeRejection({ reason: "NotOrganizer" });
+
+
 describe("Hub", () => {
 
     describe("instance", () => {
@@ -83,7 +93,7 @@ describe("Hub", () => {
             });
 
 
-            it("is Waiting for the organizer and lists the game in other players' Lobby", async () => {
+            it("is Waiting for the organizer and lists the game for others", async () => {
                 const h = await openHub();
                 const ann = await newPlayer(h, "Ann");
                 const bob = await newPlayer(h, "Bob");
@@ -135,12 +145,12 @@ describe("Hub", () => {
 
             it("fails for a player with no session", async () => {
                 const h = await openHub();
-                const stranger = (await newPlayer(h, "Ann")).replace(/.$/u, "0") as PlayerId;
+                const stranger = PlayerId.create();
 
                 const r = await h.hub.createGame(stranger);
 
                 expect(r.failed).toBeTrue();
-                expect(r.failed ? r.error : "").toBe("You need to enter your name first.");
+                expect(errorOf(r)).toBe("You need to enter your name first.");
             });
 
 
@@ -151,7 +161,7 @@ describe("Hub", () => {
 
                 const r = await h.hub.createGame(ann);
 
-                expect(r.failed ? r.error : "").toBe("You are already in a game.");
+                expect(errorOf(r)).toBe("You are already in a game.");
             });
 
         });
@@ -172,7 +182,8 @@ describe("Hub", () => {
 
                 (await h.hub.join(bob, gameId)).throwIfFailed();
 
-                expect(waiting(await nextScreen(annWatch)).seats.map((s) => s.name)).toEqual(["Ann", "Bob"] as never);
+                const annsSeats = waiting(await nextScreen(annWatch)).seats;
+                expect(annsSeats.map((s) => s.name)).toEqual(["Ann", "Bob"] as never);
                 const bobs = waiting(await nextScreen(bobWatch));
                 expect(bobs.seats.map((s) => s.name)).toEqual(["Ann", "Bob"] as never);
                 expect(bobs.isOrganizer).toBeFalse();
@@ -191,7 +202,7 @@ describe("Hub", () => {
 
                 const r = await h.hub.join(ann, gameId);
 
-                expect(r.failed ? r.error : "").toBe("That game is no longer open.");
+                expect(errorOf(r)).toBe("That game is no longer open.");
             });
 
 
@@ -206,7 +217,7 @@ describe("Hub", () => {
 
                 const r = await h.hub.join(zed, waiting(h.hub.screenFor(ann)).id);
 
-                expect(r.failed ? r.error : "").toBe(describeRejection({ reason: "TooManyPlayers" }));
+                expect(errorOf(r)).toBe(tooMany);
                 expect(h.hub.screenFor(zed).kind).toBe("Lobby");
             });
 
@@ -220,11 +231,11 @@ describe("Hub", () => {
 
                 const r = await h.hub.join(bob, waiting(h.hub.screenFor(ann)).id);
 
-                expect(r.failed ? r.error : "").toBe("You are already in a game.");
+                expect(errorOf(r)).toBe("You are already in a game.");
             });
 
 
-            it("fails with the NameTaken text for a name that differs by case or spacing", async () => {
+            it("fails with NameTaken for a name differing in case or spacing", async () => {
                 const h = await openHub();
                 const ann = await newPlayer(h, "Ann");
                 const loud = await newPlayer(h, "ANN");
@@ -235,7 +246,7 @@ describe("Hub", () => {
                 for (const p of [loud, spaced]) {
                     const r = await h.hub.join(p, gameId);
 
-                    expect(r.failed ? r.error : "").toBe(
+                    expect(errorOf(r)).toBe(
                         describeRejection({ reason: "NameTaken", name: h.sessions.nameOf(p)! })
                     );
                 }
@@ -269,7 +280,7 @@ describe("Hub", () => {
 
                 const r = await h.hub.addRobot(bob);
 
-                expect(r.failed ? r.error : "").toBe(describeRejection({ reason: "NotOrganizer" }));
+                expect(errorOf(r)).toBe(notOrganizer);
             });
 
 
@@ -279,7 +290,7 @@ describe("Hub", () => {
 
                 const r = await h.hub.addRobot(ann);
 
-                expect(r.failed ? r.error : "").toBe("You are not in a game.");
+                expect(errorOf(r)).toBe("You are not in a game.");
             });
 
 
@@ -293,7 +304,7 @@ describe("Hub", () => {
 
                 const r = await h.hub.addRobot(ann);
 
-                expect(r.failed ? r.error : "").toBe(describeRejection({ reason: "TooManyPlayers" }));
+                expect(errorOf(r)).toBe(tooMany);
             });
 
 
@@ -348,7 +359,62 @@ describe("Hub", () => {
 
                 const r = await h.hub.removeSeat(bob, cy);
 
-                expect(r.failed ? r.error : "").toBe(describeRejection({ reason: "NotOrganizer" }));
+                expect(errorOf(r)).toBe(notOrganizer);
+            });
+
+
+            it("fails for a seat that is not in the game", async () => {
+                const h = await openHub();
+                const ann = await newPlayer(h, "Ann");
+                (await h.hub.createGame(ann)).throwIfFailed();
+
+                const r = await h.hub.removeSeat(ann, PlayerId.create());
+
+                expect(errorOf(r)).toBe(describeRejection({ reason: "NoSuchSeat" }));
+            });
+
+
+            it("fails for a seat in another game", async () => {
+                const h = await openHub();
+                const ann = await newPlayer(h, "Ann");
+                const bob = await newPlayer(h, "Bob");
+                (await h.hub.createGame(ann)).throwIfFailed();
+                (await h.hub.createGame(bob)).throwIfFailed();
+
+                const r = await h.hub.removeSeat(ann, bob);
+
+                expect(errorOf(r)).toBe(describeRejection({ reason: "NoSuchSeat" }));
+                expect(waiting(h.hub.screenFor(bob)).seats.length).toBe(1);
+            });
+
+
+            it("fails when the organizer removes themselves", async () => {
+                const h = await openHub();
+                const ann = await newPlayer(h, "Ann");
+                (await h.hub.createGame(ann)).throwIfFailed();
+
+                const r = await h.hub.removeSeat(ann, ann);
+
+                expect(errorOf(r)).toBe(describeRejection({ reason: "OrganizerCannotLeave" }));
+            });
+
+
+            it("lets a removed player create or join another game at once", async () => {
+                const h = await openHub();
+                const ann = await newPlayer(h, "Ann");
+                const bob = await newPlayer(h, "Bob");
+                const cy = await newPlayer(h, "Cy");
+                (await h.hub.createGame(ann)).throwIfFailed();
+                (await h.hub.createGame(cy)).throwIfFailed();
+                (await h.hub.join(bob, waiting(h.hub.screenFor(ann)).id)).throwIfFailed();
+                (await h.hub.removeSeat(ann, bob)).throwIfFailed();
+
+                (await h.hub.join(bob, waiting(h.hub.screenFor(cy)).id)).throwIfFailed();
+                (await h.hub.leavePending(bob)).throwIfFailed();
+                (await h.hub.createGame(bob)).throwIfFailed();
+
+                expect(waiting(h.hub.screenFor(bob)).isOrganizer).toBeTrue();
+                expect(waiting(h.hub.screenFor(ann)).seats.length).toBe(1);
             });
 
         });
@@ -377,7 +443,9 @@ describe("Hub", () => {
 
                 const r = await h.hub.leavePending(ann);
 
-                expect(r.failed ? r.error : "").toBe(describeRejection({ reason: "OrganizerCannotLeave" }));
+                expect(errorOf(r)).toBe(
+                    describeRejection({ reason: "OrganizerCannotLeave" })
+                );
             });
 
         });
@@ -402,6 +470,30 @@ describe("Hub", () => {
             });
 
 
+            it("sends watchers to the Lobby with a notice, but not the organizer", async () => {
+                const h = await openHub();
+                const ann = await newPlayer(h, "Ann");
+                const bob = await newPlayer(h, "Bob");
+                (await h.hub.createGame(ann)).throwIfFailed();
+                (await h.hub.join(bob, waiting(h.hub.screenFor(ann)).id)).throwIfFailed();
+                const annWatch = watcher(h.hub, ann);
+                const bobWatch = watcher(h.hub, bob);
+                expect((await nextScreen(annWatch)).kind).toBe("Waiting");
+                expect((await nextScreen(bobWatch)).kind).toBe("Waiting");
+
+                (await h.hub.cancelPending(ann)).throwIfFailed();
+
+                const bobs = lobby(await nextScreen(bobWatch));
+                expect(bobs.notice).toContain("cancelled");
+                expect(bobs.games).toEqual([]);
+                const anns = lobby(await nextScreen(annWatch));
+                expect(anns.notice).toBeNull();
+                expect(h.hub.screenFor(ann)).toEqual(anns);
+                annWatch.abort.abort();
+                bobWatch.abort.abort();
+            });
+
+
             it("fails for a player who is not the organizer", async () => {
                 const h = await openHub();
                 const ann = await newPlayer(h, "Ann");
@@ -411,7 +503,7 @@ describe("Hub", () => {
 
                 const r = await h.hub.cancelPending(bob);
 
-                expect(r.failed ? r.error : "").toBe(describeRejection({ reason: "NotOrganizer" }));
+                expect(errorOf(r)).toBe(notOrganizer);
                 expect(h.hub.screenFor(bob).kind).toBe("Waiting");
             });
 
@@ -420,7 +512,7 @@ describe("Hub", () => {
 
         describe("swapSeats()", () => {
 
-            it("is reflected in every Waiting screen, and only the organizer may swap", async () => {
+            it("shows in every Waiting screen; only the organizer may swap", async () => {
                 const h = await openHub();
                 const ann = await newPlayer(h, "Ann");
                 const bob = await newPlayer(h, "Bob");
@@ -430,7 +522,7 @@ describe("Hub", () => {
                 const denied = await h.hub.swapSeats(bob, ann, bob);
                 (await h.hub.swapSeats(ann, ann, bob)).throwIfFailed();
 
-                expect(denied.failed).toBeTrue();
+                expect(errorOf(denied)).toBe(notOrganizer);
                 for (const p of [ann, bob]) {
                     expect(waiting(h.hub.screenFor(p)).seats.map((s) => s.name))
                     .toEqual(["Bob", "Ann"] as never);
@@ -442,7 +534,7 @@ describe("Hub", () => {
 
         describe("setLength()", () => {
 
-            it("is reflected in every Waiting screen, and only the organizer may set it", async () => {
+            it("shows in every Waiting screen; only the organizer may set it", async () => {
                 const h = await openHub();
                 const ann = await newPlayer(h, "Ann");
                 const bob = await newPlayer(h, "Bob");
@@ -452,7 +544,7 @@ describe("Hub", () => {
                 const denied = await h.hub.setLength(bob, "Full");
                 (await h.hub.setLength(ann, "Full")).throwIfFailed();
 
-                expect(denied.failed).toBeTrue();
+                expect(errorOf(denied)).toBe(notOrganizer);
                 expect(waiting(h.hub.screenFor(ann)).length).toBe("Full");
                 expect(waiting(h.hub.screenFor(bob)).length).toBe("Full");
             });
@@ -549,7 +641,7 @@ describe("Hub", () => {
             });
 
 
-            it("keeps a notice for a player with no watch until their next watch, then clears it", async () => {
+            it("keeps a notice until the player's next watch, then clears it", async () => {
                 const h = await openHub();
                 const ann = await newPlayer(h, "Ann");
                 const bob = await newPlayer(h, "Bob");
@@ -564,6 +656,61 @@ describe("Hub", () => {
                 expect(lobby(await nextScreen(second)).notice).toBeNull();
                 first.abort.abort();
                 second.abort.abort();
+            });
+
+            it("closes its listener when the consumer stops after the first screen", async () => {
+                const h = await openHub();
+                const ann = await newPlayer(h, "Ann");
+                const bob = await newPlayer(h, "Bob");
+                const abort = new AbortController();
+
+                // What `for await` does on `break`.
+                const it = h.hub.watch(ann, abort.signal)[Symbol.asyncIterator]();
+                expect(lobby((await it.next()).value as Screen).kind).toBe("Lobby");
+                expect(h.hub.watcherCount(ann)).toBe(1);
+                await it.return?.();
+
+                expect(h.hub.watcherCount(ann)).toBe(0);
+                (await h.hub.createGame(bob)).throwIfFailed();
+                expect(h.hub.watcherCount(ann)).toBe(0);
+            });
+
+
+            it("clears a notice only when the screen carrying it is delivered", async () => {
+                const h = await openHub();
+                const ann = await newPlayer(h, "Ann");
+                const bob = await newPlayer(h, "Bob");
+                (await h.hub.createGame(ann)).throwIfFailed();
+                (await h.hub.join(bob, waiting(h.hub.screenFor(ann)).id)).throwIfFailed();
+                (await h.hub.cancelPending(ann)).throwIfFailed();
+                const first = watcher(h.hub, bob);
+
+                // Other changes before the first read must not use the notice up.
+                const cy = await newPlayer(h, "Cy");
+                (await h.hub.createGame(cy)).throwIfFailed();
+                await new Promise((resolve) => { setTimeout(resolve, 5); });
+
+                expect(lobby(await nextScreen(first)).notice).not.toBeNull();
+                expect(lobby(await nextScreen(first)).notice).toBeNull();
+                first.abort.abort();
+            });
+
+
+            it("keeps a notice when the watch ends before delivering it", async () => {
+                const h = await openHub();
+                const ann = await newPlayer(h, "Ann");
+                const bob = await newPlayer(h, "Bob");
+                (await h.hub.createGame(ann)).throwIfFailed();
+                (await h.hub.join(bob, waiting(h.hub.screenFor(ann)).id)).throwIfFailed();
+                (await h.hub.cancelPending(ann)).throwIfFailed();
+                const dropped = watcher(h.hub, bob);
+                dropped.abort.abort();
+
+                expect((await dropped.next()).done).toBeTrue();
+
+                const next = watcher(h.hub, bob);
+                expect(lobby(await nextScreen(next)).notice).not.toBeNull();
+                next.abort.abort();
             });
 
         });
@@ -630,9 +777,13 @@ describe("Hub", () => {
 
                 const r = await h.hub.createGame(ann);
 
-                expect(r.failed ? r.error : "").toBe("Something went wrong saving the game. Please try again.");
+                expect(errorOf(r)).toBe(
+                    "Something went wrong saving the game. Please try again."
+                );
                 expect(h.hub.screenFor(ann).kind).toBe("Waiting");
-                expect(h.logger.lines.some((l) => l.startsWith("ERROR") && l.includes("disk full"))).toBeTrue();
+                const logged = h.logger.lines
+                .some((l) => l.startsWith("ERROR") && l.includes("disk full"));
+                expect(logged).toBeTrue();
             });
 
         });

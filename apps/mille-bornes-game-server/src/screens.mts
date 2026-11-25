@@ -7,6 +7,13 @@ import {
 import { type PlayerView } from "@repo/mille-bornes-core/view";
 
 
+/** The countdown a Playing screen shows. */
+export interface PlayingTimer {
+    kind:        "HazardWindow" | "ExtensionOffer" | "NextRace";
+    remainingMs: number;
+}
+
+
 /**
  * What one player's screen shows.  A player always has exactly one: the lobby,
  * a waiting room, or the game.  Plain JSON; safe to send.
@@ -20,7 +27,7 @@ export type Screen =
         events:      ReadonlyArray<GameEvent>;
         /** Humans with an open subscription, plus every robot. */
         connected:   ReadonlyArray<PlayerId>;
-        timer:       { kind: "HazardWindow" | "ExtensionOffer" | "NextRace"; remainingMs: number } | null;
+        timer:       PlayingTimer | null;
         isOrganizer: boolean;
         /** Only the organizer sees which seats are robots. */
         robots:      ReadonlyArray<PlayerId> | null;
