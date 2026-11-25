@@ -67,8 +67,8 @@ const faces: Readonly<Record<Card, CardFace>> = {
     ),
     [Card.speedLimit]: hazard(
         "🐌", "Speed Limit",
-        "Speed Limit slows the team you play it on to 50-mile cards until they play an " +
-        "End of Speed Limit."
+        "Speed Limit lets the team you play it on use only 25- and 50-mile cards until " +
+        "they play an End of Speed Limit."
     ),
     [Card.stop]: hazard(
         "🛑", "Stop",
@@ -76,15 +76,18 @@ const faces: Readonly<Record<Card, CardFace>> = {
     ),
     [Card.repairs]: remedy(
         "🔧", "Repairs",
-        "Repairs fixes an Accident, and then you need a Roll to get going again."
+        "Repairs fixes an Accident, and then you can roll again " +
+        "(you need a Roll first unless you have Right of Way)."
     ),
     [Card.gasoline]: remedy(
         "⛽", "Gasoline",
-        "Gasoline fixes Out of Gas, and then you need a Roll to get going again."
+        "Gasoline fixes Out of Gas, and then you can roll again " +
+        "(you need a Roll first unless you have Right of Way)."
     ),
     [Card.spareTire]: remedy(
         "🛞", "Spare Tire",
-        "Spare Tire fixes a Flat Tire, and then you need a Roll to get going again."
+        "Spare Tire fixes a Flat Tire, and then you can roll again " +
+        "(you need a Roll first unless you have Right of Way)."
     ),
     [Card.endOfSpeedLimit]: remedy(
         "🐇", "End of Speed Limit",
@@ -104,7 +107,8 @@ const faces: Readonly<Record<Card, CardFace>> = {
     ),
     [Card.punctureProof]: safety(
         "🛡️", "Puncture Proof",
-        "Puncture Proof protects your team from Flat Tires for good, and fixes one you already have."
+        "Puncture Proof protects your team from Flat Tires for good, " +
+        "and fixes one you already have."
     ),
     [Card.rightOfWay]: safety(
         "🚨", "Right of Way",

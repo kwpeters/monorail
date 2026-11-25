@@ -83,7 +83,7 @@ describe("describeEvent", () => {
                 },
                 "Race over! Team 2 completed the trip.",
             ],
-            GameEnded:         [{ type: "GameEnded", winner: team(1) }, "Team 2 wins the game!"],
+            GameEnded:      [{ type: "GameEnded", winner: team(1) }, "Team 2 wins the game!"],
         };
         /* eslint-enable @typescript-eslint/naming-convention */
 
@@ -124,6 +124,23 @@ describe("describeEvent", () => {
         });
 
 
+        it("tells the viewer when their own team completed the trip", () => {
+            const event: GameEvent = {
+                type:   "RaceEnded",
+                result: {
+                    outcome: {
+                        kind:            "TripCompleted",
+                        team:            team(0),
+                        delayedAction:   false,
+                        extensionCaller: null,
+                    },
+                    scores: [],
+                },
+            };
+            expect(describeEvent(event, view)).toBe("Race over! Your team completed the trip!");
+        });
+
+
         it("names the card the viewer drew", () => {
             expect(describeEvent({ type: "CardDrawn", player: ann, card: Card.flatTire }, view))
             .toBe("You drew Flat Tire.");
@@ -155,20 +172,37 @@ describe("describeEvent", () => {
             const outcome = {
                 kind: "TripCompleted", team: team(2), delayedAction: false, extensionCaller: null,
             } as const;
-            expect(describeRaceResult({ outcome, scores: [] })).toBe("Team 3 completed the trip.");
+            expect(describeRaceResult({ outcome, scores: [] }, team(0)))
+            .toBe("Team 3 completed the trip.");
+        });
+
+
+        it("says your team when the viewer's team completed the trip", () => {
+            const outcome = {
+                kind: "TripCompleted", team: team(2), delayedAction: false, extensionCaller: null,
+            } as const;
+            expect(describeRaceResult({ outcome, scores: [] }, team(2)))
+            .toBe("Your team completed the trip!");
         });
 
 
         it("names the team that was farthest ahead when the cards ran out", () => {
             const outcome = { kind: "Exhausted", winner: team(1), extensionCaller: null } as const;
-            expect(describeRaceResult({ outcome, scores: [] }))
+            expect(describeRaceResult({ outcome, scores: [] }, team(0)))
             .toBe("The cards ran out, and Team 2 was farthest ahead.");
+        });
+
+
+        it("says your team when the viewer's team was farthest ahead", () => {
+            const outcome = { kind: "Exhausted", winner: team(1), extensionCaller: null } as const;
+            expect(describeRaceResult({ outcome, scores: [] }, team(1)))
+            .toBe("The cards ran out, and your team was farthest ahead!");
         });
 
 
         it("says so when the cards ran out in a tie", () => {
             const outcome = { kind: "Exhausted", winner: "Tie", extensionCaller: null } as const;
-            expect(describeRaceResult({ outcome, scores: [] }))
+            expect(describeRaceResult({ outcome, scores: [] }, team(0)))
             .toBe("The cards ran out, and it is a tie.");
         });
 

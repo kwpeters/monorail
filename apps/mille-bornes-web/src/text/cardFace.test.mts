@@ -52,6 +52,18 @@ describe("cardFace", () => {
     });
 
 
+    it("says Speed Limit allows only 25- and 50-mile cards", () => {
+        expect(cardFace(Card.speedLimit).blurb).toContain("only 25- and 50-mile cards");
+    });
+
+
+    it("says a remedy needs a Roll first unless the team has Right of Way", () => {
+        for (const card of [Card.repairs, Card.gasoline, Card.spareTire]) {
+            expect(cardFace(card).blurb, card).toContain("unless you have Right of Way");
+        }
+    });
+
+
     it("explains a hazard in the friendly way the help shows", () => {
         expect(cardFace(Card.flatTire).blurb).toBe(
             "Flat Tire stops the team you play it on until they play a Spare Tire."

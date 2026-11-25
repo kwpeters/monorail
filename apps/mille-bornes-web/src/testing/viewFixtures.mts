@@ -79,7 +79,9 @@ export function gameForSeats(seatCount: SeatCount, options: ViewOptions = {}): G
     const config: GameConfig = {
         id:     GameId.tryCreate("00000000-0000-4000-8000-000000000000").throwIfFailed(),
         length: "Full",
-        teams:  teamSizes[seatCount].map((size) => Array.from({ length: size }, () => seatNamed(names[next++]!))),
+        teams:  teamSizes[seatCount].map(
+            (size) => Array.from({ length: size }, () => seatNamed(names[next++]!))
+        ),
     };
     const deck = shuffleDeck(variant.deck, seededRandom(options.seed ?? 1));
     return createGame(config, deck).throwIfFailed().game;

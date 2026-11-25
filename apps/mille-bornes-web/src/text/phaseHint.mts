@@ -70,7 +70,7 @@ export function topBarMessage(
                     tone: "Info",
                 };
         case "RaceOver":
-            return { text: `Race over! ${describeRaceResult(phase.result)}`, tone: "Info" };
+            return { text: `Race over! ${describeRaceResult(phase.result, view.me.team)}`, tone: "Info" };
         case "GameOver":
             return {
                 text: `Game over! ${describeTeamName(view, phase.winner)} wins. Congratulations!`,

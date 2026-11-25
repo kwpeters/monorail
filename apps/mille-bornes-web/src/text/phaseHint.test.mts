@@ -1,4 +1,5 @@
 import { Card } from "@repo/mille-bornes-core/card";
+import { PlayerId } from "@repo/mille-bornes-core/ids";
 import { describe, expect, it } from "vitest";
 import { idOf, team, viewForSeats, withPhase } from "../testing/viewFixtures.mjs";
 import { topBarMessage } from "./phaseHint.mjs";
@@ -75,11 +76,50 @@ describe("phaseHint", () => {
             });
 
 
-            it("leaks nothing to a player who is not on the target team", () => {
-                const text = topBarMessage(bystander).text;
-                expect(text).not.toContain("Puncture Proof");
-                expect(text).not.toMatch(/coup/iu);
-                expect(text).not.toMatch(/safety|holds|play it now/iu);
+            it("gives target-team members with different hands identical text", () => {
+                const holder = {
+                    ...incoming, me: { ...incoming.me, hand: [Card.punctureProof, Card.roll] },
+                };
+                const nonHolder = {
+                    ...incoming, me: { ...incoming.me, hand: [Card.dist25, Card.dist50] },
+                };
+                expect(topBarMessage(holder)).toEqual(topBarMessage(nonHolder));
+                expect(topBarMessage(holder).tone).toBe("Alert");
+            });
+
+
+            it("gives a teammate of the attacker the neutral text", () => {
+                // Bob attacks; a second member of Bob's team sees what Bob played.
+                const teammate = {
+                    ...incoming,
+                    me: { ...incoming.me, id: PlayerId.create(), team: team(1) },
+                };
+                expect(topBarMessage(teammate)).toEqual({
+                    text: "Bob played Flat Tire on Team 1.",
+                    tone: "Info",
+                });
+            });
+
+
+            it("names no safety card to a player off the target team, for every hazard", () => {
+                const cases = [
+                    [Card.accident, "Driving Ace"],
+                    [Card.outOfGas, "Extra Tank"],
+                    [Card.flatTire, "Puncture Proof"],
+                    [Card.speedLimit, "Right of Way"],
+                    [Card.stop, "Right of Way"],
+                ] as const;
+                for (const [hazard, safetyLabel] of cases) {
+                    const aimed = withPhase(view, {
+                        kind: "HazardIncoming", attacker: bob, hazard, target: team(0),
+                    });
+                    const outsider = { ...aimed, me: { ...aimed.me, id: cy, team: team(2) } };
+                    const { text, tone } = topBarMessage(outsider);
+                    expect(tone, hazard).toBe("Info");
+                    expect(text, hazard).not.toContain(safetyLabel);
+                    expect(text, hazard).not.toMatch(/coup fourr/iu);
+                    expect(text, hazard).not.toMatch(/hold|counter|play it now/iu);
+                }
             });
 
 
@@ -99,7 +139,9 @@ describe("phaseHint", () => {
         describe("Extension offer", () => {
 
             it("asks the decider to stop or race on, with the risk", () => {
-                const offer = withPhase(view, { kind: "ExtensionOffer", decider: ann, team: team(0) });
+                const offer = withPhase(view, {
+                    kind: "ExtensionOffer", decider: ann, team: team(0),
+                });
                 const message = topBarMessage(offer);
                 expect(message.tone).toBe("MyTurn");
                 expect(message.text).toBe(
@@ -110,7 +152,9 @@ describe("phaseHint", () => {
 
 
             it("tells everyone else who is deciding", () => {
-                const offer = withPhase(view, { kind: "ExtensionOffer", decider: bob, team: team(1) });
+                const offer = withPhase(view, {
+                    kind: "ExtensionOffer", decider: bob, team: team(1),
+                });
                 expect(topBarMessage(offer)).toEqual({
                     text: "Bob is deciding whether to go for 1,000",
                     tone: "Info",
@@ -124,7 +168,10 @@ describe("phaseHint", () => {
 
             const result = {
                 outcome: {
-                    kind: "TripCompleted", team: team(1), delayedAction: false, extensionCaller: null,
+                    kind:            "TripCompleted",
+                    team:            team(1),
+                    delayedAction:   false,
+                    extensionCaller: null,
                 },
                 scores: [],
             } as const;
@@ -138,8 +185,19 @@ describe("phaseHint", () => {
             });
 
 
+            it("says your team when the viewer's team completed the trip", () => {
+                const mine = { ...result, outcome: { ...result.outcome, team: team(0) } };
+                expect(topBarMessage(withPhase(view, { kind: "RaceOver", result: mine }))).toEqual({
+                    text: "Race over! Your team completed the trip!",
+                    tone: "Info",
+                });
+            });
+
+
             it("congratulates the winning team by name", () => {
-                const over = withPhase(view, { kind: "GameOver", winner: team(1), result, reveal: [] });
+                const over = withPhase(view, {
+                    kind: "GameOver", winner: team(1), result, reveal: [],
+                });
                 expect(topBarMessage(over)).toEqual({
                     text: "Game over! Team 2 (Bob) wins. Congratulations!",
                     tone: "Info",
@@ -148,7 +206,9 @@ describe("phaseHint", () => {
 
 
             it("says you when the viewer's team won", () => {
-                const over = withPhase(view, { kind: "GameOver", winner: team(0), result, reveal: [] });
+                const over = withPhase(view, {
+                    kind: "GameOver", winner: team(0), result, reveal: [],
+                });
                 expect(topBarMessage(over).text)
                 .toBe("Game over! Team 1 (you) wins. Congratulations!");
             });
