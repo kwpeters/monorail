@@ -35,6 +35,13 @@ export interface FakeProcedures {
     me:         Mock<() => Promise<unknown>>;
     join:       Mock<(input: { gameId: string }) => Promise<unknown>>;
     createGame: Mock<() => Promise<unknown>>;
+    leave:      Mock<() => Promise<unknown>>;
+    cancel:     Mock<() => Promise<unknown>>;
+    addRobot:   Mock<() => Promise<unknown>>;
+    removeSeat: Mock<(input: { seat: string }) => Promise<unknown>>;
+    swapSeats:  Mock<(input: { a: string; b: string }) => Promise<unknown>>;
+    setLength:  Mock<(input: { length: string }) => Promise<unknown>>;
+    start:      Mock<() => Promise<unknown>>;
 }
 
 
@@ -59,7 +66,14 @@ export function createFakeApi(): FakeApi {
         rename:     vi.fn(() => Promise.resolve(okWire(undefined))),
         me:         vi.fn(() => Promise.resolve({ playerId: "p1", name: "Ann" })),
         join:       vi.fn(() => Promise.resolve(okWire(undefined))),
-        createGame: vi.fn(() => Promise.resolve(okWire(undefined)))
+        createGame: vi.fn(() => Promise.resolve(okWire(undefined))),
+        leave:      vi.fn(() => Promise.resolve(okWire(undefined))),
+        cancel:     vi.fn(() => Promise.resolve(okWire(undefined))),
+        addRobot:   vi.fn(() => Promise.resolve(okWire(undefined))),
+        removeSeat: vi.fn(() => Promise.resolve(okWire(undefined))),
+        swapSeats:  vi.fn(() => Promise.resolve(okWire(undefined))),
+        setLength:  vi.fn(() => Promise.resolve(okWire(undefined))),
+        start:      vi.fn(() => Promise.resolve(okWire(undefined)))
     };
 
     const trpc = {
@@ -71,6 +85,15 @@ export function createFakeApi(): FakeApi {
         lobby: {
             join:       { mutate: procs.join },
             createGame: { mutate: procs.createGame }
+        },
+        pending: {
+            leave:      { mutate: procs.leave },
+            cancel:     { mutate: procs.cancel },
+            addRobot:   { mutate: procs.addRobot },
+            removeSeat: { mutate: procs.removeSeat },
+            swapSeats:  { mutate: procs.swapSeats },
+            setLength:  { mutate: procs.setLength },
+            start:      { mutate: procs.start }
         }
     } as unknown as Api["trpc"];
 

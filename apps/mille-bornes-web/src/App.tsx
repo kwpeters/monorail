@@ -6,6 +6,7 @@ import { ConnectionBanner } from "./screens/ConnectionBanner.js";
 import { LobbyScreen } from "./screens/LobbyScreen.js";
 import { NameEntryScreen } from "./screens/NameEntryScreen.js";
 import { Shell } from "./screens/Shell.js";
+import { WaitingScreen } from "./screens/WaitingScreen.js";
 import {
     SessionProvider,
     useSession,
@@ -79,13 +80,13 @@ function Following(props: FollowingProps): ReactElement {
 
 
 // One exhaustive switch: a new kind of Screen is a compile error until it
-// has a component.  Tasks 6 and 7 replace the placeholders.
+// has a component.  Task 7 replaces the Playing placeholder.
 function screenFor(screen: Screen, api: Api): ReactElement {
     switch (screen.kind) {
         case "Lobby":
             return <LobbyScreen screen={screen} api={api} />;
         case "Waiting":
-            return <section className="screen"><p>Waiting room coming soon</p></section>;
+            return <WaitingScreen screen={screen} api={api} />;
         case "Playing":
             return <section className="screen"><p>Game coming soon</p></section>;
     }

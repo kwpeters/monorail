@@ -334,3 +334,121 @@ svg {
         align-items: stretch;
     }
 }
+
+
+/* Waiting rooms. */
+
+.visually-hidden {
+    position: absolute;
+    overflow: hidden;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.format,
+.hint {
+    color: var(--color-text-soft);
+}
+
+.hint.grow {
+    flex: 1;
+}
+
+.waiting-line {
+    font-weight: 600;
+}
+
+.waiting-name {
+    display: inline-block;
+    max-inline-size: 100%;
+    vertical-align: bottom;
+}
+
+.length-picker {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.length-picker .button {
+    flex: 1;
+}
+
+.button.selected {
+    border-color: var(--color-accent);
+    background: #dcefe2;
+}
+
+.button.danger {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+
+.teams {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.team {
+    padding: var(--space-2) var(--space-3);
+    border: 2px solid var(--color-border);
+    border-radius: 0.75rem;
+    background: var(--color-surface);
+}
+
+.team-title {
+    margin: 0 0 var(--space-1);
+    font-size: 1rem;
+}
+
+.team-seats {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.team-seat {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.seat-name {
+    flex: 1;
+}
+
+.you,
+.robot {
+    flex-shrink: 0;
+    color: var(--color-text-soft);
+}
+
+.dialog {
+    max-inline-size: min(24rem, calc(100vw - 2 * var(--space-3)));
+    padding: var(--space-3);
+    border: 2px solid var(--color-border);
+    border-radius: 0.75rem;
+}
+
+.dialog::backdrop {
+    background: rgb(0 0 0 / 50%);
+}
+
+.dialog h3,
+.dialog p {
+    margin: 0 0 var(--space-3);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .button {
+        transition: background-color 0.15s;
+    }
+}

@@ -13,3 +13,38 @@ expect.extend(matchers);
 afterEach(() => {
     cleanup();
 });
+
+
+// jsdom has no modal dialogs: `showModal()` and `close()` are missing.  This
+// stand-in does what a browser does that the tests rely on: `showModal()`
+// opens the dialog and remembers the focused element, Escape closes it, and
+// closing fires `close` and returns focus to the element that opened it.
+if (typeof HTMLDialogElement.prototype.showModal !== "function") {
+    const restoreFocus = new WeakMap<HTMLDialogElement, Element | null>();
+    const escapeHandlers = new WeakMap<HTMLDialogElement, (e: KeyboardEvent) => void>();
+
+    HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement): void {
+        restoreFocus.set(this, document.activeElement);
+        this.setAttribute("open", "");
+        const onKeyDown = (e: KeyboardEvent): void => {
+            if (e.key === "Escape") {
+                this.close();
+            }
+        };
+        escapeHandlers.set(this, onKeyDown);
+        document.addEventListener("keydown", onKeyDown);
+    };
+
+    HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement): void {
+        if (!this.hasAttribute("open")) {
+            return;
+        }
+        this.removeAttribute("open");
+        document.removeEventListener("keydown", escapeHandlers.get(this)!);
+        this.dispatchEvent(new Event("close"));
+        const trigger = restoreFocus.get(this);
+        if (trigger instanceof HTMLElement) {
+            trigger.focus();
+        }
+    };
+}

@@ -12,6 +12,7 @@ import { createScreenStore, type ScreenStoreDeps } from "./state/screenStore.mjs
 import { okWire } from "./testing/fakeApi.mjs";
 import { createFakeStore, type FakeStore } from "./testing/fakeStore.mjs";
 import { createMemoryCredentials } from "./testing/memoryCredentials.mjs";
+import { pendingViewForSeats } from "./testing/pendingFixtures.mjs";
 import { viewForSeats } from "./testing/viewFixtures.mjs";
 
 
@@ -35,16 +36,10 @@ function lobby(notice: string | null = null): Screen {
 }
 
 
-const waiting: Screen = {
-    kind:    "Waiting",
-    pending: {
-        id:          GameId.create(),
-        length:      "Quick",
-        isOrganizer: false,
-        seats:       [],
-        start:       { ok: false, reason: "Not enough players." }
-    }
-};
+function waiting(viewer: number): Screen {
+    const { view } = pendingViewForSeats([{ name: "Ann" }, { name: "Bob" }], { viewer });
+    return { kind: "Waiting", pending: view };
+}
 
 
 const playing: Screen = {
@@ -185,10 +180,30 @@ describe("App", () => {
         });
 
 
-        it("shows a placeholder for a Waiting screen", () => {
+        it("shows the waiting room for a Waiting screen, then the lobby with its notice", async () => {
             const { current } = setup(ann);
-            act(() => current().set({ screen: new SomeOption(waiting), status: "Live" }));
-            expect(screen.getByText("Waiting room coming soon")).toBeInTheDocument();
+            act(() => current().set({ screen: new SomeOption(waiting(0)), status: "Live" }));
+            expect(screen.getByRole("heading", { name: "Your game" })).toBeInTheDocument();
+            expect(screen.getByRole("button", { name: "Start game" })).toBeEnabled();
+
+            act(() => current().set({
+                screen: new SomeOption(lobby("The organizer ended the game.")),
+                status: "Live"
+            }));
+            expect(screen.getByRole("heading", { name: "Lobby" })).toBeInTheDocument();
+            expect(screen.queryByRole("heading", { name: "Your game" })).not.toBeInTheDocument();
+            expect(within(screen.getByRole("main")).getByRole("status"))
+            .toHaveTextContent("The organizer ended the game.");
+            await screen.findByText("Ann");
+        });
+
+
+        it("shows the joiner's waiting room for a joiner", () => {
+            const { current } = setup(ann);
+            act(() => current().set({ screen: new SomeOption(waiting(1)), status: "Live" }));
+            expect(screen.getByText(/waiting for/iu))
+            .toHaveTextContent("Waiting for Ann to start the game...");
+            expect(screen.getByRole("button", { name: "Leave game" })).toBeInTheDocument();
         });
 
 
