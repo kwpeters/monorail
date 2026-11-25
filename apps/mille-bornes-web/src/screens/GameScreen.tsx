@@ -88,7 +88,11 @@ export function GameScreen(props: GameScreenProps): ReactElement {
         (seconds) => topBarMessage(view, seconds),
         () => topBarMessage(view)
     );
-    const message = override.defaultValue(phaseMessage);
+    // The table's phases; a race or game summary takes the table's place.
+    const table = view.phase.kind !== "RaceOver" && view.phase.kind !== "GameOver";
+    // A transient message is about the table, so it never hides the summary's
+    // announcement.
+    const message = table ? override.defaultValue(phaseMessage) : phaseMessage;
     const onTurn = playerOnTurn(view);
     const robots = Option.fromNullable(screen.robots);
     const connected = Option.fromNullable(screen.connected);
@@ -189,7 +193,6 @@ export function GameScreen(props: GameScreenProps): ReactElement {
 
     // The one place that depends on the phase.  The frame (and with it the
     // top bar's live region) stays mounted as the phase changes.
-    const table = view.phase.kind !== "RaceOver" && view.phase.kind !== "GameOver";
     const body = ((): ReactElement => {
         switch (view.phase.kind) {
             case "Turn":

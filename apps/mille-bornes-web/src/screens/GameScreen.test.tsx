@@ -936,6 +936,21 @@ describe("GameScreen", () => {
         });
 
 
+        it("drops a card's reason from the top bar when the race or the game ends", () => {
+            const ends = [screenOf(raceOver, "Ann", { timer: next }), screenOf(gameOver, "Ann")];
+            for (const end of ends) {
+                const { again, unmount } = show(playingScreen(viewOf(midRace, "Ann")));
+                fireEvent.click(card("Roll"));
+                expect(bar()).toHaveTextContent(
+                    describeRejection({ reason: "RollNotNeeded", because: "AlreadyRolling" })
+                );
+                again(end);
+                expect(bar()).toHaveTextContent(topBarMessage(end.view).text);
+                unmount();
+            }
+        });
+
+
         it("reveals no seat's kind before the game is over", () => {
             const bobId = idOf(viewOf(midRace, "Ann"), "Bob");
             const screens = [
