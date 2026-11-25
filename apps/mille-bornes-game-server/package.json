@@ -1,0 +1,28 @@
+{
+    "name": "@repo/mille-bornes-game-server",
+    "version": "0.0.0",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "start": "node ./dist/www.mjs",
+        "dev": "echo 'Add dev script here'",
+        "build": "tsc --build tsconfig.src.json",
+        "test": "tsx ../../node_modules/jasmine/bin/jasmine.js --color --config=./jasmine.json",
+        "lint": "eslint .",
+        "type-check": "tsc --project tsconfig.json --noEmit",
+        "depcheck": "depcheck"
+    },
+    "bin": {
+        "mille-bornes-game-server": "./dist/www.mjs"
+    },
+    "dependencies": {
+        "@repo/depot": "*"
+    },
+    "devDependencies": {
+        "@repo/eslint-config": "*",
+        "@repo/typescript-config": "*",
+        "@types/jasmine": "^6.0.0",
+        "eslint": "^10.0.1",
+        "jasmine": "^6.1.0"
+    }
+}

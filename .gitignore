@@ -67,3 +67,6 @@ Thumbs.db
 
 # Files created by the Superpowers plugin.
 .superpowers/
+
+# Mille Bornes game server snapshots
+apps/mille-bornes-game-server/data/
