@@ -10,7 +10,8 @@
     "exclude": [
         "node_modules",
         "dist",
-        "src/**/*.test.mts"
+        "src/**/*.test.mts",
+        "src/scriptedPlayer.mts"
     ]
 }
 

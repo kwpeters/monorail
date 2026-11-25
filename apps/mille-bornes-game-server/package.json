@@ -15,6 +15,16 @@
     "bin": {
         "mille-bornes-game-server": "./dist/www.mjs"
     },
+    "exports": {
+        "./router": {
+            "types": "./src/router.mts",
+            "default": "./dist/router.mjs"
+        },
+        "./screens": {
+            "types": "./src/screens.mts",
+            "default": "./dist/screens.mjs"
+        }
+    },
     "dependencies": {
         "@repo/depot": "*",
         "@repo/depot-node": "*",
