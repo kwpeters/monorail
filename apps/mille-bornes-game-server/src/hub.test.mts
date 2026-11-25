@@ -673,6 +673,30 @@ describe("Hub", () => {
 
         describe("startGame()", () => {
 
+            it("fails when the first screens trip the stuck guard", async () => {
+                const h = await openHub(undefined, {
+                    tableFactory: (o) => {
+                        const t = new Table(o);
+                        t.timer = (): never => { throw new Error("timer broke"); };
+                        return t;
+                    }
+                });
+                const ann = await newPlayer(h, "Ann");
+                const bob = await newPlayer(h, "Bob");
+                (await h.hub.createGame(ann)).throwIfFailed();
+                const gameId = waiting(h.hub.screenFor(ann)).id;
+                (await h.hub.join(bob, gameId)).throwIfFailed();
+                const quarantine = spyOn(h.store, "quarantineGame").and.callThrough();
+
+                const r = await h.hub.startGame(ann);
+
+                expect(errorOf(r)).toBe(stuckNotice);
+                expect(quarantine).toHaveBeenCalledOnceWith(gameId);
+                expect(lobby(h.hub.screenFor(ann)).notice).toBe(stuckNotice);
+                expect(lobby(h.hub.screenFor(bob)).notice).toBe(stuckNotice);
+            });
+
+
             it("fails for a player who is not the organizer", async () => {
                 const h = await openHub();
                 const ann = await newPlayer(h, "Ann");
@@ -1323,11 +1347,14 @@ describe("Hub", () => {
                 await playUntil(h, [ann!, bob!], inWindow);
                 const w = watcher(h.hub, bob!);
                 await nextScreen(w);
+                const gameId = playing(h.hub.screenFor(ann!)).view.gameId;
+                const quarantine = spyOn(h.store, "quarantineGame").and.callThrough();
 
                 h.clock.advance(5000);
 
                 expect(lobby(await nextScreen(w)).notice).toBe(stuckNotice);
                 expect(lobby(h.hub.screenFor(ann!)).notice).toBe(stuckNotice);
+                expect(quarantine).toHaveBeenCalledOnceWith(gameId);
                 expect((await records(h)).length).toBe(1);
                 expect(h.logger.lines.some((l) => l.startsWith("ERROR"))).toBeTrue();
                 h.clock.advance(24 * 60 * 60 * 1000);
@@ -1358,11 +1385,14 @@ describe("Hub", () => {
                 const players = await startedGame(h, ["Ann", "Bob"]);
                 const others = await startedGame(h, ["Cy", "Dee"]);
                 const move = nextMove(h, players, seededRandom(1))!;
+                const gameId = playing(h.hub.screenFor(players[0]!)).view.gameId;
                 broken = tables[0]!;
+                const quarantine = spyOn(h.store, "quarantineGame").and.callThrough();
 
                 const r = await h.hub.play(move.by, move.cmd);
 
                 expect(errorOf(r)).toBe(stuckNotice);
+                expect(quarantine).toHaveBeenCalledOnceWith(gameId);
                 for (const p of players) {
                     expect(lobby(h.hub.screenFor(p)).notice).toBe(stuckNotice);
                 }
@@ -1684,6 +1714,7 @@ describe("Hub", () => {
                 const cyGame = playing(first.hub.screenFor(cy!)).view.gameId;
                 await first.hub.flush();
                 first.hub.dispose();
+                const quarantine = spyOn(first.store, "quarantineGame").and.callThrough();
 
                 const second = await openHub(first.store, {
                     tableFactory: (o) => {
@@ -1696,6 +1727,7 @@ describe("Hub", () => {
 
                 expect(second.hub.screenFor(ann!).kind).toBe("Playing");
                 expect(lobby(second.hub.screenFor(cy!)).notice).toBe(stuckNotice);
+                expect(quarantine).toHaveBeenCalledOnceWith(cyGame);
                 expect((await records(second)).length).toBe(1);
                 expect(second.logger.lines.some((l) => l.includes("no table today"))).toBeTrue();
             });

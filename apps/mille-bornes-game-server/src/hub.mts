@@ -17,7 +17,9 @@ import { type Timings } from "./config.mjs";
 import { type Logger } from "./logger.mjs";
 import { Presence } from "./presence.mjs";
 import { recordGameId } from "./records.mjs";
-import { humansOf, RunningGames, type AdminEntry, type RunningGame } from "./runningGames.mjs";
+import {
+    humansOf, RunningGames, stuckNotice, type AdminEntry, type RunningGame
+} from "./runningGames.mjs";
 import { lobbyScreen, waitingScreen, type Screen } from "./screens.mjs";
 import { type SessionRegistry } from "./sessions.mjs";
 import { type LoadedSnapshots, type SnapshotStore } from "./snapshotStore.mjs";
@@ -336,7 +338,11 @@ export class Hub {
             }
             this._pending.delete(pending.id);
             this.publish(this.lobbyWatchers());
-            return this._running.accepted(running.value, begun.value.events);
+            const saved = this._running.accepted(running.value, begun.value.events);
+            // Showing the first screens may have tripped the stuck guard.
+            return this._running.get(pending.id) === running.value ?
+                saved :
+                fail(stuckNotice);
         });
     }
 
