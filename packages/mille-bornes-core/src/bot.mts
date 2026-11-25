@@ -40,7 +40,8 @@ const extensionLead = 100;
 // discarded.  See `chooseCommand()`.
 function discardRank(card: Card, view: PlayerView, legal: ReadonlyArray<PlayerCommand>): number {
     const myZone = view.teams[view.me.team]!.zone;
-    const distance = distanceCardSchema.safeParse(card).data;
+    // Lookups, not safeParse(): a failed parse builds a costly ZodError.
+    const distance = distanceCardSchema.options.find((c) => c === card);
     // Distance cards by miles, remedies between the 100 and the 200.
     const keepValue = distance ? distanceMiles(distance) : 125;
 
@@ -48,7 +49,7 @@ function discardRank(card: Card, view: PlayerView, legal: ReadonlyArray<PlayerCo
     if (cured.length > 0 && cured.every((h) => hasSafety(myZone, safetyFor(h)))) {
         return 0;
     }
-    if (hazardCardSchema.safeParse(card).success &&
+    if (hazardCardSchema.options.some((c) => c === card) &&
         !legal.some((c) => c.type === "Attack" && c.card === card)) {
         return 1000 + keepValue;
     }
@@ -63,7 +64,7 @@ function discardRank(card: Card, view: PlayerView, legal: ReadonlyArray<PlayerCo
             return 2000;
         }
     }
-    if (safetyCardSchema.safeParse(card).success) {
+    if (safetyCardSchema.options.some((c) => c === card)) {
         return 5000;
     }
     const copies = view.me.hand.filter((c) => c === card).length;

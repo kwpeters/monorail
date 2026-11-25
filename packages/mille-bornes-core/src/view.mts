@@ -174,28 +174,30 @@ export function eventsFor(
 }
 
 
-// Every well-formed command for one card, ending with its Discard.
+// Every well-formed command for one card, ending with its Discard.  Lookups,
+// not safeParse(): a failed parse builds a ZodError, which made this the
+// hot spot of every robot decision.
 function commandsFor(card: Card, v: PlayerView): ReadonlyArray<PlayerCommand> {
     const plays: Array<PlayerCommand> = [];
-    const distance = distanceCardSchema.safeParse(card);
-    const remedy = remedyCardSchema.safeParse(card);
-    const safety = safetyCardSchema.safeParse(card);
-    const hazard = hazardCardSchema.safeParse(card);
-    if (distance.success) {
-        plays.push({ type: "Drive", card: distance.data });
+    const distance = distanceCardSchema.options.find((c) => c === card);
+    const remedy = remedyCardSchema.options.find((c) => c === card);
+    const safety = safetyCardSchema.options.find((c) => c === card);
+    const hazard = hazardCardSchema.options.find((c) => c === card);
+    if (distance) {
+        plays.push({ type: "Drive", card: distance });
     }
-    if (remedy.success) {
-        plays.push({ type: "Remedy", card: remedy.data });
+    if (remedy) {
+        plays.push({ type: "Remedy", card: remedy });
     }
-    if (safety.success) {
+    if (safety) {
         plays.push(
-            { type: "PlaySafety", card: safety.data },
-            { type: "CoupFourre", card: safety.data }
+            { type: "PlaySafety", card: safety },
+            { type: "CoupFourre", card: safety }
         );
     }
-    if (hazard.success) {
+    if (hazard) {
         for (const { index } of v.teams.filter((t) => t.index !== v.me.team)) {
-            plays.push({ type: "Attack", card: hazard.data, targetTeam: index });
+            plays.push({ type: "Attack", card: hazard, targetTeam: index });
         }
     }
     return [...plays, { type: "Discard", card }];
