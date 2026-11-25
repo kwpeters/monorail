@@ -24,6 +24,8 @@ const tinyTimings: Timings = {
 };
 const gameTimeoutMs = 15_000;
 const seatKeys = ["handSize", "id", "isMe", "name", "team"];
+const meKeys = ["hand", "id", "name", "team"];
+const playingKeys = ["connected", "events", "isOrganizer", "kind", "robots", "timer", "view"];
 const viewKeys = [
     "discardTop", "drawPileCount", "gameId", "length", "me", "phase", "raceNumber", "seats",
     "teams", "trip"
@@ -152,7 +154,9 @@ function expectNoLeaks(
         if (!organizer) {
             expect(s.robots).toBeNull();
         }
+        expect(Object.keys(s).sort()).toEqual(playingKeys);
         expect(Object.keys(s.view).sort()).toEqual(viewKeys);
+        expect(Object.keys(s.view.me).sort()).toEqual(meKeys);
         expect(s.view.me.id).toBe(p.playerId);
         s.view.seats.forEach((v) => { expect(Object.keys(v).sort()).toEqual(seatKeys); });
         for (const e of s.events) {

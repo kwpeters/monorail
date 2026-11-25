@@ -214,6 +214,9 @@ describe("router", () => {
                 ["game.leave", (c) => c.game.leave()],
                 ["watch", (c) => c.watch()]
             ];
+            // A new procedure must be added above.
+            const others = Object.keys(appRouter._def.procedures).filter((n) => n !== "session.create");
+            expect(procedures.map(([name]) => name).sort()).toEqual(others.sort());
             const headers: Array<string | undefined> = [
                 undefined,
                 "Bearer",
