@@ -53,7 +53,7 @@ export function createContextFromHeader(
 export function contextFromRequest(
     deps:             ContextDeps,
     headers:          { authorization?: string | undefined },
-    connectionParams: Record<string, string> | null | undefined
+    connectionParams: Record<string, string | undefined> | null | undefined
 ): Context {
     return createContextFromHeader(deps, headers.authorization ?? connectionParams?.authorization);
 }

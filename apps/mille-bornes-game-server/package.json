@@ -17,14 +17,19 @@
     },
     "dependencies": {
         "@repo/depot": "*",
+        "@repo/depot-node": "*",
         "@repo/mille-bornes-core": "*",
         "@trpc/server": "^11.31.3",
+        "express": "^5.2.1",
+        "qrcode": "^1.5.4",
         "zod": "^4.3.6"
     },
     "devDependencies": {
         "@repo/eslint-config": "*",
         "@repo/typescript-config": "*",
+        "@types/express": "^5.0.6",
         "@types/jasmine": "^6.0.0",
+        "@types/qrcode": "^1.5.5",
         "eslint": "^10.0.1",
         "jasmine": "^6.1.0"
     }
