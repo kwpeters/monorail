@@ -18,6 +18,7 @@
     "dependencies": {
         "@repo/depot": "*",
         "@repo/mille-bornes-core": "*",
+        "@trpc/server": "^11.31.3",
         "zod": "^4.3.6"
     },
     "devDependencies": {
