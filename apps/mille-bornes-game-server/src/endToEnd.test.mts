@@ -186,22 +186,26 @@ function rawPost(
     body:        string
 ): Promise<{ status: number; body: string }> {
     return new Promise((resolve, reject) => {
+        let answered = false;
         const req = http.request({
             host:   "127.0.0.1",
             port:   s.running.port,
             method: "POST",
             path:   "/trpc/session.create"
         }, (res) => {
+            answered = true;
             const chunks: Array<Buffer> = [];
             res.on("data", (c: Buffer) => { chunks.push(c); });
             res.on("end", () => {
                 resolve({ status: res.statusCode ?? 0, body: Buffer.concat(chunks).toString() });
             });
         });
-        // The server may answer and close before a large body is all sent.
+        // The server may answer and close before a large body is all sent; a
+        // reset after the answer is fine, one before it is a failure.
         req.on("error", (err: NodeJS.ErrnoException) => {
-            if (err.code !== "EPIPE" && err.code !== "ECONNRESET") {
-                reject(err);
+            const afterAnswer = answered && (err.code === "EPIPE" || err.code === "ECONNRESET");
+            if (!afterAnswer) {
+                reject(new Error(`POST got ${err.code ?? err.message} before any answer.`));
             }
         });
         req.setTimeout(5000, () => { req.destroy(new Error("No answer within 5 s.")); });
