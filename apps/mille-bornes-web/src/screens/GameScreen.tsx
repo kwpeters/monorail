@@ -8,6 +8,7 @@ import type { Api } from "../api/client.mjs";
 import { voidWire } from "../api/outcomes.mjs";
 import { prefersReducedMotion, useFlyingCards } from "../animation/FlyingCard.js";
 import { useAnimator } from "../animation/useAnimator.js";
+import { useSound } from "../sound/useSound.js";
 import type { EventBatch } from "../state/screenStore.mjs";
 import { EndGameDialog } from "../table/EndGameDialog.js";
 import { ExtensionOffer } from "../table/ExtensionOffer.js";
@@ -66,7 +67,8 @@ function windowSeconds(screen: PlayingData): Option<number> {
  * the top bar.  Components inside it can show a transient top bar message
  * through `useSetOverride()`.  The pending events play as animations, one
  * batch after another, and the last move line follows the batch that is
- * playing, so the words and the motion agree.
+ * playing, so the words and the motion agree; the batch's sounds and
+ * vibration start with it.
  * @param props - The Playing screen, the API and the store's event queue
  * @returns The table
  */
@@ -74,9 +76,11 @@ export function GameScreen(props: GameScreenProps): ReactElement {
     const { screen, api } = props;
     const { view } = screen;
     const flying = useFlyingCards();
+    const onBatchStart = useSound();
     const started = useAnimator(props.pendingEvents, props.consumeEvents, view, {
         play:          flying.play,
-        reducedMotion: prefersReducedMotion
+        reducedMotion: prefersReducedMotion,
+        onBatchStart
     });
     const { override, setOverride } = useOverrideMessage();
     const { selection, dispatch } = useSelection(view, setOverride);

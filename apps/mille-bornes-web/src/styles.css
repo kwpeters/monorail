@@ -900,6 +900,18 @@ svg {
     font-size: 0.85rem;
 }
 
+/* The speaker icon in the header: always at least 44 by 44 pixels. */
+.mute-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
 .race-outcome {
     font-weight: 600;
 }

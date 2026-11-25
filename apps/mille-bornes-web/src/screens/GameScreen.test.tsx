@@ -1,14 +1,18 @@
 import type { Card } from "@repo/mille-bornes-core/card";
-import { viewFor, type PlayerView } from "@repo/mille-bornes-core/view";
-import { applySystemCommand } from "@repo/mille-bornes-core/engine";
+import { eventsFor, viewFor, type PlayerView } from "@repo/mille-bornes-core/view";
+import { applyPlayerCommand, applySystemCommand } from "@repo/mille-bornes-core/engine";
 import { describeRejection } from "@repo/mille-bornes-core/rejection";
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+    act, cleanup, fireEvent, render, screen, waitFor, within
+} from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-    annPlays, extensionOffer, flatTireWindow, midRace, viewOf
+    annPlays, extensionOffer, flatTireWindow, midRace, play, viewOf
 } from "../testing/engineBatches.mjs";
+import { createFakeEngine } from "../testing/fakeAudio.mjs";
+import { AudioEngineContext } from "../sound/useSound.js";
 import { createFakeApi, failWire, neverSettles, type FakeApi } from "../testing/fakeApi.mjs";
 import { cardFace } from "../text/cardFace.mjs";
 import { hazardAlertText, topBarMessage } from "../text/phaseHint.mjs";
@@ -402,6 +406,80 @@ describe("GameScreen", () => {
             expect(layer).toHaveAttribute("aria-hidden", "true");
             expect(layer.style.pointerEvents).toBe("none");
             expect(layer).toBeEmptyDOMElement();
+        });
+
+    });
+
+
+    describe("sounds", () => {
+
+        // Bob drives after Ann: Ann's screen gets drive, yourTurn and draw.
+        const afterAnn = play(midRace, "Ann", { type: "Drive", card: "50" });
+        const bobs = applyPlayerCommand(afterAnn, idOf(viewOf(midRace, "Ann"), "Bob"), {
+            type: "Drive", card: "75"
+        }).throwIfFailed();
+        const annId = idOf(viewOf(midRace, "Ann"), "Ann");
+        const view = viewFor(bobs.game, annId).throwIfFailed();
+        const events = eventsFor(annId, bobs.events);
+        const batch: EventBatch = { id: 1, events };
+
+
+        function showWithSound(data: PlayingData) {
+            const engine = createFakeEngine();
+            const ui = (d: PlayingData, pending: ReadonlyArray<EventBatch>): ReactElement => (
+                <AudioEngineContext.Provider value={engine}>
+                    <GameScreen
+                        screen={d}
+                        api={createFakeApi().api}
+                        pendingEvents={pending}
+                        consumeEvents={vi.fn()}
+                    />
+                </AudioEngineContext.Provider>
+            );
+            const rendered = render(ui(data, []));
+            return {
+                engine,
+                again: (d: PlayingData, pending: ReadonlyArray<EventBatch> = []): void => {
+                    rendered.rerender(ui(d, pending));
+                }
+            };
+        }
+
+
+        beforeEach(() => {
+            vi.useFakeTimers();
+        });
+
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+
+        it("start when a batch starts, not when its screen arrives", async () => {
+            const { engine, again } = showWithSound(playingScreen(viewForSeats(2)));
+            // A snapshot: the events are in the screen and no batch is queued.
+            again(playingScreen(view, { events }));
+            await act(() => vi.advanceTimersByTimeAsync(2000));
+            expect(engine.played).not.toHaveBeenCalled();
+
+            again(playingScreen(view, { events }), [batch]);
+            expect(engine.played).not.toHaveBeenCalled();
+            await act(() => vi.advanceTimersByTimeAsync(0));
+            expect(engine.played.mock.calls).toEqual([["drive"]]);
+            await act(() => vi.advanceTimersByTimeAsync(240));
+            expect(engine.played.mock.calls).toEqual([["drive"], ["yourTurn"], ["draw"]]);
+        });
+
+
+        it("stop with the screen: nothing more plays after it unmounts", async () => {
+            const { engine, again } = showWithSound(playingScreen(viewForSeats(2)));
+            again(playingScreen(view, { events }), [batch]);
+            await act(() => vi.advanceTimersByTimeAsync(0));
+            cleanup();
+            await act(() => vi.advanceTimersByTimeAsync(2000));
+            expect(engine.played).toHaveBeenCalledOnce();
+            expect(vi.getTimerCount()).toBe(0);
         });
 
     });

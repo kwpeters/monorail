@@ -130,6 +130,25 @@ describe("useAnimator", () => {
     });
 
 
+    it("does not play a finished batch again while it is still in pending", async () => {
+        const { deps, consume, rerender } = setup([first]);
+        await advance(batchMs);
+        expect(consume).toHaveBeenCalledExactlyOnceWith(1);
+        // The store has not dropped it yet (or an effect ran on a stale render).
+        rerender({ pending: [first] });
+        rerender({ pending: [{ ...first }] });
+        await advance(5000);
+        expect(deps.play).toHaveBeenCalledTimes(3);
+        expect(deps.onBatchStart).toHaveBeenCalledOnce();
+        expect(consume).toHaveBeenCalledOnce();
+        // Once the store drops it, the id may be forgotten.
+        rerender({ pending: [] });
+        rerender({ pending: [second] });
+        await advance(batchMs);
+        expect(consume).toHaveBeenCalledTimes(2);
+    });
+
+
     it("does not end a Hold when a played batch is consumed", async () => {
         const hazard: EventBatch = { id: 7, events: attacked.events };
         const { deps, consume, rerender } = setup([first, hazard]);

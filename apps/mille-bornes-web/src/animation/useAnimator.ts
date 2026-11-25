@@ -17,6 +17,8 @@ interface Live {
     readonly animator: Animator;
     /** The batches given to this animator, by id, with what drops them. */
     readonly enqueued: Map<number, () => void>;
+    /** The batches that played to the end, until the store drops them. */
+    readonly finished: Set<number>;
 }
 
 
@@ -58,7 +60,11 @@ export function useAnimator(
                 latest.current.deps.onBatchStart?.(events, batchView);
             }
         });
-        live.current = new SomeOption({ animator, enqueued: new Map() });
+        live.current = new SomeOption({
+            animator,
+            enqueued: new Map(),
+            finished: new Set<number>()
+        });
         return () => {
             animator.stop();
             live.current = NoneOption.get();
@@ -69,22 +75,29 @@ export function useAnimator(
         if (live.current.isNone) {
             return;
         }
-        const { animator, enqueued } = live.current.value;
+        const { animator, enqueued, finished } = live.current.value;
         const ids = new Set(pending.map((batch) => batch.id));
+        // A finished batch may linger in `pending` for a render or two.
+        for (const id of finished) {
+            if (!ids.has(id)) {
+                finished.delete(id);
+            }
+        }
         for (const [id, drop] of enqueued) {
             if (!ids.has(id)) {
                 drop();
                 enqueued.delete(id);
                 // The store dropped a batch we did not finish (a snapshot or
                 // a screen that is not Playing): the hazard window it showed
-                // is over.  A batch we finished is gone from `enqueued`.
+                // is over.  A batch we finished is in `finished`, not here.
                 animator.endHold();
             }
         }
         for (const { id, events } of pending) {
-            if (!enqueued.has(id)) {
+            if (!enqueued.has(id) && !finished.has(id)) {
                 enqueued.set(id, animator.enqueue(events, view, () => {
                     enqueued.delete(id);
+                    finished.add(id);
                     latest.current.consume(id);
                 }));
             }

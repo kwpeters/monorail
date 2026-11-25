@@ -2,7 +2,7 @@ import { NoneOption, SomeOption } from "@repo/depot/option";
 import { GameId } from "@repo/mille-bornes-core/ids";
 import { PlayerName } from "@repo/mille-bornes-core/playerName";
 import type { Screen } from "@repo/mille-bornes-game-server/screens";
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StrictMode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -14,6 +14,8 @@ import { createFakeStore, type FakeStore } from "./testing/fakeStore.mjs";
 import { createMemoryCredentials } from "./testing/memoryCredentials.mjs";
 import { pendingViewForSeats } from "./testing/pendingFixtures.mjs";
 import { annPlays } from "./testing/engineBatches.mjs";
+import { createFakeEngine } from "./testing/fakeAudio.mjs";
+import type { AudioEngine } from "./sound/audioEngine.mjs";
 import { viewForSeats } from "./testing/viewFixtures.mjs";
 
 
@@ -92,7 +94,7 @@ interface Created {
 }
 
 
-function setup(initial?: Credential, answers?: Answers) {
+function setup(initial?: Credential, answers?: Answers, audio?: AudioEngine) {
     const credentials = createMemoryCredentials(initial);
     const created: Created[] = [];
     const createStore = (deps: ScreenStoreDeps): FakeStore => {
@@ -101,7 +103,12 @@ function setup(initial?: Credential, answers?: Answers) {
         return store;
     };
     const fetch = vi.fn(stubFetch(answers));
-    const props: AppProps = { credentials, createStore, fetch: forApi(fetch) };
+    const props: AppProps = {
+        credentials,
+        createStore,
+        fetch: forApi(fetch),
+        ...(audio === undefined ? {} : { audio })
+    };
     const view = render(<App {...props} />);
     const current = (): FakeStore => created[created.length - 1]!.store;
     return { credentials, created, current, fetch, props, view, user: userEvent.setup() };
@@ -375,6 +382,67 @@ describe("App", () => {
             act(() => current().set({ status: "Reconnecting" }));
             expect(screen.getByText("Connecting...")).toBeInTheDocument();
             expect(screen.getByText("Reconnecting...")).toBeInTheDocument();
+        });
+
+    });
+
+
+    describe("sound", () => {
+
+        const muteButton = (): HTMLElement => within(screen.getByRole("banner"))
+        .getByRole("button", { name: /mute sounds$/iu });
+
+
+        it("puts the mute button in the header of every screen", () => {
+            const { current, view } = setup(ann);
+            act(() => current().set({ screen: new SomeOption(lobby()), status: "Live" }));
+            expect(muteButton()).toBeInTheDocument();
+            act(() => current().set({ screen: new SomeOption(waiting(0)), status: "Live" }));
+            expect(muteButton()).toBeInTheDocument();
+            act(() => current().set({ screen: new SomeOption(playing), status: "Live" }));
+            expect(muteButton()).toBeInTheDocument();
+            view.unmount();
+            setup();
+            expect(muteButton()).toBeInTheDocument();
+        });
+
+
+        it("keeps the mute choice and the one engine across screens", async () => {
+            const audio = createFakeEngine();
+            const { current, user } = setup(ann, undefined, audio);
+            act(() => current().set({ screen: new SomeOption(lobby()), status: "Live" }));
+            await user.click(muteButton());
+            expect(audio.muted).toBe(true);
+            act(() => current().set({ screen: new SomeOption(playing), status: "Live" }));
+            expect(muteButton()).toHaveAccessibleName("Unmute sounds");
+        });
+
+
+        it("unlocks the audio on the first tap anywhere", () => {
+            const audio = createFakeEngine();
+            setup(ann, undefined, audio);
+            expect(audio.unlocks).not.toHaveBeenCalled();
+            fireEvent.pointerUp(document.body);
+            expect(audio.unlocks).toHaveBeenCalled();
+        });
+
+
+        it("plays a pending batch's sounds, and none for a screen that brings no batch", async () => {
+            const audio = createFakeEngine();
+            const { current } = setup(ann, undefined, audio);
+            const { view, events } = annPlays({ type: "Drive", card: "50" });
+            act(() => current().set({
+                screen: new SomeOption({ ...playing, view, events }),
+                status: "Live"
+            }));
+            expect(audio.played).not.toHaveBeenCalled();
+            act(() => current().set({
+                screen:        new SomeOption({ ...playing, view, events }),
+                status:        "Live",
+                pendingEvents: [{ id: 3, events }]
+            }));
+            await waitFor(() => expect(audio.played).toHaveBeenCalledWith("drive"));
+            expect(audio.played).toHaveBeenCalledTimes(1);
         });
 
     });
