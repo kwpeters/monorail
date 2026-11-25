@@ -177,7 +177,9 @@ The server owns the timer (default 5 seconds, configurable) and sends the engine
   There is no "pass" command, because passing early would also reveal information.
 - Every other player sees only the hazard card animation, which lasts as long as the window, so the pause looks like animation time.
   Nobody outside the hit team is told anything about the window.
-- Robots on the hit team respond immediately (if they hold the card), but the window still runs in full.
+- Robots on the hit team answer after their usual 1 to 3 second delay (if they hold the card), capped so the answer still lands inside the window.
+  An instant answer would give a robot away, so a quick answer never does.
+  The window still runs in full.
 - A Coup Fourre played in the window cancels the hazard, scores the bonus, and gives the player a replacement draw and the next turn.
   If the window closes with no Coup Fourre, the hazard lands.
 - The window state must survive a snapshot and restart (the server restarts the window rather than resolving it silently).
@@ -224,7 +226,7 @@ with one row per line of the rulebook's score sheet (total brought forward, mile
 - A player's identity is a seat plus a random credential stored in the browser's local storage.
   It is never included in any view.
   Returning to the app after a screen lock or reload resumes the same seat.
-- A bot driver issues robot commands with random 1 to 3 second delays and answers Coup Fourre prompts immediately.
+- A bot driver issues robot commands with random 1 to 3 second delays, and answers Coup Fourre prompts after the same delay, capped so the answer lands inside the window.
 - On startup the server finds the PC's LAN address(es), prints the URL and a QR code in the terminal, and serves them on `/host`.
   Machines with several adapters (VPN, WSL, Hyper-V) are common, so show every plausible private IPv4 address.
 - The organizer can end the game at any time (with a confirmation).

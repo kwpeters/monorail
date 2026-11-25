@@ -274,7 +274,7 @@ Failure modes the spec implies; each has a test in the owning task.
   }
   ```
   Scheduling is derived from `game.phase` after every accepted change and in `start()`, replacing all timers (no timer survives a change):
-  - `HazardIncoming`: a timer of the full `hazardWindowMs` that applies `CloseHazardWindow`, even if no seat can answer; plus, for each robot target-team seat that has a move, a delay-0 timer that submits it.
+  - `HazardIncoming`: a timer of the full `hazardWindowMs` that applies `CloseHazardWindow`, even if no seat can answer; plus, for each robot target-team seat that has a move, a timer of `min(robot delay, max(0, hazardWindowMs - 1000))` that submits it (so a robot never answers instantly and always answers inside the window).
   - `ExtensionOffer`: a timer of `extensionOfferMs` that applies `CloseExtensionOffer`; if the decider is a robot, a robot timer with a random delay in `[robotDelayMinMs, robotDelayMaxMs]` that submits its move.
   - `Turn` with a robot on turn: a robot timer with the random delay.
   - `RaceOver`: a timer of `raceOverPauseMs` that applies `StartNextRace` with a deck from `shuffleDeck(variant.deck, rand)`.
