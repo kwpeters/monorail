@@ -11,9 +11,11 @@ with one Server-Sent Events subscription per player.
 From the repository root:
 
 ```powershell
-npm run build -w @repo/mille-bornes-game-server
+npm run build
 npm start -w @repo/mille-bornes-game-server
 ```
+
+`npm run build` builds the server and the web app it serves.
 
 The server prints the URLs that phones on the network can open,
 a QR code for the first one,
@@ -133,14 +135,14 @@ and at least 0 for the robot delays and the grace;
 the robot delay minimum must not be more than the maximum.
 The server refuses to start with a bad value and says which variable is wrong.
 
-| Timing              | Variable                 | Default | What it is                                                  |
-| ------------------- | ------------------------ | ------- | ----------------------------------------------------------- |
-| `hazardWindowMs`    | `MB_HAZARD_WINDOW_MS`    | 5,000   | How long the target team has to play a Coup Fourre.         |
-| `extensionOfferMs`  | `MB_EXTENSION_OFFER_MS`  | 30,000  | How long the decider has to call or decline Extension.      |
-| `raceOverPauseMs`   | `MB_RACE_OVER_PAUSE_MS`  | 20,000  | How long the scores show before the next race is dealt.     |
-| `robotDelayMinMs`   | `MB_ROBOT_DELAY_MIN_MS`  | 1,000   | The shortest wait before a robot plays or answers.          |
-| `robotDelayMaxMs`   | `MB_ROBOT_DELAY_MAX_MS`  | 3,000   | The longest wait before a robot plays or answers.           |
-| `disconnectGraceMs` | `MB_DISCONNECT_GRACE_MS` | 3,000   | How long after a dropped connection a player is shown gone. |
+| Variable                 | Default | What it is                                                  |
+| ------------------------ | ------- | ----------------------------------------------------------- |
+| `MB_HAZARD_WINDOW_MS`    | 5,000   | How long the target team has to play a Coup Fourre.         |
+| `MB_EXTENSION_OFFER_MS`  | 30,000  | How long the decider has to call or decline Extension.      |
+| `MB_RACE_OVER_PAUSE_MS`  | 20,000  | How long the scores show before the next race is dealt.     |
+| `MB_ROBOT_DELAY_MIN_MS`  | 1,000   | The shortest wait before a robot plays or answers.          |
+| `MB_ROBOT_DELAY_MAX_MS`  | 3,000   | The longest wait before a robot plays or answers.           |
+| `MB_DISCONNECT_GRACE_MS` | 3,000   | How long after a dropped connection a player is shown gone. |
 
 A robot answers a Coup Fourre window after its usual random wait,
 so its speed does not reveal that it is a robot,
