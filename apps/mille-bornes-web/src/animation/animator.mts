@@ -153,31 +153,42 @@ export function createAnimator(deps: AnimatorDeps): Animator {
         // Starts a microtask later, so a stop() right after the first
         // enqueue() (React StrictMode's test unmount) plays nothing.
         await Promise.resolve();
-        while (!isStopped() && waiting.length > 0) {
-            if (waiting.length > maxWaiting) {
-                for (const old of waiting.splice(0, waiting.length - playInFull)) {
-                    start(old, true);
-                    finish(old);
+        try {
+            while (!isStopped() && waiting.length > 0) {
+                if (waiting.length > maxWaiting) {
+                    for (const old of waiting.splice(0, waiting.length - playInFull)) {
+                        start(old, true);
+                        finish(old);
+                    }
                 }
-            }
-            const batch = waiting.shift()!;
-            start(batch);
-            for (const s of batch.events.flatMap((e) => stepsFor(e, batch.view))) {
-                // A Hold shows a hazard window that the next batch has closed.
-                const over = s.kind === "Hold" && waiting.length > 0;
+                const batch = waiting.shift()!;
+                start(batch);
+                try {
+                    for (const s of batch.events.flatMap((e) => stepsFor(e, batch.view))) {
+                        // A Hold shows a hazard window that the next batch has closed.
+                        const over = s.kind === "Hold" && waiting.length > 0;
+                        if (isStopped()) {
+                            return;
+                        }
+                        if (!over && !deps.reducedMotion()) {
+                            await runStep(s);
+                        }
+                    }
+                }
+                catch {
+                    // A batch that cannot be shown (an event this page does not
+                    // know, say) loses its motion; the queue goes on.
+                }
                 if (isStopped()) {
                     return;
                 }
-                if (!over && !deps.reducedMotion()) {
-                    await runStep(s);
-                }
+                finish(batch);
             }
-            if (isStopped()) {
-                return;
-            }
-            finish(batch);
         }
-        becomeIdle();
+        finally {
+            // Whatever happened, the next enqueue() starts the loop again.
+            becomeIdle();
+        }
     };
 
     return {

@@ -144,6 +144,30 @@ describe("createAnimator", () => {
         });
 
 
+        it("skips a batch whose steps cannot be worked out and plays the next", async () => {
+            const h = harness();
+            const animator = createAnimator(h.deps);
+            const broken = {
+                get type(): never {
+                    throw new Error("an event this page cannot read");
+                }
+            } as unknown as GameEvent;
+            animator.enqueue(h.batch("broken", [broken]), view, h.done("broken"));
+            animator.enqueue(h.batch("drive", drive.events), view, h.done("drive"));
+            await vi.runAllTimersAsync();
+            expect(h.log).toEqual([
+                "batch broken", "done broken",
+                "batch drive", ...playedSteps, "done drive"
+            ]);
+            await expect(animator.whenIdle()).resolves.toBeUndefined();
+
+            // Idle again, so a later batch starts the queue once more.
+            animator.enqueue(h.batch("discard", discard.events), view, h.done("discard"));
+            await vi.runAllTimersAsync();
+            expect(h.log.slice(-8)).toEqual(["batch discard", ...playedSteps, "done discard"]);
+        });
+
+
         it("keeps playing when a batch's onDone throws", async () => {
             const h = harness();
             const animator = createAnimator(h.deps);

@@ -155,6 +155,12 @@ describe("stepsFor", () => {
     });
 
 
+    it("shows nothing for an event of a kind this page does not know", () => {
+        const unknown = { type: "PitStop", team: 0 } as unknown as GameEvent;
+        expect(stepsFor(unknown, view)).toEqual([]);
+    });
+
+
     it("flies another player's card from their own lane", () => {
         expect(stepsFor(eventOf(bobDrives, "DistancePlayed"), view))
         .toEqual([fly("75", theirs, theirs)]);

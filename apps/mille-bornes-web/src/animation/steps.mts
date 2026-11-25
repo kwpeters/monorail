@@ -162,5 +162,12 @@ export function stepsFor(event: GameEvent, view: PlayerView): ReadonlyArray<Step
         case "ExtensionCalled":
         case "ExtensionDeclined":
             return [pulse(lane(event.team), "Info")];
+        default: {
+            // A missing case is still a compile error; an event from a newer
+            // server that this page does not know shows nothing.
+            const unknown: never = event;
+            void unknown;
+            return [];
+        }
     }
 }
