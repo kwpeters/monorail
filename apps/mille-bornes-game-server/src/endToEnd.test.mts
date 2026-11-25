@@ -153,6 +153,10 @@ function expectNoLeaks(
         expect(s.isOrganizer).toBe(organizer);
         if (!organizer) {
             expect(s.robots).toBeNull();
+            expect(s.connected).toBeNull();
+        }
+        else {
+            expect(s.connected).not.toBeNull();
         }
         expect(Object.keys(s).sort()).toEqual(playingKeys);
         expect(Object.keys(s.view).sort()).toEqual(viewKeys);

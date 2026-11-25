@@ -29,8 +29,13 @@ export type Screen =
         kind:        "Playing";
         view:        PlayerView;
         events:      ReadonlyArray<GameEvent>;
-        /** Humans with an open subscription, plus every robot. */
-        connected:   ReadonlyArray<PlayerId>;
+        /**
+         * Humans with an open subscription, plus every robot, in seat order.
+         * Only the organizer gets it: robots are always listed, so everyone
+         * else could tell robots from humans by elimination once a phone
+         * locks.  Null for everyone else.
+         */
+        connected:   ReadonlyArray<PlayerId> | null;
         timer:       PlayingTimer | null;
         isOrganizer: boolean;
         /** Only the organizer sees which seats are robots. */
@@ -86,17 +91,18 @@ export function playingScreens(
     const robots = game.players.filter((p) => p.seat.kind === "Robot").map((p) => p.seat.id);
     const seats = game.players.map((p) => p.seat.id);
     return broadcast(game, events).mapSuccess((updates) => new Map(updates.map((u) => {
+        const isOrganizer = u.player === ctx.organizer;
         const connected = seats.filter((id) => {
             return id === u.player || robots.includes(id) || ctx.isConnected(id);
         });
         const screen: Screen = {
-            kind:        "Playing",
-            view:        u.view,
-            events:      u.events,
-            connected,
-            timer:       ctx.timer,
-            isOrganizer: u.player === ctx.organizer,
-            robots:      u.player === ctx.organizer ? robots : null
+            kind:      "Playing",
+            view:      u.view,
+            events:    u.events,
+            connected: isOrganizer ? connected : null,
+            timer:     ctx.timer,
+            isOrganizer,
+            robots:    isOrganizer ? robots : null
         };
         return [u.player, screen];
     })));

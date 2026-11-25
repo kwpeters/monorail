@@ -24,8 +24,8 @@ Findings from its reviews that the web milestone, or later cleanup, should pick 
 
 ## Design observations for the owner
 
-- A seat that has been disconnected for more than 3 s appears in `connected` as a human, so with locked phones the robots stand out by elimination.
-  The design asked for a disconnected indicator; sending `connected` only to the organizer is a one-line alternative.
+- `connected` is organizer-only now (`null` for everyone else), so players cannot spot robots by elimination.
+  The web client should show the disconnected indicator on the organizer's screen only.
 - The organizer sees robot seats (intended).
 - `session.create` is unauthenticated and unbounded; fine on a home network.
 

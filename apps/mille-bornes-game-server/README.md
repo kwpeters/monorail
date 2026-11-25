@@ -90,6 +90,14 @@ then each later one.
 Missed events are not replayed,
 so a phone that reconnects lands on the current state.
 
+In a game,
+only the organizer's screen carries `connected`
+(the robots and the humans with an open `watch`, in seat order)
+and `robots`;
+both are `null` for every other player,
+so nobody can tell robots from humans by elimination.
+A player's connection change is shown to the organizer only.
+
 ## The credential
 
 `session.create` returns a `playerId` and a `token`.

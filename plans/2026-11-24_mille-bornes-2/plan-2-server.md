@@ -312,7 +312,7 @@ Failure modes the spec implies; each has a test in the owning task.
     | { kind: "Lobby"; notice: string | null; games: ReadonlyArray<PendingSummary> }
     | { kind: "Waiting"; pending: PendingView }
     | { kind: "Playing"; view: PlayerView; events: ReadonlyArray<GameEvent>;
-        connected: ReadonlyArray<PlayerId>;           // humans with an open subscription, plus every robot
+        connected: ReadonlyArray<PlayerId> | null;    // organizer only (else null): humans with an open subscription, plus every robot
         timer: { kind: "HazardWindow" | "ExtensionOffer" | "NextRace"; remainingMs: number } | null;
         isOrganizer: boolean;
         robots: ReadonlyArray<PlayerId> | null };     // only the organizer sees which seats are robots
@@ -373,7 +373,7 @@ Failure modes the spec implies; each has a test in the owning task.
   Behavior:
   - Starting a pending game creates a `Table` (`start()` called), saves a `Running` record (organizer, game, `seq`, `left: []`), and every seat's screen becomes `Playing`.
   - Each `TableUpdate` is saved (`store.saveGame`), passed to core's `broadcast()`, and emitted as one `Screen` per human player with that player's redacted `events` (only `broadcast` output is ever sent).
-  - Presence: a player is connected while at least one `watch` for them is open; a disconnect takes effect after `disconnectGraceMs` (a reconnect inside the grace period never shows as disconnected); a change re-emits `Playing` to the others in that game; robots are always in `connected`.
+  - Presence: a player is connected while at least one `watch` for them is open; a disconnect takes effect after `disconnectGraceMs` (a reconnect inside the grace period never shows as disconnected); `connected` goes to the organizer only (`null` for everyone else, so players cannot find robots by elimination), so a change re-emits `Playing` to the organizer alone; robots are always in `connected`.
   - `robots` is the organizer's list of robot seats; everyone else gets `null`.
   - The `timer` field comes from `Table.timer()`, computed when the screen is built, so a reconnecting phone sees the true remaining time (**Review Focus 1**).
   - The stuck guard (`onStuck`): the game is removed, `store.quarantineGame`, and every human returns to `Lobby` with a notice ("Something went wrong with the game, so it was ended.").

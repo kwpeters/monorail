@@ -1086,8 +1086,7 @@ describe("Hub", () => {
                 expect(playing(await nextScreen(annWatch)).connected).toEqual([ann!]);
 
                 const bobWatch = watcher(h.hub, bob!);
-                expect(playing(await nextScreen(bobWatch)).connected)
-                .toEqual(jasmine.arrayWithExactContents([ann!, bob!]));
+                expect(playing(await nextScreen(bobWatch)).connected).toBeNull();
 
                 expect(playing(await nextScreen(annWatch)).connected)
                 .toEqual(jasmine.arrayWithExactContents([ann!, bob!]));
@@ -1179,6 +1178,74 @@ describe("Hub", () => {
                 const connected = playing(h.hub.screenFor(ann!)).connected;
 
                 expect(connected).toEqual(game.players.map((p) => p.seat.id));
+            });
+
+
+            it("gives a non-organizer no connected list, not even in the JSON", async () => {
+                const h = await openHub();
+                const [ann, bob] = await startedGame(h, ["Ann", "Bob"], 1);
+                const annWatch = watcher(h.hub, ann!);
+                const bobWatch = watcher(h.hub, bob!);
+                await nextScreen(annWatch);
+
+                const first = await nextScreen(bobWatch);
+
+                expect(playing(first).connected).toBeNull();
+                expect(playing(h.hub.screenFor(bob!)).connected).toBeNull();
+                expect((JSON.parse(JSON.stringify(first)) as { connected: unknown }).connected)
+                .toBeNull();
+                expect(playing(h.hub.screenFor(ann!)).connected).not.toBeNull();
+                annWatch.abort.abort();
+                bobWatch.abort.abort();
+            });
+
+
+            it("shows the organizer a human leaving and coming back", async () => {
+                const h = await openHub();
+                const [ann, bob] = await startedGame(h, ["Ann", "Bob"]);
+                const annWatch = watcher(h.hub, ann!);
+                await nextScreen(annWatch);
+                const first = watcher(h.hub, bob!);
+                await nextScreen(first);
+                expect(playing(await nextScreen(annWatch)).connected)
+                .toEqual(jasmine.arrayWithExactContents([ann!, bob!]));
+                first.abort.abort();
+                expect((await first.next()).done).toBeTrue();
+
+                h.clock.advance(3000);
+
+                expect(playing(await nextScreen(annWatch)).connected).toEqual([ann!]);
+                const second = watcher(h.hub, bob!);
+                await nextScreen(second);
+                expect(playing(await nextScreen(annWatch)).connected)
+                .toEqual(jasmine.arrayWithExactContents([ann!, bob!]));
+                annWatch.abort.abort();
+                second.abort.abort();
+            });
+
+
+            it("sends a non-organizer nothing when another player's presence changes", async () => {
+                const h = await openHub();
+                const players = await startedGame(h, ["Ann", "Bob"]);
+                const [ann, bob] = players;
+                const bobWatch = watcher(h.hub, bob!);
+                await nextScreen(bobWatch);
+                const first = watcher(h.hub, ann!);
+                await nextScreen(first);
+                first.abort.abort();
+                expect((await first.next()).done).toBeTrue();
+                h.clock.advance(3000);
+                const second = watcher(h.hub, ann!);
+                await nextScreen(second);
+                const move = nextMove(h, players, seededRandom(1))!;
+                (await h.hub.play(move.by, move.cmd)).throwIfFailed();
+
+                // Bob sees the play next, so no presence screen came first.
+                const next = playing(await nextScreen(bobWatch));
+                expect(next.events.length).toBeGreaterThan(0);
+                expect(next.connected).toBeNull();
+                bobWatch.abort.abort();
+                second.abort.abort();
             });
 
         });

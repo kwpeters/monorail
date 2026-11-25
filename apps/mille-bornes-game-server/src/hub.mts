@@ -550,13 +550,14 @@ export class Hub {
     }
 
 
-    // Shows the other humans in the player's running game that the player
-    // connected or disconnected.  Runs from a clock timer, so never throws.
+    // Shows the organizer of the player's running game that the player
+    // connected or disconnected; only the organizer's screen lists who is
+    // connected.  Runs from a clock timer, so never throws.
     private presenceChanged(player: PlayerId): void {
         try {
             const r = this._running.of(player);
-            if (r) {
-                this.publish(humansOf(r).filter((p) => p !== player));
+            if (r && r.organizer !== player && humansOf(r).includes(r.organizer)) {
+                this.publish([r.organizer]);
             }
         }
         catch (e) {
