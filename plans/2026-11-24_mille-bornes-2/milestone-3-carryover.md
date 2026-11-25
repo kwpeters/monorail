@@ -22,6 +22,17 @@ Findings from its reviews that the web milestone, or later cleanup, should pick 
 - `session.me` returns `UNAUTHORIZED` for an unknown credential;
   treat that as "enter your name again".
 
+## Keeping phones awake (decision for milestone 3)
+
+The Screen Wake Lock API (`navigator.wakeLock.request("screen")`) needs a secure context,
+so it does not exist on a plain `http://<lan-ip>` page.
+Plan: feature-detect it, and fall back to a hidden, muted, looping, `playsinline` video started from the tap that joins a game (the NoSleep.js technique).
+Re-request the lock when the page becomes visible again, because the browser releases it when the tab is hidden.
+Run in the browser tab, not as a home-screen app (an iOS bug disabled the API there until iOS 18.4).
+How the fallback behaves over plain HTTP is unconfirmed: test it on the family's real phones at the rehearsal.
+HTTPS with a self-signed certificate would make the real API work but shows a certificate warning on every phone.
+If a phone locks anyway, the stream reconnects and shows the current state.
+
 ## Design observations for the owner
 
 - `connected` is organizer-only now (`null` for everyone else), so players cannot spot robots by elimination.
