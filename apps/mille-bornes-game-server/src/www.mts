@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 import qrcode from "qrcode";
 import { getExternalIpv4Addresses } from "@repo/depot-node/networkHelpers";
-import { realClock } from "./clock.mjs";
+import { realClock, type Clock } from "./clock.mjs";
 import { loadConfig } from "./config.mjs";
 import { consoleLogger } from "./logger.mjs";
+import { createShutdown } from "./shutdown.mjs";
 import { startServer, type RunningServer } from "./startServer.mjs";
 
 
@@ -47,16 +48,28 @@ urls.forEach((u) => { console.log(`  ${u}`); });
 console.log(`Host page (on this computer only): http://localhost:${running.port.toString()}/host`);
 console.log(await qrcode.toString(urls[0]!, { type: "terminal", small: true }));
 
-let stopping = false;
-async function shutdown(): Promise<void> {
-    if (stopping) {
-        return;
+// The force-exit timer must not keep the process alive.
+const unrefClock: Clock = {
+    now:        () => realClock.now(),
+    setTimeout: (fn, ms) => {
+        const handle = setTimeout(fn, ms);
+        handle.unref();
+        return () => { clearTimeout(handle); };
     }
-    stopping = true;
-    logger.info("Shutting down.");
-    await running.close();
-    process.exit(0);
-}
+};
+
+const shutdown = createShutdown({
+    close: async () => running.close(),
+    exit:  (code) => process.exit(code),
+    clock: unrefClock,
+    logger
+});
 
 process.on("SIGINT", () => { void shutdown(); });
 process.on("SIGTERM", () => { void shutdown(); });
+
+// Windows sends SIGBREAK when the console window is closed; elsewhere the
+// signal is not supported, so it is registered on Windows only.
+if (process.platform === "win32") {
+    process.on("SIGBREAK", () => { void shutdown(); });
+}
