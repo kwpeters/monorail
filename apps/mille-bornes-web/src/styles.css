@@ -523,7 +523,7 @@ svg {
 
 .miles-of {
     color: var(--color-text-soft);
-    font-size: 0.7rem;
+    font-size: 0.75rem;
 }
 
 .team-body {
@@ -583,7 +583,7 @@ svg {
 .offline {
     flex-shrink: 0;
     color: #8a3b00;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
 }
 
 .status {
@@ -731,6 +731,10 @@ svg {
     line-height: 1.2;
 }
 
+/*
+ * At most 0.65rem: a one-word label such as "Gasoline" must fit the card's
+ * width, or it breaks in the middle of the word.
+ */
 .card-label {
     font-size: 0.65rem;
     line-height: 1.15;
@@ -745,7 +749,7 @@ svg {
 
 .card-unit {
     color: var(--color-text-soft);
-    font-size: 0.65rem;
+    font-size: 0.75rem;
 }
 
 
