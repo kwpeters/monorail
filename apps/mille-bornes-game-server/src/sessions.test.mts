@@ -18,6 +18,27 @@ function failSaves(store: MemorySnapshotStore): void {
 }
 
 
+// Makes each save take a moment, and fails the saves whose 1-based call number
+// is listed, so concurrent changes overlap.
+function slowSaves(store: MemorySnapshotStore, failing: ReadonlyArray<number> = []): void {
+    const save = store.saveSessions.bind(store);
+    let calls = 0;
+    store.saveSessions = async (records) => {
+        const call = ++calls;
+        await new Promise((resolve) => { setTimeout(resolve, 5); });
+        if (failing.includes(call)) {
+            throw new Error("disk full");
+        }
+        return save(records);
+    };
+}
+
+
+async function storedNames(store: MemorySnapshotStore): Promise<Array<string>> {
+    return (await store.loadAll()).sessions.map((s) => s.name);
+}
+
+
 describe("SessionRegistry", () => {
 
     describe("static", () => {
@@ -105,6 +126,50 @@ describe("SessionRegistry", () => {
             });
 
 
+            it("keeps picking surprise names after the pool would be used up", async () => {
+                const registry = await SessionRegistry.load(new MemorySnapshotStore(), rand);
+
+                for (let i = 0; i < whimsicalNames.length + 10; i++) {
+                    expect((await registry.create(null)).succeeded).withContext(String(i)).toBeTrue();
+                }
+            });
+
+
+            it("accepts a 20 character name and refuses a 21 character one", async () => {
+                const registry = await SessionRegistry.load(new MemorySnapshotStore(), rand);
+
+                expect((await registry.create("x".repeat(20))).succeeded).toBeTrue();
+                expect((await registry.create("x".repeat(21))).failed).toBeTrue();
+            });
+
+
+            it("persists two concurrent creates", async () => {
+                const store = new MemorySnapshotStore();
+                slowSaves(store);
+                const registry = await SessionRegistry.load(store, rand);
+
+                const [a, b] = await Promise.all([registry.create("Ann"), registry.create("Bob")]);
+
+                expect(a.succeeded && b.succeeded).toBeTrue();
+                expect(await storedNames(store)).toEqual(["Ann", "Bob"]);
+            });
+
+
+            it("never stores a failed create, and keeps a concurrent one", async () => {
+                const store = new MemorySnapshotStore();
+                slowSaves(store, [1]);
+                const registry = await SessionRegistry.load(store, rand);
+
+                const [a, b] = await Promise.all([registry.create("Ann"), registry.create("Bob")]);
+                const c = (await registry.create("Cy")).throwIfFailed();
+
+                expect(a.failed).toBeTrue();
+                expect(b.succeeded).toBeTrue();
+                expect(await storedNames(store)).toEqual(["Bob", "Cy"]);
+                expect(registry.authenticate({ playerId: c.playerId, token: c.token })).toBeTrue();
+            });
+
+
             it("saves every session through the store", async () => {
                 const store = new MemorySnapshotStore();
                 const registry = await SessionRegistry.load(store, rand);
@@ -168,6 +233,50 @@ describe("SessionRegistry", () => {
                 const result = await registry.rename(PlayerId.create(), "Ann");
 
                 expect(result.failed).toBeTrue();
+            });
+
+
+            it("ends with the last of two concurrent renames applied and persisted", async () => {
+                const store = new MemorySnapshotStore();
+                const registry = await SessionRegistry.load(store, rand);
+                const made = (await registry.create("Ann")).throwIfFailed();
+                slowSaves(store);
+
+                await Promise.all([registry.rename(made.playerId, "One"), registry.rename(made.playerId, "Two")]);
+
+                expect(registry.nameOf(made.playerId)).toBe(name("Two"));
+                expect(await storedNames(store)).toEqual(["Two"]);
+            });
+
+
+            it("does not undo a concurrent rename when the first one cannot be saved", async () => {
+                const store = new MemorySnapshotStore();
+                const registry = await SessionRegistry.load(store, rand);
+                const made = (await registry.create("Ann")).throwIfFailed();
+                slowSaves(store, [1]);
+
+                const [one, two] = await Promise.all([
+                    registry.rename(made.playerId, "One"),
+                    registry.rename(made.playerId, "Two")
+                ]);
+
+                expect(one.failed).toBeTrue();
+                expect(two.succeeded).toBeTrue();
+                expect(registry.nameOf(made.playerId)).toBe(name("Two"));
+                expect(await storedNames(store)).toEqual(["Two"]);
+            });
+
+
+            it("keeps a concurrent rename that succeeded when the second cannot be saved", async () => {
+                const store = new MemorySnapshotStore();
+                const registry = await SessionRegistry.load(store, rand);
+                const made = (await registry.create("Ann")).throwIfFailed();
+                slowSaves(store, [2]);
+
+                await Promise.all([registry.rename(made.playerId, "One"), registry.rename(made.playerId, "Two")]);
+
+                expect(registry.nameOf(made.playerId)).toBe(name("One"));
+                expect(await storedNames(store)).toEqual(["One"]);
             });
 
 
@@ -244,6 +353,16 @@ describe("parseBearer()", () => {
 
     it("accepts the exact form", () => {
         expect(parseBearer(`Bearer ${id}.${token}`)).toEqual({ playerId: id, token });
+    });
+
+
+    it("accepts a header of exactly 200 characters and rejects one of 201", () => {
+        const prefix = `Bearer ${id}.`;
+        const exact = `${prefix}${"a".repeat(200 - prefix.length)}`;
+
+        expect(exact.length).toBe(200);
+        expect(parseBearer(exact)).not.toBeNull();
+        expect(parseBearer(`${exact}a`)).toBeNull();
     });
 
 

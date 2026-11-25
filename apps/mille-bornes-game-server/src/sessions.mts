@@ -52,7 +52,7 @@ function sameToken(a: string, b: string): boolean {
 
 /**
  * Issues and checks player credentials, and keeps each player's name.  Every
- * change is saved through the store before it is reported as done.
+ * change is saved through the store before it takes effect, one at a time.
  */
 export class SessionRegistry {
 
@@ -74,7 +74,8 @@ export class SessionRegistry {
     }
 
 
-    private readonly _sessions = new Map<PlayerId, SessionRecord>();
+    private _sessions = new Map<PlayerId, SessionRecord>();
+    private _tail: Promise<void> = Promise.resolve();
 
 
     private constructor(
@@ -83,7 +84,7 @@ export class SessionRegistry {
         private readonly _newToken: () => string,
         sessions:                   ReadonlyArray<SessionRecord>
     ) {
-        sessions.forEach((s) => { this._sessions.set(s.playerId, s); });
+        this._sessions = new Map(sessions.map((s) => [s.playerId, s]));
     }
 
 
@@ -93,24 +94,31 @@ export class SessionRegistry {
      * @param name - The player's name, or null to be given a whimsical one
      * @returns The credential and the player's name, or a plain-English reason
      */
-    public async create(name: string | null): Promise<Result<Credential & { name: PlayerName }, string>> {
+    public async create(
+        name: string | null
+    ): Promise<Result<Credential & { name: PlayerName }, string>> {
+        // Names are unique only within a game, so a surprise name avoids no one.
         const named = name === null ?
-            pickWhimsicalName([...this._sessions.values()].map((s) => s.name), this._rand) :
+            pickWhimsicalName([], this._rand) :
             PlayerName.tryCreate(name);
         if (named.failed) {
             return named;
         }
-        const record: SessionRecord = {
-            playerId: PlayerId.create(),
-            token:    this._newToken(),
-            name:     named.value
-        };
-        this._sessions.set(record.playerId, record);
-        if (!await this.save()) {
-            this._sessions.delete(record.playerId);
-            return new FailedResult("The session could not be saved.");
-        }
-        return new SucceededResult({ playerId: record.playerId, token: record.token, name: record.name });
+        return this.exclusive(async () => {
+            const record: SessionRecord = {
+                playerId: PlayerId.create(),
+                token:    this._newToken(),
+                name:     named.value
+            };
+            const next = new Map(this._sessions).set(record.playerId, record);
+            return await this.commit(next) ?
+                new SucceededResult({
+                    playerId: record.playerId,
+                    token:    record.token,
+                    name:     record.name
+                }) :
+                new FailedResult("The session could not be saved.");
+        });
     }
 
 
@@ -122,20 +130,20 @@ export class SessionRegistry {
      * @returns The new name, or a plain-English reason
      */
     public async rename(id: PlayerId, name: string): Promise<Result<PlayerName, string>> {
-        const old = this._sessions.get(id);
-        if (!old) {
-            return new FailedResult("That player has no session.");
-        }
         const named = PlayerName.tryCreate(name);
         if (named.failed) {
             return named;
         }
-        this._sessions.set(id, { ...old, name: named.value });
-        if (!await this.save()) {
-            this._sessions.set(id, old);
-            return new FailedResult("The new name could not be saved.");
-        }
-        return named;
+        return this.exclusive(async () => {
+            const old = this._sessions.get(id);
+            if (!old) {
+                return new FailedResult("That player has no session.");
+            }
+            const next = new Map(this._sessions).set(id, { ...old, name: named.value });
+            return await this.commit(next) ?
+                named :
+                new FailedResult("The new name could not be saved.");
+        });
     }
 
 
@@ -160,15 +168,25 @@ export class SessionRegistry {
     }
 
 
-    // The failure is logged by the store; callers only need to know it failed.
-    private async save(): Promise<boolean> {
+    // Runs one change at a time, so each sees the result of the one before it.
+    private exclusive<T>(change: () => Promise<T>): Promise<T> {
+        const run = this._tail.then(change);
+        this._tail = run.then(() => undefined, () => undefined);
+        return run;
+    }
+
+
+    // Saves the sessions as they would be, and adopts them only once saved, so
+    // a failed save leaves nothing behind.  The store logs the failure.
+    private async commit(next: Map<PlayerId, SessionRecord>): Promise<boolean> {
         try {
-            await this._store.saveSessions([...this._sessions.values()]);
-            return true;
+            await this._store.saveSessions([...next.values()]);
         }
         catch {
             return false;
         }
+        this._sessions = next;
+        return true;
     }
 
 }
