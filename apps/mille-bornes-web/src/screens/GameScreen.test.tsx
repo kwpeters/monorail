@@ -2,6 +2,7 @@ import type { Card } from "@repo/mille-bornes-core/card";
 import { viewFor, type PlayerView } from "@repo/mille-bornes-core/view";
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { annPlays } from "../testing/engineBatches.mjs";
 import { cardFace } from "../text/cardFace.mjs";
 import { topBarMessage } from "../text/phaseHint.mjs";
 import {
@@ -279,16 +280,13 @@ describe("GameScreen", () => {
 
     describe("the last move", () => {
 
-        it("shows the latest events and keeps them when a later screen has none", () => {
-            const view = viewForSeats(2);
-            const bob = idOf(view, "Bob");
-            const events = [
-                { type: "DistancePlayed", player: bob, card: "75", team: team(1) }
-            ] as const;
+        it("shows the move of an engine batch and keeps it when a later screen has none", () => {
+            // The batch ends with the next turn and its draw, as the engine emits it.
+            const { view, events } = annPlays({ type: "Drive", card: "50" });
             const { rerender } = show(playingScreen(view, { events }));
-            expect(screen.getByRole("status")).toHaveTextContent("Bob drove 75 miles.");
+            expect(screen.getByRole("status")).toHaveTextContent("You drove 50 miles.");
             rerender(<GameScreen screen={playingScreen(view, { events: [] })} />);
-            expect(screen.getByRole("status")).toHaveTextContent("Bob drove 75 miles.");
+            expect(screen.getByRole("status")).toHaveTextContent("You drove 50 miles.");
         });
 
     });

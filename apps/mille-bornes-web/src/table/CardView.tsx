@@ -1,4 +1,5 @@
-import type { Card } from "@repo/mille-bornes-core/card";
+import { Option } from "@repo/depot/option";
+import { distanceCardSchema, distanceMiles, type Card } from "@repo/mille-bornes-core/card";
 import type { ReactElement } from "react";
 import { cardFace } from "../text/cardFace.mjs";
 
@@ -17,12 +18,15 @@ export interface CardViewProps {
  */
 export function CardView(props: CardViewProps): ReactElement {
     const face = cardFace(props.card);
+    const distance = Option.fromNullable(
+        distanceCardSchema.options.find((c) => c === props.card)
+    );
     return (
         <div className={`card kind-${face.kind.toLowerCase()}`} data-card={props.card}>
-            {face.kind === "Distance" ?
+            {distance.isSome ?
                 <>
                     <span className="card-miles" aria-hidden="true">
-                        {Number.parseInt(face.label, 10)}
+                        {distanceMiles(distance.value)}
                     </span>
                     <span className="card-unit" aria-hidden="true">mi</span>
                     <span className="visually-hidden">{face.label}</span>

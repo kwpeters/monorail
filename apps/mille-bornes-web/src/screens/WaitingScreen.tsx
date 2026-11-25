@@ -302,7 +302,8 @@ function OrganizerRoom(props: RoomProps): ReactElement {
                 disabled={busy}
                 onClick={() => {
                     dialog.current?.showModal();
-                    // Not the destructive button, which showModal() focuses first.
+                    // Not the destructive button, which showModal() focuses
+                    // first.
                     keepButton.current?.focus();
                 }}
             >

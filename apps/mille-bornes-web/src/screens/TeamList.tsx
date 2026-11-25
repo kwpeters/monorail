@@ -20,7 +20,8 @@ export interface TeamListProps {
 
 
 /**
- * The seats of a waiting room grouped by team, each team's seats in seat-list order.
+ * The seats of a waiting room grouped by team, each team's seats in
+ * seat-list order.
  * When the seat count has no team layout yet, one "Players" list is shown with
  * the hint.  Names are rendered as text and truncated.
  * @param props - The seats and how to show them

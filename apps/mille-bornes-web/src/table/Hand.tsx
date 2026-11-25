@@ -22,7 +22,7 @@ export function Hand(props: HandProps): ReactElement {
             <h2 id={labelId} className="hand-label">Your hand</h2>
             <ul className="cards">
                 {props.cards.map((card, i) => (
-                    // A hand can hold the same card twice, so the position is part of the key.
+                    // A hand can hold a card twice, so the position is in the key.
                     <li key={`${i}-${card}`}>
                         <CardView card={card} />
                     </li>

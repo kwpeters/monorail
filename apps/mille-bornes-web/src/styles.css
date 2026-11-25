@@ -123,8 +123,11 @@ svg {
     gap: var(--space-2);
 }
 
+/* A flex column, so the game table can stretch and keep its hand at the bottom. */
 .shell-main {
+    display: flex;
     flex: 1;
+    flex-direction: column;
     container-type: inline-size;
     padding-top: var(--space-3);
     padding-right: calc(var(--space-3) + env(safe-area-inset-right));
@@ -151,10 +154,12 @@ svg {
     text-align: center;
 }
 
+/* Full width up to the maximum: a flex item with auto margins would shrink. */
 .screen {
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
+    inline-size: 100%;
     max-inline-size: 32rem;
     margin-inline: auto;
 }
@@ -456,6 +461,10 @@ svg {
 
 /* The game table.  Mobile first: one column, 320px and up. */
 
+.table {
+    flex: 1;
+}
+
 .top-bar {
     padding: var(--space-2) var(--space-3);
     border-radius: 0.5rem;
@@ -648,6 +657,7 @@ svg {
 }
 
 .hand {
+    margin-block-start: auto;
     padding: var(--space-2);
     border-radius: 0.75rem;
     background: #e9ecef;

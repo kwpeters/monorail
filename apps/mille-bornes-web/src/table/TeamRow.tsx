@@ -1,6 +1,6 @@
 import { type Option } from "@repo/depot/option";
 import type { PlayerId } from "@repo/mille-bornes-core/ids";
-import { canMove, zoneMiles, type DrivingZone } from "@repo/mille-bornes-core/drivingZone";
+import { zoneMiles, type DrivingZone } from "@repo/mille-bornes-core/drivingZone";
 import type { PlayerView } from "@repo/mille-bornes-core/view";
 import { useId, type ReactElement } from "react";
 import { cardFace } from "../text/cardFace.mjs";
@@ -33,13 +33,22 @@ interface StatusChip {
 const speedLimitMax = 50;
 
 
+// No default: a new kind of ZoneStatus is a compile error until it is shown.
+function statusChip(zone: DrivingZone): StatusChip {
+    switch (zone.status.kind) {
+        case "Rolling":
+            return { text: "Rolling", tone: "go" };
+        case "NeedsRoll":
+            return { text: "Needs a Roll", tone: "info" };
+        case "Hazard":
+            return { text: cardFace(zone.status.hazard).label, tone: "stop" };
+    }
+}
+
+
 // Every chip says its meaning in words; the color only repeats it.
 function statusChips(zone: DrivingZone): ReadonlyArray<StatusChip> {
-    const status: StatusChip = canMove(zone) ?
-        { text: "Rolling", tone: "go" } :
-        zone.status.kind === "Hazard" ?
-            { text: cardFace(zone.status.hazard).label, tone: "stop" } :
-            { text: "Needs a Roll", tone: "info" };
+    const status = statusChip(zone);
     const coupFourres = zone.safeties.filter((s) => s.coupFourre).length;
     const speedLimit: ReadonlyArray<StatusChip> = zone.speedLimit ?
         [{ text: `Speed Limit: ${speedLimitMax} max`, tone: "info" }] :
