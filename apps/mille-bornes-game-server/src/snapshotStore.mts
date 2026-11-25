@@ -283,7 +283,15 @@ export class FileSnapshotStore implements SnapshotStore {
     private async writeFile(file: string, json: string): Promise<void> {
         await fs.mkdir(path.dirname(file), { recursive: true });
         const tmp = `${file}.tmp`;
-        await fs.writeFile(tmp, json, "utf8");
+        const handle = await fs.open(tmp, "w");
+        try {
+            await handle.writeFile(json, "utf8");
+            // On disk before the rename, so a power cut cannot leave it empty.
+            await handle.sync();
+        }
+        finally {
+            await handle.close();
+        }
         await fs.rename(tmp, file);
         this._writeCount++;
     }
@@ -331,21 +339,34 @@ export class FileSnapshotStore implements SnapshotStore {
             text = await fs.readFile(this._sessionsFile, "utf8");
         }
         catch (err) {
-            if (!isMissing(err)) {
-                this._logger.warn(`Ignoring sessions.json: it cannot be read (${String(err)}).`);
-            }
-            return [];
+            return isMissing(err) ? [] : this.setAsideSessions(`it cannot be read (${String(err)}).`);
         }
+        let json: unknown;
         try {
-            const sessions = decodeSessions(JSON.parse(text));
-            if (!sessions.failed) {
-                return sessions.value;
-            }
-            this._logger.warn(`Ignoring sessions.json: ${sessions.error}`);
+            json = JSON.parse(text);
         }
-        catch (err) {
-            this._logger.warn(`Ignoring sessions.json: it is not valid JSON (${String(err)}).`);
+        catch {
+            // The parser's message quotes the text, which holds tokens.
+            return this.setAsideSessions("it is not valid JSON.");
         }
+        const decoded = decodeSessions(json);
+        if (decoded.failed) {
+            return this.setAsideSessions(decoded.error);
+        }
+        decoded.value.problems.forEach((p) => {
+            this._logger.warn(`Skipping a session in sessions.json: ${p}`);
+        });
+        return decoded.value.sessions;
+    }
+
+
+    // Moves an unusable sessions.json to sessions.json.bad (replacing an older
+    // one), so the next save does not destroy the evidence.  Best effort.
+    private async setAsideSessions(reason: string): Promise<ReadonlyArray<SessionRecord>> {
+        this._logger.warn(`Ignoring sessions.json, moved to sessions.json.bad: ${reason}`);
+        await fs.rename(this._sessionsFile, `${this._sessionsFile}.bad`).catch((err: unknown) => {
+            this._logger.warn(`Could not move sessions.json to sessions.json.bad: ${String(err)}`);
+        });
         return [];
     }
 
@@ -389,7 +410,7 @@ export class MemorySnapshotStore implements SnapshotStore {
             id,
             record: decodeRecord(JSON.parse(json)).throwIfFailed()
         }));
-        const sessions = decodeSessions(JSON.parse(this._sessions)).throwIfFailed();
+        const { sessions } = decodeSessions(JSON.parse(this._sessions)).throwIfFailed();
         return Promise.resolve({ games, sessions });
     }
 

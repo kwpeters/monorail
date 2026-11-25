@@ -37,17 +37,22 @@ a relative `MB_DATA_DIR` is taken from the current directory.
 
 ## The data directory
 
-| Path               | What it holds                                                     |
-| ------------------ | ----------------------------------------------------------------- |
-| `games/<id>.json`  | One pending, running or finished game.                            |
-| `failed/<id>.json` | A game the server ended because it got stuck, kept for debugging. |
-| `sessions.json`    | Every player's id, name and token.                                |
+| Path                | What it holds                                                     |
+| ------------------- | ----------------------------------------------------------------- |
+| `games/<id>.json`   | One pending, running or finished game.                            |
+| `failed/<id>.json`  | A game the server ended because it got stuck, kept for debugging. |
+| `sessions.json`     | Every player's id, name and token.                                |
+| `sessions.json.bad` | A `sessions.json` that could not be read, kept for debugging.     |
 
 Each file is written to a `.tmp` file first and then renamed over the old one,
 so a crash never leaves a half-written game.
 At startup a leftover `.tmp` file is removed,
 and a game file that cannot be read is skipped with a warning;
 the other games still load.
+A bad record in `sessions.json` is skipped the same way.
+If the file as a whole cannot be read,
+it is renamed to `sessions.json.bad` (replacing an older one)
+and the server starts with no sessions.
 A game's file is deleted when the game is cancelled or ended,
 or when every human has left it after it is over.
 

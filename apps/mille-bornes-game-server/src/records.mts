@@ -107,20 +107,44 @@ export function decodeRecord(json: unknown): Result<GameRecord, string> {
 }
 
 
-const sessionsSchema = z.array(z.strictObject({
+const sessionSchema = z.strictObject({
     playerId: playerIdSchema,
     token:    z.string().min(1).max(200),
     name:     z.string().max(100).transform((s, ctx) => unwrapOrAddIssue(PlayerName.tryCreate(s), ctx))
-}));
+});
+
+
+/** The stored sessions that decoded, and why each of the others did not. */
+export interface DecodedSessions {
+    sessions: ReadonlyArray<SessionRecord>;
+    /** One plain-English reason per bad record; never a record's contents. */
+    problems: ReadonlyArray<string>;
+}
 
 
 /**
- * Decodes the stored sessions from untrusted JSON.  Never throws.
+ * Decodes the stored sessions from untrusted JSON, one record at a time, so a
+ * bad record costs only itself.  Never throws.
  * @param json - The parsed JSON value
- * @returns The sessions, or a plain-English reason they were refused
+ * @returns The good sessions and a reason for each bad one, or a reason the
+ * value is not a list of sessions at all
  */
-export function decodeSessions(json: unknown): Result<ReadonlyArray<SessionRecord>, string> {
-    return safeParse(sessionsSchema, json);
+export function decodeSessions(json: unknown): Result<DecodedSessions, string> {
+    if (!Array.isArray(json)) {
+        return new FailedResult("it is not a list of sessions.");
+    }
+    const sessions: Array<SessionRecord> = [];
+    const problems: Array<string> = [];
+    json.forEach((item: unknown, i) => {
+        const decoded = safeParse(sessionSchema, item);
+        if (decoded.succeeded) {
+            sessions.push(decoded.value);
+        }
+        else {
+            problems.push(`record ${i.toString()}: ${decoded.error}`);
+        }
+    });
+    return new SucceededResult({ sessions, problems });
 }
 
 

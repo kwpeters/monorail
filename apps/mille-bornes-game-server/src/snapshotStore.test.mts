@@ -478,12 +478,49 @@ describe("FileSnapshotStore", () => {
             });
 
 
-            it("gives no sessions and a warning for a corrupt sessions.json", async () => {
-                await fs.writeFile(path.join(dir, "sessions.json"), "{");
+            it("keeps the good sessions and warns once per bad record", async () => {
+                const bea = { playerId: PlayerId.create(), token: "bea-token", name: ann.name };
+                const bad = [
+                    { ...session, token: "" },
+                    { playerId: "nope", token: "leaky-token", name: "Cy" },
+                    "garbage"
+                ];
+                const file = path.join(dir, "sessions.json");
+                await fs.writeFile(file, JSON.stringify([session, ...bad, bea]));
+
+                expect((await store.loadAll()).sessions).toEqual([session, bea]);
+                const warnings = logger.lines.filter((l) => l.startsWith("WARN"));
+                expect(warnings.length).toBe(3);
+                expect(warnings.some((w) => w.includes("leaky-token"))).toBeFalse();
+                expect(await fs.readdir(dir)).not.toContain("sessions.json.bad");
+            });
+
+
+            it("moves a torn sessions.json to sessions.json.bad and starts empty", async () => {
+                const file = path.join(dir, "sessions.json");
+                const torn = `[{"playerId":"${ann.id}","token":"secret-tok`;
+                await fs.writeFile(`${file}.bad`, "an older bad file");
+                await fs.writeFile(file, torn);
+
                 expect((await store.loadAll()).sessions).toEqual([]);
-                await fs.writeFile(path.join(dir, "sessions.json"), JSON.stringify([{ ...session, token: "" }]));
+                expect(await fs.readFile(`${file}.bad`, "utf8")).toBe(torn);
+                const warnings = logger.lines.filter((l) => l.startsWith("WARN"));
+                expect(warnings.length).toBe(1);
+                expect(warnings[0]).not.toContain("secret-tok");
+
+                await store.saveSessions([session]);
+                expect(await fs.readFile(`${file}.bad`, "utf8")).toBe(torn);
+                expect((await store.loadAll()).sessions).toEqual([session]);
+            });
+
+
+            it("moves a sessions.json that is not a list to sessions.json.bad", async () => {
+                const file = path.join(dir, "sessions.json");
+                await fs.writeFile(file, JSON.stringify({ sessions: [session] }));
+
                 expect((await store.loadAll()).sessions).toEqual([]);
-                expect(logger.lines.filter((l) => l.startsWith("WARN")).length).toBe(2);
+                expect(await fs.readdir(dir)).toContain("sessions.json.bad");
+                expect(await fs.readdir(dir)).not.toContain("sessions.json");
             });
 
         });
