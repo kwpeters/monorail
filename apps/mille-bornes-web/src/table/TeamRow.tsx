@@ -9,14 +9,16 @@ import { describeTeamName, teamLabel } from "../text/teamName.mjs";
 
 /** What `TeamRow` shows. */
 export interface TeamRowProps {
-    view:      PlayerView;
-    team:      PlayerView["teams"][number];
+    view:       PlayerView;
+    team:       PlayerView["teams"][number];
     /** The player to mark as on turn, if any. */
-    onTurn:    Option<PlayerId>;
+    onTurn:     Option<PlayerId>;
     /** Which seats are robots; known only on the organizer's screen. */
-    robots:    Option<ReadonlyArray<PlayerId>>;
+    robots:     Option<ReadonlyArray<PlayerId>>;
     /** Which seats are connected; known only on the organizer's screen. */
-    connected: Option<ReadonlyArray<PlayerId>>;
+    connected:  Option<ReadonlyArray<PlayerId>>;
+    /** Plays the picked-up attack on this team, when it can land here. */
+    onPlayHere: Option<() => void>;
 }
 
 
@@ -65,12 +67,14 @@ function statusChips(zone: DrivingZone): ReadonlyArray<StatusChip> {
 /**
  * One team's lane: its name, miles and progress, its players (the one on
  * turn marked with a dot and bold type), and its status in words.  On the
- * organizer's screen, robots and disconnected players are marked too.
- * @param props - The view, the team and what is known about the seats
+ * organizer's screen, robots and disconnected players are marked too.  While
+ * an attack that can land here is picked up, the lane has a Play button.
+ * @param props - The view, the team, what is known about the seats and the
+ * play on this lane
  * @returns The lane
  */
 export function TeamRow(props: TeamRowProps): ReactElement {
-    const { view, team, onTurn, robots, connected } = props;
+    const { view, team, onTurn, robots, connected, onPlayHere } = props;
     const titleId = useId();
     const miles = zoneMiles(team.zone);
     const trip = view.trip.distance;
@@ -80,7 +84,9 @@ export function TeamRow(props: TeamRowProps): ReactElement {
 
     return (
         <section
-            className={active ? "team-row active" : "team-row"}
+            className={["team-row", active ? "active" : "", onPlayHere.isSome ? "targeted" : ""]
+            .filter((c) => c !== "")
+            .join(" ")}
             aria-labelledby={titleId}
             aria-current={active ? "true" : undefined}
             data-anim-anchor={`team-${team.index}`}
@@ -136,6 +142,15 @@ export function TeamRow(props: TeamRowProps): ReactElement {
                         <li key={chip.text} className={`status ${chip.tone}`}>{chip.text}</li>
                     ))}
                 </ul>
+                {onPlayHere.isSome ?
+                    <button
+                        type="button"
+                        className="button primary lane-target"
+                        onClick={onPlayHere.value}
+                    >
+                        {`Play on ${teamLabel(team.index)}`}
+                    </button> :
+                    null}
             </div>
         </section>
     );

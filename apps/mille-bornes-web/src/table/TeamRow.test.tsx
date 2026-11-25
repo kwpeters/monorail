@@ -2,8 +2,8 @@ import { NoneOption, SomeOption } from "@repo/depot/option";
 import { Card } from "@repo/mille-bornes-core/card";
 import type { PlayerId } from "@repo/mille-bornes-core/ids";
 import type { PlayerView } from "@repo/mille-bornes-core/view";
-import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { idOf, viewForSeats, withZone } from "../testing/viewFixtures.mjs";
 import {
     blockedZone, rollingZone, speedLimitedZone, withCoupFourre, withSafety
@@ -14,10 +14,11 @@ import { TeamRow, type TeamRowProps } from "./TeamRow.js";
 function setup(view: PlayerView, team = 0, extras: Partial<TeamRowProps> = {}) {
     const props: TeamRowProps = {
         view,
-        team:      view.teams[team]!,
-        onTurn:    NoneOption.get(),
-        robots:    NoneOption.get(),
-        connected: NoneOption.get(),
+        team:       view.teams[team]!,
+        onTurn:     NoneOption.get(),
+        robots:     NoneOption.get(),
+        connected:  NoneOption.get(),
+        onPlayHere: NoneOption.get(),
         ...extras,
     };
     return render(<TeamRow {...props} />);
@@ -193,6 +194,28 @@ describe("TeamRow", () => {
             expect(screen.queryByText("Robot")).not.toBeInTheDocument();
             expect(screen.queryByText("\u{1F916}")).not.toBeInTheDocument();
             expect(screen.queryByText(/disconnected/u)).not.toBeInTheDocument();
+        });
+
+    });
+
+
+    describe("as a target", () => {
+
+        it("has a Play on button when an attack can land on it", () => {
+            const onPlayHere = vi.fn();
+            const { container } = setup(viewForSeats(3), 1, {
+                onPlayHere: new SomeOption(onPlayHere),
+            });
+            expect(container.firstElementChild).toHaveClass("targeted");
+            fireEvent.click(screen.getByRole("button", { name: "Play on Team 2" }));
+            expect(onPlayHere).toHaveBeenCalledOnce();
+        });
+
+
+        it("has no button otherwise", () => {
+            const { container } = setup(viewForSeats(3), 1);
+            expect(container.firstElementChild).not.toHaveClass("targeted");
+            expect(screen.queryByRole("button")).not.toBeInTheDocument();
         });
 
     });

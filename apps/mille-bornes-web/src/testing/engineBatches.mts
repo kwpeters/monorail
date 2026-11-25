@@ -1,11 +1,11 @@
-import type { Card } from "@repo/mille-bornes-core/card";
+import { Card } from "@repo/mille-bornes-core/card";
 import type { PlayerCommand } from "@repo/mille-bornes-core/commands";
 import type { DrivingZone } from "@repo/mille-bornes-core/drivingZone";
 import { applyPlayerCommand } from "@repo/mille-bornes-core/engine";
 import type { GameEvent } from "@repo/mille-bornes-core/events";
 import type { Game } from "@repo/mille-bornes-core/game";
 import { eventsFor, viewFor, type PlayerView } from "@repo/mille-bornes-core/view";
-import { gameForSeats, type SeatCount } from "./viewFixtures.mjs";
+import { gameForSeats, team, type SeatCount } from "./viewFixtures.mjs";
 import { rollingZone } from "./zoneFixtures.mjs";
 
 
@@ -124,3 +124,35 @@ export function play(game: Game, name: string, command: PlayerCommand): Game {
     const seat = game.players.find((p) => p.seat.name === name)!.seat;
     return applyPlayerCommand(game, seat.id, command).throwIfFailed().game;
 }
+
+
+/**
+ * A 4-seat game in a hazard window: Ann (team 1, with Cy) has hit team 2
+ * (Bob and Di) with a Flat Tire, and Di holds Puncture Proof.
+ */
+export const flatTireWindow: Game = play(
+    arrange(
+        4,
+        [
+            ["Ann", [Card.flatTire, Card.dist50]],
+            ["Bob", [Card.dist75, Card.drivingAce]],
+            ["Cy", [Card.roll, Card.stop]],
+            ["Di", [Card.punctureProof, Card.dist25]],
+        ],
+        [rollingZone(), rollingZone()]
+    ),
+    "Ann",
+    { type: "Attack", card: Card.flatTire, targetTeam: team(1) }
+);
+
+
+/** A 2-seat game where Ann has just reached 700 miles and decides on Extension. */
+export const extensionOffer: Game = play(
+    arrange(
+        2,
+        [["Ann", [Card.dist100, Card.dist25]]],
+        [rollingZone(["200", "200", "100", "100"]), rollingZone()]
+    ),
+    "Ann",
+    { type: "Drive", card: Card.dist100 }
+);

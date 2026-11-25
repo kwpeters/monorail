@@ -27,6 +27,13 @@ describe("CardView", () => {
     });
 
 
+    it("is made of spans only, so it can sit inside a button", () => {
+        const { container } = render(<CardView card={Card.dist75} />);
+        expect(container.firstElementChild!.tagName).toBe("SPAN");
+        expect(container.querySelectorAll(":not(span)")).toHaveLength(0);
+    });
+
+
     it("has a kind class so each kind can have its own color", () => {
         const { container } = render(<CardView card={Card.drivingAce} />);
         expect(container.firstElementChild).toHaveClass("kind-safety");

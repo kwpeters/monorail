@@ -735,3 +735,148 @@ svg {
     color: var(--color-text-soft);
     font-size: 0.65rem;
 }
+
+
+/* Playing cards. */
+
+/* The button is only the hit area; the card face inside it is what shows. */
+.card-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 0.4rem;
+    background: none;
+    cursor: pointer;
+    touch-action: manipulation;
+    /* Prefixed, as every engine reads it: a long press must not select text. */
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+.card-button:focus-visible {
+    outline: 3px solid var(--color-text);
+    outline-offset: 2px;
+}
+
+/* Picked up: it rises and gets a heavy dark frame, not only a color. */
+.card-button.selected {
+    transform: translateY(-0.6rem);
+}
+
+.card-button.selected .card {
+    border-width: 3px;
+    border-color: #1c2e80;
+    box-shadow: 0 0.3rem 0.6rem rgb(0 0 0 / 30%);
+}
+
+.card-button.dimmed .card {
+    opacity: 0.45;
+}
+
+/* The answer to a hazard glows, and its badge says so in words. */
+.card-button.counter .card {
+    border-color: #b58900;
+    box-shadow: 0 0 0 3px #ffd43b, 0 0 0.75rem 0.25rem #fab005;
+}
+
+.card-badge {
+    margin-block-start: var(--space-1);
+    padding: 0 var(--space-1);
+    border-radius: 0.5rem;
+    background: #ffd43b;
+    color: #3d2e00;
+    font-size: 0.65rem;
+    font-weight: 700;
+}
+
+.hand-actions {
+    display: flex;
+    justify-content: center;
+    margin-block-start: var(--space-2);
+}
+
+/* A place the picked-up card can go: a dashed frame plus its button's words. */
+.team-row.targeted,
+.pile.discard.targeted {
+    outline: 3px dashed #1c2e80;
+    outline-offset: 2px;
+}
+
+.lane-target {
+    align-self: flex-start;
+}
+
+.pile-target {
+    margin-block-start: var(--space-1);
+    padding: var(--space-1) var(--space-2);
+    font-size: 0.8rem;
+}
+
+.hazard-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border: 3px solid #7a1414;
+    border-radius: 0.75rem;
+    background: #ffe3e3;
+    color: #7a1414;
+}
+
+.hazard-title {
+    font-size: 1.25rem;
+}
+
+.countdown {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.extension-offer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border: 3px solid #1e7a34;
+    border-radius: 0.75rem;
+    background: var(--color-surface);
+}
+
+.extension-offer h2 {
+    font-size: 1.1rem;
+}
+
+.extension-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.extension-actions .button {
+    flex: 1;
+}
+
+/* The body fills the dialog, so a tap on the dialog itself is the backdrop. */
+.card-help {
+    padding: 0;
+}
+
+.card-help-body {
+    padding: var(--space-3);
+}
+
+.card-help-body h2,
+.card-help-body p {
+    margin: 0 0 var(--space-3);
+}
+
+/* Movement only when the reader has not asked for less; the states still show. */
+@media (prefers-reduced-motion: no-preference) {
+    .card-button {
+        transition: transform 0.15s;
+    }
+}

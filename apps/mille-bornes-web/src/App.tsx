@@ -89,6 +89,6 @@ function screenFor(screen: Screen, api: Api): ReactElement {
         case "Waiting":
             return <WaitingScreen screen={screen} api={api} />;
         case "Playing":
-            return <GameScreen screen={screen} />;
+            return <GameScreen screen={screen} api={api} />;
     }
 }

@@ -1,4 +1,5 @@
 import { FailedResult } from "@repo/depot/result";
+import type { PlayerCommand } from "@repo/mille-bornes-core/commands";
 import { discriminatedResultSchema } from "@repo/depot/schemaUtility";
 import { vi, type Mock } from "vitest";
 import { z } from "zod";
@@ -42,6 +43,7 @@ export interface FakeProcedures {
     swapSeats:  Mock<(input: { a: string; b: string }) => Promise<unknown>>;
     setLength:  Mock<(input: { length: string }) => Promise<unknown>>;
     start:      Mock<() => Promise<unknown>>;
+    play:       Mock<(input: PlayerCommand) => Promise<unknown>>;
 }
 
 
@@ -73,7 +75,8 @@ export function createFakeApi(): FakeApi {
         removeSeat: vi.fn(() => Promise.resolve(okWire(undefined))),
         swapSeats:  vi.fn(() => Promise.resolve(okWire(undefined))),
         setLength:  vi.fn(() => Promise.resolve(okWire(undefined))),
-        start:      vi.fn(() => Promise.resolve(okWire(undefined)))
+        start:      vi.fn(() => Promise.resolve(okWire(undefined))),
+        play:       vi.fn(() => Promise.resolve(okWire(undefined)))
     };
 
     const trpc = {
@@ -94,6 +97,9 @@ export function createFakeApi(): FakeApi {
             swapSeats:  { mutate: procs.swapSeats },
             setLength:  { mutate: procs.setLength },
             start:      { mutate: procs.start }
+        },
+        game: {
+            play: { mutate: procs.play }
         }
     } as unknown as Api["trpc"];
 

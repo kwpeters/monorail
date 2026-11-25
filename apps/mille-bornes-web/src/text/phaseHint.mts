@@ -18,6 +18,14 @@ export interface TopBarMessage {
 }
 
 
+/** What the decider of an Extension offer is asked. */
+export const extensionQuestion = "Stop here, or race on to 1,000?";
+
+
+/** The risk of calling Extension, in one sentence. */
+export const extensionRisk = "If you do not get there first, every other team scores 200.";
+
+
 /** The server's hazard window length, in seconds, when the caller gives none. */
 const defaultWindowSeconds = 5;
 
@@ -61,8 +69,7 @@ export function topBarMessage(
         case "ExtensionOffer":
             return phase.decider === view.me.id ?
                 {
-                    text: "You reached 700 miles! Stop here, or race on to 1,000? " +
-                        "If you do not get there first, every other team scores 200.",
+                    text: `You reached 700 miles! ${extensionQuestion} ${extensionRisk}`,
                     tone: "MyTurn",
                 } :
                 {
