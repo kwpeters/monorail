@@ -1,6 +1,6 @@
 import { createCredentialStore, type CredentialStore } from "./api/credential.mjs";
 import type { Screen } from "@repo/mille-bornes-game-server/screens";
-import { useEffect, useState, type ReactElement } from "react";
+import { useLayoutEffect, useState, type ReactElement } from "react";
 import { type Api } from "./api/client.mjs";
 import { ConnectionBanner } from "./screens/ConnectionBanner.js";
 import { GameScreen } from "./screens/GameScreen.js";
@@ -95,8 +95,9 @@ function Following(props: FollowingProps): ReactElement {
     const place = snapshot.screen.match(placeOf, () => "Connecting");
 
     // One document shows every screen, so a new one would open where the
-    // last one was scrolled to (the table under Start game, say).
-    useEffect(() => {
+    // last one was scrolled to (the table under Start game, say).  Before
+    // paint, so the new screen is never drawn once at the old position.
+    useLayoutEffect(() => {
         window.scrollTo(0, 0);
     }, [place]);
 
