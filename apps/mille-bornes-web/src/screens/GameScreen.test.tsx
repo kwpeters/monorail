@@ -860,14 +860,23 @@ describe("GameScreen", () => {
         });
 
 
-        it("keeps what to do in the banner while the top bar explains a tap", () => {
+        it("shows the top bar's explanation of a tap in the banner, which covers the bar", () => {
             show(windowFor("Bob"));
-            expect(banner()).toHaveTextContent(hazardAlertText(viewOf(flatTireWindow, "Bob")));
+            const alert = hazardAlertText(viewOf(flatTireWindow, "Bob"));
+            const explanation = describeRejection({ reason: "WindowOpen" });
+            expect(banner()).toHaveTextContent(alert);
             fireEvent.click(card("75 miles"));
-            expect(bar()).toHaveTextContent(describeRejection({ reason: "WindowOpen" }));
-            expect(banner()).toHaveTextContent(
-                "If anyone on your team holds Puncture Proof, play it now."
-            );
+            expect(bar()).toHaveTextContent(explanation);
+            // The banner covers the bar, so it says it too; the hazard, the
+            // countdown and what to do come back when the message is over.
+            expect(banner().querySelector(".hazard-alert")).toHaveTextContent(explanation);
+            expect(banner()).toHaveTextContent("Flat Tire!");
+            expect(within(banner()).getByRole("timer")).toBeInTheDocument();
+            act(() => {
+                vi.advanceTimersByTime(3000);
+            });
+            expect(banner().querySelector(".hazard-alert")).toHaveTextContent(alert);
+            expect(bar()).not.toHaveTextContent(explanation);
         });
 
 

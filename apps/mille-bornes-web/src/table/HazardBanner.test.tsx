@@ -1,5 +1,5 @@
 import { act, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
 import type { PlayingData } from "../screens/GameScreen.js";
 import { flatTireWindow, viewOf } from "../testing/engineBatches.mjs";
 import { playingScreen } from "../testing/viewFixtures.mjs";
@@ -120,6 +120,53 @@ describe("HazardBanner", () => {
         render(<HazardBanner alert={alert} screen={{ ...windowFor("Bob"), timer: null }} />);
         expect(screen.getByRole("region", { name: "Flat Tire!" })).toBeInTheDocument();
         expect(screen.queryByRole("timer")).not.toBeInTheDocument();
+    });
+
+
+    describe("scrolling to its top", () => {
+
+        // The page may be scrolled down (a pick-up on a short screen scrolls
+        // it), and the banner and its countdown are at the top.
+        function scrolls(): MockInstance<typeof window.scrollTo> {
+            return vi.spyOn(window, "scrollTo").mockImplementation(() => undefined);
+        }
+
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+
+        it("scrolls to the top, once, when the banner shows", () => {
+            const scrollTo = scrolls();
+            const data = windowFor("Bob");
+            const { rerender } = render(<HazardBanner alert={alert} screen={data} />);
+            expect(scrollTo).toHaveBeenCalledExactlyOnceWith(0, 0);
+            // A tick, a new alert and a new screen of the same window do not
+            // scroll the page back up under the player's finger.
+            tick(2000);
+            rerender(<HazardBanner alert="Please wait." screen={data} />);
+            rerender(<HazardBanner alert="Please wait." screen={windowFor("Bob", 3000)} />);
+            expect(scrollTo).toHaveBeenCalledOnce();
+        });
+
+
+        it("scrolls when the window opens on a table that was showing none", () => {
+            const scrollTo = scrolls();
+            const quiet = windowFor("Ann");
+            const { rerender } = render(<HazardBanner alert={alert} screen={quiet} />);
+            expect(scrollTo).not.toHaveBeenCalled();
+            rerender(<HazardBanner alert={alert} screen={windowFor("Bob")} />);
+            expect(scrollTo).toHaveBeenCalledExactlyOnceWith(0, 0);
+        });
+
+
+        it("does not scroll for a team that sees no banner", () => {
+            const scrollTo = scrolls();
+            render(<HazardBanner alert={alert} screen={windowFor("Cy")} />);
+            expect(scrollTo).not.toHaveBeenCalled();
+        });
+
     });
 
 

@@ -254,7 +254,10 @@ export function GameScreen(props: GameScreenProps): ReactElement {
         >
             <div className="top-slot">
                 <TopBar text={message.text} tone={message.tone} />
-                <HazardBanner screen={screen} alert={hazardAlertText(view)} />
+                <HazardBanner
+                    screen={screen}
+                    alert={override.match((o) => o.text, () => hazardAlertText(view))}
+                />
             </div>
             {screen.isOrganizer && view.phase.kind !== "GameOver" ?
                 <EndGameDialog api={api} /> :

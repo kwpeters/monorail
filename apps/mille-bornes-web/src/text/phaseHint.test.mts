@@ -157,10 +157,8 @@ describe("phaseHint", () => {
                 });
                 const message = topBarMessage(offer);
                 expect(message.tone).toBe("MyTurn");
-                expect(message.text).toBe(
-                    "You reached 700 miles! Stop here, or race on to 1,000? " +
-                    "If you do not get there first, every other team scores 200."
-                );
+                // The risk is in the offer, not in the bar, which stays at three lines.
+                expect(message.text).toBe("You reached 700 miles! Stop here, or race on to 1,000?");
             });
 
 

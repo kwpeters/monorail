@@ -72,7 +72,8 @@ export function topBarMessage(
         case "ExtensionOffer":
             return phase.decider === view.me.id ?
                 {
-                    text: `You reached 700 miles! ${extensionQuestion} ${extensionRisk}`,
+                    // The risk is in the offer itself; the bar stays at three lines.
+                    text: `You reached 700 miles! ${extensionQuestion}`,
                     tone: "MyTurn",
                 } :
                 {
