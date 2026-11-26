@@ -4,7 +4,7 @@ import { zoneMiles, type DrivingZone } from "@repo/mille-bornes-core/drivingZone
 import type { PlayerView } from "@repo/mille-bornes-core/view";
 import { useId, type ReactElement } from "react";
 import { cardFace } from "../text/cardFace.mjs";
-import { describeTeamName, teamLabel } from "../text/teamName.mjs";
+import { teamLabel } from "../text/teamName.mjs";
 
 
 /** What `TeamRow` shows. */
@@ -97,7 +97,7 @@ export function TeamRow(props: TeamRowProps): ReactElement {
             </div>
             <div className="team-body">
                 <h2 id={titleId} className="team-name truncate">
-                    {describeTeamName(view, team.index)}
+                    {teamLabel(team.index)}
                 </h2>
                 <div
                     className="bar"
@@ -124,6 +124,7 @@ export function TeamRow(props: TeamRowProps): ReactElement {
                                     <span className="turn-dot" aria-hidden="true">{"●"}</span> :
                                     null}
                                 <span className="truncate">{seat.name}</span>
+                                {seat.isMe ? <span className="you">(you)</span> : null}
                                 {robots.isSome && robots.value.includes(seat.id) ?
                                     <span className="robot">
                                         <span aria-hidden="true">{"\u{1F916}"}</span>

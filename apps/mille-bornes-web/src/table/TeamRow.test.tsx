@@ -36,10 +36,19 @@ describe("TeamRow", () => {
 
     describe("the team name and miles", () => {
 
-        it("names the team with its members, the viewer first", () => {
+        it("names the team by its number only; the players are the pills", () => {
             setup(viewForSeats(4, { viewer: 1 }), 0);
-            expect(screen.getByRole("heading", { level: 2 }))
-            .toHaveTextContent("Team 1 (you + Ann)");
+            const heading = screen.getByRole("heading", { level: 2 });
+            expect(heading).toHaveTextContent(/^Team 1$/);
+            expect(within(screen.getByRole("list", { name: "Players" })).getAllByRole("listitem"))
+            .toHaveLength(2);
+        });
+
+
+        it("marks the viewer's own pill with (you), and no other", () => {
+            setup(viewForSeats(4, { viewer: 1 }), 0);
+            expect(screen.getAllByText("(you)")).toHaveLength(1);
+            expect(screen.getByText("(you)").closest("li")).toHaveTextContent("Cy");
         });
 
 
