@@ -3,8 +3,8 @@ import type { RaceResult } from "@repo/mille-bornes-core/game";
 import type { TeamIndex } from "@repo/mille-bornes-core/ids";
 import type { RaceScore } from "@repo/mille-bornes-core/scoring";
 import type { PlayerView } from "@repo/mille-bornes-core/view";
-import type { ReactElement } from "react";
-import { describeTeamName } from "../text/teamName.mjs";
+import { Fragment, type ReactElement } from "react";
+import { teamLabel, teamMemberNames } from "../text/teamName.mjs";
 
 
 /** What `ScoreSheet` shows. */
@@ -50,8 +50,8 @@ const rows: ReadonlyArray<Row> = [
  * The score sheet of a race: one column per team and one row per line of
  * the rulebook's sheet, every value read from the result (none is worked
  * out here).  A value not earned shows as 0.  The table scrolls sideways in
- * a labeled region the keyboard can focus, so six long names stay readable
- * at 320 px.  The winner is marked with a word, not only a color.
+ * a labeled region the keyboard can focus.  A team's heading stacks its number
+ * and then each player's name on its own line, so no name is cut off.  The winner is marked with a word, not only a color.
  * @param props - The view, the result and the winner to mark
  * @returns The score sheet
  */
@@ -73,9 +73,15 @@ export function ScoreSheet(props: ScoreSheetProps): ReactElement {
                                     "score-team winning" :
                                     "score-team"}
                             >
-                                <span className="truncate score-team-name">
-                                    {describeTeamName(view, team as TeamIndex)}
-                                </span>
+                                {/* One line each; the spaces keep the name readable as text. */}
+                                <span className="score-team-name">{teamLabel(team as TeamIndex)}</span>
+                                {teamMemberNames(view, team as TeamIndex).map((name, i) => (
+                                    // Names can repeat ("you" is unique, others are distinct seats).
+                                    <Fragment key={`${i}-${name}`}>
+                                        {" "}
+                                        <span className="score-member">{name}</span>
+                                    </Fragment>
+                                ))}
                                 {winner.isSome && winner.value === team ?
                                     <>
                                         {" "}

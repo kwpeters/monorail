@@ -1215,15 +1215,25 @@ svg {
 }
 
 .score-team {
-    min-inline-size: 5rem;
+    min-inline-size: 6rem;
     text-align: end;
 }
 
-/* Long names end in an ellipsis; the full name is the text. */
-.score-team-name {
+/* The heading stacks the team and each player on a line of its own; a long
+   name wraps rather than being cut off. */
+.score-team-name,
+.score-member {
     display: block;
-    max-inline-size: 5rem;
     margin-inline-start: auto;
+    overflow-wrap: anywhere;
+}
+
+.score-team-name {
+    font-weight: 700;
+}
+
+.score-member {
+    font-weight: 400;
 }
 
 .score-winner {

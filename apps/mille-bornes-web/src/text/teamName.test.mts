@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { idOf, team, viewForSeats } from "../testing/viewFixtures.mjs";
-import { describeTeamName, nameOf, subjectOf, teamLabel } from "./teamName.mjs";
+import { describeTeamName, nameOf, subjectOf, teamLabel, teamMemberNames } from "./teamName.mjs";
 
 
 describe("teamName", () => {
@@ -76,6 +76,22 @@ describe("teamName", () => {
         it("returns names containing markup verbatim", () => {
             const view = viewForSeats(2, { names: ["Ann", "<b>Bob</b>"] });
             expect(describeTeamName(view, team(1))).toBe("Team 2 (<b>Bob</b>)");
+        });
+
+    });
+
+
+    describe("teamMemberNames", () => {
+
+        it("lists the viewer first as you, then the others in seat order", () => {
+            expect(teamMemberNames(viewForSeats(4, { viewer: 1 }), team(0))).toEqual(["you", "Ann"]);
+            expect(teamMemberNames(viewForSeats(4), team(1))).toEqual(["Bob", "Di"]);
+        });
+
+
+        it("returns names containing markup verbatim", () => {
+            const view = viewForSeats(2, { names: ["Ann", "<b>Bob</b>"] });
+            expect(teamMemberNames(view, team(1))).toEqual(["<b>Bob</b>"]);
         });
 
     });

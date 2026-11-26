@@ -147,7 +147,7 @@ describe("GameOverScreen", () => {
         const six = finishedGame(6, { seed: 1, length: "Quick", names, robots: [names[2]!] });
 
 
-        it("truncates every name in the reveal and the score sheet", () => {
+        it("truncates every name in the reveal and wraps them in the score sheet", () => {
             show(over(names[0], six.gameOver));
             const items = within(whoWasWho()).getAllByRole("listitem");
             expect(items).toHaveLength(6);
@@ -156,8 +156,10 @@ describe("GameOverScreen", () => {
             }
             const heads = screen.getAllByRole("columnheader").slice(1);
             expect(heads).toHaveLength(3);
+            // The score sheet never cuts a name off: one line per player.
             for (const th of heads) {
-                expect(th.querySelector(".truncate")).not.toBeNull();
+                expect(th.querySelector(".truncate")).toBeNull();
+                expect(th.querySelectorAll(".score-member")).toHaveLength(2);
             }
         });
 

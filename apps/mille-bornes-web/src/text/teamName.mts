@@ -44,8 +44,19 @@ export function teamLabel(team: TeamIndex): string {
  * @returns For example "Team 1 (you + Bob)" or "Team 3 (Cy)"
  */
 export function describeTeamName(view: PlayerView, team: TeamIndex): string {
-    const members = view.seats.filter((s) => s.team === team);
-    const names = [...members.filter((s) => s.isMe), ...members.filter((s) => !s.isMe)]
-    .map((s) => s.isMe ? "you" : s.name);
+    const names = teamMemberNames(view, team);
     return names.length === 0 ? teamLabel(team) : `${teamLabel(team)} (${names.join(" + ")})`;
+}
+
+
+/**
+ * Lists a team's members, the viewer first and shown as "you".
+ * @param view - The viewer's view
+ * @param team - The team
+ * @returns For example ["you", "Bob"]; empty for a team with no seats
+ */
+export function teamMemberNames(view: PlayerView, team: TeamIndex): string[] {
+    const members = view.seats.filter((s) => s.team === team);
+    return [...members.filter((s) => s.isMe), ...members.filter((s) => !s.isMe)]
+    .map((s) => s.isMe ? "you" : s.name);
 }

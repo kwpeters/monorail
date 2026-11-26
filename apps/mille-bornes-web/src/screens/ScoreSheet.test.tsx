@@ -179,8 +179,8 @@ describe("ScoreSheet", () => {
 
         it("names the teams with their members", () => {
             show(two.raceOvers[0]!);
-            expect(screen.getByRole("columnheader", { name: "Team 1 (you)" })).toBeInTheDocument();
-            expect(screen.getByRole("columnheader", { name: "Team 2 (Bob)" })).toBeInTheDocument();
+            expect(screen.getByRole("columnheader", { name: "Team 1 you" })).toBeInTheDocument();
+            expect(screen.getByRole("columnheader", { name: "Team 2 Bob" })).toBeInTheDocument();
         });
 
 
@@ -230,28 +230,29 @@ describe("ScoreSheet", () => {
             const game = finishedGame(2, { seed: 4, length: "Short", names: ["Ann", hostile] });
             const { container } = show(game.gameOver);
             expect(container.querySelector("img")).toBeNull();
-            expect(screen.getByText(`Team 2 (${hostile})`)).toBeInTheDocument();
+            expect(screen.getByText(hostile)).toBeInTheDocument();
         });
 
 
-        it("truncates the names of a table of 20-character names", () => {
-            const names = [long, "Bob"];
-            const game = finishedGame(2, { seed: 4, length: "Short", names });
-            show(game.gameOver, long);
-            const name = screen.getByText("Team 1 (you)");
-            expect(name).toHaveClass("truncate");
-            const other = screen.getByText("Team 2 (Bob)");
-            expect(other).toHaveClass("truncate");
-        });
-
-
-        it("truncates a long name in a team of two", () => {
+        it("puts the team and each player on a line of their own, never cut off", () => {
             const names = ["Ann", long, "Bob", "Di"];
             const game = finishedGame(4, { seed: 1, length: "Short", names });
             show(game.gameOver, "Bob");
-            const heading = screen.getByText("Team 2 (you + Di)");
-            expect(heading).toHaveClass("truncate");
-            expect(screen.getByText(`Team 1 (Ann + ${long})`)).toHaveClass("truncate");
+            const heading = screen.getByRole("columnheader", { name: `Team 1 Ann ${long}` });
+            const lines = [...heading.querySelectorAll(".score-team-name, .score-member")]
+            .map((el) => el.textContent);
+            expect(lines).toEqual(["Team 1", "Ann", long]);
+            expect(heading.querySelector(".truncate")).toBeNull();
+            expect(screen.getByRole("columnheader", { name: "Team 2 you Di" })).toBeInTheDocument();
+        });
+
+
+        it("shows a single player's team as two lines", () => {
+            const game = finishedGame(2, { seed: 4, length: "Short", names: [long, "Bob"] });
+            show(game.gameOver, long);
+            const heading = screen.getByRole("columnheader", { name: "Team 1 you" });
+            expect([...heading.querySelectorAll("span")].map((el) => el.textContent))
+            .toEqual(["Team 1", "you"]);
         });
 
     });
