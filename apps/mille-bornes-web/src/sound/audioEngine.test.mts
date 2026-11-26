@@ -84,6 +84,47 @@ describe("createAudioEngine", () => {
         });
 
 
+        it("prepares the session once, before the context is made", () => {
+            const order: string[] = [];
+            const prepareSession = vi.fn(() => {
+                order.push("prepare");
+            });
+            const createContext = vi.fn(() => {
+                order.push("context");
+                return new SomeOption<AudioContextLike>(createFakeAudio().context);
+            });
+            const engine = createAudioEngine({
+                createContext,
+                storage: createMemoryStorage(),
+                prepareSession
+            });
+            expect(prepareSession).not.toHaveBeenCalled();
+            for (let i = 0; i < 5; i++) {
+                engine.unlock();
+            }
+            expect(prepareSession).toHaveBeenCalledOnce();
+            expect(order).toEqual(["prepare", "context"]);
+        });
+
+
+        it("still makes and resumes the context when preparing the session throws", () => {
+            const audio = createFakeAudio("suspended");
+            const prepareSession = vi.fn((): void => {
+                throw new Error("no session");
+            });
+            const engine = createAudioEngine({
+                createContext: () => new SomeOption<AudioContextLike>(audio.context),
+                storage:       createMemoryStorage(),
+                prepareSession
+            });
+            expect(() => engine.unlock()).not.toThrow();
+            expect(() => engine.unlock()).not.toThrow();
+            expect(audio.resume).toHaveBeenCalled();
+            // Not retried on later taps.
+            expect(prepareSession).toHaveBeenCalledOnce();
+        });
+
+
         it("tries again on the next gesture after a failed resume", async () => {
             let allow = false;
             const audio = createFakeAudio("suspended", () => {

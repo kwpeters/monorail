@@ -111,6 +111,11 @@ in its folder under `test-results/`;
   A phone that locks reconnects when it wakes
   and shows the game as it is then.
 - The synthesized sounds have not been judged by the owner yet.
+- On an iPhone, the ring/silent switch normally silences web audio.
+  The app asks iOS for a playback audio session,
+  so sounds play even in silent mode on iOS versions that support it.
+  If a very old iOS still stays silent,
+  flip the switch to ring and raise the media volume.
 - Dimmed cards are marked `aria-disabled`,
   but they can still be tapped:
   the tap explains why the card cannot be played

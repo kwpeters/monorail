@@ -1,4 +1,5 @@
 import { NoneOption, SomeOption, type Option } from "@repo/depot/option";
+import { startPlaybackSession } from "./playbackSession.mjs";
 import { soundPack, type SoundName, type Tone } from "./soundPack.mjs";
 
 
@@ -163,14 +164,19 @@ function startTone(ctx: AudioContextLike, tone: Tone, onEnded: () => void): () =
  * is missing), with a context that cannot resume, or while muted, `play` is a
  * no-op.  The mute choice is kept in `storage` under `muteStorageKey`; a
  * storage that throws, or holds anything but "true", means unmuted.
- * @param deps - How to make the context and where to keep the mute choice
+ * `prepareSession`, if given, runs once, on the first `unlock()` and before the
+ * context is made; it is never retried, even if it throws.
+ * @param deps - How to make the context, where to keep the mute choice, and an
+ * optional gesture-time audio session setup
  * @returns The engine, locked
  */
 export function createAudioEngine(deps: {
-    createContext: () => Option<AudioContextLike>;
-    storage:       StorageLike;
+    createContext:   () => Option<AudioContextLike>;
+    storage:         StorageLike;
+    prepareSession?: () => void;
 }): AudioEngine {
     let context: Option<AudioContextLike> = NoneOption.get();
+    let prepared = false;
     let muted = ((): boolean => {
         try {
             return deps.storage.getItem(muteStorageKey) === "true";
@@ -197,6 +203,15 @@ export function createAudioEngine(deps: {
 
     return {
         unlock: () => {
+            if (!prepared) {
+                prepared = true;
+                try {
+                    deps.prepareSession?.();
+                }
+                catch {
+                    // Without a playback session the sounds still play.
+                }
+            }
             try {
                 if (context.isNone) {
                     context = deps.createContext();
@@ -282,8 +297,9 @@ export function createBrowserAudioEngine(): AudioEngine {
         createContext: () => typeof AudioContext === "function" ?
             new SomeOption<AudioContextLike>(new AudioContext()) :
             NoneOption.get(),
+        prepareSession: () => startPlaybackSession({ navigator, document }),
         // Looked up per call: reading `window.localStorage` can itself throw.
-        storage: {
+        storage:        {
             getItem: (key) => window.localStorage.getItem(key),
             setItem: (key, value) => {
                 window.localStorage.setItem(key, value);
