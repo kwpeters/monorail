@@ -245,6 +245,11 @@ with one row per line of the rulebook's score sheet (total brought forward, mile
   Your phone plays a sound and a short vibration (where supported) on your turn.
 - Unplayable cards are dimmed; tapping one explains why using the rejection text.
 - Animations are driven from the event stream through a queue, so back-to-back events play in order.
+  The lanes, the piles and the top bar show the table as the animations have brought it:
+  a card's result appears when the card lands,
+  while the hand and every control follow the live state, so no play waits for an animation.
+  A backlog is shortened (older batches play faster, the oldest are skipped),
+  so the table never falls far behind the game.
 - Sound effects: a sound per card kind or event (for example roll, flat tire, accident, Coup Fourre fanfare, your-turn chime, a honk for Sir Honks-a-Lot), unlocked by the first tap, with a persisted mute control.
 
 ## Testing
