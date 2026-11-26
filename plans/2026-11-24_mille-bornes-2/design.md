@@ -158,6 +158,10 @@ The engine is a set of pure functions over immutable values.
 - `viewFor(state, player)` returns the per-player view: the viewer's own hand, other players' names, teams, turns and card counts, each team's public driving zone, the draw pile count, the discard pile top, and phase-specific prompts.
   It never contains other hands, the draw pile order, or any other player's credential.
 - `legalPlays(view)` and the command validation share one implementation, so the client can dim unplayable cards and explain them while the server stays authoritative.
+- When the draw pile is empty and no player holds any play except a Discard (`isDeadPosition(game)`),
+  the engine ends the race at once as `Exhausted`, instead of waiting for everyone to discard their hands away.
+  The check runs wherever a turn would start (`nextTurn`), asks every player as if it were their turn, and emits the same events as any other exhausted ending.
+  Discards change nothing the rules or the scoring look at, so the result is the one playing them out would give.
 - The domain makes illegal states unrepresentable and avoids primitive obsession:
   branded types (for example `PlayerId`, `GameId`, `Miles` as a multiple of 25, `Points`, `PlayerName`), discriminated unions for a driving zone's status (a zone cannot be both rolling and hazarded) and for the game phase, and no parallel arrays whose lengths must agree.
   Zod schemas exist at the boundaries (commands in, views and snapshots out) and for enums; they are not the only line of defense inside the engine.

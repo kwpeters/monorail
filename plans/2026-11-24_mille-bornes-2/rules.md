@@ -83,6 +83,17 @@ These came from the rulebook and replace what `design.md` and the first plan dra
 - **Discarding.**
   The rulebook says to discard when you cannot make a play (p. 8), but hints C and D (p. 17) tell players to discard useless cards early and to hold Safety cards for a Coup Fourré.
   This project lets a player discard any one card instead of playing.
+- **Early end when nobody can play.**
+  Once the draw pile is empty,
+  the race ends at once if no player holds a card that can be played in any way except a Discard
+  (nobody can drive, play a remedy or a safety, or attack).
+  Every team is then stuck, for example stopped with no remedy in any hand or short of the exact trip distance,
+  so the rest of the race would be players discarding until their hands are empty.
+  A discard changes nothing that affects scoring,
+  so the race ends as if the cards had run out and scores exactly as it would have:
+  the team with the most miles wins (or it is a tie).
+  With cards still in the draw pile the race goes on,
+  because drawing changes what players hold.
 - **No stacked Speed Limits.**
   The rulebook allows a Speed Limit on a team that already has one (hint H, p. 18).
   By the owner's decision this project refuses it, because a second Speed Limit has no effect.
