@@ -339,9 +339,9 @@ export function applyPlayerCommand(
 
 // Lands the hazard in flight, then play passes to the player after the
 // attacker.  Called when the window's timer fires, or at once by playAttack()
-// when no window is needed.  The timer must always move the game on, so a hazard that cannot
-// land (only in a hostile snapshot: nothing changes a zone while the window
-// is open) goes to the discard pile instead.
+// when no window is needed.  The timer must always move the game on, so a
+// hazard that cannot land (only in a hostile snapshot: nothing changes a zone
+// while the window is open) goes to the discard pile instead.
 function closeHazardWindow(g: Game): Result<Applied, Rejection> {
     const phase = g.phase;
     if (phase.kind !== "HazardIncoming") {

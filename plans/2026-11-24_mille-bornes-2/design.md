@@ -166,7 +166,7 @@ The engine is a set of pure functions over immutable values.
 ### Coup Fourre window
 
 When a hazard is played, the engine enters a "Coup Fourre window" phase.
-The window is always opened and always runs its full length, whether or not anyone could respond, so its length reveals nothing.
+The window normally opens and always runs its full length, whether or not anyone could respond, so its length reveals nothing.
 The one exception is a hazard whose matching safety is already on any team's drive pile:
 a deck has one copy of each safety, so no one can hold it, no window opens, and the hazard lands at once.
 The server owns the timer (default 8 seconds, configurable) and sends the engine a "close window" command when it expires.
@@ -177,7 +177,9 @@ The server owns the timer (default 8 seconds, configurable) and sends the engine
   Everyone on the hit team gets the same sound and vibration.
 - The Coup Fourre is played by tapping the card in the hand.
   There is no "pass" command, because passing early would also reveal information.
-- Every other player sees only the hazard card animation, which lasts as long as the window, so the pause looks like animation time.
+- Every other player sees only the hazard card animation,
+  which lasts as long as the window (a hazard that lands at once has no window, so its animation is as short as any other),
+  so the pause looks like animation time.
   Nobody outside the hit team is told anything about the window.
 - Robots on the hit team answer after their usual 1 to 3 second delay (if they hold the card), capped so the answer still lands inside the window.
   An instant answer would give a robot away, so a quick answer never does.

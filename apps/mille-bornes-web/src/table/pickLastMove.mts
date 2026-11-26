@@ -12,7 +12,8 @@ const bookkeeping: ReadonlySet<GameEvent["type"]> = new Set(["TurnStarted", "Car
  * not a turn change or a draw.  A batch with nothing else (for example the
  * turn that follows a hazard that could not land) falls back to its last
  * event.  When a batch holds both a hazard's play and its landing (no
- * window opened), the play is described.  A freshly dealt race gives its `RaceDealt` event.
+ * window opened), the play is described.  A freshly dealt race gives its
+ * `RaceDealt` event.
  * @param events - One batch of events, in order
  * @returns The event to describe, or none for an empty batch
  */

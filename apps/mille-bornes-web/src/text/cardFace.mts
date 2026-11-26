@@ -99,7 +99,8 @@ const faces: Readonly<Record<Card, CardFace>> = {
             "🐇", "End of Speed Limit",
             "End of Speed Limit lets you play any distance card again after a Speed Limit."
         ),
-        // The full name wraps to three lines and makes this card taller than the rest.
+        // The full name wraps to three lines and makes this card taller than
+        // the rest.
         faceLabel: "End of Limit",
     },
     [Card.roll]: remedy(

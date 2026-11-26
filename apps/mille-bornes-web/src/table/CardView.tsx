@@ -13,8 +13,8 @@ export interface CardViewProps {
 /**
  * One card face: an emoji and the card's name, or for a distance card the
  * miles in big digits.  A card with a short face label shows it, and its full
- * name is there for assistive tech.  The card's value is in `data-card`.  Only spans,
- * so the face can go inside a button.
+ * name is there for assistive tech.  The card's value is in `data-card`.  Only
+ * spans, so the face can go inside a button.
  * @param props - The card
  * @returns The card
  */

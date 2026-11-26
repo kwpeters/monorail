@@ -35,8 +35,7 @@ const rows: ReadonlyArray<readonly [string, (s: RaceScore) => number]> = [
 // call), then GameOver.
 const two = finishedGame(2, { seed: 4, length: "Short" });
 
-// A 3-seat Quick game: two tied races, then a
-// trip completed.
+// A 3-seat Quick game: two tied races, then a trip completed.
 const three = finishedGame(3, { seed: 585, length: "Quick" });
 
 
