@@ -1,5 +1,6 @@
 import { GameId } from "@repo/mille-bornes-core/ids";
 import { type PlayerName } from "@repo/mille-bornes-core/playerName";
+import { whimsicalNames } from "@repo/mille-bornes-core/whimsicalNames";
 import type { PendingSummary } from "@repo/mille-bornes-core/pendingView";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -35,11 +36,14 @@ function lobby(games: ReadonlyArray<PendingSummary> = [], notice: string | null 
 }
 
 
-function setup(data: LobbyData = lobby()) {
+function setup(data: LobbyData = lobby(), rand?: () => number) {
     const fake = createFakeApi();
-    const view = render(<LobbyScreen screen={data} api={fake.api} />);
+    const view = render(<LobbyScreen screen={data} api={fake.api} rand={rand} />);
     return { ...fake, ...view, user: userEvent.setup() };
 }
+
+
+const pool: ReadonlyArray<string> = whimsicalNames.map((n) => n as string);
 
 
 describe("LobbyScreen", () => {
@@ -342,6 +346,140 @@ describe("LobbyScreen", () => {
         it("shows no status box without a notice", () => {
             setup();
             expect(screen.queryByRole("status")).not.toBeInTheDocument();
+        });
+
+    });
+
+
+    describe("Surprise me in the Change name form", () => {
+
+        async function openForm(
+            data: LobbyData = lobby(),
+            rand?: () => number,
+            own = "Ann"
+        ) {
+            const fake = createFakeApi();
+            fake.procs.me.mockResolvedValue({ playerId: "p1", name: own });
+            const view = render(<LobbyScreen screen={data} api={fake.api} rand={rand} />);
+            const user = userEvent.setup();
+            await screen.findByText(own);
+            await user.click(screen.getByRole("button", { name: "Change name" }));
+            return { ...fake, ...view, user };
+        }
+
+
+        // Cycles through the values, so each press can be told apart.
+        function sequence(...values: ReadonlyArray<number>): () => number {
+            let i = 0;
+            return () => values[i++ % values.length]!;
+        }
+
+
+        it("fills the input with a whimsical name that fits", async () => {
+            const { user } = await openForm();
+            await user.type(screen.getByLabelText("New name"), "typed");
+            await user.click(screen.getByRole("button", { name: "Surprise me" }));
+            const field = screen.getByLabelText("New name");
+            expect(pool).toContain((field as HTMLInputElement).value);
+            expect((field as HTMLInputElement).value.length)
+            .toBeLessThanOrEqual(Number(field.getAttribute("maxlength")));
+            expect(field).toHaveAttribute("maxlength", "20");
+            expect(field).not.toHaveValue("typed");
+        });
+
+
+        it("never offers the player's own current name", async () => {
+            const { user } = await openForm(lobby(), () => 0, pool[0]);
+            await user.click(screen.getByRole("button", { name: "Surprise me" }));
+            expect(screen.getByLabelText("New name")).toHaveValue(pool[1]);
+        });
+
+
+        it("never offers a name seated in a listed game, ignoring case", async () => {
+            const seated = [pool[0]!.toUpperCase(), ` ${pool[1]!} `];
+            const { user } = await openForm(lobby([game("Dad", seated)]), () => 0);
+            await user.click(screen.getByRole("button", { name: "Surprise me" }));
+            expect(screen.getByLabelText("New name")).toHaveValue(pool[2]);
+        });
+
+
+        it("offers a different name when pressed again", async () => {
+            // 0 would pick the first free name each time.
+            const { user } = await openForm(lobby(), () => 0);
+            const button = screen.getByRole("button", { name: "Surprise me" });
+            await user.click(button);
+            const first = screen.getByLabelText<HTMLInputElement>("New name").value;
+            await user.click(button);
+            const second = screen.getByLabelText<HTMLInputElement>("New name").value;
+            expect(pool).toContain(second);
+            expect(second).not.toBe(first);
+        });
+
+
+        it("uses the injected rand", async () => {
+            const { user } = await openForm(lobby(), sequence(0.999999));
+            await user.click(screen.getByRole("button", { name: "Surprise me" }));
+            expect(screen.getByLabelText("New name")).toHaveValue(pool[pool.length - 1]);
+        });
+
+
+        it("says so and keeps the input when every name is taken", async () => {
+            const { user } = await openForm(lobby([game("Dad", pool)]));
+            await user.type(screen.getByLabelText("New name"), "mine");
+            await user.click(screen.getByRole("button", { name: "Surprise me" }));
+            expect(screen.getByRole("alert"))
+            .toHaveTextContent("No funny names are free right now. Please type one.");
+            expect(screen.getByLabelText("New name")).toHaveValue("Annmine");
+        });
+
+
+        it("clears an old message when it fills the input", async () => {
+            const { user } = await openForm();
+            await user.clear(screen.getByLabelText("New name"));
+            await user.click(screen.getByRole("button", { name: "Save" }));
+            expect(screen.getByRole("alert")).toHaveTextContent("Please type a name");
+            await user.click(screen.getByRole("button", { name: "Surprise me" }));
+            expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+        });
+
+
+        it("makes no server call", async () => {
+            const { procs, user } = await openForm();
+            const meCalls = procs.me.mock.calls.length;
+            await user.click(screen.getByRole("button", { name: "Surprise me" }));
+            expect(procs.rename).not.toHaveBeenCalled();
+            expect(procs.join).not.toHaveBeenCalled();
+            expect(procs.createGame).not.toHaveBeenCalled();
+            expect(procs.me.mock.calls).toHaveLength(meCalls);
+        });
+
+
+        it("is a plain button that keeps focus and does not submit", async () => {
+            const { procs, user } = await openForm();
+            const button = screen.getByRole("button", { name: "Surprise me" });
+            expect(button).toHaveAttribute("type", "button");
+            await user.click(button);
+            expect(procs.rename).not.toHaveBeenCalled();
+            expect(button).toHaveFocus();
+            expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+        });
+
+
+        it("lets Save send exactly what is shown, once", async () => {
+            const { procs, user } = await openForm();
+            procs.rename.mockReturnValue(neverSettles());
+            await user.click(screen.getByRole("button", { name: "Surprise me" }));
+            const shown = screen.getByLabelText<HTMLInputElement>("New name").value;
+            await user.dblClick(screen.getByRole("button", { name: "Save" }));
+            expect(procs.rename).toHaveBeenCalledExactlyOnceWith({ name: shown });
+        });
+
+
+        it("is disabled while a Save is in flight", async () => {
+            const { procs, user } = await openForm();
+            procs.rename.mockReturnValue(neverSettles());
+            await user.click(screen.getByRole("button", { name: "Save" }));
+            expect(screen.getByRole("button", { name: "Surprise me" })).toBeDisabled();
         });
 
     });

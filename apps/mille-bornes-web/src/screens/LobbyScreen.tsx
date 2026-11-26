@@ -1,5 +1,7 @@
 import { NoneOption, Option, SomeOption } from "@repo/depot/option";
 import type { PendingSummary } from "@repo/mille-bornes-core/pendingView";
+import { PlayerName } from "@repo/mille-bornes-core/playerName";
+import { pickWhimsicalName } from "@repo/mille-bornes-core/whimsicalNames";
 import type { Screen } from "@repo/mille-bornes-game-server/screens";
 import {
     useEffect,
@@ -21,6 +23,8 @@ export type LobbyData = Extract<Screen, { kind: "Lobby" }>;
 export interface LobbyScreenProps {
     screen: LobbyData;
     api:    Api;
+    /** Returns a number from 0 (included) to 1 (excluded); tests inject one. */
+    rand?:  (() => number) | undefined;
 }
 
 
@@ -46,7 +50,7 @@ const maxNameLength = 20;
  * @returns The screen
  */
 export function LobbyScreen(props: LobbyScreenProps): ReactElement {
-    const { screen, api } = props;
+    const { screen, api, rand } = props;
     const [message, setMessage] = useState<Option<string>>(NoneOption.get());
     const [busy, setBusy] = useState(false);
 
@@ -77,7 +81,7 @@ export function LobbyScreen(props: LobbyScreenProps): ReactElement {
         <section className="screen">
             <Notice screen={screen} />
             <h2>Lobby</h2>
-            <MyName api={api} />
+            <MyName api={api} games={screen.games} rand={rand} />
             <h3>Games waiting for players</h3>
             {screen.games.length === 0 ?
                 <p className="empty">No games yet. Start one!</p> :
@@ -182,7 +186,21 @@ function GameRow(props: GameRowProps): ReactElement {
 
 
 interface MyNameProps {
-    api: Api;
+    api:   Api;
+    games: ReadonlyArray<PendingSummary>;
+    rand?: (() => number) | undefined;
+}
+
+
+const noFunnyNamesMessage = "No funny names are free right now. Please type one.";
+
+
+// The names that cannot be offered; a string that is no valid name is skipped.
+function parseNames(raws: ReadonlyArray<string>): Array<PlayerName> {
+    return raws.flatMap((raw) => PlayerName.tryCreate(raw).match(
+        (parsed) => [parsed],
+        () => []
+    ));
 }
 
 
@@ -190,7 +208,7 @@ interface MyNameProps {
 // server gives the new name only through `session.me`, so it is fetched on
 // mount and again after a rename.
 function MyName(props: MyNameProps): ReactElement {
-    const { api } = props;
+    const { api, games, rand } = props;
     const fieldId = useId();
     const [name, setName] = useState<Option<string>>(NoneOption.get());
     const [editing, setEditing] = useState(false);
@@ -236,6 +254,23 @@ function MyName(props: MyNameProps): ReactElement {
         setDraft(name.defaultValue(""));
         setMessage(NoneOption.get());
         setEditing(true);
+    };
+
+    // Only fills the box: no server call.  The server still refuses a name that
+    // is in use, so avoiding the names in view is a convenience.
+    const surprise = (): void => {
+        const taken = parseNames([
+            ...name.match((n) => [n], () => []),
+            ...games.flatMap((g) => g.seatNames),
+            draft
+        ]);
+        pickWhimsicalName(taken, rand).match(
+            (picked) => {
+                setDraft(picked);
+                setMessage(NoneOption.get());
+            },
+            () => setMessage(new SomeOption(noFunnyNamesMessage))
+        );
     };
 
     const save = async (event: FormEvent): Promise<void> => {
@@ -286,16 +321,21 @@ function MyName(props: MyNameProps): ReactElement {
     return (
         <form className="stack" onSubmit={(e) => void save(e)}>
             <label className="field-label" htmlFor={fieldId}>New name</label>
-            <input
-                id={fieldId}
-                ref={input}
-                className="text-field"
-                type="text"
-                autoComplete="nickname"
-                maxLength={maxNameLength}
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-            />
+            <div className="input-row">
+                <input
+                    id={fieldId}
+                    ref={input}
+                    className="text-field"
+                    type="text"
+                    autoComplete="nickname"
+                    maxLength={maxNameLength}
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                />
+                <button type="button" className="button" disabled={busy} onClick={surprise}>
+                    Surprise me
+                </button>
+            </div>
             {message.isSome ? <p className="error" role="alert">{message.value}</p> : null}
             <div className="button-row">
                 <button type="submit" className="button primary" disabled={busy}>Save</button>
