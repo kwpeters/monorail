@@ -243,6 +243,10 @@ with one row per line of the rulebook's score sheet (total brought forward, mile
 - Game table: the approved "scoreboard rows" layout.
   A top bar says exactly what to do ("Your turn: play or discard a card") and turns green on your turn; for everyone else it says who is playing.
   Your phone plays a sound and a short vibration (where supported) on your turn.
+  The table has no header, to leave room for two teams to fit without scrolling:
+  a 44 by 44 menu button at the top right of the top bar opens a list over the table with Mute sounds and,
+  for the organizer, End game (still with its confirmation).
+  The other screens keep their header with the title and the mute button.
 - Unplayable cards are dimmed; tapping one explains why using the rejection text.
 - Animations are driven from the event stream through a queue, so back-to-back events play in order.
   The lanes, the piles and the top bar show the table as the animations have brought it:

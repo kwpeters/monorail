@@ -25,6 +25,10 @@ it shows each address with a QR code for the players to scan,
 and every game with an End game button.
 
 At the table a player taps a card, then where it goes.
+The table has no header:
+the **Menu** button at the right of the message box on top
+opens Mute sounds
+and, for the organizer, End game.
 A long press on a card explains it,
 and so does the ❓ button (named **What's this?**)
 under Play, beside the cards, once a card is picked up
