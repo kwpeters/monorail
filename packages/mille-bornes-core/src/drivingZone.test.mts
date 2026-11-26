@@ -192,6 +192,25 @@ describe("drivingZone", () => {
         });
 
 
+        it("says a remedy is never needed once its safety is played", () => {
+            const pairs = [
+                [Card.repairs, Card.drivingAce],
+                [Card.gasoline, Card.extraTank],
+                [Card.spareTire, Card.punctureProof],
+                [Card.endOfSpeedLimit, Card.rightOfWay],
+            ] as const;
+            for (const [remedy, safety] of pairs) {
+                const zone = afterSafety(rolling(), safety);
+                expect(rejected(playRemedy(zone, remedy)))
+                .toEqual({ reason: "RemedyNeverNeeded", card: remedy, safety });
+            }
+            // A safety for another calamity does not make the remedy pointless.
+            const zone = afterSafety(rolling(), Card.drivingAce);
+            expect(rejected(playRemedy(zone, Card.gasoline)))
+            .toEqual({ reason: "RemedyNotNeeded", card: Card.gasoline });
+        });
+
+
         it("fixing a calamity leaves the car needing a Roll", () => {
             const zone = afterHazard(rolling(), Card.accident);
             const change = afterRemedy(zone, Card.repairs);

@@ -42,6 +42,9 @@ describe("rejection", () => {
                 { reason: "WouldOvershoot", remaining: 25 as Miles, trip: 1000 as Miles },
                 { reason: "TooManyTwoHundreds" },
                 ...remedyCardSchema.options.map((card): Rejection => ({ reason: "RemedyNotNeeded", card })),
+                ...remedyCardSchema.options.flatMap((card) => safetyCardSchema.options.map(
+                    (safety): Rejection => ({ reason: "RemedyNeverNeeded", card, safety })
+                )),
                 { reason: "RollNotNeeded", because: "AlreadyRolling" },
                 { reason: "RollNotNeeded", because: "RightOfWay" },
                 { reason: "CannotAttackOwnTeam" },

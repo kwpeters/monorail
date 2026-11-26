@@ -16,6 +16,7 @@ export type Rejection =
     | { reason: "WouldOvershoot"; remaining: Miles; trip: Miles }
     | { reason: "TooManyTwoHundreds" }
     | { reason: "RemedyNotNeeded"; card: RemedyCard }
+    | { reason: "RemedyNeverNeeded"; card: RemedyCard; safety: SafetyCard }
     | { reason: "RollNotNeeded"; because: "AlreadyRolling" | "RightOfWay" }
     | { reason: "CannotAttackOwnTeam" }
     | { reason: "TargetNotMoving"; hazard: HazardCard }
@@ -77,6 +78,8 @@ export function describeRejection(r: Rejection): string {
             return "Each team can only play two 200-mile cards per race.";
         case "RemedyNotNeeded":
             return `You don't need ${r.card} right now: there is nothing for it to fix.`;
+        case "RemedyNeverNeeded":
+            return `You have ${r.safety}, so you never need ${r.card}.`;
         case "RollNotNeeded":
             return r.because === "AlreadyRolling" ?
                 "You are already rolling, so you don't need a Roll card." :

@@ -1,6 +1,7 @@
+import { Option } from "@repo/depot/option";
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import {
-    Card, type BlockingHazard, type DistanceCard, type HazardCard, type RemedyCard, type SafetyCard,
+    Card, hazardCardSchema, type BlockingHazard, type DistanceCard, type HazardCard, type RemedyCard, type SafetyCard,
     distanceMiles, remedyFor, safetyFor
 } from "./card.mjs";
 import { Miles } from "./miles.mjs";
@@ -170,6 +171,13 @@ function playRoll(z: DrivingZone): Result<ZoneChange, Rejection> {
 export function playRemedy(z: DrivingZone, card: RemedyCard): Result<ZoneChange, Rejection> {
     if (card === Card.roll) {
         return playRoll(z);
+    }
+    // A team that holds the safety can never be hit, so it never needs the remedy.
+    const immune = Option.fromNullable(
+        hazardCardSchema.options.find((h) => remedyFor(h) === card && hasSafety(z, safetyFor(h)))
+    );
+    if (immune.isSome) {
+        return fail({ reason: "RemedyNeverNeeded", card, safety: safetyFor(immune.value) });
     }
     if (card === Card.endOfSpeedLimit) {
         return z.speedLimit ?
