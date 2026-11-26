@@ -14,7 +14,9 @@ import {
 } from "../testing/engineBatches.mjs";
 import { team } from "../testing/viewFixtures.mjs";
 import { rollingZone } from "../testing/zoneFixtures.mjs";
-import { stepsFor, type Anchor, type Step } from "./steps.mjs";
+import {
+    flightMs, releaseAt, stepsFor, stepsForBatch, type Anchor, type Step
+} from "./steps.mjs";
 
 
 // Every event is taken from a batch the real engine emits, redacted for Ann
@@ -93,13 +95,15 @@ const drawPile: Anchor = { kind: "DrawPile" };
 const discardPile: Anchor = { kind: "DiscardPile" };
 const ours: Anchor = { kind: "Team", team: team(0) };
 const theirs: Anchor = { kind: "Team", team: team(1) };
+// Bob's name chip: where his cards leave from and go.
+const bobsSeat: Anchor = { kind: "Seat", player: bobId };
 
 const fly = (card: Card | undefined, from: Anchor, to: Anchor, lingers = false): Step => ({
     kind: "Fly",
     card: card === undefined ? NoneOption.get() : new SomeOption(card),
     from,
     to,
-    ms:   350,
+    ms:   450,
     ...(lingers ? { lingers } : {})
 });
 const pulse = (target: Anchor, tone: "Good" | "Bad" | "Gold" | "Info"): Step => (
@@ -113,7 +117,7 @@ const pause: Step = { kind: "Pause", ms: 150 };
 const table: Record<GameEvent["type"], readonly [GameEvent, ReadonlyArray<Step>]> = {
     RaceDealt:      [eventOf(dealt, "RaceDealt"), [pause]],
     TurnStarted:    [eventOf(drive, "TurnStarted"), [pause]],
-    CardDrawn:      [eventOf(drive, "CardDrawn"), [fly(undefined, drawPile, theirs)]],
+    CardDrawn:      [eventOf(drive, "CardDrawn"), [fly(undefined, drawPile, bobsSeat)]],
     DistancePlayed: [eventOf(drive, "DistancePlayed"), [fly("50", hand, ours)]],
     HazardPlayed:   [
         eventOf(attack.events, "HazardPlayed"),
@@ -133,7 +137,7 @@ const table: Record<GameEvent["type"], readonly [GameEvent, ReadonlyArray<Step>]
     CoupFourrePlayed: [
         eventOf(coupFourre, "CoupFourrePlayed"),
         [
-            fly("Right of Way", theirs, theirs),
+            fly("Right of Way", bobsSeat, theirs),
             { kind: "Pulse", target: theirs, tone: "Gold", big: true, ms: 900 }
         ]
     ],
@@ -161,8 +165,15 @@ describe("stepsFor", () => {
     });
 
 
-    it("flies another player's card from their own lane", () => {
+    it("flies another player's card from their own name chip to their lane", () => {
         expect(stepsFor(eventOf(bobDrives, "DistancePlayed"), view))
+        .toEqual([fly("75", bobsSeat, theirs)]);
+    });
+
+
+    it("falls back to the lane for a player who is not in the view", () => {
+        const stranger = { ...view, seats: view.seats.filter((s) => s.id !== bobId) };
+        expect(stepsFor(eventOf(bobDrives, "DistancePlayed"), stranger))
         .toEqual([fly("75", theirs, theirs)]);
     });
 
@@ -195,9 +206,78 @@ describe("stepsFor", () => {
 
 
     it("keeps a typical play under a second", () => {
-        const total = drive.flatMap((e) => stepsFor(e, view))
-        .reduce((ms, s) => ms + s.ms, 0);
+        const total = stepsForBatch(drive, view).reduce((ms, s) => ms + s.ms, 0);
         expect(total).toBeLessThan(1000);
+    });
+
+});
+
+
+describe("stepsForBatch", () => {
+
+    it("leaves out the pause of an event without motion when the batch has motion", () => {
+        expect(drive.map((e) => e.type)).toContain("TurnStarted");
+        expect(stepsForBatch(drive, view).map((s) => s.kind)).toEqual(["Fly", "Fly"]);
+    });
+
+
+    it("keeps the pause when nothing else in the batch shows anything", () => {
+        const turnOnly = [eventOf(drive, "TurnStarted")];
+        expect(stepsForBatch(turnOnly, view)).toEqual([pause]);
+    });
+
+
+    it("lists the steps of every event, in order", () => {
+        expect(stepsForBatch(drive, view)).toEqual([
+            fly("50", hand, ours),
+            fly(undefined, drawPile, bobsSeat)
+        ]);
+    });
+
+});
+
+
+describe("flightMs", () => {
+
+    it("takes 450 ms for a short way and grows with the distance", () => {
+        expect(flightMs(0)).toBe(450);
+        expect(flightMs(100)).toBe(450);
+        expect(flightMs(170)).toBeCloseTo(499);
+        expect(flightMs(400)).toBeGreaterThan(flightMs(300));
+    });
+
+
+    it("takes at most 750 ms, however far", () => {
+        expect(flightMs(550)).toBe(750);
+        expect(flightMs(5000)).toBe(750);
+    });
+
+});
+
+
+describe("releaseAt", () => {
+
+    const flight = fly("50", hand, ours);
+    const glow = pulse(ours, "Good");
+    const hold: Step = { kind: "Hold", card: "Stop", at: theirs, tone: "Bad", ms: 10000 };
+
+
+    it("lets a flight leave when the one before it is 70% through", () => {
+        expect(releaseAt(flight, flight)).toBe(0.7);
+    });
+
+
+    it("lets a flight leave when a pulse is 60% through", () => {
+        expect(releaseAt(glow, flight)).toBe(0.6);
+    });
+
+
+    it("starts a pulse, a hold or a pause only when the step before has ended", () => {
+        expect(releaseAt(flight, glow)).toBe(1);
+        expect(releaseAt(glow, glow)).toBe(1);
+        expect(releaseAt(flight, hold)).toBe(1);
+        expect(releaseAt(pause, flight)).toBe(1);
+        expect(releaseAt(flight, pause)).toBe(1);
     });
 
 });

@@ -1,15 +1,21 @@
 import type { GameEvent } from "@repo/mille-bornes-core/events";
 import type { PlayerView } from "@repo/mille-bornes-core/view";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { annPlays, annPlaysIn, stopAlreadyAnswered } from "../testing/engineBatches.mjs";
+import { Card } from "@repo/mille-bornes-core/card";
+import { newZone } from "@repo/mille-bornes-core/drivingZone";
+import {
+    annPlays, annPlaysIn, setUp, stopAlreadyAnswered
+} from "../testing/engineBatches.mjs";
 import { team } from "../testing/viewFixtures.mjs";
+import { rollingZone } from "../testing/zoneFixtures.mjs";
 import { createAnimator, type AnimatorDeps } from "./animator.mjs";
-import type { Step } from "./steps.mjs";
+import type { Release, Step } from "./steps.mjs";
 
 
 // Real engine batches: a drive and a discard are [play, TurnStarted,
-// CardDrawn], so three steps each (Fly, Pause, Fly); an attack is a batch of
-// its own whose steps end with a Hold.
+// CardDrawn], so two steps each (Fly, Fly: the Pause of TurnStarted is left
+// out when a batch has motion); an attack is a batch of its own whose steps
+// end with a Hold; a remedy is Fly, Pulse, Fly.
 const drive = annPlays({ type: "Drive", card: "50" });
 const discard = annPlays({ type: "Discard", card: "25" });
 const attack = annPlays({ type: "Attack", card: "Stop", targetTeam: team(1) });
@@ -18,6 +24,10 @@ const attack = annPlays({ type: "Attack", card: "Stop", targetTeam: team(1) });
 const instantAttack = annPlaysIn(
     stopAlreadyAnswered,
     { type: "Attack", card: "Stop", targetTeam: team(1) }
+);
+const remedy = annPlaysIn(
+    setUp([Card.roll, Card.dist25], [Card.dist50], [newZone(), rollingZone()]),
+    { type: "Remedy", card: "Roll" }
 );
 const { view } = drive;
 
@@ -34,25 +44,34 @@ interface Harness {
 
 // A fake `play` that takes `step.ms` of fake time, logging when each step
 // starts and ends.  A Hold never ends by itself: only the animator ends it.
-function harness(): Harness {
+// With `early`, a step lets the next one start when the animator asks it to
+// (the real `play` of a flight or a pulse does); without, the next step
+// starts when it ends.
+function harness(early = false): Harness {
     const log: string[] = [];
     const names = new Map<ReadonlyArray<GameEvent>, string>();
     let reduced = false;
-    const play = vi.fn((step: Step, signal: AbortSignal) => new Promise<void>((resolve) => {
-        log.push(`start ${step.kind}`);
-        let ended = false;
-        const end = (): void => {
-            if (ended) {
-                return;
-            }
-            ended = true;
-            window.clearTimeout(timer);
-            log.push(`end ${step.kind}`);
-            resolve();
-        };
-        const timer = step.kind === "Hold" ? undefined : window.setTimeout(end, step.ms);
-        signal.addEventListener("abort", end, { once: true });
-    }));
+    const play = vi.fn((step: Step, signal: AbortSignal, release?: Release) => {
+        return new Promise<void>((resolve) => {
+            log.push(`start ${step.kind}`);
+            let ended = false;
+            const end = (): void => {
+                if (ended) {
+                    return;
+                }
+                ended = true;
+                window.clearTimeout(timer);
+                window.clearTimeout(releaser);
+                log.push(`end ${step.kind}`);
+                resolve();
+            };
+            const timer = step.kind === "Hold" ? undefined : window.setTimeout(end, step.ms);
+            const releaser = release === undefined || !early ?
+                undefined :
+                window.setTimeout(release.run, release.at * step.ms);
+            signal.addEventListener("abort", end, { once: true });
+        });
+    });
     return {
         deps: {
             play,
@@ -77,7 +96,7 @@ function harness(): Harness {
 }
 
 
-const playedSteps = ["Fly", "Pause", "Fly"].flatMap((k) => [`start ${k}`, `end ${k}`]);
+const playedSteps = ["Fly", "Fly"].flatMap((k) => [`start ${k}`, `end ${k}`]);
 
 
 describe("createAnimator", () => {
@@ -145,7 +164,7 @@ describe("createAnimator", () => {
             animator.enqueue(h.batch("drive", drive.events), view, h.done("drive"));
             animator.enqueue(h.batch("discard", discard.events), view, h.done("discard"));
             await animator.whenIdle();
-            expect(play).toHaveBeenCalledTimes(6);
+            expect(play).toHaveBeenCalledTimes(4);
             expect(h.log).toEqual(["batch drive", "done drive", "batch discard", "done discard"]);
         });
 
@@ -170,7 +189,7 @@ describe("createAnimator", () => {
             // Idle again, so a later batch starts the queue once more.
             animator.enqueue(h.batch("discard", discard.events), view, h.done("discard"));
             await vi.runAllTimersAsync();
-            expect(h.log.slice(-8)).toEqual(["batch discard", ...playedSteps, "done discard"]);
+            expect(h.log.slice(-6)).toEqual(["batch discard", ...playedSteps, "done discard"]);
         });
 
 
@@ -312,7 +331,7 @@ describe("createAnimator", () => {
             const h = harness();
             const animator = createAnimator(h.deps);
             animator.enqueue(h.batch("attack", attack.events), view, h.done("attack"));
-            await vi.advanceTimersByTimeAsync(350 + 9999);
+            await vi.advanceTimersByTimeAsync(450 + 9999);
             expect(h.log.at(-1)).toBe("start Hold");
             await vi.advanceTimersByTimeAsync(1);
             expect(h.log.slice(-2)).toEqual(["end Hold", "done attack"]);
@@ -346,6 +365,99 @@ describe("createAnimator", () => {
             await vi.advanceTimersByTimeAsync(800);
             expect(h.log).not.toContain("start Hold");
             expect(h.log).toContain("batch drive");
+        });
+
+    });
+
+
+    describe("overlapping steps", () => {
+
+        it("starts the next flight when a flight is 70% through", async () => {
+            const h = harness(true);
+            const animator = createAnimator(h.deps);
+            animator.enqueue(h.batch("drive", drive.events), view, h.done("drive"));
+            await vi.advanceTimersByTimeAsync(314);
+            expect(h.log).toEqual(["batch drive", "start Fly"]);
+            await vi.advanceTimersByTimeAsync(2);
+            expect(h.log).toEqual(["batch drive", "start Fly", "start Fly"]);
+            // The first flight lands at 450 ms, the second at 315 + 450 ms.
+            await vi.advanceTimersByTimeAsync(134);
+            expect(h.log.at(-1)).toBe("end Fly");
+            expect(h.log).not.toContain("done drive");
+            await vi.advanceTimersByTimeAsync(315);
+            expect(h.log.slice(-3)).toEqual(["end Fly", "end Fly", "done drive"]);
+            expect(vi.getTimerCount()).toBe(0);
+        });
+
+
+        it("starts a pulse when its flight lands and the next flight 60% into the pulse", async () => {
+            const h = harness(true);
+            const animator = createAnimator(h.deps);
+            animator.enqueue(h.batch("remedy", remedy.events), view, h.done("remedy"));
+            await vi.advanceTimersByTimeAsync(449);
+            expect(h.log).toEqual(["batch remedy", "start Fly"]);
+            await vi.advanceTimersByTimeAsync(1);
+            expect(h.log.slice(-2)).toEqual(["end Fly", "start Pulse"]);
+            // The pulse lasts 450 ms; the draw leaves at 60% of it.
+            await vi.advanceTimersByTimeAsync(269);
+            expect(h.log.at(-1)).toBe("start Pulse");
+            await vi.advanceTimersByTimeAsync(1);
+            expect(h.log.at(-1)).toBe("start Fly");
+            await vi.runAllTimersAsync();
+            expect(h.log.at(-1)).toBe("done remedy");
+        });
+
+
+        it("waits for every step of a batch before the next batch starts", async () => {
+            const h = harness(true);
+            const animator = createAnimator(h.deps);
+            animator.enqueue(h.batch("drive", drive.events), view, h.done("drive"));
+            animator.enqueue(h.batch("discard", discard.events), view, h.done("discard"));
+            await vi.runAllTimersAsync();
+            const flights = ["start Fly", "start Fly", "end Fly", "end Fly"];
+            expect(h.log).toEqual([
+                "batch drive", ...flights, "done drive",
+                "batch discard", ...flights, "done discard"
+            ]);
+        });
+
+
+        it("ends a Hold only after the flight before it, which never overlaps it", async () => {
+            const h = harness(true);
+            const animator = createAnimator(h.deps);
+            animator.enqueue(h.batch("attack", attack.events), view, h.done("attack"));
+            await vi.advanceTimersByTimeAsync(449);
+            expect(h.log).toEqual(["batch attack", "start Fly"]);
+            await vi.advanceTimersByTimeAsync(1);
+            expect(h.log.slice(-2)).toEqual(["end Fly", "start Hold"]);
+        });
+
+
+        it("stop() ends every step in flight at once and leaves no timer", async () => {
+            const h = harness(true);
+            const animator = createAnimator(h.deps);
+            animator.enqueue(h.batch("drive", drive.events), view, h.done("drive"));
+            animator.enqueue(h.batch("discard", discard.events), view, h.done("discard"));
+            await vi.advanceTimersByTimeAsync(400);
+            expect(h.log).toEqual(["batch drive", "start Fly", "start Fly"]);
+            animator.stop();
+            expect(vi.getTimerCount()).toBe(0);
+            await vi.runAllTimersAsync();
+            expect(h.log).toEqual(["batch drive", "start Fly", "start Fly", "end Fly", "end Fly"]);
+            await expect(animator.whenIdle()).resolves.toBeUndefined();
+        });
+
+
+        it("starts the next step when a step ends without releasing it", async () => {
+            // The fake ignores `release`: a step that does not call it
+            // releases the next one when it ends, so nothing waits forever.
+            const h = harness(false);
+            const animator = createAnimator(h.deps);
+            animator.enqueue(h.batch("drive", drive.events), view, h.done("drive"));
+            await vi.advanceTimersByTimeAsync(449);
+            expect(h.log).toEqual(["batch drive", "start Fly"]);
+            await vi.advanceTimersByTimeAsync(1);
+            expect(h.log.slice(-2)).toEqual(["end Fly", "start Fly"]);
         });
 
     });

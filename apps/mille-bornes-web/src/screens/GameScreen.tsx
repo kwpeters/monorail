@@ -121,17 +121,30 @@ export function GameScreen(props: GameScreenProps): ReactElement {
         }
     }, [pickedIndex]);
 
+    // The card's flight leaves from where it was tapped: its box is read now,
+    // before the screen that answers the play takes the card from the hand.
+    const rememberLaunch = (command: PlayerCommand): void => {
+        if (selection.kind !== "Card" || !("card" in command) || command.card !== selection.card) {
+            return;
+        }
+        Option.fromNullable(
+            tableRef.current?.querySelectorAll(".hand .card-button .card")[selection.index]
+        ).mapSome((el) => flying.launchFrom(selection.card, el.getBoundingClientRect()));
+    };
+
     const send = async (command: PlayerCommand): Promise<void> => {
         if (inFlight.current) {
             return;
         }
         inFlight.current = true;
+        rememberLaunch(command);
         // Cleared now rather than on the answer: the next screen may arrive
         // first, and the selection must not look stale under it.
         dispatch({ type: "TapTarget" });
         try {
             const result = await api.call((t) => t.game.play.mutate(command), voidWire);
             if (!result.succeeded) {
+                flying.forgetLaunch();
                 setOverride(result.error);
             }
         }

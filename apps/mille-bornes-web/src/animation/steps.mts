@@ -8,13 +8,17 @@ import { z } from "zod";
 
 /**
  * A place on the table an animation starts or ends at; each one is the
- * element with the matching `data-anim-anchor` attribute.
+ * element with the matching `data-anim-anchor` attribute.  A `Team` is the
+ * whole lane (a pulse glows around it), and a card that flies to a lane lands
+ * on its card slot; a `Seat` is a player's name chip in their lane, where
+ * another player's cards come from and go.
  */
 export type Anchor =
     | { readonly kind: "DrawPile" }
     | { readonly kind: "DiscardPile" }
     | { readonly kind: "Hand" }
-    | { readonly kind: "Team"; readonly team: TeamIndex };
+    | { readonly kind: "Team"; readonly team: TeamIndex }
+    | { readonly kind: "Seat"; readonly player: PlayerId };
 
 
 /** The color of a pulse: a fix, a hit, a safety, or news. */
@@ -26,12 +30,16 @@ export type PulseTone = z.infer<typeof pulseToneSchema>;
 
 
 /**
- * One thing to show, played one at a time.  A `Fly` moves a card (face down
- * when it is none) and fades it out at the end unless it `lingers`, because
- * a `Hold` takes it over; a `Pulse` glows a lane once (twice when `big`); a
- * `Hold` keeps a card pinned at a lane, with a pulse of its `tone` beside it,
- * until the animator ends it (the next batch arrives, a snapshot shows the
- * window is over, or `ms` passes).
+ * One thing to show.  A `Fly` moves a card (face down when it is none); it
+ * lasts `ms` at the least, longer over a longer way (see `flightMs()`), and
+ * ends fully visible on a lane or the discard pile, which show the result,
+ * but fades out at a seat or the hand, which have no card of its own to take
+ * over, unless it `lingers`, because a `Hold` takes it over; a `Pulse` glows
+ * a lane once (twice when `big`); a `Hold` keeps a card pinned at a lane,
+ * with a pulse of its `tone` beside it, until the animator ends it (the next
+ * batch arrives, a snapshot shows the window is over, or `ms` passes).  The
+ * animator starts a step as soon as `releaseAt()` says (a flight may still
+ * be on its way when the next one leaves); a `Hold` always comes last.
  */
 export type Step =
     | {
@@ -59,10 +67,26 @@ export type Step =
     };
 
 
-const flyMs = 350;
+/**
+ * What the animator gives a step that the next one may start before it ends:
+ * the step calls `run` when `at` (a part of its duration, from 0 to 1) has
+ * passed.  A step that never calls it releases the next one when it ends.
+ */
+export interface Release {
+    readonly at:  number;
+    readonly run: () => void;
+}
+
+
+const flightMinMs = 450;
+const flightMaxMs = 750;
 const pulseMs = 450;
 const bigPulseMs = 900;
 const pauseMs = 150;
+
+// How far into a flight (or a pulse) the next flight may leave.
+const flightOverlap = 0.7;
+const pulseOverlap = 0.6;
 
 
 // The longest a hazard stays pinned; it must stay above the server's window
@@ -78,8 +102,40 @@ function lane(team: TeamIndex): Anchor {
 }
 
 
+/**
+ * How long a flight takes over a distance: a little more than the least for a
+ * short way, so a card is seen to leave and to arrive, and up to a limit for a
+ * long one.
+ * @param px - The distance between the two centres, in CSS pixels
+ * @returns The duration in milliseconds, from 450 to 750
+ */
+export function flightMs(px: number): number {
+    return Math.min(flightMaxMs, Math.max(flightMinMs, 380 + 0.7 * px));
+}
+
+
+/**
+ * Says how far into a step the next one may start.  A flight may be 70%
+ * through when the next flight leaves, and a pulse 60% through; a pulse starts
+ * once its flight has landed, and a hold only after the step before it.
+ * @param prev - The step that has started
+ * @param next - The step after it
+ * @returns The part of `prev` that has to be over first, from 0 to 1 (1 is
+ * all of it)
+ */
+export function releaseAt(prev: Step, next: Step): number {
+    if (next.kind === "Fly") {
+        if (prev.kind === "Fly") {
+            return flightOverlap;
+        }
+        return prev.kind === "Pulse" ? pulseOverlap : 1;
+    }
+    return 1;
+}
+
+
 function fly(card: Option<Card>, from: Anchor, to: Anchor, lingers = false): Step {
-    return { kind: "Fly", card, from, to, ms: flyMs, ...(lingers ? { lingers } : {}) };
+    return { kind: "Fly", card, from, to, ms: flightMinMs, ...(lingers ? { lingers } : {}) };
 }
 
 
@@ -89,20 +145,21 @@ function pulse(target: Anchor, tone: PulseTone): Step {
 
 
 // Another player's hand is not on screen, so their cards leave from their
-// team's lane.  A seat missing from the view falls back to `fallback`.
+// name chip in the lane.  A seat missing from the view falls back to the lane
+// `fallback`.
 function seatAnchor(view: PlayerView, player: PlayerId, fallback: TeamIndex): Anchor {
     if (player === view.me.id) {
         return hand;
     }
     const seat = Option.fromNullable(view.seats.find((s) => s.id === player));
-    return lane(seat.match((s) => s.team, () => fallback));
+    return seat.match((s) => ({ kind: "Seat", player: s.id }), () => lane(fallback));
 }
 
 
 /**
  * Lists what to show for one event.  Pure: it only reads the view, to tell
  * the viewer's own cards (from and to the hand) from everyone else's (from
- * and to their team's lane).
+ * and to their seat in their team's lane).
  * @param event - The event
  * @param view - The view the event arrived with
  * @returns The steps, in order; a short pause for events with no motion
@@ -170,4 +227,23 @@ export function stepsFor(event: GameEvent, view: PlayerView): ReadonlyArray<Step
             return [];
         }
     }
+}
+
+
+/**
+ * Lists what to show for a batch of events.  The pause an event without
+ * motion asks for is left out when the batch has any motion: it would only
+ * show a blank table between two flights.
+ * @param events - The batch, in order
+ * @param view - The view the batch arrived with
+ * @returns The steps, in order
+ */
+export function stepsForBatch(
+    events: ReadonlyArray<GameEvent>,
+    view: PlayerView
+): ReadonlyArray<Step> {
+    const steps = events.flatMap((e) => stepsFor(e, view));
+    return steps.some((s) => s.kind !== "Pause") ?
+        steps.filter((s) => s.kind !== "Pause") :
+        steps;
 }

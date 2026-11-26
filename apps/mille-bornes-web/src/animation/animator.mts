@@ -1,6 +1,6 @@
 import type { GameEvent } from "@repo/mille-bornes-core/events";
 import type { PlayerView } from "@repo/mille-bornes-core/view";
-import { stepsFor, type Step } from "./steps.mjs";
+import { releaseAt, stepsForBatch, type Release, type Step } from "./steps.mjs";
 
 
 /** What `createAnimator()` needs. */
@@ -8,9 +8,10 @@ export interface AnimatorDeps {
     /**
      * Shows one step.  The animator aborts `signal` when the step must end
      * early (a Hold that is over, or `stop()`), and always once the step is
-     * done, so the step can clean up.  A rejection is ignored.
+     * done, so the step can clean up.  A rejection is ignored.  `release`,
+     * when given, lets the step start the next one early (see `Release`).
      */
-    play:          (step: Step, signal: AbortSignal) => Promise<void>;
+    play:          (step: Step, signal: AbortSignal, release?: Release) => Promise<void>;
 
     /** Read before each step; when true, no step is played at all. */
     reducedMotion: () => boolean;
@@ -29,7 +30,7 @@ export interface AnimatorDeps {
 }
 
 
-/** Plays batches of events one after another. */
+/** Plays batches of events one after another; a batch's steps may overlap. */
 export interface Animator {
     /**
      * Queues a batch; it plays after every batch queued before it.  Ends a
@@ -74,8 +75,10 @@ const playInFull = 2;
 
 
 /**
- * Makes the animation queue: batches play strictly in the order queued, one
- * step at a time, and never overlap.  A failing `play` never stalls it.
+ * Makes the animation queue: batches play strictly in the order queued and
+ * never overlap; within a batch a step starts when `releaseAt()` allows (a
+ * flight when the one before it is 70% through, any other step when the one
+ * before it has ended).  A failing `play` never stalls it.
  * @param deps - How to play a step, the motion preference and the batch
  * start hook
  * @returns The animator, idle
@@ -87,8 +90,8 @@ export function createAnimator(deps: AnimatorDeps): Animator {
     let idleWaiters: Array<() => void> = [];
     const noop = (): void => undefined;
 
-    // Ends the step in flight; ends the Hold in flight (and its cap timer).
-    let endStep = noop;
+    // Ends every step in flight; ends the Hold in flight (and its cap timer).
+    const ends = new Set<() => void>();
     let endCurrentHold = noop;
 
     // A call, so the loop below sees a stop() made while it awaited.
@@ -120,10 +123,19 @@ export function createAnimator(deps: AnimatorDeps): Animator {
         }
     };
 
-    const runStep = async (s: Step): Promise<void> => {
+    // Starts a step.  `done` resolves when it is over; `released` when the
+    // next step may start (when `fraction` of it has played, if it says so).
+    const runStep = (
+        s: Step,
+        fraction: number
+    ): { done: Promise<void>; released: Promise<void> } => {
         const controller = new AbortController();
         const aborted = new Promise<void>((resolve) => {
             controller.signal.addEventListener("abort", () => resolve(), { once: true });
+        });
+        let release = noop;
+        const released = new Promise<void>((resolve) => {
+            release = resolve;
         });
         const timer = s.kind === "Hold" ?
             window.setTimeout(() => controller.abort(), s.ms) :
@@ -132,21 +144,60 @@ export function createAnimator(deps: AnimatorDeps): Animator {
             window.clearTimeout(timer);
             controller.abort();
         };
-        endStep = end;
-        endCurrentHold = s.kind === "Hold" ? end : noop;
-        try {
-            // Raced with the signal: a `play` that never settles cannot stall.
-            await Promise.race([deps.play(s, controller.signal), aborted]);
+        ends.add(end);
+        if (s.kind === "Hold") {
+            endCurrentHold = end;
         }
-        catch {
-            // A failed animation only loses its own motion.
+        const done = (async (): Promise<void> => {
+            try {
+                const early = fraction < 1 ? { at: fraction, run: release } : undefined;
+                // Raced with the signal: a `play` that never settles cannot
+                // stall.
+                await Promise.race([deps.play(s, controller.signal, early), aborted]);
+            }
+            catch {
+                // A failed animation only loses its own motion.
+            }
+            finally {
+                window.clearTimeout(timer);
+                ends.delete(end);
+                if (s.kind === "Hold") {
+                    endCurrentHold = noop;
+                }
+                controller.abort();
+                release();
+            }
+        })();
+        return { done, released };
+    };
+
+    // Plays a batch's steps; resolves once they are all over (or stopped).
+    const playSteps = async (batch: Queued): Promise<void> => {
+        // A hazard that landed in the same batch had no window to show.
+        const landedAtOnce = batch.events.some((e) => e.type === "HazardLanded");
+        const steps = stepsForBatch(batch.events, batch.view);
+        const live = new Set<Promise<void>>();
+        // Resolves when the next step may start.
+        let gate: Promise<unknown> = Promise.resolve();
+        for (const [i, s] of steps.entries()) {
+            await gate;
+            if (isStopped()) {
+                return;
+            }
+            // A Hold shows a hazard window that the next batch has closed.
+            const over = s.kind === "Hold" && (landedAtOnce || waiting.length > 0);
+            if (over || deps.reducedMotion()) {
+                continue;
+            }
+            const next = steps[i + 1];
+            const fraction = next === undefined ? 1 : releaseAt(s, next);
+            const { done, released } = runStep(s, fraction);
+            live.add(done);
+            void done.then(() => live.delete(done));
+            // Waiting for the whole step also waits for any still running.
+            gate = fraction < 1 ? released : Promise.all([...live]);
         }
-        finally {
-            window.clearTimeout(timer);
-            endStep = noop;
-            endCurrentHold = noop;
-            controller.abort();
-        }
+        await Promise.all([...live]);
     };
 
     const run = async (): Promise<void> => {
@@ -164,18 +215,7 @@ export function createAnimator(deps: AnimatorDeps): Animator {
                 const batch = waiting.shift()!;
                 start(batch);
                 try {
-                    // A hazard that landed in the same batch had no window to show.
-                    const landedAtOnce = batch.events.some((e) => e.type === "HazardLanded");
-                    for (const s of batch.events.flatMap((e) => stepsFor(e, batch.view))) {
-                        // A Hold shows a hazard window that the next batch has closed.
-                        const over = s.kind === "Hold" && (landedAtOnce || waiting.length > 0);
-                        if (isStopped()) {
-                            return;
-                        }
-                        if (!over && !deps.reducedMotion()) {
-                            await runStep(s);
-                        }
-                    }
+                    await playSteps(batch);
                 }
                 catch {
                     // A batch that cannot be shown (an event this page does not
@@ -224,7 +264,7 @@ export function createAnimator(deps: AnimatorDeps): Animator {
         stop: () => {
             stopped = true;
             waiting.length = 0;
-            endStep();
+            [...ends].forEach((end) => end());
             becomeIdle();
         }
     };

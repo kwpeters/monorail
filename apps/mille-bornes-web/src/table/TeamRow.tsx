@@ -91,7 +91,7 @@ export function TeamRow(props: TeamRowProps): ReactElement {
             aria-current={active ? "true" : undefined}
             data-anim-anchor={`team-${team.index}`}
         >
-            <div className="miles">
+            <div className="miles" data-anim-anchor={`team-${team.index}-card`}>
                 <span className="miles-number">{miles}</span>
                 <span className="miles-of">{`of ${tripText}`}</span>
             </div>
@@ -118,6 +118,7 @@ export function TeamRow(props: TeamRowProps): ReactElement {
                                 key={seat.id}
                                 className={isOnTurn ? "player on-turn" : "player"}
                                 aria-current={isOnTurn ? "true" : undefined}
+                                data-anim-anchor={`seat-${seat.id}`}
                             >
                                 {isOnTurn ?
                                     <span className="turn-dot" aria-hidden="true">{"●"}</span> :

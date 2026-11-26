@@ -49,7 +49,7 @@ function show(screenData: PlayingData, fake: FakeApi = createFakeApi()) {
 
 
 function lanes(): HTMLElement[] {
-    return [...document.querySelectorAll<HTMLElement>("[data-anim-anchor^='team-']")];
+    return [...document.querySelectorAll<HTMLElement>("section[data-anim-anchor^='team-']")];
 }
 
 
@@ -319,9 +319,13 @@ describe("GameScreen", () => {
 
     describe("the last move and the animations", () => {
 
-        // Engine batches end with the next turn and its draw: a Fly, a 150 ms
-        // Pause and a Fly.  jsdom has no Web Animations, so only the Pause
-        // takes time.
+        // Engine batches end with the next turn and its draw: two flights, the
+        // second leaving when the first is 70% through.  jsdom has no Web
+        // Animations, so a stand-in makes each flight take its 450 ms: the
+        // batch lasts 315 + 450 ms.
+        const batchMs = 765;
+        // The keyframes of every flight so far.
+        let flights: Keyframe[][] = [];
         const drove = annPlays({ type: "Drive", card: "50" });
         const discarded = annPlays({ type: "Discard", card: "25" });
         const first: EventBatch = { id: 1, events: drove.events };
@@ -335,10 +339,26 @@ describe("GameScreen", () => {
 
         beforeEach(() => {
             vi.useFakeTimers();
+            flights = [];
+            const animation = (frames: Keyframe[]): object => ({
+                finished: new Promise<void>((resolve) => {
+                    flights.push(frames);
+                    window.setTimeout(resolve, 450);
+                }),
+                cancel:   () => undefined
+            });
+            Object.defineProperty(Element.prototype, "animate", {
+                value: animation, configurable: true
+            });
+            Object.defineProperty(Element.prototype, "getAnimations", {
+                value: () => [{}], configurable: true
+            });
         });
 
 
         afterEach(() => {
+            Reflect.deleteProperty(Element.prototype, "animate");
+            Reflect.deleteProperty(Element.prototype, "getAnimations");
             vi.useRealTimers();
         });
 
@@ -356,7 +376,7 @@ describe("GameScreen", () => {
             await act(() => vi.advanceTimersByTimeAsync(0));
             expect(line()).toHaveTextContent("You drove 50 miles.");
             expect(consume).not.toHaveBeenCalled();
-            await act(() => vi.advanceTimersByTimeAsync(150));
+            await act(() => vi.advanceTimersByTimeAsync(batchMs));
             expect(consume).toHaveBeenCalledExactlyOnceWith(1);
         });
 
@@ -366,11 +386,11 @@ describe("GameScreen", () => {
             again(playingScreen(drove.view, { events: drove.events }), [first]);
             await act(() => vi.advanceTimersByTimeAsync(0));
             again(playingScreen(discarded.view, { events: discarded.events }), [first, second]);
-            await act(() => vi.advanceTimersByTimeAsync(100));
+            await act(() => vi.advanceTimersByTimeAsync(batchMs - 100));
             expect(line()).toHaveTextContent("You drove 50 miles.");
             await act(() => vi.advanceTimersByTimeAsync(100));
             expect(line()).toHaveTextContent("You discarded 25 miles.");
-            await act(() => vi.advanceTimersByTimeAsync(150));
+            await act(() => vi.advanceTimersByTimeAsync(batchMs));
             expect(consume.mock.calls).toEqual([[1], [2]]);
         });
 
@@ -392,16 +412,34 @@ describe("GameScreen", () => {
             fireEvent.click(card("50 miles"));
             expect(pressedCards()).toHaveLength(1);
             expect(consume).not.toHaveBeenCalled();
-            await act(() => vi.advanceTimersByTimeAsync(150));
+            await act(() => vi.advanceTimersByTimeAsync(batchMs));
             expect(consume).toHaveBeenCalledExactlyOnceWith(1);
             expect(pressedCards()).toHaveLength(1);
+        });
+
+
+        it("starts the flight of the player's own play at the card that was tapped", async () => {
+            const { again } = show(playingScreen(viewOf(midRace, "Ann")));
+            const tapped = new DOMRect(40, 600, 56, 76);
+            vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+                this: Element
+            ) {
+                return this.matches(".hand .card-button .card") ? tapped : new DOMRect();
+            });
+            fireEvent.click(card("50 miles"));
+            fireEvent.click(screen.getByRole("button", { name: "Play" }));
+            // The server's answer: the play, the next turn and its draw.
+            again(playingScreen(drove.view, { events: drove.events }), [first]);
+            await act(() => vi.advanceTimersByTimeAsync(0));
+            expect(String(flights[0]![0]!.transform)).toContain("translate(68px, 638px)");
+            vi.restoreAllMocks();
         });
 
 
         it("flies in a layer that takes no taps and is hidden and empty after", async () => {
             const { again } = show(playingScreen(drove.view));
             again(playingScreen(drove.view), [first]);
-            await act(() => vi.advanceTimersByTimeAsync(200));
+            await act(() => vi.advanceTimersByTimeAsync(batchMs + 100));
             const layer = document.querySelector<HTMLElement>(".flying-layer")!;
             expect(layer).toHaveAttribute("aria-hidden", "true");
             expect(layer.style.pointerEvents).toBe("none");

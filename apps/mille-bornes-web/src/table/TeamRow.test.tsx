@@ -228,6 +228,17 @@ describe("TeamRow", () => {
             expect(container.firstElementChild).toHaveAttribute("data-anim-anchor", "team-2");
         });
 
+
+        it("anchors the lane's card slot and each player's name chip", () => {
+            const view = viewForSeats(4);
+            const { container } = setup(view, 0);
+            expect(container.querySelector(".miles")).toHaveAttribute("data-anim-anchor", "team-0-card");
+            for (const name of ["Ann", "Cy"]) {
+                expect(screen.getByText(name).closest("li"))
+                .toHaveAttribute("data-anim-anchor", `seat-${idOf(view, name)}`);
+            }
+        });
+
     });
 
 });

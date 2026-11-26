@@ -53,7 +53,7 @@ export function useAnimator(
 
     useEffect(() => {
         const animator = createAnimator({
-            play:          (step, signal) => latest.current.deps.play(step, signal),
+            play:          (...args) => latest.current.deps.play(...args),
             reducedMotion: () => latest.current.deps.reducedMotion(),
             onBatchStart:  (events, batchView, skipped) => {
                 setStarted(new SomeOption({ events, view: batchView }));

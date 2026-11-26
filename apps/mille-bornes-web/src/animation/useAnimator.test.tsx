@@ -9,12 +9,13 @@ import type { Step } from "./steps.mjs";
 import { useAnimator } from "./useAnimator.js";
 
 
-// Real engine batches: three steps each (Fly 350, Pause 150, Fly 350 ms).
+// Real engine batches: two steps each (two flights of 450 ms; the pause of
+// TurnStarted is left out of a batch with motion).
 const drove = annPlays({ type: "Drive", card: "50" });
 const discarded = annPlays({ type: "Discard", card: "25" });
 const attacked = annPlays({ type: "Attack", card: "Stop", targetTeam: team(1) });
 const { view } = drove;
-const batchMs = 850;
+const batchMs = 900;
 
 
 interface Props {
@@ -82,7 +83,7 @@ describe("useAnimator", () => {
         await advance(1);
         expect(consume).toHaveBeenCalledExactlyOnceWith(1);
         await advance(5000);
-        expect(deps.play).toHaveBeenCalledTimes(3);
+        expect(deps.play).toHaveBeenCalledTimes(2);
     });
 
 
@@ -107,8 +108,8 @@ describe("useAnimator", () => {
         rerender({ pending: [] });
         await advance(5000);
         expect(consume).toHaveBeenCalledExactlyOnceWith(1);
-        // The batch in flight finished its three steps; nothing came after.
-        expect(deps.play).toHaveBeenCalledTimes(3);
+        // The batch in flight finished its two steps; nothing came after.
+        expect(deps.play).toHaveBeenCalledTimes(2);
         expect(deps.onBatchStart).toHaveBeenCalledOnce();
         expect(result.current.isSome && result.current.value.events).toBe(drove.events);
     });
@@ -118,9 +119,9 @@ describe("useAnimator", () => {
         const hazard: EventBatch = { id: 7, events: attacked.events };
         const { deps, consume, rerender } = setup([hazard]);
         // The hazard's flight, then its Hold, which would last 10 s.
-        await advance(400);
+        await advance(500);
         expect(deps.play).toHaveBeenLastCalledWith(
-            expect.objectContaining({ kind: "Hold" }), expect.any(AbortSignal)
+            expect.objectContaining({ kind: "Hold" }), expect.any(AbortSignal), undefined
         );
         expect(consume).not.toHaveBeenCalled();
         rerender({ pending: [] });
@@ -138,7 +139,7 @@ describe("useAnimator", () => {
         rerender({ pending: [first] });
         rerender({ pending: [{ ...first }] });
         await advance(5000);
-        expect(deps.play).toHaveBeenCalledTimes(3);
+        expect(deps.play).toHaveBeenCalledTimes(2);
         expect(deps.onBatchStart).toHaveBeenCalledOnce();
         expect(consume).toHaveBeenCalledOnce();
         // Once the store drops it, the id may be forgotten.
@@ -153,10 +154,10 @@ describe("useAnimator", () => {
         const hazard: EventBatch = { id: 7, events: attacked.events };
         const { deps, consume, rerender } = setup([first, hazard]);
         // The first batch plays and is consumed; the store then drops it.
-        await advance(batchMs + 400);
+        await advance(batchMs + 500);
         expect(consume).toHaveBeenCalledExactlyOnceWith(1);
         expect(deps.play).toHaveBeenLastCalledWith(
-            expect.objectContaining({ kind: "Hold" }), expect.any(AbortSignal)
+            expect.objectContaining({ kind: "Hold" }), expect.any(AbortSignal), undefined
         );
         rerender({ pending: [hazard] });
         await advance(1000);
@@ -173,14 +174,14 @@ describe("useAnimator", () => {
         rerender({ pending: [] });
         await advance(5000);
         expect(consume).toHaveBeenCalledExactlyOnceWith(1);
-        expect(deps.play).toHaveBeenCalledTimes(3);
+        expect(deps.play).toHaveBeenCalledTimes(2);
     });
 
 
     it("enqueues once under StrictMode's double mount", async () => {
         const { deps, consume } = setup([first], StrictMode);
         await advance(5000);
-        expect(deps.play).toHaveBeenCalledTimes(3);
+        expect(deps.play).toHaveBeenCalledTimes(2);
         expect(consume).toHaveBeenCalledExactlyOnceWith(1);
     });
 
