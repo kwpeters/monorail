@@ -306,6 +306,8 @@ export function GameScreen(props: GameScreenProps): ReactElement {
                 {hasMenu ?
                     <TableMenu
                         engine={engine}
+                        hazard={view.phase.kind === "HazardIncoming" &&
+                            view.phase.target === view.me.team}
                         onEndGame={screen.isOrganizer ?
                             new SomeOption(() => endGame.current?.open()) :
                             NoneOption.get()}

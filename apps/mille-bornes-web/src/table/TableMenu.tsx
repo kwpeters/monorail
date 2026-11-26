@@ -10,6 +10,40 @@ export interface TableMenuProps {
 
     /** Opens the End game question; there is one only for the organizer. */
     onEndGame: Option<() => void>;
+
+    /**
+     * True while a hazard is in flight against the player's team.  When it
+     * becomes true the menu closes, so the answering card needs one tap.
+     */
+    hazard:    boolean;
+}
+
+
+// How long a tap that closed the menu still swallows its click: a tap makes
+// its click at once, so a click later than this belongs to another tap.
+const swallowMs = 400;
+
+
+// Makes the click that follows the tap which closed the menu do nothing: it
+// stops in the capture phase, before any button under the finger (a card,
+// Play, Discard, a lane) sees it.  It ends with that click, with a scroll or
+// another press (neither makes the click), or after `swallowMs`.
+function swallowNextClick(): void {
+    const end = (): void => {
+        window.clearTimeout(timer);
+        document.removeEventListener("click", swallow, true);
+        document.removeEventListener("pointerdown", end, true);
+        document.removeEventListener("pointercancel", end, true);
+    };
+    const swallow = (e: Event): void => {
+        e.stopPropagation();
+        e.preventDefault();
+        end();
+    };
+    const timer = window.setTimeout(end, swallowMs);
+    document.addEventListener("click", swallow, true);
+    document.addEventListener("pointerdown", end, true);
+    document.addEventListener("pointercancel", end, true);
 }
 
 
@@ -18,10 +52,12 @@ export interface TableMenuProps {
  * table (it moves nothing) with Mute or Unmute sounds and, for the organizer,
  * End game.  Enter, Space or the Down arrow opens it with the first item
  * focused (a tap leaves the focus on the button); the arrow keys, Home and
- * End move in it.  Escape, a tap elsewhere or choosing End game closes it,
- * and Escape and End game give the focus back to the button.  Muting leaves
- * it open, so the item's changed words show what the tap did.  Place it in a
- * positioned box: it sits at that box's top right.
+ * End move in it.  Escape (wherever the focus is), a tap elsewhere or choosing
+ * End game closes it, and Escape and End game give the focus back to the
+ * button.  A tap elsewhere only closes it: what was under the finger does
+ * not get that tap.  A hazard against the player's team closes it too.
+ * Muting leaves it open, so the item's changed words show what the tap did.
+ * Place it in a positioned box: it sits at that box's top right.
  * @param props - The audio engine and the End game action, if any
  * @returns The button and, while open, the list
  */
@@ -52,8 +88,17 @@ export function TableMenu(props: TableMenuProps): ReactElement {
         }
     }, [open]);
 
-    // A tap anywhere else closes it; pointerdown, because a tap on plain
-    // page content makes no click on iOS.
+    // A hazard against the player's team is the moment to answer it, not to
+    // have a menu open over it.
+    useEffect(() => {
+        if (props.hazard) {
+            setOpen(false);
+        }
+    }, [props.hazard]);
+
+    // A tap anywhere else closes it (and does nothing else); pointerdown,
+    // because a tap on plain page content makes no click on iOS.  Escape
+    // closes it from wherever the focus is.
     useEffect(() => {
         if (!open) {
             return undefined;
@@ -61,10 +106,20 @@ export function TableMenu(props: TableMenuProps): ReactElement {
         const away = (e: PointerEvent): void => {
             if (!(e.target instanceof Node && root.current?.contains(e.target) === true)) {
                 setOpen(false);
+                swallowNextClick();
+            }
+        };
+        const escape = (e: globalThis.KeyboardEvent): void => {
+            if (e.key === "Escape") {
+                close(true);
             }
         };
         document.addEventListener("pointerdown", away);
-        return () => document.removeEventListener("pointerdown", away);
+        document.addEventListener("keydown", escape);
+        return () => {
+            document.removeEventListener("pointerdown", away);
+            document.removeEventListener("keydown", escape);
+        };
     }, [open]);
 
     const onKeyDown = (e: KeyboardEvent): void => {
@@ -74,11 +129,6 @@ export function TableMenu(props: TableMenuProps): ReactElement {
                 enter.current = true;
                 setOpen(true);
             }
-            return;
-        }
-        if (e.key === "Escape") {
-            e.stopPropagation();
-            close(true);
             return;
         }
         const all = items();
