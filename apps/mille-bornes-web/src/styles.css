@@ -476,6 +476,11 @@ svg {
 }
 
 .top-bar {
+    /* Room for two lines, so a longer message never pushes the table down. */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: calc(2 * 1.4em + 2 * var(--space-2));
     padding: var(--space-2) var(--space-3);
     border-radius: 0.5rem;
     color: #ffffff;
@@ -503,6 +508,8 @@ svg {
 }
 
 .team-row {
+    /* The positioning context of the Play button over the lane. */
+    position: relative;
     display: flex;
     align-items: center;
     gap: var(--space-2);
@@ -577,7 +584,8 @@ svg {
     align-items: center;
     gap: var(--space-1);
     max-inline-size: 100%;
-    padding: 0 var(--space-2);
+    /* The room of the turn dot, so a turn change never wraps the names. */
+    padding: 0 var(--space-2) 0 calc(var(--space-2) + 0.75em + var(--space-1));
     border: 2px solid transparent;
     border-radius: 1rem;
     background: var(--color-bg);
@@ -585,9 +593,15 @@ svg {
 }
 
 .player.on-turn {
+    padding-inline-start: var(--space-2);
     border-color: #1e7a34;
     background: #d3f9d8;
-    font-weight: 700;
+}
+
+/* A fixed width, so it takes the room the other names keep free. */
+.turn-dot {
+    inline-size: 0.75em;
+    text-align: center;
 }
 
 .offline {
@@ -624,12 +638,22 @@ svg {
 }
 
 .last-move {
+    /* Two lines, so a long name does not move the piles. */
+    min-block-size: calc(2 * 1.4 * 0.9rem + 2 * var(--space-2) + 2px);
     padding: var(--space-2);
     border: 1px solid #ffe066;
     border-radius: 0.5rem;
     background: #fff9db;
     font-size: 0.9rem;
     overflow-wrap: anywhere;
+}
+
+/* The last move and the piles: the hazard banner covers them, not the lanes. */
+.table-middle {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: inherit;
 }
 
 .piles {
@@ -660,6 +684,11 @@ svg {
 .pile-count {
     font-size: 1.5rem;
     font-weight: 700;
+}
+
+.pile.discard {
+    /* The positioning context of the Discard button over the pile. */
+    position: relative;
 }
 
 .pile.discard .card {
@@ -864,17 +893,32 @@ svg {
     outline-offset: 2px;
 }
 
+/*
+ * The buttons over a lane and over the discard pile are laid over them, so
+ * picking a card up (or putting it down) moves nothing on the table.
+ */
 .lane-target {
-    align-self: flex-start;
+    position: absolute;
+    inset-inline-end: var(--space-2);
+    inset-block-end: var(--space-2);
 }
 
 .pile-target {
-    margin-block-start: var(--space-1);
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    margin: 0;
     padding: var(--space-1) var(--space-2);
     font-size: 0.8rem;
 }
 
+/* Laid over the piles, so its coming and going moves nothing on the table. */
 .hazard-banner {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: 1;
+    box-shadow: 0 0.25rem 0.75rem rgb(0 0 0 / 25%);
     display: flex;
     flex-wrap: wrap;
     align-items: center;

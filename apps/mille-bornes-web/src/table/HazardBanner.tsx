@@ -19,7 +19,8 @@ export interface HazardBannerProps {
  * The red banner the hit team sees while a hazard is in flight: the hazard,
  * what to do and the time left to answer it.  Every member of the hit team
  * sees the same banner, whatever they hold, and everyone else sees nothing,
- * so it gives nothing away.
+ * so it gives nothing away.  It is laid over the piles (see `.hazard-banner`),
+ * so showing and hiding it moves nothing on the table.
  * @param props - The Playing screen and the phase's alert
  * @returns The banner, or nothing outside a hazard window on the viewer's team
  */

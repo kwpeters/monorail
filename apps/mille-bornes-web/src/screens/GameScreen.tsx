@@ -172,7 +172,6 @@ export function GameScreen(props: GameScreenProps): ReactElement {
 
     const tableBody = (
         <OverrideContext.Provider value={setOverride}>
-            <HazardBanner screen={screen} alert={hazardAlertText(view)} />
             <ExtensionOffer screen={screen} onDecide={(command) => void send(command)} />
             <div className="scoreboard">
                 {view.teams.map((team) => (
@@ -187,15 +186,18 @@ export function GameScreen(props: GameScreenProps): ReactElement {
                     />
                 ))}
             </div>
-            <LastMove
-                events={started.match((b) => b.events, () => [])}
-                view={started.match((b) => b.view, () => view)}
-            />
-            <Piles
-                drawPileCount={view.drawPileCount}
-                discardTop={Option.fromNullable(view.discardTop)}
-                onDiscard={discard}
-            />
+            <div className="table-middle">
+                <LastMove
+                    events={started.match((b) => b.events, () => [])}
+                    view={started.match((b) => b.view, () => view)}
+                />
+                <Piles
+                    drawPileCount={view.drawPileCount}
+                    discardTop={Option.fromNullable(view.discardTop)}
+                    onDiscard={discard}
+                />
+                <HazardBanner screen={screen} alert={hazardAlertText(view)} />
+            </div>
             <Hand
                 cards={view.me.hand}
                 selected={selection.kind === "Card" ?

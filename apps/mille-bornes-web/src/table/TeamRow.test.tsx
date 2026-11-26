@@ -131,7 +131,7 @@ describe("TeamRow", () => {
         });
 
 
-        it("marks the player on turn with a dot and bold, and aria-current", () => {
+        it("marks the player on turn with a dot, and aria-current", () => {
             const view = viewForSeats(4);
             setup(view, 0, { onTurn: new SomeOption(idOf(view, "Ann")) });
             const ann = screen.getByText("Ann").closest("li")!;

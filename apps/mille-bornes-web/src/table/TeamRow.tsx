@@ -66,7 +66,7 @@ function statusChips(zone: DrivingZone): ReadonlyArray<StatusChip> {
 
 /**
  * One team's lane: its name, miles and progress, its players (the one on
- * turn marked with a dot and bold type), and its status in words.  On the
+ * turn marked with a dot and a green frame), and its status in words.  On the
  * organizer's screen, robots and disconnected players are marked too.  While
  * an attack that can land here is picked up, the lane has a Play button.
  * @param props - The view, the team, what is known about the seats and the
@@ -119,7 +119,9 @@ export function TeamRow(props: TeamRowProps): ReactElement {
                                 className={isOnTurn ? "player on-turn" : "player"}
                                 aria-current={isOnTurn ? "true" : undefined}
                             >
-                                {isOnTurn ? <span aria-hidden="true">{"●"}</span> : null}
+                                {isOnTurn ?
+                                    <span className="turn-dot" aria-hidden="true">{"●"}</span> :
+                                    null}
                                 <span className="truncate">{seat.name}</span>
                                 {robots.isSome && robots.value.includes(seat.id) ?
                                     <span className="robot">
