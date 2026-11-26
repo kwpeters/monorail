@@ -3,7 +3,7 @@ import type { Card } from "@repo/mille-bornes-core/card";
 import { act, render } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { bobId } from "../testing/engineBatches.mjs";
+import { annId, bobId } from "../testing/engineBatches.mjs";
 import { team } from "../testing/viewFixtures.mjs";
 import {
     prefersReducedMotion, useFlyingCards, type FlyingCards, type PlayStep
@@ -15,7 +15,7 @@ const hand: Anchor = { kind: "Hand" };
 const lane0: Anchor = { kind: "Team", team: team(0) };
 const lane1: Anchor = { kind: "Team", team: team(1) };
 const discardPile: Anchor = { kind: "DiscardPile" };
-const seat: Anchor = { kind: "Seat", player: bobId };
+const seat: Anchor = { kind: "Seat", player: bobId, team: team(1) };
 const fifty: Option<Card> = new SomeOption<Card>("50");
 
 
@@ -382,6 +382,15 @@ describe("useFlyingCards", () => {
             expect(startsOf(stub)).toEqual([[150, 120]]);
             expect(endsOf(stub)).toEqual([[235, 445]]);
             expect(frames.at(-1)!.opacity).toBe(1);
+        });
+
+
+        it("leaves from its team's lane when the player's chip is not on the table", async () => {
+            const stub = stubAnimations(false);
+            const { play } = show();
+            const absent: Anchor = { kind: "Seat", player: annId, team: team(1) };
+            await play(flight(fifty, discardPile, absent), new AbortController().signal);
+            expect(startsOf(stub)).toEqual([[150, 300]]);
         });
 
 

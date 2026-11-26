@@ -88,8 +88,12 @@ function rectOfName(name: string): Option<DOMRect> {
 }
 
 
+// A seat whose chip is not on the table is its team's lane.
 function rectOf(anchor: Anchor): Option<DOMRect> {
-    return rectOfName(anchorName(anchor));
+    const found = rectOfName(anchorName(anchor));
+    return anchor.kind === "Seat" ?
+        found.bindNone(() => rectOf({ kind: "Team", team: anchor.team })) :
+        found;
 }
 
 

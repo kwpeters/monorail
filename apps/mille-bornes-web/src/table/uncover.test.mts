@@ -23,6 +23,11 @@ describe("scrollToUncover()", () => {
     });
 
 
+    it("scrolls a target that is below the hand, off the screen", () => {
+        expect(scrollToUncover([{ top: 571, bottom: 615 }], hand)).toBe(615 + 8 - 330);
+    });
+
+
     it("keeps a gap for a target just touching the hand", () => {
         expect(scrollToUncover([{ top: 286, bottom: 330 }], hand)).toBe(8);
     });

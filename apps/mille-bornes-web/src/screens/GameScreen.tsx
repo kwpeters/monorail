@@ -199,18 +199,15 @@ export function GameScreen(props: GameScreenProps): ReactElement {
                     />
                 ))}
             </div>
-            <div className="table-middle">
-                <LastMove
-                    events={started.match((b) => b.events, () => [])}
-                    view={started.match((b) => b.view, () => view)}
-                />
-                <Piles
-                    drawPileCount={view.drawPileCount}
-                    discardTop={Option.fromNullable(view.discardTop)}
-                    onDiscard={discard}
-                />
-                <HazardBanner screen={screen} alert={hazardAlertText(view)} />
-            </div>
+            <LastMove
+                events={started.match((b) => b.events, () => [])}
+                view={started.match((b) => b.view, () => view)}
+            />
+            <Piles
+                drawPileCount={view.drawPileCount}
+                discardTop={Option.fromNullable(view.discardTop)}
+                onDiscard={discard}
+            />
             <Hand
                 cards={view.me.hand}
                 selected={selection.kind === "Card" ?
@@ -255,7 +252,10 @@ export function GameScreen(props: GameScreenProps): ReactElement {
                 }
             }}
         >
-            <TopBar text={message.text} tone={message.tone} />
+            <div className="top-slot">
+                <TopBar text={message.text} tone={message.tone} />
+                <HazardBanner screen={screen} alert={hazardAlertText(view)} />
+            </div>
             {screen.isOrganizer && view.phase.kind !== "GameOver" ?
                 <EndGameDialog api={api} /> :
                 null}

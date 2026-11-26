@@ -96,7 +96,7 @@ const discardPile: Anchor = { kind: "DiscardPile" };
 const ours: Anchor = { kind: "Team", team: team(0) };
 const theirs: Anchor = { kind: "Team", team: team(1) };
 // Bob's name chip: where his cards leave from and go.
-const bobsSeat: Anchor = { kind: "Seat", player: bobId };
+const bobsSeat: Anchor = { kind: "Seat", player: bobId, team: team(1) };
 
 const fly = (card: Card | undefined, from: Anchor, to: Anchor, lingers = false): Step => ({
     kind: "Fly",

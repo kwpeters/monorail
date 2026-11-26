@@ -10,15 +10,16 @@ import { z } from "zod";
  * A place on the table an animation starts or ends at; each one is the
  * element with the matching `data-anim-anchor` attribute.  A `Team` is the
  * whole lane (a pulse glows around it), and a card that flies to a lane lands
- * on its card slot; a `Seat` is a player's name chip in their lane, where
- * another player's cards come from and go.
+ * on its card slot; a `Seat` is a player's name chip in their lane (of
+ * `team`, the lane to use when the chip is not on the table), where another
+ * player's cards come from and go.
  */
 export type Anchor =
     | { readonly kind: "DrawPile" }
     | { readonly kind: "DiscardPile" }
     | { readonly kind: "Hand" }
     | { readonly kind: "Team"; readonly team: TeamIndex }
-    | { readonly kind: "Seat"; readonly player: PlayerId };
+    | { readonly kind: "Seat"; readonly player: PlayerId; readonly team: TeamIndex };
 
 
 /** The color of a pulse: a fix, a hit, a safety, or news. */
@@ -152,7 +153,7 @@ function seatAnchor(view: PlayerView, player: PlayerId, fallback: TeamIndex): An
         return hand;
     }
     const seat = Option.fromNullable(view.seats.find((s) => s.id === player));
-    return seat.match((s) => ({ kind: "Seat", player: s.id }), () => lane(fallback));
+    return seat.match((s) => ({ kind: "Seat", player: s.id, team: s.team }), () => lane(fallback));
 }
 
 

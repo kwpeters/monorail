@@ -476,11 +476,14 @@ svg {
 }
 
 .top-bar {
-    /* Room for two lines, so a longer message never pushes the table down. */
+    /*
+     * Room for three lines, so a longer message never pushes the table down:
+     * the hazard alert is three lines on a 320px phone.
+     */
     display: flex;
     align-items: center;
     justify-content: center;
-    min-block-size: calc(2 * 1.4em + 2 * var(--space-2));
+    min-block-size: calc(3 * 1.4em + 2 * var(--space-2));
     padding: var(--space-2) var(--space-3);
     border-radius: 0.5rem;
     color: #ffffff;
@@ -648,12 +651,9 @@ svg {
     overflow-wrap: anywhere;
 }
 
-/* The last move and the piles: the hazard banner covers them, not the lanes. */
-.table-middle {
+/* The top bar and, over it, the hazard banner. */
+.top-slot {
     position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: inherit;
 }
 
 .piles {
@@ -894,37 +894,50 @@ svg {
 }
 
 /*
- * The buttons over a lane and over the discard pile are laid over them, so
- * picking a card up (or putting it down) moves nothing on the table.
+ * The buttons of a lane and of the discard pile are laid out of the flow, so
+ * picking a card up (or putting it down) moves nothing on the table, and
+ * where they cover nothing the player needs to see: the Play button of a
+ * lane over its miles, the Discard button beside the pile.
  */
 .lane-target {
     position: absolute;
-    inset-inline-end: var(--space-2);
-    inset-block-end: var(--space-2);
+    inset-block-start: 50%;
+    inset-inline-start: var(--space-2);
+    inline-size: 4rem;
+    padding: var(--space-1);
+    font-size: 0.75rem;
+    transform: translateY(-50%);
 }
 
 .pile-target {
     position: absolute;
-    inset-inline: 0;
-    inset-block-end: 0;
+    inset-block-start: 50%;
+    inset-inline-start: calc(100% + var(--space-1));
     margin: 0;
-    padding: var(--space-1) var(--space-2);
+    padding: var(--space-1);
     font-size: 0.8rem;
+    transform: translateY(-50%);
+    white-space: nowrap;
 }
 
-/* Laid over the piles, so its coming and going moves nothing on the table. */
+/*
+ * Laid over the top bar, which is as tall as its three lines of alert, so its
+ * coming and going moves nothing on the table, and its countdown is at the
+ * top, never under the hand.
+ */
 .hazard-banner {
     position: absolute;
+    inset-block-start: 0;
     inset-inline: 0;
-    inset-block-end: 0;
     z-index: 1;
+    min-block-size: 100%;
     box-shadow: 0 0.25rem 0.75rem rgb(0 0 0 / 25%);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-2);
-    padding: var(--space-2) var(--space-3);
+    column-gap: var(--space-2);
+    padding: var(--space-1) var(--space-2);
     border: 3px solid #7a1414;
     border-radius: 0.75rem;
     background: #ffe3e3;
@@ -932,13 +945,15 @@ svg {
 }
 
 .hazard-title {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
 }
 
 /* The title and the countdown share a row; what to do goes under them. */
 .hazard-alert {
     flex-basis: 100%;
+    font-size: 0.9rem;
     font-weight: 600;
+    line-height: 1.25;
 }
 
 .countdown {
