@@ -10,9 +10,9 @@ import { voidWire } from "../api/outcomes.mjs";
 import { prefersReducedMotion, useFlyingCards } from "../animation/FlyingCard.js";
 import { drawnSlots } from "../animation/shownTable.mjs";
 import { useAnimator } from "../animation/useAnimator.js";
-import { useSound } from "../sound/useSound.js";
+import { useAudioEngine, useSound } from "../sound/useSound.js";
 import type { EventBatch } from "../state/screenStore.mjs";
-import { EndGameDialog } from "../table/EndGameDialog.js";
+import { EndGameDialog, type EndGameHandle } from "../table/EndGameDialog.js";
 import { ExtensionOffer } from "../table/ExtensionOffer.js";
 import { Hand } from "../table/Hand.js";
 import { HazardBanner } from "../table/HazardBanner.js";
@@ -20,6 +20,7 @@ import { LastMove } from "../table/LastMove.js";
 import { Piles } from "../table/Piles.js";
 import { playerOnTurn } from "../table/playerOnTurn.mjs";
 import { targetsFor, type Targets } from "../table/playController.mjs";
+import { TableMenu } from "../table/TableMenu.js";
 import { TeamRow } from "../table/TeamRow.js";
 import { TopBar } from "../table/TopBar.js";
 import { scrollToUncover } from "../table/uncover.mjs";
@@ -45,6 +46,18 @@ export interface GameScreenProps {
     pendingEvents: ReadonlyArray<EventBatch>;
     /** Marks a batch as played. */
     consumeEvents: (id: number) => void;
+}
+
+
+/**
+ * Whether the page leaves out the shell's header for this screen: at the
+ * table and between races, the top bar's menu (mute, End game) takes its
+ * place; the game summary keeps the header.
+ * @param screen - The screen the server sent
+ * @returns True for a Playing screen that is not the game summary
+ */
+export function hidesShellBar(screen: Screen): boolean {
+    return screen.kind === "Playing" && screen.view.phase.kind !== "GameOver";
 }
 
 
@@ -76,7 +89,8 @@ function barView(live: PlayerView, shown: PlayerView): PlayerView {
 
 
 /**
- * The game table: the message bar, one row per team, the last move, the
+ * The game table: the message bar with the menu button (mute, and End game
+ * for the organizer), one row per team, the last move, the
  * piles and the viewer's hand, plus the hazard banner and the Extension
  * offer when they apply.  A play is two taps: a card, then a target (a lane,
  * the discard pile, or Play); the server judges it, and a refusal shows in
@@ -122,6 +136,9 @@ export function GameScreen(props: GameScreenProps): ReactElement {
     const flyingIn = view.phase.kind === "HazardIncoming" ?
         new Set<number>() :
         drawnSlots(view.me.hand, drawing);
+    const engine = useAudioEngine();
+    const endGame = useRef<EndGameHandle>(null);
+    const hasMenu = hidesShellBar(screen);
     const robots = Option.fromNullable(screen.robots);
     const connected = Option.fromNullable(screen.connected);
 
@@ -280,16 +297,22 @@ export function GameScreen(props: GameScreenProps): ReactElement {
                 }
             }}
         >
-            <div className="top-slot">
+            <div className={hasMenu ? "top-slot has-menu" : "top-slot"}>
                 <TopBar text={message.text} tone={message.tone} />
                 <HazardBanner
                     screen={screen}
                     alert={override.match((o) => o.text, () => hazardAlertText(view))}
                 />
+                {hasMenu ?
+                    <TableMenu
+                        engine={engine}
+                        onEndGame={screen.isOrganizer ?
+                            new SomeOption(() => endGame.current?.open()) :
+                            NoneOption.get()}
+                    /> :
+                    null}
             </div>
-            {screen.isOrganizer && view.phase.kind !== "GameOver" ?
-                <EndGameDialog api={api} /> :
-                null}
+            {screen.isOrganizer && hasMenu ? <EndGameDialog ref={endGame} api={api} /> : null}
             {body}
             {flying.layer}
         </section>

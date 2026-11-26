@@ -4,7 +4,7 @@ import { useLayoutEffect, useState, type ReactElement } from "react";
 import { type Api } from "./api/client.mjs";
 import { ConnectionBanner } from "./screens/ConnectionBanner.js";
 import { ErrorBoundary } from "./screens/ErrorBoundary.js";
-import { GameScreen } from "./screens/GameScreen.js";
+import { GameScreen, hidesShellBar } from "./screens/GameScreen.js";
 import { LobbyScreen } from "./screens/LobbyScreen.js";
 import { NameEntryScreen } from "./screens/NameEntryScreen.js";
 import { Shell } from "./screens/Shell.js";
@@ -107,9 +107,13 @@ function Following(props: FollowingProps): ReactElement {
     }, [place]);
 
     return (
-        <Shell controls={props.mute} banner={<ConnectionBanner status={snapshot.status} />}>
-            {/* A screen that throws keeps the header and the banner; the next
-                screen from the server tries again. */}
+        <Shell
+            controls={props.mute}
+            banner={<ConnectionBanner status={snapshot.status} />}
+            hideBar={snapshot.screen.match(hidesShellBar, () => false)}
+        >
+            {/* A screen that throws keeps the header (if it has one) and the
+                banner; the next screen from the server tries again. */}
             <ErrorBoundary resetKey={snapshot.screen}>
                 {snapshot.screen.isNone ?
                     <section className="screen"><p>Connecting...</p></section> :

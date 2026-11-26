@@ -123,6 +123,14 @@ svg {
     gap: var(--space-2);
 }
 
+/*
+ * No header (the game table): the page keeps the room the header's top
+ * padding gave the notch and the status bar.
+ */
+.shell.no-bar {
+    padding-top: env(safe-area-inset-top);
+}
+
 /* A flex column, so the game table can stretch and keep its hand at the bottom. */
 .shell-main {
     display: flex;
@@ -656,6 +664,124 @@ svg {
     position: relative;
 }
 
+/*
+ * The menu button sits at the top right, over the top bar and the hazard
+ * banner (above both), which keep its width and a gap free of text.
+ */
+.top-slot.has-menu {
+    --menu-inset:   var(--space-1);
+    --menu-reserve: calc(44px + var(--menu-inset) + var(--space-2));
+}
+
+.has-menu .top-bar {
+    padding-inline-end: var(--menu-reserve);
+}
+
+/*
+ * The button costs the message 40px of width: the hazard alert, three lines
+ * on a 320px phone before, is four there and up to a 348px phone (it is three
+ * from 350px: measured for every hazard with its safety, 10 seconds, and the
+ * other messages).  Reserving the fourth line keeps the alert from pushing
+ * the table; 20rem is the same bound as the hand's.
+ */
+@container (max-width: 20rem) {
+    .has-menu .top-bar {
+        min-block-size: calc(4 * 1.4em + 2 * var(--space-2));
+    }
+}
+
+/*
+ * In the banner only the title row and the alert's first line are beside the
+ * button; the rest of the alert has the whole width.  The reserve is the
+ * button's side less the banner's border and padding.
+ */
+.has-menu .hazard-banner {
+    --banner-reserve: calc(var(--menu-reserve) - var(--space-2) - 3px);
+}
+
+.has-menu .countdown {
+    margin-inline-end: var(--banner-reserve);
+}
+
+.has-menu .hazard-alert::before {
+    content: "";
+    float: right;
+    inline-size: var(--banner-reserve);
+    block-size: 1.25em;
+}
+
+.table-menu {
+    position: absolute;
+    inset-block-start: var(--menu-inset);
+    inset-inline-end: var(--menu-inset);
+    z-index: 3;
+}
+
+/* A speaker or hamburger icon: always at least 44 by 44 pixels. */
+.menu-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.menu-button[aria-expanded="true"] {
+    border-color: var(--color-text);
+    background: var(--color-bg);
+}
+
+/* Over the table, never moving it; it ends at the button's right edge. */
+.menu-list {
+    position: absolute;
+    inset-block-start: calc(100% + var(--space-1));
+    inset-inline-end: 0;
+    min-inline-size: 12rem;
+    max-inline-size: calc(100vw - 2 * var(--space-3));
+    overflow: hidden;
+    border: 2px solid var(--color-text);
+    border-radius: 0.5rem;
+    background: var(--color-surface);
+    box-shadow: 0 0.25rem 0.75rem rgb(0 0 0 / 25%);
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    inline-size: 100%;
+    min-block-size: 44px;
+    padding: 0 var(--space-3);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    cursor: pointer;
+    font-weight: 600;
+    text-align: start;
+    white-space: nowrap;
+}
+
+.menu-item + .menu-item {
+    border-top: 1px solid var(--color-border);
+}
+
+.menu-item:hover,
+.menu-item:focus-visible {
+    background: var(--color-bg);
+}
+
+.menu-item:focus-visible {
+    outline: 3px solid var(--color-text);
+    outline-offset: -3px;
+}
+
+.menu-item.danger {
+    color: var(--color-danger);
+}
+
 .piles {
     display: flex;
     justify-content: center;
@@ -1023,16 +1149,6 @@ svg {
 
 
 /* Race summary, score sheet, game over. */
-
-/* The portal target of ShellControls: it adds no box of its own. */
-.shell-slot {
-    display: contents;
-}
-
-.shell-button {
-    padding-block: var(--space-1);
-    font-size: 0.85rem;
-}
 
 /* The speaker icon in the header: always at least 44 by 44 pixels. */
 .mute-button {
