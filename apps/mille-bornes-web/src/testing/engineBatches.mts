@@ -223,13 +223,17 @@ export const flatTireAttack: PlayerCommand = {
 export const flatTireWindow: Game = play(beforeFlatTire, "Ann", flatTireAttack);
 
 
+/** A 2-seat game on Ann's turn, 100 miles short of 700, with a 100 in hand. */
+export const beforeExtensionOffer: Game = arrange(
+    2,
+    [["Ann", [Card.dist100, Card.dist25]]],
+    [rollingZone(["200", "200", "100", "100"]), rollingZone()]
+);
+
+
 /** A 2-seat game where Ann has just reached 700 miles and decides on Extension. */
 export const extensionOffer: Game = play(
-    arrange(
-        2,
-        [["Ann", [Card.dist100, Card.dist25]]],
-        [rollingZone(["200", "200", "100", "100"]), rollingZone()]
-    ),
+    beforeExtensionOffer,
     "Ann",
     { type: "Drive", card: Card.dist100 }
 );

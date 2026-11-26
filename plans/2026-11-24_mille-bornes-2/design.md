@@ -248,6 +248,7 @@ with one row per line of the rulebook's score sheet (total brought forward, mile
   The lanes, the piles and the top bar show the table as the animations have brought it:
   a card's result appears when the card lands,
   while the hand and every control follow the live state, so no play waits for an animation.
+  The top bar says at once what the player can act on (a hazard alert, their turn or their Extension offer).
   A backlog is shortened (older batches play faster, the oldest are skipped),
   so the table never falls far behind the game.
 - Sound effects: a sound per card kind or event (for example roll, flat tire, accident, Coup Fourre fanfare, your-turn chime, a honk for Sir Honks-a-Lot), unlocked by the first tap, with a persisted mute control.

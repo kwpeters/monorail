@@ -63,13 +63,15 @@ function windowSeconds(screen: PlayingData): Option<number> {
 
 
 // The top bar tells what the table shows (`shown`), but says at once what
-// must not wait: an alert, and the end of the viewer's turn (it never says
-// "Your turn" once it is over).
+// concerns the viewer's own controls: an alert, and the viewer's turn or
+// offer, which start and end with them (never "Your turn" over an offer, or
+// once the turn is over).
 function barView(live: PlayerView, shown: PlayerView): PlayerView {
-    const tone = (v: PlayerView): string => topBarMessage(v).tone;
-    const now = tone(live) === "Alert" || tone(shown) === "Alert" ||
-        (tone(shown) === "MyTurn" && tone(live) !== "MyTurn");
-    return now ? live : shown;
+    const now = (v: PlayerView): boolean => {
+        const { tone } = topBarMessage(v);
+        return tone === "Alert" || tone === "MyTurn";
+    };
+    return now(live) || now(shown) ? live : shown;
 }
 
 
@@ -84,7 +86,8 @@ function barView(live: PlayerView, shown: PlayerView): PlayerView {
  * playing, so the words and the motion agree; the batch's sounds and
  * vibration start with it.  The lanes, the piles and the top bar show the
  * table as the animations have brought it (`useAnimator()`'s shown view):
- * a card's result appears when it lands.  Everything the player acts on
+ * a card's result appears when it lands; the top bar says at once what the
+ * viewer can act on (an alert, their turn or offer).  Everything the player acts on
  * (the hand, the buttons, the hazard banner) follows the live view, so a
  * play is never held back by an animation; a card the player drew stays
  * hidden in its place until its flight lands, except in a hazard window.
