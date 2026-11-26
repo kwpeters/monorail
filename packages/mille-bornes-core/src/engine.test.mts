@@ -1,5 +1,5 @@
 import { type Result } from "@repo/depot/result";
-import { Card, type DistanceCard, type HazardCard } from "./card.mjs";
+import { Card, type DistanceCard, type HazardCard, type SafetyCard } from "./card.mjs";
 import { type Applied, type PlayerCommand, type SystemCommand } from "./commands.mjs";
 import { createDeck, type DeckKind, type ShuffledDeck } from "./deck.mjs";
 import { newZone, zoneMiles, type DrivingZone } from "./drivingZone.mjs";
@@ -730,6 +730,83 @@ describe("engine", () => {
                 expect(events).toEqual([
                     { type: "HazardPlayed", player: ann, card: Card.accident, targetTeam: team1 },
                 ]);
+            });
+
+
+            describe("when the hazard's safety is already played", () => {
+
+                const noSafeties = [six(Card.roll), six(Card.dist50)];
+
+
+                it("lands the hazard at once when another team has the safety", () => {
+                    // Ann (Team 0) attacks Cy (Team 2); Team 1 has Driving Ace.
+                    const aceDown = [{ card: Card.drivingAce, coupFourre: false }];
+                    const g = buildGame({
+                        config:   threeSolo(),
+                        hands:    [[Card.accident, Card.dist25, Card.roll], six(Card.roll), six(Card.dist50)],
+                        zones:    [rollingAt(), { ...rollingAt(), safeties: aceDown }, rollingAt()],
+                        drawPile: [Card.dist200, Card.spareTire],
+                    });
+                    const team2 = 2 as TeamIndex;
+                    const { game, events } = play(g, ann, { type: "Attack", card: Card.accident, targetTeam: team2 });
+                    expect(events.slice(0, 2)).toEqual([
+                        { type: "HazardPlayed", player: ann, card: Card.accident, targetTeam: team2 },
+                        { type: "HazardLanded", card: Card.accident, targetTeam: team2 },
+                    ]);
+                    expect(events.filter((e) => e.type === "HazardPlayed" || e.type === "HazardLanded").length)
+                    .toBe(2);
+                    expect(game.teams[2]!.zone.status).toEqual({ kind: "Hazard", hazard: Card.accident });
+                    expect(game.phase).toEqual({ kind: "Turn", player: bob });
+                });
+
+
+                it("lands the hazard at once when the attacker's own team has the safety", () => {
+                    const aceDown = [{ card: Card.drivingAce, coupFourre: false }];
+                    const g = attackGame({
+                        hands: [
+                            [Card.accident, Card.dist25, Card.roll],
+                            six(Card.roll), six(Card.dist50), six(Card.roll),
+                        ],
+                        zones: [{ ...rollingAt(), safeties: aceDown }, rollingAt()],
+                    });
+                    const { game, events } = play(g, ann, { type: "Attack", card: Card.accident, targetTeam: team1 });
+                    expect(events.slice(0, 2).map((e) => e.type)).toEqual(["HazardPlayed", "HazardLanded"]);
+                    expect(game.teams[1]!.zone.status).toEqual({ kind: "Hazard", hazard: Card.accident });
+                    expect(game.phase).toEqual({ kind: "Turn", player: bob });
+                });
+
+
+                it("lands each kind of hazard at once", () => {
+                    const pairs: ReadonlyArray<[HazardCard, SafetyCard]> = [
+                        [Card.accident, Card.drivingAce],
+                        [Card.flatTire, Card.punctureProof],
+                        [Card.outOfGas, Card.extraTank],
+                        [Card.stop, Card.rightOfWay],
+                        [Card.speedLimit, Card.rightOfWay],
+                    ];
+                    for (const [hazard, safety] of pairs) {
+                        const g = attackGame({
+                            hands: [[hazard, Card.dist25, Card.roll], ...noSafeties, six(Card.roll)],
+                            zones: [
+                                { ...rollingAt(), safeties: [{ card: safety, coupFourre: false }] },
+                                rollingAt(),
+                            ],
+                        });
+                        const { game, events } = play(g, ann, { type: "Attack", card: hazard, targetTeam: team1 });
+                        expect(events.slice(0, 2).map((e) => e.type)).withContext(hazard)
+                        .toEqual(["HazardPlayed", "HazardLanded"]);
+                        expect(game.phase).withContext(hazard).toEqual({ kind: "Turn", player: bob });
+                    }
+                });
+
+
+                it("still opens the window when the safety is not played anywhere", () => {
+                    const g = attackGame({ zones: [rollingAt(), rollingAt()] });
+                    const { game, events } = play(g, ann, { type: "Attack", card: Card.accident, targetTeam: team1 });
+                    expect(game.phase.kind).toBe("HazardIncoming");
+                    expect(events.map((e) => e.type)).toEqual(["HazardPlayed"]);
+                });
+
             });
 
 

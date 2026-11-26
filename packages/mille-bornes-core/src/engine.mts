@@ -1,9 +1,9 @@
 import { NoneOption, Option, SomeOption } from "@repo/depot/option";
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
-import { cardSchema, type Card, type SafetyCard } from "./card.mjs";
+import { cardSchema, safetyFor, type Card, type SafetyCard } from "./card.mjs";
 import { type Applied, type PlayerCommand, type SystemCommand } from "./commands.mjs";
 import { ShuffledDeck } from "./deck.mjs";
-import { landHazard, newZone, zoneMiles, type ZoneChange } from "./drivingZone.mjs";
+import { hasSafety, landHazard, newZone, zoneMiles, type ZoneChange } from "./drivingZone.mjs";
 import { type GameEvent } from "./events.mjs";
 import {
     seatOrder, validateGameConfig, type Game, type GameConfig, type PlayerState, type TeamState
@@ -230,7 +230,8 @@ function decideExtension(g: Game, call: boolean): Result<Applied, Rejection> {
 type AttackCommand = Extract<PlayerCommand, { type: "Attack" }>;
 
 
-// The hazard stays in flight (in the phase) until the window closes.
+// Opens the hazard window: the hazard stays in flight (in the phase) until the
+// window closes.
 function attack(g: Game, index: number, cmd: AttackCommand): Applied {
     const attacker = g.players[index]!.seat.id;
     return {
@@ -246,6 +247,23 @@ function attack(g: Game, index: number, cmd: AttackCommand): Applied {
         },
         events: [{ type: "HazardPlayed", player: attacker, card: cmd.card, targetTeam: cmd.targetTeam }],
     };
+}
+
+
+// A deck has one copy of each safety, so once it is on any team's drive pile
+// no one can hold it: no Coup Fourre is possible and the hazard lands at once
+// (HazardPlayed and HazardLanded in one Applied, no HazardIncoming state).
+function playAttack(g: Game, index: number, cmd: AttackCommand): Applied {
+    const opened = attack(g, index, cmd);
+    const safety = safetyFor(cmd.card);
+    if (!g.teams.some((t) => hasSafety(t.zone, safety))) {
+        return opened;
+    }
+    const closed = closeHazardWindow(opened.game);
+    // closeHazardWindow() cannot fail: attack() has just opened the window.
+    return closed.failed ?
+        opened :
+        { game: closed.value.game, events: [...opened.events, ...closed.value.events] };
 }
 
 
@@ -283,6 +301,9 @@ function coupFourre(
  * card, and moves the game on (the next turn, an Extension offer, or the end
  * of the race).  An Attack opens the hazard window (`HazardIncoming`) and
  * changes no zone; a Coup Fourre answers it and starts the player's turn.
+ * When the hazard's safety is already on any team's drive pile, no one can
+ * hold it, so no window opens: the hazard lands at once and the events are
+ * HazardPlayed then HazardLanded.
  * CallExtension and DeclineExtension resolve an Extension offer.
  * @param g - The game
  * @param by - The player issuing the command
@@ -305,7 +326,7 @@ export function applyPlayerCommand(
             case "Discard":
                 return new SucceededResult(playCard(g, index, cmd, change));
             case "Attack":
-                return new SucceededResult(attack(g, index, cmd));
+                return new SucceededResult(playAttack(g, index, cmd));
             case "CoupFourre":
                 return coupFourre(g, index, cmd.card, change.throwIfNone());
             case "CallExtension":
@@ -317,7 +338,8 @@ export function applyPlayerCommand(
 
 
 // Lands the hazard in flight, then play passes to the player after the
-// attacker.  The timer must always move the game on, so a hazard that cannot
+// attacker.  Called when the window's timer fires, or at once by playAttack()
+// when no window is needed.  The timer must always move the game on, so a hazard that cannot
 // land (only in a hostile snapshot: nothing changes a zone while the window
 // is open) goes to the discard pile instead.
 function closeHazardWindow(g: Game): Result<Applied, Rejection> {
