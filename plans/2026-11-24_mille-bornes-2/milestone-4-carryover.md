@@ -36,3 +36,18 @@ Everything below is for the rehearsal with real phones and for later polish.
 - No e2e covers the Extension offer or "Stop here" (unit tests with real engine states do).
 - Score sheet rows show points only (counts such as "2 × 100" would be clearer); `EndGameDialog` duplicates the waiting-room cancel dialog; events say "Team N" instead of "your team".
 - Server: the deferred minors listed in `milestone-3-carryover.md` still apply.
+
+## Added after the first phone tests
+
+- Sound in iOS Safari: the owner later reported it works now, and wants to come back to it.
+  If it fails again, try starting the silent looping `<audio>` element in addition to `navigator.audioSession.type = "playback"`.
+- Animations were reworked (stable layout, longer eased flights, the table shows a card's result when its card lands).
+  Measured only in desktop Chromium, also with 4x CPU throttling.
+  Judge it on a real phone, especially the cost of one synchronous render per landing (`flushSync` in `useAnimator`).
+- The Coup Fourre window is now 8 seconds, and a hazard whose safety is already played lands at once.
+- The hand is docked in two rows with the buttons in a right column; with large system text or zoom it needs more rows than before.
+- The hazard banner overlays the top bar, and the pinned hazard card covers the hit team's miles during the window.
+- Known small gaps:
+  a status chip wrapping in a lane still shifts the table by about 21 px;
+  a drawn card can flicker back into hiding if a hazard window ends before its flight lands;
+  the first batch of a game or a race is shown live.
