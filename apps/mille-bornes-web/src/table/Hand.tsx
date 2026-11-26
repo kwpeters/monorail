@@ -118,9 +118,11 @@ interface Help {
 /**
  * The viewer's cards, in hand order, as toggle buttons: tapping one reports
  * it, a long press explains it, and the picked-up card can show a Play
- * button and always shows a "What's this?" button that explains it too (the
- * way in for a keyboard, and for anyone who does not know the long press).
- * The row wraps on narrow screens, so nothing is clipped.
+ * button and always shows a "What's this?" button (a question mark) that
+ * explains it too (the way in for a keyboard, and for anyone who does not
+ * know the long press).  The cards wrap on narrow screens, so nothing is
+ * clipped; the buttons are a column beside them that is there even when
+ * empty, so the cards stay put when a card is picked up.
  * @param props - The cards, their state and the handlers
  * @returns The hand
  */
@@ -158,25 +160,29 @@ export function Hand(props: HandProps): ReactElement {
                     </li>
                 ))}
             </ul>
-            {picked.isSome ?
-                <div className="hand-actions">
-                    {onPlay.isSome ?
-                        <button type="button" className="button primary" onClick={onPlay.value}>
-                            Play
-                        </button> :
-                        null}
-                    <button
-                        type="button"
-                        className="button"
-                        onClick={(e) => {
-                            const button = e.currentTarget;
-                            setHelp(new SomeOption({ card: picked.value, button }));
-                        }}
-                    >
-                        What's this?
-                    </button>
-                </div> :
-                null}
+            {/* Always there, so the cards stay put when a card is picked up. */}
+            <div className="hand-actions">
+                {picked.isSome ?
+                    <>
+                        {onPlay.isSome ?
+                            <button type="button" className="button primary" onClick={onPlay.value}>
+                                Play
+                            </button> :
+                            null}
+                        <button
+                            type="button"
+                            className="button"
+                            onClick={(e) => {
+                                const button = e.currentTarget;
+                                setHelp(new SomeOption({ card: picked.value, button }));
+                            }}
+                        >
+                            <span aria-hidden="true">❓</span>
+                            <span className="visually-hidden">What's this?</span>
+                        </button>
+                    </> :
+                    null}
+            </div>
             {help.isSome ? <CardHelp card={help.value.card} onClose={closeHelp} /> : null}
         </section>
     );

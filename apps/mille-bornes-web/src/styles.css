@@ -676,6 +676,11 @@ svg {
     position: sticky;
     bottom: 0;
     z-index: 1;
+    /* The cards on the left, the buttons in a column of their own on the right. */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: var(--space-1);
+    align-items: center;
     margin-block-start: auto;
     padding: var(--space-2);
     padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
@@ -685,7 +690,19 @@ svg {
 }
 /* eslint-enable css/no-invalid-properties */
 
+/*
+ * A 320px phone leaves 224px for the cards beside the buttons, and four cards
+ * need 236px: the hand takes the table's side padding too, so seven cards
+ * make two rows.
+ */
+@container (max-width: 20rem) {
+    .hand {
+        margin-inline: calc(-1 * var(--space-2));
+    }
+}
+
 .hand-label {
+    grid-column: 1 / -1;
     margin-block-end: var(--space-2);
     color: var(--color-text-soft);
     font-size: 0.8rem;
@@ -826,10 +843,18 @@ svg {
     font-weight: 700;
 }
 
+/* Always there, even empty, so the cards do not move when a card is picked up. */
 .hand-actions {
     display: flex;
-    justify-content: center;
-    margin-block-start: var(--space-2);
+    flex-direction: column;
+    gap: var(--space-1);
+    min-inline-size: 2.75rem;
+    /* Room for both buttons, so a single row of cards does not grow on a pick. */
+    min-block-size: calc(2 * 2.75rem + var(--space-1));
+}
+
+.hand-actions .button {
+    padding-inline: 0;
 }
 
 /* A place the picked-up card can go: a dashed frame plus its button's words. */

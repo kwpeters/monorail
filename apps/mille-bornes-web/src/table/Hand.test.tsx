@@ -110,6 +110,30 @@ describe("Hand", () => {
     });
 
 
+    describe("the buttons column", () => {
+
+        it("is there, empty, while no card is picked up", () => {
+            const { container } = showHand([Card.dist25]);
+            const column = container.querySelector(".hand-actions");
+            expect(column).toBeInTheDocument();
+            expect(column).toBeEmptyDOMElement();
+        });
+
+
+        it("holds Play, then What's this?, once a card is picked up", () => {
+            const { container } = showHand([Card.dist25], {
+                selected: new SomeOption(0),
+                onPlay:   new SomeOption(vi.fn()),
+            });
+            const column = container.querySelector<HTMLElement>(".hand-actions")!;
+            expect(within(column).getAllByRole("button").map((b) => b.textContent))
+            .toEqual(["Play", "❓What's this?"]);
+            expect(container.querySelector(".cards")!.nextElementSibling).toBe(column);
+        });
+
+    });
+
+
     describe("the Play button", () => {
 
         it("is there only when the selected card has a play that needs no target", () => {
@@ -134,6 +158,14 @@ describe("Hand", () => {
             rerender(<Hand {...props} selected={new SomeOption(1)} />);
             expect(screen.getByRole("button", { name: "What's this?" })).toBeInTheDocument();
             expect(screen.queryByRole("button", { name: "Play" })).not.toBeInTheDocument();
+        });
+
+
+        it("shows a question mark, hidden from assistive tech, and is named What's this?", () => {
+            showHand([Card.flatTire], { selected: new SomeOption(0) });
+            const whatsThis = screen.getByRole("button", { name: "What's this?" });
+            expect(within(whatsThis).getByText("❓")).toHaveAttribute("aria-hidden", "true");
+            expect(within(whatsThis).getByText("What's this?")).toHaveClass("visually-hidden");
         });
 
 

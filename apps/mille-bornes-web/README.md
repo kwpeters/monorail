@@ -26,7 +26,8 @@ and every game with an End game button.
 
 At the table a player taps a card, then where it goes.
 A long press on a card explains it,
-and so does the **What's this?** button beside Play once a card is picked up
+and so does the ❓ button (named **What's this?**)
+under Play, beside the cards, once a card is picked up
 (the way in from a keyboard, too).
 
 ## Development
