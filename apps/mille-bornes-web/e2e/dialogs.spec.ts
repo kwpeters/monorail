@@ -44,14 +44,16 @@ test.describe("native dialogs in a real browser", () => {
         await expect(ann.getByRole("heading", { name: "Your game" })).toBeVisible();
 
         await startGame(ann);
-        const end = ann.getByRole("banner").getByRole("button", { name: "End game" });
-        await end.tap();
+        // At the table End game is in the top bar's menu, not in a header.
+        const menu = ann.getByRole("button", { name: "Menu" });
+        await menu.tap();
+        await ann.getByRole("menuitem", { name: "End game" }).tap();
         const endDialog = ann.getByRole("dialog", { name: "End the game for everyone?" });
         await expect(endDialog).toBeVisible();
         await expect(endDialog.getByRole("button", { name: "Keep playing" })).toBeFocused();
         await ann.keyboard.press("Escape");
         await expect(endDialog).toBeHidden();
-        await expect(end).toBeFocused();
+        await expect(menu).toBeFocused();
         await expect(hand(ann)).toBeVisible();
     });
 

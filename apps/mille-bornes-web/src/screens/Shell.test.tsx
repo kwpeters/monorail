@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { Shell, ShellControls } from "./Shell.js";
+import { Shell } from "./Shell.js";
 
 
 describe("Shell", () => {
@@ -33,44 +33,35 @@ describe("Shell", () => {
     });
 
 
-    describe("ShellControls", () => {
+    describe("hideBar", () => {
 
-        it("puts its children in the header, beside the shell's own controls", () => {
-            render(
-                <Shell controls={<button>Mute</button>}>
-                    <ShellControls><button>End game</button></ShellControls>
-                    <p>table</p>
-                </Shell>
-            );
-            const header = within(screen.getByRole("banner"));
-            expect(header.getByRole("button", { name: "End game" })).toBeInTheDocument();
-            expect(header.getByRole("button", { name: "Mute" })).toBeInTheDocument();
-            expect(within(screen.getByRole("main")).queryByRole("button")).toBeNull();
+        it("leaves out the header and its controls, and keeps the main landmark", () => {
+            render(<Shell hideBar controls={<button>Mute</button>}><p>table</p></Shell>);
+            expect(screen.queryByRole("banner")).toBeNull();
+            expect(screen.queryByRole("button", { name: "Mute" })).toBeNull();
+            expect(within(screen.getByRole("main")).getByText("table")).toBeInTheDocument();
         });
 
 
-        it("keeps the element it shows when the screen renders again", () => {
-            const { rerender } = render(
-                <Shell><ShellControls><input aria-label="Note" /></ShellControls></Shell>
-            );
-            const input = within(screen.getByRole("banner")).getByLabelText("Note");
-            rerender(<Shell><ShellControls><input aria-label="Note" /></ShellControls></Shell>);
-            expect(within(screen.getByRole("banner")).getByLabelText("Note")).toBe(input);
+        it("keeps the one h1 for the page, hidden from sight", () => {
+            render(<Shell hideBar><h2>Table</h2></Shell>);
+            const headings = screen.getAllByRole("heading", { level: 1 });
+            expect(headings).toHaveLength(1);
+            expect(headings[0]).toHaveTextContent("Mille Bornes");
+            expect(headings[0]).toHaveClass("visually-hidden");
         });
 
 
-        it("shows its children in place outside a shell", () => {
-            render(<ShellControls><button>End game</button></ShellControls>);
-            expect(screen.getByRole("button", { name: "End game" })).toBeInTheDocument();
+        it("still shows the banner above the main content", () => {
+            render(<Shell hideBar banner={<p>Reconnecting...</p>}>content</Shell>);
+            expect(screen.getByText("Reconnecting...")).toBeInTheDocument();
+            expect(within(screen.getByRole("main")).queryByText("Reconnecting...")).toBeNull();
         });
 
 
-        it("removes its children from the header when it goes away", () => {
-            const { rerender } = render(
-                <Shell><ShellControls><button>End game</button></ShellControls></Shell>
-            );
-            rerender(<Shell>nothing</Shell>);
-            expect(screen.queryByRole("button", { name: "End game" })).not.toBeInTheDocument();
+        it("keeps the header when it is false", () => {
+            render(<Shell hideBar={false}>content</Shell>);
+            expect(screen.getByRole("banner")).toBeInTheDocument();
         });
 
     });

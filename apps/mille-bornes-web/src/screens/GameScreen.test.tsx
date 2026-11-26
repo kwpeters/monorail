@@ -26,7 +26,7 @@ import {
 } from "../testing/zoneFixtures.mjs";
 import { finishedGame, screenOf } from "../testing/finishedGames.mjs";
 import type { EventBatch } from "../state/screenStore.mjs";
-import { GameScreen, type PlayingData } from "./GameScreen.js";
+import { GameScreen, hidesShellBar, type PlayingData } from "./GameScreen.js";
 import { Shell } from "./Shell.js";
 
 
@@ -1180,7 +1180,7 @@ describe("GameScreen", () => {
 
         function inShell(data: PlayingData, fake: FakeApi = createFakeApi()) {
             const ui = (d: PlayingData): ReactElement => (
-                <Shell>
+                <Shell hideBar={hidesShellBar(d)}>
                     <GameScreen
                         screen={d}
                         api={fake.api}
@@ -1194,8 +1194,15 @@ describe("GameScreen", () => {
         }
 
 
-        function endGameControl(): HTMLElement | null {
-            return within(screen.getByRole("banner")).queryByRole("button", { name: "End game" });
+        // The control is the End game item of the top bar's menu, which has to
+        // be opened first.
+        async function endGameControl(user = userEvent.setup()): Promise<HTMLElement | null> {
+            const menu = screen.queryByRole("button", { name: "Menu" });
+            if (menu === null) {
+                return null;
+            }
+            await user.click(menu);
+            return screen.queryByRole("menuitem", { name: "End game" });
         }
 
 
@@ -1276,36 +1283,68 @@ describe("GameScreen", () => {
         });
 
 
-        it("gives the organizer an End game control in the header while playing", () => {
+        it("gives the organizer an End game item in the menu while playing", async () => {
             inShell(playingScreen(viewOf(midRace, "Ann"), { isOrganizer: true }));
-            expect(endGameControl()).toBeInTheDocument();
+            expect(await endGameControl()).toBeInTheDocument();
         });
 
 
-        it("gives the organizer the control between races too", () => {
+        it("gives the organizer the item between races too", async () => {
             inShell(screenOf(raceOver, "Ann", { timer: next, isOrganizer: true }));
-            expect(endGameControl()).toBeInTheDocument();
+            expect(await endGameControl()).toBeInTheDocument();
         });
 
 
-        it("gives the organizer no control once the game is over", () => {
+        it("gives the organizer no menu and no item once the game is over", async () => {
             const { again } = inShell(screenOf(raceOver, "Ann", { isOrganizer: true }));
-            expect(endGameControl()).toBeInTheDocument();
+            expect(await endGameControl()).toBeInTheDocument();
             again(screenOf(gameOver, "Ann", { isOrganizer: true }));
+            expect(screen.queryByRole("button", { name: "Menu" })).not.toBeInTheDocument();
+            expect(screen.queryByRole("menuitem", { name: "End game" })).not.toBeInTheDocument();
             expect(screen.queryByRole("button", { name: "End game" })).not.toBeInTheDocument();
         });
 
 
-        it("gives everyone else no control", () => {
+        it("gives everyone else a menu with Mute and no End game", async () => {
             for (const data of [
                 playingScreen(viewOf(midRace, "Bob")),
                 screenOf(raceOver, "Ann", { timer: next }),
-                screenOf(gameOver, "Ann"),
             ]) {
                 const { unmount } = inShell(data);
-                expect(screen.queryByRole("button", { name: "End game" })).not.toBeInTheDocument();
+                expect(await endGameControl()).toBeNull();
+                expect(screen.getByRole("menuitem", { name: "Mute sounds" })).toBeInTheDocument();
+                expect(screen.getAllByRole("menuitem")).toHaveLength(1);
                 unmount();
             }
+        });
+
+
+        it("has no menu on the game summary, where the shell's header has the controls", () => {
+            inShell(screenOf(gameOver, "Ann"));
+            expect(screen.queryByRole("button", { name: "Menu" })).not.toBeInTheDocument();
+            expect(screen.getByRole("banner")).toBeInTheDocument();
+        });
+
+
+        it("has no header while playing or between races, and no second h1", () => {
+            for (const data of [
+                playingScreen(viewOf(midRace, "Ann")),
+                screenOf(raceOver, "Ann", { timer: next }),
+            ]) {
+                const { unmount } = inShell(data);
+                expect(screen.queryByRole("banner")).not.toBeInTheDocument();
+                expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+                unmount();
+            }
+        });
+
+
+        it("puts the menu button beside the top bar's message, not inside the live region", () => {
+            inShell(playingScreen(viewOf(midRace, "Ann")));
+            const button = screen.getByRole("button", { name: "Menu" });
+            expect(bar()).not.toContainElement(button);
+            expect(button.closest(".top-slot")).toBe(bar().closest(".top-slot"));
+            expect(button.closest(".top-slot")).toHaveClass("has-menu");
         });
 
 
@@ -1314,12 +1353,17 @@ describe("GameScreen", () => {
             fake.procs.endGame.mockResolvedValueOnce(failWire("The game already ended."));
             inShell(screenOf(raceOver, "Ann", { timer: next, isOrganizer: true }), fake);
             const user = userEvent.setup();
-            await user.click(endGameControl()!);
+            await user.click((await endGameControl(user))!);
+            // Choosing it closes the menu and opens the question.
+            expect(screen.queryByRole("menu")).not.toBeInTheDocument();
             const dialog = document.querySelector("dialog")!;
+            expect(dialog).toHaveAttribute("open");
             await user.click(within(dialog).getByRole("button", { name: "End game" }));
             expect(fake.procs.endGame).toHaveBeenCalledOnce();
             expect(await screen.findByRole("alert")).toHaveTextContent("The game already ended.");
             expect(within(screen.getByRole("main")).getByRole("alert")).toBeInTheDocument();
+            // The focus is back where the question was asked from.
+            await waitFor(() => expect(screen.getByRole("button", { name: "Menu" })).toHaveFocus());
         });
 
     });

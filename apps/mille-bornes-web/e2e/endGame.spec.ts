@@ -15,7 +15,8 @@ test("the organizer ends the game: everyone else is back in the lobby with a not
     await fillWithRobots(ann, 4);
     await startGame(ann);
 
-    await ann.getByRole("button", { name: "End game" }).tap();
+    await ann.getByRole("button", { name: "Menu" }).tap();
+    await ann.getByRole("menuitem", { name: "End game" }).tap();
     const dialog = ann.getByRole("dialog", { name: "End the game for everyone?" });
     await dialog.getByRole("button", { name: "End game" }).tap();
 

@@ -1,12 +1,26 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
+import { useRef, type ReactElement } from "react";
 import { describe, expect, it } from "vitest";
 import { createFakeApi, failWire, neverSettles, type FakeApi } from "../testing/fakeApi.mjs";
-import { EndGameDialog } from "./EndGameDialog.js";
+import { EndGameDialog, type EndGameHandle } from "./EndGameDialog.js";
+
+
+// The dialog has no control of its own: its parent (the table's menu) opens
+// it through the ref.  This button stands in for that menu item.
+function Harness(props: { fake: FakeApi }): ReactElement {
+    const dialog = useRef<EndGameHandle>(null);
+    return (
+        <>
+            <button type="button" onClick={() => dialog.current?.open()}>Open question</button>
+            <EndGameDialog ref={dialog} api={props.fake.api} />
+        </>
+    );
+}
 
 
 function show(fake: FakeApi = createFakeApi()) {
-    return { ...render(<EndGameDialog api={fake.api} />), fake };
+    return { ...render(<Harness fake={fake} />), fake };
 }
 
 
@@ -16,7 +30,7 @@ function dialog(): HTMLDialogElement {
 
 
 function trigger(): HTMLElement {
-    return screen.getByRole("button", { name: "End game" });
+    return screen.getByRole("button", { name: "Open question" });
 }
 
 
@@ -27,9 +41,9 @@ function confirm(): HTMLElement {
 
 describe("EndGameDialog", () => {
 
-    it("shows an End game control and a closed dialog", () => {
+    it("shows a closed dialog and no control of its own", () => {
         show();
-        expect(trigger()).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "End game" })).not.toBeInTheDocument();
         expect(dialog()).not.toHaveAttribute("open");
         const title = within(dialog()).getByRole("heading", { hidden: true });
         expect(title).toHaveTextContent("End the game for everyone?");
@@ -47,7 +61,7 @@ describe("EndGameDialog", () => {
     });
 
 
-    it("closes on Escape without ending, and returns focus to the control", async () => {
+    it("closes on Escape without ending, and returns focus to what opened it", async () => {
         const { fake } = show();
         const user = userEvent.setup();
         await user.click(trigger());
@@ -120,7 +134,9 @@ describe("EndGameDialog", () => {
         const user = userEvent.setup();
         await user.click(trigger());
         await user.click(confirm());
-        expect(trigger()).toBeDisabled();
+        // Asking again cannot send a second request.
+        await user.click(trigger());
+        await user.click(confirm());
         expect(fake.procs.endGame).toHaveBeenCalledOnce();
     });
 

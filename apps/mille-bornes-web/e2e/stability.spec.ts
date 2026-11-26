@@ -40,6 +40,19 @@ interface Opened {
     readonly countdown: { top: number; bottom: number; right: number } | null;
     readonly handTop:   number;
     readonly width:     number;
+    /** The menu button when the banner was inserted. */
+    readonly menu:      MenuCheck;
+}
+
+
+/** Whether the menu button can be pressed while a hazard banner shows. */
+interface MenuCheck {
+    /** The element at the button's centre is the button (nothing covers it). */
+    readonly hit:     boolean;
+    /** The banner's lines of text that reach under the button. */
+    readonly overlap: ReadonlyArray<string>;
+    /** How far the banner reaches below the message box (negative: within). */
+    readonly spill:   number;
 }
 
 
@@ -96,6 +109,31 @@ async function watchTable(page: Page): Promise<void> {
             }
             return found;
         };
+        const menuCheck = (): MenuCheck => {
+            const button = document.querySelector(".menu-button");
+            const banner = document.querySelector(".hazard-banner");
+            const slot = document.querySelector(".top-slot");
+            if (button === null || banner === null || slot === null) {
+                return { hit: false, overlap: ["no menu button or banner"], spill: NaN };
+            }
+            const b = button.getBoundingClientRect();
+            const at = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
+            const overlap: Array<string> = [];
+            for (const line of banner.querySelectorAll("h2, [role='timer'], .hazard-alert")) {
+                const range = document.createRange();
+                range.selectNodeContents(line);
+                for (const r of range.getClientRects()) {
+                    if (r.left < b.right && r.right > b.left && r.top < b.bottom && r.bottom > b.top) {
+                        overlap.push(line.textContent);
+                    }
+                }
+            }
+            return {
+                hit:   at !== null && button.contains(at),
+                overlap,
+                spill: banner.getBoundingClientRect().bottom - slot.getBoundingClientRect().bottom
+            };
+        };
         const watch: Watch = { measure, opens: [], closes: [] };
         let quiet = measure();
         let quietY = window.scrollY;
@@ -127,7 +165,8 @@ async function watchTable(page: Page): Promise<void> {
                             null :
                             { top: countdown.top, bottom: countdown.bottom, right: countdown.right },
                         handTop: document.querySelector(".hand")?.getBoundingClientRect().top ?? 0,
-                        width:   window.innerWidth
+                        width:   window.innerWidth,
+                        menu:    menuCheck()
                     });
                 }
                 if ([...record.removedNodes].some(isBanner)) {
@@ -264,6 +303,12 @@ for (const [name, size] of sizes) {
             expect(o.countdown!.right).toBeLessThanOrEqual(o.width);
             expect(o.countdown!.bottom, "the countdown is above the hand")
             .toBeLessThanOrEqual(o.handTop);
+            // The player can still mute or end the game: nothing covers the
+            // menu button, and no text of the banner runs under it.
+            expect(o.menu.hit, "the menu button is on top of the banner").toBe(true);
+            expect(o.menu.overlap, "no banner text under the menu button").toEqual([]);
+            expect(o.menu.spill, "the banner stays over the message box")
+            .toBeLessThanOrEqual(tolerance);
         }
         if (size === smallPhone) {
             // On this screen the table is taller than the screen, so the page

@@ -247,7 +247,7 @@ describe("App", () => {
         });
 
 
-        it("keeps the header and banner when a screen throws, and tries the next screen", () => {
+        it("keeps the page title and banner when a screen throws, and tries the next screen", () => {
             // React reports the caught render error on the console, and jsdom as
             // an uncaught error event.
             const quiet = vi.spyOn(console, "error").mockImplementation(() => undefined);
@@ -266,7 +266,8 @@ describe("App", () => {
                 }));
                 expect(screen.getByRole("alert")).toHaveTextContent("Something went wrong");
                 expect(screen.getByRole("button", { name: "Reload" })).toBeInTheDocument();
-                expect(within(screen.getByRole("banner")).getByText("Mille Bornes"))
+                // The unknown phase counts as the table, which has no header.
+                expect(screen.getByRole("heading", { name: "Mille Bornes", level: 1 }))
                 .toBeInTheDocument();
                 expect(screen.getByText("Reconnecting...")).toBeInTheDocument();
 
@@ -449,17 +450,32 @@ describe("App", () => {
         .getByRole("button", { name: /mute sounds$/iu });
 
 
-        it("puts the mute button in the header of every screen", () => {
+        it("puts the mute button in the header of every screen but the table", () => {
+            const over = finishedGame(2, { seed: 4, length: "Quick", names: ["Ann", "Bob"] });
             const { current, view } = setup(ann);
             act(() => current().set({ screen: new SomeOption(lobby()), status: "Live" }));
             expect(muteButton()).toBeInTheDocument();
             act(() => current().set({ screen: new SomeOption(waiting(0)), status: "Live" }));
             expect(muteButton()).toBeInTheDocument();
-            act(() => current().set({ screen: new SomeOption(playing), status: "Live" }));
+            act(() => current().set({
+                screen: new SomeOption(screenOf(over.gameOver, "Ann")),
+                status: "Live"
+            }));
             expect(muteButton()).toBeInTheDocument();
             view.unmount();
             setup();
             expect(muteButton()).toBeInTheDocument();
+        });
+
+
+        it("has no header at the table: the mute switch is in the top bar's menu", async () => {
+            const { current, user } = setup(ann);
+            act(() => current().set({ screen: new SomeOption(playing), status: "Live" }));
+            expect(screen.queryByRole("banner")).not.toBeInTheDocument();
+            expect(screen.queryByRole("button", { name: /mute sounds$/iu })).toBeNull();
+            expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+            await user.click(screen.getByRole("button", { name: "Menu" }));
+            expect(screen.getByRole("menuitem", { name: "Mute sounds" })).toBeInTheDocument();
         });
 
 
@@ -470,7 +486,8 @@ describe("App", () => {
             await user.click(muteButton());
             expect(audio.muted).toBe(true);
             act(() => current().set({ screen: new SomeOption(playing), status: "Live" }));
-            expect(muteButton()).toHaveAccessibleName("Unmute sounds");
+            await user.click(screen.getByRole("button", { name: "Menu" }));
+            expect(screen.getByRole("menuitem", { name: "Unmute sounds" })).toBeInTheDocument();
         });
 
 

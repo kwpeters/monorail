@@ -75,6 +75,46 @@ describe("MuteButton", () => {
     });
 
 
+    describe("as a menu item", () => {
+
+        function showItem() {
+            const engine = createAudioEngine({
+                createContext: () => new SomeOption<AudioContextLike>(createFakeAudio().context),
+                storage:       createMemoryStorage()
+            });
+            return { ...render(<MuteButton engine={engine} variant="menuitem" />), engine };
+        }
+
+
+        it("is a menu item named for what a press does, out of the tab order", () => {
+            showItem();
+            const item = screen.getByRole("menuitem", { name: "Mute sounds" });
+            expect(item).toHaveAttribute("tabindex", "-1");
+            expect(item).toHaveTextContent("Mute sounds");
+            expect(item.querySelector("[aria-hidden='true']")).not.toBeNull();
+        });
+
+
+        it("flips its words and its icon, and mutes the engine", async () => {
+            const { engine } = showItem();
+            await userEvent.setup().click(screen.getByRole("menuitem"));
+            expect(engine.muted).toBe(true);
+            expect(screen.getByRole("menuitem", { name: "Unmute sounds" })).toHaveTextContent(
+                "🔇Unmute sounds"
+            );
+        });
+
+
+        it("is not an icon button: it has no 44 pixel icon class and no aria-label", () => {
+            showItem();
+            const item = screen.getByRole("menuitem");
+            expect(item).not.toHaveClass("mute-button");
+            expect(item).not.toHaveAttribute("aria-label");
+        });
+
+    });
+
+
     it("works from the keyboard", async () => {
         const user = userEvent.setup();
         const { engine } = show();
