@@ -186,24 +186,24 @@ describe("describeEvent", () => {
         });
 
 
-        it("names the team that was farthest ahead when the cards ran out", () => {
+        it("names the team that was farthest ahead when no team could play on", () => {
             const outcome = { kind: "Exhausted", winner: team(1), extensionCaller: null } as const;
             expect(describeRaceResult({ outcome, scores: [] }, team(0)))
-            .toBe("The cards ran out, and Team 2 was farthest ahead.");
+            .toBe("No team could play another card, and Team 2 was farthest ahead.");
         });
 
 
         it("says your team when the viewer's team was farthest ahead", () => {
             const outcome = { kind: "Exhausted", winner: team(1), extensionCaller: null } as const;
             expect(describeRaceResult({ outcome, scores: [] }, team(1)))
-            .toBe("The cards ran out, and your team was farthest ahead!");
+            .toBe("No team could play another card, and your team was farthest ahead!");
         });
 
 
-        it("says so when the cards ran out in a tie", () => {
+        it("says so when no team could play on in a tie", () => {
             const outcome = { kind: "Exhausted", winner: "Tie", extensionCaller: null } as const;
             expect(describeRaceResult({ outcome, scores: [] }, team(0)))
-            .toBe("The cards ran out, and it is a tie.");
+            .toBe("No team could play another card, and it is a tie.");
         });
 
     });
@@ -219,7 +219,7 @@ describe("describeEvent", () => {
         });
 
 
-        it("is the team farthest ahead when the cards ran out", () => {
+        it("is the team farthest ahead when no team could play on", () => {
             const outcome = { kind: "Exhausted", winner: team(1), extensionCaller: null } as const;
             expect(raceWinner({ outcome, scores: [] }).toNullable(null)).toBe(1);
         });

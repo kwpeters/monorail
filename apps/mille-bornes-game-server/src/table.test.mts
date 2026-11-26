@@ -161,6 +161,24 @@ function turnGame(annKind: SeatKind, annHand: ReadonlyArray<Card>): Game {
 }
 
 
+// Ann (human, rolling at 650) holds a 25 and a 75; Bob (a robot) needs a Roll and
+// holds only a Spare Tire.  Once Ann has driven the 25, nobody can do more than
+// discard, though both still hold cards.
+function deadAfterDrive(): Game {
+    return buildGame({
+        config: oneOnOne("Human", "Robot"),
+        hands:  [[Card.dist25, Card.dist75], [Card.spareTire]],
+        zones:  [
+            {
+                ...rolling,
+                distance: [Card.dist200, Card.dist200, Card.dist100, Card.dist100, Card.dist50],
+            },
+            newZone(),
+        ],
+    });
+}
+
+
 interface HarnessOptions {
     readonly clock?:       FakeClock;
     readonly seq?:         number;
@@ -493,6 +511,24 @@ describe("Table", () => {
                     expect(dealt.raceNumber).toEqual(2);
                     expect(dealt.players.every((p) => p.hand.length >= 6)).toBeTrue();
                     expect(checkInvariants(dealt).succeeded).toBeTrue();
+                });
+
+
+                it("ends a race early, with only the next-race timer left", () => {
+                    const h = harness(deadAfterDrive());
+
+                    h.table.submit(ann, drive25).throwIfFailed();
+
+                    expect(h.table.game.phase.kind).toEqual("RaceOver");
+                    expect(h.table.game.players.map((p) => p.hand.length)).toEqual([1, 1]);
+                    expect(eventTypes(h.updates[0])).toEqual(["DistancePlayed", "RaceEnded"]);
+                    expect(h.clock.pendingCount()).toEqual(1);
+                    expect(h.table.timer())
+                    .toEqual(new SomeOption<VisibleTimer>({ kind: "NextRace", remainingMs: 20000 }));
+
+                    h.clock.advance(20000);
+                    expect(eventTypes(h.updates[1])).toContain("RaceDealt");
+                    expect(h.table.game.raceNumber).toEqual(2);
                 });
 
 

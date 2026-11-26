@@ -24,11 +24,11 @@ export function describeRaceResult(result: RaceResult, viewerTeam: TeamIndex): s
             `${teamLabel(outcome.team)} completed the trip.`;
     }
     if (outcome.winner === "Tie") {
-        return "The cards ran out, and it is a tie.";
+        return "No team could play another card, and it is a tie.";
     }
     return outcome.winner === viewerTeam ?
-        "The cards ran out, and your team was farthest ahead!" :
-        `The cards ran out, and ${teamLabel(outcome.winner)} was farthest ahead.`;
+        "No team could play another card, and your team was farthest ahead!" :
+        `No team could play another card, and ${teamLabel(outcome.winner)} was farthest ahead.`;
 }
 
 
@@ -36,7 +36,7 @@ export function describeRaceResult(result: RaceResult, viewerTeam: TeamIndex): s
  * Gets the team that won a race.
  * @param result - The race's result
  * @returns The team that completed the trip, or was farthest ahead when the
- * cards ran out; none for a tie
+ * no team could play another card; none for a tie
  */
 export function raceWinner(result: RaceResult): Option<TeamIndex> {
     const { outcome } = result;

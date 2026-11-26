@@ -91,7 +91,7 @@ describe("RaceSummary", () => {
 
     it("says a tie is a tie and marks no winner", () => {
         show(raceOver(three.raceOvers[0]));
-        expect(screen.getByText("The cards ran out, and it is a tie.")).toBeInTheDocument();
+        expect(screen.getByText("No team could play another card, and it is a tie.")).toBeInTheDocument();
         expect(screen.queryByText("Race winner")).not.toBeInTheDocument();
     });
 
