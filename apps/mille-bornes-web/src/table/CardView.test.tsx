@@ -27,6 +27,13 @@ describe("CardView", () => {
     });
 
 
+    it("shows a short label on End of Speed Limit, keeping its full name for assistive tech", () => {
+        render(<CardView card={Card.endOfSpeedLimit} />);
+        expect(screen.getByText("End of Limit")).toHaveAttribute("aria-hidden", "true");
+        expect(screen.getByText("End of Speed Limit")).toHaveClass("visually-hidden");
+    });
+
+
     it("is made of spans only, so it can sit inside a button", () => {
         const { container } = render(<CardView card={Card.dist75} />);
         expect(container.firstElementChild!.tagName).toBe("SPAN");

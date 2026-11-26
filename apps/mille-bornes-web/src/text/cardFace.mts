@@ -9,12 +9,17 @@ export type CardKind = z.infer<typeof cardKindSchema>;
 
 /** How a card looks and what the long-press help says about it. */
 export interface CardFace {
-    readonly emoji: string;
+    readonly emoji:      string;
     /** The rulebook name, or the miles for a distance card.  Unique. */
-    readonly label: string;
-    readonly kind:  CardKind;
+    readonly label:      string;
+    /**
+     * A shorter label for the card's face, when the label will not fit the
+     * card's width.  Only the visible text; the label stays the name.
+     */
+    readonly faceLabel?: string;
+    readonly kind:       CardKind;
     /** One plain sentence for a child, ending in a period. */
-    readonly blurb: string;
+    readonly blurb:      string;
 }
 
 
@@ -89,10 +94,14 @@ const faces: Readonly<Record<Card, CardFace>> = {
         "Spare Tire fixes a Flat Tire, and then your team needs a Roll to move again, " +
         "unless it has Right of Way."
     ),
-    [Card.endOfSpeedLimit]: remedy(
-        "🐇", "End of Speed Limit",
-        "End of Speed Limit lets you play any distance card again after a Speed Limit."
-    ),
+    [Card.endOfSpeedLimit]: {
+        ...remedy(
+            "🐇", "End of Speed Limit",
+            "End of Speed Limit lets you play any distance card again after a Speed Limit."
+        ),
+        // The full name wraps to three lines and makes this card taller than the rest.
+        faceLabel: "End of Limit",
+    },
     [Card.roll]: remedy(
         "🟢", "Roll",
         "Roll gets your car moving at the start of a race and after any fix."
@@ -126,4 +135,16 @@ const faces: Readonly<Record<Card, CardFace>> = {
  */
 export function cardFace(card: Card): CardFace {
     return faces[card];
+}
+
+
+/**
+ * Gets the text to show on a card's face: the short face label when the card
+ * has one, otherwise its label.  The card's name stays `label` everywhere else.
+ * @param card - The card
+ * @returns The visible text for the card's face
+ */
+export function visibleLabel(card: Card): string {
+    const face = cardFace(card);
+    return face.faceLabel ?? face.label;
 }

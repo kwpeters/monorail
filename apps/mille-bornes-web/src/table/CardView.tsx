@@ -12,7 +12,8 @@ export interface CardViewProps {
 
 /**
  * One card face: an emoji and the card's name, or for a distance card the
- * miles in big digits.  The card's value is in `data-card`.  Only spans,
+ * miles in big digits.  A card with a short face label shows it, and its full
+ * name is there for assistive tech.  The card's value is in `data-card`.  Only spans,
  * so the face can go inside a button.
  * @param props - The card
  * @returns The card
@@ -22,6 +23,7 @@ export function CardView(props: CardViewProps): ReactElement {
     const distance = Option.fromNullable(
         distanceCardSchema.options.find((c) => c === props.card)
     );
+    const shortLabel = Option.fromNullable(face.faceLabel);
     return (
         <span className={`card kind-${face.kind.toLowerCase()}`} data-card={props.card}>
             {distance.isSome ?
@@ -34,7 +36,14 @@ export function CardView(props: CardViewProps): ReactElement {
                 </> :
                 <>
                     <span className="card-emoji" aria-hidden="true">{face.emoji}</span>
-                    <span className="card-label">{face.label}</span>
+                    {shortLabel.isSome ?
+                        <>
+                            <span className="card-label" aria-hidden="true">
+                                {shortLabel.value}
+                            </span>
+                            <span className="visually-hidden">{face.label}</span>
+                        </> :
+                        <span className="card-label">{face.label}</span>}
                 </>}
         </span>
     );

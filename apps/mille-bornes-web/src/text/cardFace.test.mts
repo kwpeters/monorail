@@ -1,7 +1,7 @@
 import { Card, cardSchema } from "@repo/mille-bornes-core/card";
 import { createDeck } from "@repo/mille-bornes-core/deck";
 import { describe, expect, it } from "vitest";
-import { cardFace } from "./cardFace.mjs";
+import { cardFace, visibleLabel } from "./cardFace.mjs";
 
 
 describe("cardFace", () => {
@@ -41,6 +41,13 @@ describe("cardFace", () => {
         expect(cardFace(Card.endOfSpeedLimit).label).toBe("End of Speed Limit");
         expect(cardFace(Card.punctureProof).label).toBe("Puncture Proof");
         expect(cardFace(Card.dist50).label).toBe("50 miles");
+    });
+
+
+    it("shows End of Limit on the face of End of Speed Limit and the label elsewhere", () => {
+        expect(visibleLabel(Card.endOfSpeedLimit)).toBe("End of Limit");
+        expect(cardFace(Card.endOfSpeedLimit).label).toBe("End of Speed Limit");
+        expect(visibleLabel(Card.flatTire)).toBe("Flat Tire");
     });
 
 
