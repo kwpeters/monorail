@@ -81,13 +81,24 @@ interface TargetCheck {
     readonly problems: ReadonlyArray<string>;
     /** How many lane targets were on screen and checked. */
     readonly lanes:    number;
+    /**
+     * False when there was nothing to check: the card was already put back
+     * by the time the page was read (a new screen from the server drops a
+     * pick; see `useSelection`), or it is the counter picked up in a hazard
+     * window, which has Play and no Discard.
+     */
+    readonly checked:  boolean;
 }
 
 
 /**
  * Checks that the Discard button is on screen, on top at its centre and at
  * least 44 x 44, and that every lane button with its centre on screen is on
- * top too.
+ * top too.  One read of the page decides whether a card is still picked up
+ * and checks it: the pick can be dropped between the caller seeing it and
+ * this read (the robots' moves bring new screens, more often when the machine
+ * is busy), and then the buttons are rightly gone; and a hazard window against
+ * the player's team has no Discard (see below).
  * @param page - A phone with a card picked up
  * @returns What was found
  */
@@ -95,6 +106,9 @@ async function checkTargets(page: Page): Promise<TargetCheck> {
     return page.evaluate((min) => {
         const problems: Array<string> = [];
         let lanes = 0;
+        if (document.querySelector(".hand [aria-pressed='true']") === null) {
+            return { problems, lanes, checked: false };
+        }
         const onTop = (b: Element): boolean => {
             const r = b.getBoundingClientRect();
             const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
@@ -102,6 +116,14 @@ async function checkTargets(page: Page): Promise<TargetCheck> {
         };
         const discard = document.querySelector(".pile-target");
         if (discard === null) {
+            // A hazard window against the player's team (the hazard banner)
+            // allows no discard: the card picked up there is the counter,
+            // with Play in the hand and nothing to check.  The window can
+            // open between the harness seeing it is the player's turn and
+            // the pick; its length makes that likely only on a busy machine.
+            if (document.querySelector(".hazard-banner") !== null) {
+                return { problems, lanes, checked: false };
+            }
             problems.push("no Discard button");
         }
         else {
@@ -129,7 +151,7 @@ async function checkTargets(page: Page): Promise<TargetCheck> {
                 }
             }
         }
-        return { problems, lanes };
+        return { problems, lanes, checked: true };
     }, minTarget);
 }
 
@@ -160,7 +182,9 @@ test("at 320 x 568 a picked-up card's Discard and lane buttons are never under t
     await playToGameOver(ann, "Ann", {
         onPicked: async (page) => {
             const found = await checkTargets(page);
-            picks++;
+            if (found.checked) {
+                picks++;
+            }
             lanes += found.lanes;
             problems.push(...found.problems);
         },

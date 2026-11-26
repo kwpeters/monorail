@@ -1167,6 +1167,82 @@ describe("GameScreen", () => {
     });
 
 
+    describe("the menu over the table", () => {
+
+        const hazardWindow = (name: string): PlayingData => playingScreen(
+            viewOf(flatTireWindow, name),
+            { timer: { kind: "HazardWindow", remainingMs: 5000 } }
+        );
+
+
+        it("closes on a tap on a card without picking the card up; the next tap does", async () => {
+            show(playingScreen(viewOf(midRace, "Ann")));
+            const user = userEvent.setup();
+            await user.click(screen.getByRole("button", { name: "Menu" }));
+            expect(screen.getByRole("menu")).toBeInTheDocument();
+            await user.click(card("50 miles"));
+            expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+            expect(pressedCards()).toHaveLength(0);
+            await user.click(card("50 miles"));
+            expect(pressedCards()).toHaveLength(1);
+        });
+
+
+        it("closes on a tap on Discard without discarding, and the next tap discards", async () => {
+            const { fake } = show(playingScreen(viewOf(midRace, "Ann")));
+            const user = userEvent.setup();
+            await user.click(card("50 miles"));
+            await user.click(screen.getByRole("button", { name: "Menu" }));
+            await user.click(screen.getByRole("button", { name: "Discard" }));
+            expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+            expect(fake.procs.play).not.toHaveBeenCalled();
+            await user.click(screen.getByRole("button", { name: "Discard" }));
+            expect(fake.procs.play).toHaveBeenCalledOnce();
+        });
+
+
+        it("closes when a hazard window opens against the player's team", async () => {
+            const { again } = show(playingScreen(viewOf(midRace, "Bob")));
+            const user = userEvent.setup();
+            await user.click(screen.getByRole("button", { name: "Menu" }));
+            expect(screen.getByRole("menu")).toBeInTheDocument();
+            again(hazardWindow("Bob"));
+            expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+        });
+
+
+        it("stays open when the hazard hits the other team", async () => {
+            const { again } = show(playingScreen(viewOf(midRace, "Ann")));
+            const user = userEvent.setup();
+            await user.click(screen.getByRole("button", { name: "Menu" }));
+            again(hazardWindow("Ann"));
+            expect(screen.queryByRole("region", { name: "Flat Tire!" })).not.toBeInTheDocument();
+            expect(screen.getByRole("menu")).toBeInTheDocument();
+        });
+
+
+        it("can be opened during a window against the player's team, to mute", async () => {
+            // The engine is the test's own: a muted default engine would be
+            // shared with the other tests.
+            render(
+                <AudioEngineContext.Provider value={createFakeEngine()}>
+                    <GameScreen
+                        screen={hazardWindow("Bob")}
+                        api={createFakeApi().api}
+                        pendingEvents={[]}
+                        consumeEvents={vi.fn()}
+                    />
+                </AudioEngineContext.Provider>
+            );
+            const user = userEvent.setup();
+            await user.click(screen.getByRole("button", { name: "Menu" }));
+            await user.click(screen.getByRole("menuitem", { name: "Mute sounds" }));
+            expect(screen.getByRole("menuitem", { name: "Unmute sounds" })).toBeInTheDocument();
+        });
+
+    });
+
+
     describe("the end of a race and of the game", () => {
 
         const robot = "Sir Honks-a-Lot";

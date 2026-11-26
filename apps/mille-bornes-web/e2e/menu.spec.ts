@@ -193,3 +193,34 @@ test("a player who is not the organizer has Mute sounds and no End game", async 
     await ann.getByRole("button", { name: "Menu" }).tap();
     await expect(ann.getByRole("menuitem")).toHaveCount(2);
 });
+
+
+test("a tap that closes the menu does nothing else, and the hand works at once after it", async ({
+    openPhone
+}) => {
+    const ann = await openPhone();
+    await toTable(ann);
+    await untilMyTurn(ann);
+    const button = ann.getByRole("button", { name: "Menu" });
+    const menu = ann.getByRole("menu");
+    // A dimmed card can be picked up too, to be discarded.
+    const card = hand(ann).locator("button.card-button").first();
+
+    await button.tap();
+    await expect(menu).toBeVisible();
+    await card.tap({ force: true });
+    await expect(menu).toBeHidden();
+    await expect(card, "the tap only closed the menu").toHaveAttribute("aria-pressed", "false");
+
+    await card.tap({ force: true });
+    await expect(card, "the next tap picks the card up").toHaveAttribute("aria-pressed", "true");
+    await expect(ann.getByRole("button", { name: "Discard", exact: true })).toBeVisible();
+
+    // The same for a target: with the card picked up, one tap closes the menu
+    // and the next one discards.
+    await button.tap();
+    await ann.getByRole("button", { name: "Discard", exact: true }).tap();
+    await expect(menu).toBeHidden();
+    await expect(card).toHaveAttribute("aria-pressed", "true");
+    await expect(ann.getByRole("button", { name: "Discard", exact: true })).toBeVisible();
+});

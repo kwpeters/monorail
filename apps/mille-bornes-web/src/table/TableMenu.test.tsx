@@ -1,23 +1,38 @@
 import { NoneOption, Option, SomeOption } from "@repo/depot/option";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import type { ReactElement } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createAudioEngine, muteStorageKey, type AudioEngine } from "../sound/audioEngine.mjs";
 import { createFakeEngine, createMemoryStorage } from "../testing/fakeAudio.mjs";
 import { TableMenu } from "./TableMenu.js";
+
+
+function ui(
+    onEndGame: Option<() => void>,
+    engine: AudioEngine,
+    hazard: boolean,
+    underFinger: () => void
+): ReactElement {
+    return (
+        <>
+            <TableMenu engine={engine} onEndGame={onEndGame} hazard={hazard} />
+            <button type="button" onClick={underFinger}>Elsewhere</button>
+        </>
+    );
+}
 
 
 function show(
     onEndGame: Option<() => void> = NoneOption.get(),
     engine: AudioEngine = createFakeEngine()
 ) {
-    const rendered = render(
-        <>
-            <TableMenu engine={engine} onEndGame={onEndGame} />
-            <button type="button">Elsewhere</button>
-        </>
-    );
-    return { ...rendered, engine, user: userEvent.setup() };
+    const underFinger = vi.fn();
+    const rendered = render(ui(onEndGame, engine, false, underFinger));
+    const hazard = (on: boolean): void => {
+        rendered.rerender(ui(onEndGame, engine, on, underFinger));
+    };
+    return { ...rendered, engine, hazard, underFinger, user: userEvent.setup() };
 }
 
 
@@ -29,6 +44,11 @@ function menuButton(): HTMLElement {
 function labels(): string[] {
     return screen.queryAllByRole("menuitem").map((i) => i.textContent);
 }
+
+
+afterEach(() => {
+    vi.useRealTimers();
+});
 
 
 describe("TableMenu", () => {
@@ -147,6 +167,75 @@ describe("TableMenu", () => {
     });
 
 
+    describe("a tap outside that closes it", () => {
+
+        const elsewhere = (): HTMLElement => screen.getByRole("button", { name: "Elsewhere" });
+
+
+        it("does nothing else: what was under the finger gets no click", async () => {
+            const { user, underFinger } = show();
+            await user.click(menuButton());
+            await user.click(elsewhere());
+            expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+            expect(underFinger).not.toHaveBeenCalled();
+        });
+
+
+        it("leaves the next tap alone", async () => {
+            const { user, underFinger } = show();
+            await user.click(menuButton());
+            await user.click(elsewhere());
+            await user.click(elsewhere());
+            expect(underFinger).toHaveBeenCalledOnce();
+        });
+
+
+        it("swallows only its own click: a press that makes no click ends it", () => {
+            const { underFinger } = show();
+            fireEvent.click(menuButton());
+            fireEvent.pointerDown(elsewhere());
+            // A scroll that began there: the browser cancels the pointer and
+            // makes no click.
+            fireEvent.pointerCancel(elsewhere());
+            fireEvent.click(elsewhere());
+            expect(underFinger).toHaveBeenCalledOnce();
+        });
+
+
+        it("ends at the next press, so a later tap is never lost", () => {
+            const { underFinger } = show();
+            fireEvent.click(menuButton());
+            fireEvent.pointerDown(elsewhere());
+            fireEvent.pointerDown(elsewhere());
+            fireEvent.click(elsewhere());
+            expect(underFinger).toHaveBeenCalledOnce();
+        });
+
+
+        it("ends by itself after a moment (a long press makes its click much later)", () => {
+            vi.useFakeTimers();
+            const { underFinger } = show();
+            fireEvent.click(menuButton());
+            fireEvent.pointerDown(elsewhere());
+            vi.advanceTimersByTime(500);
+            fireEvent.click(elsewhere());
+            expect(underFinger).toHaveBeenCalledOnce();
+        });
+
+
+        it("is not started by a press inside the menu", async () => {
+            const { user, underFinger } = show();
+            await user.click(menuButton());
+            await user.click(screen.getByRole("menuitem", { name: "Mute sounds" }));
+            await user.click(elsewhere());
+            expect(underFinger).not.toHaveBeenCalled();
+            await user.click(elsewhere());
+            expect(underFinger).toHaveBeenCalledOnce();
+        });
+
+    });
+
+
     describe("Mute sounds", () => {
 
         it("flips to Unmute sounds in the open menu, mutes the engine, and persists", async () => {
@@ -243,6 +332,33 @@ describe("TableMenu", () => {
             fireEvent.click(menuButton());
             fireEvent.pointerDown(document.body);
             expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+        });
+
+
+        it("happens on Escape wherever the focus is, and the focus returns to the button", async () => {
+            const { user } = show();
+            await user.click(menuButton());
+            menuButton().blur();
+            expect(document.body).toHaveFocus();
+            await user.keyboard("{Escape}");
+            expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+            expect(menuButton()).toHaveFocus();
+        });
+
+
+        it("happens when a hazard comes against the player's team", async () => {
+            const { user, hazard } = show();
+            await user.click(menuButton());
+            hazard(true);
+            expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+        });
+
+
+        it("can still be opened while that hazard lasts, and stays open", async () => {
+            const { user, hazard } = show();
+            hazard(true);
+            await user.click(menuButton());
+            expect(screen.getByRole("menu")).toBeInTheDocument();
         });
 
 
