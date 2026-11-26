@@ -290,12 +290,12 @@ describe("Table", () => {
 
             describe("in a hazard window", () => {
 
-                it("closes the window at 5,000 ms when nobody holds the counter", () => {
+                it("closes the window at 8,000 ms when nobody holds the counter", () => {
                     const h = harness(hazardGame("Human", [Card.dist25]));
                     h.table.submit(ann, attackBob).throwIfFailed();
                     expect(h.clock.pendingCount()).toEqual(1);
 
-                    h.clock.advance(4999);
+                    h.clock.advance(7999);
                     expect(h.updates.length).toEqual(1);
 
                     h.clock.advance(1);
@@ -308,7 +308,7 @@ describe("Table", () => {
                     const h = harness(hazardGame("Human", [Card.rightOfWay, Card.dist25]));
                     h.table.submit(ann, attackBob).throwIfFailed();
 
-                    h.clock.advance(4999);
+                    h.clock.advance(7999);
                     expect(h.updates.length).toEqual(1);
 
                     h.clock.advance(1);
@@ -339,7 +339,7 @@ describe("Table", () => {
                     expect(h.table.submit(bob, drive25).failed).toBeTrue();
                     expect(h.table.seq).toEqual(1);
 
-                    h.clock.advance(2999);
+                    h.clock.advance(5999);
                     expect(h.updates.length).toEqual(1);
                     h.clock.advance(1);
                     expect(eventTypes(h.updates[1])).toContain("HazardLanded");
@@ -376,10 +376,33 @@ describe("Table", () => {
                     h.table.submit(ann, attackBob).throwIfFailed();
                     expect(h.clock.pendingCount()).toEqual(1);
 
-                    h.clock.advance(4999);
+                    h.clock.advance(7999);
                     expect(h.updates.length).toEqual(1);
                     h.clock.advance(1);
                     expect(eventTypes(h.updates[1])).toContain("HazardLanded");
+                });
+
+
+                it("lands at once, with no window timer, when the safety is already played", () => {
+                    const rightOfWayDown = [{ card: Card.rightOfWay, coupFourre: false }];
+                    const game = buildGame({
+                        config:   oneOnOne("Human", "Robot"),
+                        hands:    [[Card.stop, Card.dist25], [Card.dist25, Card.dist50]],
+                        zones:    [{ ...rolling, safeties: rightOfWayDown }, rolling],
+                        drawPile: [Card.dist50, Card.dist50, Card.dist75, Card.dist75],
+                    });
+                    const h = harness(game);
+                    h.table.submit(ann, attackBob).throwIfFailed();
+
+                    expect(eventTypes(h.updates[0]).slice(0, 2)).toEqual(["HazardPlayed", "HazardLanded"]);
+                    expect(h.table.game.phase).toEqual({ kind: "Turn", player: bob });
+                    expect(h.table.timer()).toEqual(new NoneOption<VisibleTimer>());
+                    // Only the robot's turn timer; no HazardWindow timer.
+                    expect(h.clock.pendingCount()).toEqual(1);
+
+                    h.clock.advance(1000);
+                    expect(h.updates.length).toEqual(2);
+                    expect(h.table.game.phase).toEqual({ kind: "Turn", player: ann });
                 });
 
             });
@@ -494,9 +517,9 @@ describe("Table", () => {
 
                     expect(h.table.timer())
                     .toEqual(new SomeOption<VisibleTimer>({
-                        kind: "HazardWindow", remainingMs: 5000
+                        kind: "HazardWindow", remainingMs: 8000
                     }));
-                    h.clock.advance(4999);
+                    h.clock.advance(7999);
                     expect(h.updates.length).toEqual(0);
 
                     h.clock.advance(1);
@@ -511,7 +534,7 @@ describe("Table", () => {
                     h.table.start();
                     expect(h.clock.pendingCount()).toEqual(1);
 
-                    h.clock.advance(3000);
+                    h.clock.advance(6000);
                     expect(eventTypes(h.updates[0])).toContain("HazardLanded");
                 });
 
@@ -525,7 +548,7 @@ describe("Table", () => {
                         applySystem: () => new FailedResult({ reason: "WrongPhase" }),
                     });
 
-                    h.clock.advance(5000);
+                    h.clock.advance(8000);
 
                     expect(h.stuck.length).toEqual(1);
                     expect(errorLines(h).length).toEqual(1);
@@ -539,7 +562,7 @@ describe("Table", () => {
                         applySystem: () => { throw new Error("boom"); },
                     });
 
-                    h.clock.advance(5000);
+                    h.clock.advance(8000);
 
                     expect(h.stuck.length).toEqual(1);
                     expect(h.stuck[0]).toContain("boom");
@@ -617,7 +640,7 @@ describe("Table", () => {
                 h.clock.advance(1000);
 
                 expect(h.table.timer())
-                .toEqual(new SomeOption<VisibleTimer>({ kind: "HazardWindow", remainingMs: 4000 }));
+                .toEqual(new SomeOption<VisibleTimer>({ kind: "HazardWindow", remainingMs: 7000 }));
             });
 
 
@@ -732,7 +755,7 @@ describe("Table", () => {
                 expect(h.updates.map((u) => u.seq)).toEqual([1, 2]);
                 expect(h.table.game.phase.kind).toEqual("HazardIncoming");
                 expect(h.clock.pendingCount()).toEqual(1);
-                h.clock.advance(5000);
+                h.clock.advance(8000);
                 expect(eventTypes(h.updates[2])).toContain("HazardLanded");
             });
 
@@ -757,7 +780,7 @@ describe("Table", () => {
                 expect(h.table.seq).toEqual(1);
                 expect(errorLines(h).length).toEqual(1);
 
-                h.clock.advance(5000);
+                h.clock.advance(8000);
                 expect(h.table.seq).toEqual(2);
                 expect(h.stuck).toEqual([]);
             });

@@ -18,7 +18,7 @@ export interface Timings {
 
 /** The default timings. */
 export const defaultTimings: Timings = {
-    hazardWindowMs:    5000,
+    hazardWindowMs:    8000,
     extensionOfferMs:  30000,
     raceOverPauseMs:   20000,
     robotDelayMinMs:   1000,

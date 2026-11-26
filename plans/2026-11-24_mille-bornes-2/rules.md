@@ -44,6 +44,9 @@ Where it disagrees with `design.md` or the implementation plans, this file wins.
 - **Coup Fourré.**
   When an opponent plays a hazard and you hold the matching Safety card, you may play it immediately, on or off your turn, before anyone draws (p. 13).
   The hazard goes to the discard pile, and the situation before the hazard is restored.
+  This game gives the target team 8 seconds to play it (the Coup Fourré window),
+  unless the matching Safety card is already on any team's drive pile:
+  nobody can hold it then, so there is no window and the hazard lands at once.
   You then draw one card (5 back to 6) and, because you played a Safety card, draw again and take an extra turn.
   Players between you and the attacker lose their turns (p. 14).
 - **Winning the game.**

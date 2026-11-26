@@ -1005,14 +1005,14 @@ describe("Hub", () => {
 
         describe("timers", () => {
 
-            it("closes a hazard window after 5,000 ms and shows HazardLanded", async () => {
+            it("closes a hazard window after 8,000 ms and shows HazardLanded", async () => {
                 const h = await openHub();
                 const players = await startedGame(h, ["Ann", "Bob"]);
                 await playUntil(h, players, inWindow);
                 const w = watcher(h.hub, players[0]!);
                 await nextScreen(w);
 
-                h.clock.advance(4999);
+                h.clock.advance(7999);
                 expect(inWindow(playing(h.hub.screenFor(players[0]!)))).toBeTrue();
                 h.clock.advance(1);
 
@@ -1026,14 +1026,14 @@ describe("Hub", () => {
                 const players = await startedGame(h, ["Ann", "Bob"]);
                 await playUntil(h, players, inWindow);
                 expect(playing(h.hub.screenFor(players[0]!)).timer)
-                .toEqual({ kind: "HazardWindow", remainingMs: 5000 });
+                .toEqual({ kind: "HazardWindow", remainingMs: 8000 });
                 h.clock.advance(1000);
                 const pending = h.clock.pendingCount();
 
                 const w = watcher(h.hub, players[1]!);
                 const screen = playing(await nextScreen(w));
 
-                expect(screen.timer).toEqual({ kind: "HazardWindow", remainingMs: 4000 });
+                expect(screen.timer).toEqual({ kind: "HazardWindow", remainingMs: 7000 });
                 expect(screen.events).toEqual([]);
                 expect(h.clock.pendingCount()).toBe(pending);
                 w.abort.abort();
@@ -1418,7 +1418,7 @@ describe("Hub", () => {
                 const gameId = playing(h.hub.screenFor(ann!)).view.gameId;
                 const quarantine = spyOn(h.store, "quarantineGame").and.callThrough();
 
-                h.clock.advance(5000);
+                h.clock.advance(8000);
 
                 expect(lobby(await nextScreen(w)).notice).toBe(stuckNotice);
                 expect(lobby(h.hub.screenFor(ann!)).notice).toBe(stuckNotice);
@@ -1748,8 +1748,8 @@ describe("Hub", () => {
                 const second = await openHub(first.store);
 
                 const ann = players[0]!;
-                expect(playing(second.hub.screenFor(ann)).timer?.remainingMs).toBe(5000);
-                second.clock.advance(4999);
+                expect(playing(second.hub.screenFor(ann)).timer?.remainingMs).toBe(8000);
+                second.clock.advance(7999);
                 expect(inWindow(playing(second.hub.screenFor(ann)))).toBeTrue();
                 second.clock.advance(1);
                 expect(inWindow(playing(second.hub.screenFor(ann)))).toBeFalse();

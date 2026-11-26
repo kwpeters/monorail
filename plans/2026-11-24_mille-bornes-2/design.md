@@ -167,9 +167,11 @@ The engine is a set of pure functions over immutable values.
 
 When a hazard is played, the engine enters a "Coup Fourre window" phase.
 The window is always opened and always runs its full length, whether or not anyone could respond, so its length reveals nothing.
-The server owns the timer (default 5 seconds, configurable) and sends the engine a "close window" command when it expires.
+The one exception is a hazard whose matching safety is already on any team's drive pile:
+a deck has one copy of each safety, so no one can hold it, no window opens, and the hazard lands at once.
+The server owns the timer (default 8 seconds, configurable) and sends the engine a "close window" command when it expires.
 
-- Every member of the hit team sees an identical banner and countdown, for example "Flat Tire! You have 5 seconds. If anyone on your team holds Puncture Proof, play it now."
+- Every member of the hit team sees an identical banner and countdown, for example "Flat Tire! You have 8 seconds. If anyone on your team holds Puncture Proof, play it now."
   There is no decoy button.
   The matching safety card may glow in the holder's own hand to help new players.
   Everyone on the hit team gets the same sound and vibration.

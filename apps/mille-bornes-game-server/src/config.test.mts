@@ -10,7 +10,7 @@ describe("config", () => {
 
         it("has the specified values", () => {
             expect(defaultTimings).toEqual({
-                hazardWindowMs:    5000,
+                hazardWindowMs:    8000,
                 extensionOfferMs:  30000,
                 raceOverPauseMs:   20000,
                 robotDelayMinMs:   1000,

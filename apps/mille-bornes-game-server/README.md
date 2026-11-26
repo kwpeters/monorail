@@ -139,7 +139,7 @@ The server refuses to start with a bad value and says which variable is wrong.
 
 | Variable                 | Default | What it is                                                  |
 | ------------------------ | ------- | ----------------------------------------------------------- |
-| `MB_HAZARD_WINDOW_MS`    | 5,000   | How long the target team has to play a Coup Fourre.         |
+| `MB_HAZARD_WINDOW_MS`    | 8,000   | How long the target team has to play a Coup Fourre.         |
 | `MB_EXTENSION_OFFER_MS`  | 30,000  | How long the decider has to call or decline Extension.      |
 | `MB_RACE_OVER_PAUSE_MS`  | 20,000  | How long the scores show before the next race is dealt.     |
 | `MB_ROBOT_DELAY_MIN_MS`  | 1,000   | The shortest wait before a robot plays or answers.          |
@@ -151,6 +151,8 @@ so its speed does not reveal that it is a robot,
 but always at least 1,000 ms before the window closes.
 The window always runs its full length,
 so its length reveals nothing about anyone's hand.
+The one exception is a hazard whose matching safety is already on any team's drive pile:
+no one can hold that card, so no window opens and the hazard lands at once.
 
 ## Tests
 
