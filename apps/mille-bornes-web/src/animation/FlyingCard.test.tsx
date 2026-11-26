@@ -21,7 +21,7 @@ const fifty: Option<Card> = new SomeOption<Card>("50");
 
 // The table's anchors and the layer; the hook's handles are given out.  Lane 0
 // has a card slot, lane 1 has none.
-function show(): Omit<FlyingCards, "layer"> & { layer: () => HTMLElement } {
+function show(handCard = false): Omit<FlyingCards, "layer"> & { layer: () => HTMLElement } {
     let flying: FlyingCards | undefined;
     function Table(): ReactElement {
         flying = useFlyingCards();
@@ -33,6 +33,7 @@ function show(): Omit<FlyingCards, "layer"> & { layer: () => HTMLElement } {
                 <div data-anim-anchor="team-1" />
                 <div data-anim-anchor="discard-pile" />
                 <div data-anim-anchor={`seat-${bobId}`} />
+                {handCard ? <div data-anim-anchor="hand-card" /> : null}
                 {flying.layer}
             </>
         );
@@ -52,7 +53,8 @@ const boxes = new Map<string, Box>([
     ["team-0-card", [0, 120, 60, 60]],
     ["team-1", [0, 250, 300, 100]],
     ["discard-pile", [200, 400, 70, 90]],
-    [`seat-${bobId}`, [100, 110, 100, 20]]
+    [`seat-${bobId}`, [100, 110, 100, 20]],
+    ["hand-card", [200, 720, 56, 76]]
 ]);
 
 
@@ -391,6 +393,24 @@ describe("useFlyingCards", () => {
             const absent: Anchor = { kind: "Seat", player: annId, team: team(1) };
             await play(flight(fifty, discardPile, absent), new AbortController().signal);
             expect(startsOf(stub)).toEqual([[150, 300]]);
+        });
+
+
+        it("lands a drawn card on its place in the hand, fully visible", async () => {
+            const stub = stubAnimations(false);
+            const { play } = show(true);
+            await play(flight(fifty, hand, discardPile), new AbortController().signal);
+            const { frames } = firstCall(stub);
+            expect(endsOf(stub)).toEqual([[228, 758]]);
+            expect(frames.at(-1)!.opacity).toBe(1);
+        });
+
+
+        it("leaves the hand from the hand, not from a place a card flies into", async () => {
+            const stub = stubAnimations(false);
+            const { play } = show(true);
+            await play(flight(fifty), new AbortController().signal);
+            expect(startsOf(stub)).toEqual([[150, 750]]);
         });
 
 

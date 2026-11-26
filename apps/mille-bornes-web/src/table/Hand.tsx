@@ -20,6 +20,11 @@ export interface HandProps {
     onPlay:   Option<() => void>;
     /** A card was tapped (not long-pressed). */
     onTap:    (card: Card, index: number) => void;
+    /**
+     * The places of cards still flying in: each keeps its room but is not
+     * seen, tapped, focused or read out until its card lands there.
+     */
+    hidden:   ReadonlySet<number>;
 }
 
 
@@ -122,12 +127,13 @@ interface Help {
  * explains it too (the way in for a keyboard, and for anyone who does not
  * know the long press).  The cards wrap on narrow screens, so nothing is
  * clipped; the buttons are a column beside them that is there even when
- * empty, so the cards stay put when a card is picked up.
+ * empty, so the cards stay put when a card is picked up.  A card still
+ * flying in (`hidden`) has its place, but shows only once it lands.
  * @param props - The cards, their state and the handlers
  * @returns The hand
  */
 export function Hand(props: HandProps): ReactElement {
-    const { cards, selected, playable, counter, onPlay, onTap } = props;
+    const { cards, selected, playable, counter, onPlay, onTap, hidden } = props;
     const labelId = useId();
     const [help, setHelp] = useState<Option<Help>>(NoneOption.get());
     const longPressed = useRef(false);
@@ -146,8 +152,13 @@ export function Hand(props: HandProps): ReactElement {
             <h2 id={labelId} className="hand-label">Your hand</h2>
             <ul className="cards" aria-label="Cards">
                 {cards.map((card, i) => (
-                    // A hand can hold a card twice, so the position is in the key.
-                    <li key={`${i}-${card}`}>
+                    // A hand can hold a card twice, so the position is in the
+                    // key.  A card still flying in is where its flight lands.
+                    <li
+                        key={`${i}-${card}`}
+                        style={hidden.has(i) ? { visibility: "hidden" } : undefined}
+                        data-anim-anchor={hidden.has(i) ? "hand-card" : undefined}
+                    >
                         <HandCard
                             card={card}
                             longPressed={longPressed}

@@ -9,7 +9,8 @@ import { userEvent } from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-    annPlays, extensionOffer, flatTireWindow, midRace, play, viewOf
+    annPlays, beforeFlatTire, bobDrivesToAnn, extensionOffer, flatTireAttack, flatTireWindow,
+    midRace, play, seenBy, viewOf
 } from "../testing/engineBatches.mjs";
 import { createFakeEngine } from "../testing/fakeAudio.mjs";
 import { AudioEngineContext } from "../sound/useSound.js";
@@ -433,6 +434,159 @@ describe("GameScreen", () => {
             await act(() => vi.advanceTimersByTimeAsync(0));
             expect(String(flights[0]![0]!.transform)).toContain("translate(68px, 638px)");
             vi.restoreAllMocks();
+        });
+
+
+        describe("the table, in step with them", () => {
+
+            // Bob drives 75 into Ann's turn: his card lands on his lane at
+            // 450 ms; Ann's draw leaves at 315 ms and lands at 765 ms.
+            const bob = bobDrivesToAnn;
+            const bobs: EventBatch = { id: 3, events: bob.events };
+            const whenBobDrives = (): ReturnType<typeof show> => {
+                const shown = show(playingScreen(bob.before));
+                shown.again(playingScreen(bob.view, { events: bob.events }), [bobs]);
+                return shown;
+            };
+
+
+            function milesOn(n: number): string {
+                return lane(n).querySelector(".miles-number")!.textContent;
+            }
+
+
+            function drawPile(): string {
+                return screen.getByRole("img", { name: /^Draw pile/u }).getAttribute("aria-label")!;
+            }
+
+
+            function flyingIn(): Element | null {
+                return document.querySelector("[data-anim-anchor='hand-card']");
+            }
+
+
+            it("shows each card's result when it lands, and the turn with the last", async () => {
+                whenBobDrives();
+                const before = { miles: milesOn(1), pile: drawPile() };
+                expect(before.miles).toBe("0");
+                expect(bar()).toHaveTextContent("Waiting for Bob to play");
+                expect(flyingIn()?.querySelector("[data-card]")).toHaveAttribute(
+                    "data-card", "Spare Tire"
+                );
+                expect(flyingIn()).not.toBeVisible();
+                await act(() => vi.advanceTimersByTimeAsync(449));
+                expect(milesOn(1)).toBe("0");
+                await act(() => vi.advanceTimersByTimeAsync(1));
+                // Bob's card has landed; the pile, the turn and Ann's card wait.
+                expect(milesOn(1)).toBe("75");
+                expect(drawPile()).toBe(before.pile);
+                expect(bar()).toHaveTextContent("Waiting for Bob to play");
+                expect(screen.getByText("Bob").closest("li")).toHaveAttribute("aria-current", "true");
+                expect(flyingIn()).not.toBeVisible();
+                await act(() => vi.advanceTimersByTimeAsync(315));
+                expect(drawPile()).toBe(`Draw pile, ${bob.view.drawPileCount} cards`);
+                expect(bar()).toHaveTextContent("Your turn: play or discard a card");
+                expect(screen.getByText("Ann").closest("li")).toHaveAttribute("aria-current", "true");
+                expect(flyingIn()).toBeNull();
+                expect(card("Spare Tire")).toBeVisible();
+            });
+
+
+            it("lets the viewer play at once, before the table shows the turn", async () => {
+                const { fake } = whenBobDrives();
+                expect(bar()).toHaveTextContent("Waiting for Bob to play");
+                expect(card("25 miles")).not.toHaveAttribute("aria-disabled");
+                fireEvent.click(card("25 miles"));
+                fireEvent.click(screen.getByRole("button", { name: "Play" }));
+                await act(() => vi.advanceTimersByTimeAsync(0));
+                expect(fake.procs.play).toHaveBeenCalledExactlyOnceWith({ type: "Drive", card: "25" });
+            });
+
+
+            it("lands the viewer's draw on its place in the hand, fully visible", async () => {
+                vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (
+                    this: Element
+                ) {
+                    return this.matches("[data-anim-anchor='hand-card']") ?
+                        new DOMRect(300, 700, 56, 76) :
+                        new DOMRect();
+                });
+                whenBobDrives();
+                await act(() => vi.advanceTimersByTimeAsync(400));
+                const landing = flights[1]!.at(-1)!;
+                expect(String(landing.transform)).toContain("translate(328px, 738px)");
+                expect(landing.opacity).toBe(1);
+                vi.restoreAllMocks();
+            });
+
+
+            it("stops saying Your turn as soon as the viewer has played", async () => {
+                const { again } = show(playingScreen(viewOf(midRace, "Ann")));
+                again(playingScreen(drove.view, { events: drove.events }), [first]);
+                expect(bar()).toHaveTextContent("Waiting for Bob to play");
+                expect(milesOn(0)).toBe("0");
+                await act(() => vi.advanceTimersByTimeAsync(450));
+                expect(milesOn(0)).toBe("50");
+            });
+
+
+            it("lets the hit team answer at once while the table shows the attack", async () => {
+                const attack = seenBy(beforeFlatTire, "Ann", flatTireAttack, "Di");
+                const { again, fake } = show(playingScreen(attack.before));
+                again(playingScreen(attack.view, {
+                    events: attack.events,
+                    timer:  { kind: "HazardWindow", remainingMs: 5000 }
+                }), [{ id: 4, events: attack.events }]);
+                // The attack is still in flight: Ann's turn is on the table.
+                expect(screen.getByText("Ann").closest("li")).toHaveAttribute("aria-current", "true");
+                expect(screen.getByRole("region", { name: "Flat Tire!" })).toBeInTheDocument();
+                expect(bar()).toHaveClass("tone-red");
+                fireEvent.click(card("Puncture Proof Blocks it!"));
+                fireEvent.click(screen.getByRole("button", { name: "Play" }));
+                expect(fake.procs.play)
+                .toHaveBeenCalledExactlyOnceWith({ type: "CoupFourre", card: "Puncture Proof" });
+                await act(() => vi.advanceTimersByTimeAsync(450));
+                expect(screen.getByText("Ann").closest("li")).not.toHaveAttribute("aria-current");
+            });
+
+
+            it("hides no card during a hazard window", () => {
+                const { again } = show(playingScreen(bob.before));
+                const hazard = withPhase(bob.view, {
+                    kind:     "HazardIncoming",
+                    attacker: idOf(bob.view, "Bob"),
+                    hazard:   "Stop",
+                    target:   team(0)
+                });
+                again(playingScreen(hazard, { events: bob.events }), [bobs]);
+                expect(flyingIn()).toBeNull();
+                expect(card("Spare Tire")).toBeVisible();
+            });
+
+
+            it("shows the live table at once under reduced motion", () => {
+                vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("reduce") }));
+                try {
+                    whenBobDrives();
+                    expect(milesOn(1)).toBe("75");
+                    expect(bar()).toHaveTextContent("Your turn: play or discard a card");
+                    expect(flyingIn()).toBeNull();
+                }
+                finally {
+                    vi.unstubAllGlobals();
+                }
+            });
+
+
+            it("shows the live table at once after a reconnect snapshot", async () => {
+                const { again } = whenBobDrives();
+                await act(() => vi.advanceTimersByTimeAsync(100));
+                again(playingScreen(bob.view), []);
+                expect(milesOn(1)).toBe("75");
+                expect(bar()).toHaveTextContent("Your turn: play or discard a card");
+                expect(flyingIn()).toBeNull();
+            });
+
         });
 
 

@@ -2,11 +2,13 @@ import { NoneOption, Option, SomeOption } from "@repo/depot/option";
 import type { Card } from "@repo/mille-bornes-core/card";
 import type { PlayerCommand } from "@repo/mille-bornes-core/commands";
 import type { TeamIndex } from "@repo/mille-bornes-core/ids";
+import type { PlayerView } from "@repo/mille-bornes-core/view";
 import type { Screen } from "@repo/mille-bornes-game-server/screens";
 import { useLayoutEffect, useRef, type ReactElement } from "react";
 import type { Api } from "../api/client.mjs";
 import { voidWire } from "../api/outcomes.mjs";
 import { prefersReducedMotion, useFlyingCards } from "../animation/FlyingCard.js";
+import { drawnSlots } from "../animation/shownTable.mjs";
 import { useAnimator } from "../animation/useAnimator.js";
 import { useSound } from "../sound/useSound.js";
 import type { EventBatch } from "../state/screenStore.mjs";
@@ -60,6 +62,17 @@ function windowSeconds(screen: PlayingData): Option<number> {
 }
 
 
+// The top bar tells what the table shows (`shown`), but says at once what
+// must not wait: an alert, and the end of the viewer's turn (it never says
+// "Your turn" once it is over).
+function barView(live: PlayerView, shown: PlayerView): PlayerView {
+    const tone = (v: PlayerView): string => topBarMessage(v).tone;
+    const now = tone(live) === "Alert" || tone(shown) === "Alert" ||
+        (tone(shown) === "MyTurn" && tone(live) !== "MyTurn");
+    return now ? live : shown;
+}
+
+
 /**
  * The game table: the message bar, one row per team, the last move, the
  * piles and the viewer's hand, plus the hazard banner and the Extension
@@ -69,7 +82,12 @@ function windowSeconds(screen: PlayingData): Option<number> {
  * through `useSetOverride()`.  The pending events play as animations, one
  * batch after another, and the last move line follows the batch that is
  * playing, so the words and the motion agree; the batch's sounds and
- * vibration start with it.
+ * vibration start with it.  The lanes, the piles and the top bar show the
+ * table as the animations have brought it (`useAnimator()`'s shown view):
+ * a card's result appears when it lands.  Everything the player acts on
+ * (the hand, the buttons, the hazard banner) follows the live view, so a
+ * play is never held back by an animation; a card the player drew stays
+ * hidden in its place until its flight lands, except in a hazard window.
  * @param props - The Playing screen, the API and the store's event queue
  * @returns The table
  */
@@ -78,23 +96,29 @@ export function GameScreen(props: GameScreenProps): ReactElement {
     const { view } = screen;
     const flying = useFlyingCards();
     const onBatchStart = useSound();
-    const started = useAnimator(props.pendingEvents, props.consumeEvents, view, {
-        play:          flying.play,
-        reducedMotion: prefersReducedMotion,
-        onBatchStart
-    });
+    const { started, shown, drawing } = useAnimator(
+        props.pendingEvents,
+        props.consumeEvents,
+        view,
+        { play: flying.play, reducedMotion: prefersReducedMotion, onBatchStart }
+    );
     const { override, setOverride } = useOverrideMessage();
     const { selection, dispatch } = useSelection(view, setOverride);
+    const bar = barView(view, shown);
     const phaseMessage = windowSeconds(screen).match(
-        (seconds) => topBarMessage(view, seconds),
-        () => topBarMessage(view)
+        (seconds) => topBarMessage(bar, seconds),
+        () => topBarMessage(bar)
     );
     // The table's phases; a race or game summary takes the table's place.
     const table = view.phase.kind !== "RaceOver" && view.phase.kind !== "GameOver";
     // A transient message is about the table, so it never hides the summary's
     // announcement.
     const message = table ? override.defaultValue(phaseMessage) : phaseMessage;
-    const onTurn = playerOnTurn(view);
+    const onTurn = playerOnTurn(shown);
+    // A card that may answer a hazard is never hidden.
+    const flyingIn = view.phase.kind === "HazardIncoming" ?
+        new Set<number>() :
+        drawnSlots(view.me.hand, drawing);
     const robots = Option.fromNullable(screen.robots);
     const connected = Option.fromNullable(screen.connected);
 
@@ -187,10 +211,10 @@ export function GameScreen(props: GameScreenProps): ReactElement {
         <OverrideContext.Provider value={setOverride}>
             <ExtensionOffer screen={screen} onDecide={(command) => void send(command)} />
             <div className="scoreboard">
-                {view.teams.map((team) => (
+                {shown.teams.map((team) => (
                     <TeamRow
                         key={team.index}
-                        view={view}
+                        view={shown}
                         team={team}
                         onTurn={onTurn}
                         robots={robots}
@@ -204,8 +228,8 @@ export function GameScreen(props: GameScreenProps): ReactElement {
                 view={started.match((b) => b.view, () => view)}
             />
             <Piles
-                drawPileCount={view.drawPileCount}
-                discardTop={Option.fromNullable(view.discardTop)}
+                drawPileCount={shown.drawPileCount}
+                discardTop={Option.fromNullable(shown.discardTop)}
                 onDiscard={discard}
             />
             <Hand
@@ -220,6 +244,7 @@ export function GameScreen(props: GameScreenProps): ReactElement {
                 }}
                 onPlay={play}
                 onTap={tapCard}
+                hidden={flyingIn}
             />
         </OverrideContext.Provider>
     );

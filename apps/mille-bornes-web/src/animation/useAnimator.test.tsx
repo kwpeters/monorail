@@ -1,8 +1,11 @@
+import { Card } from "@repo/mille-bornes-core/card";
+import { zoneMiles } from "@repo/mille-bornes-core/drivingZone";
+import type { PlayerView } from "@repo/mille-bornes-core/view";
 import { act, renderHook } from "@testing-library/react";
 import { StrictMode, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EventBatch } from "../state/screenStore.mjs";
-import { annPlays } from "../testing/engineBatches.mjs";
+import { annPlays, bobDrivesToAnn, midRace, viewOf } from "../testing/engineBatches.mjs";
 import { team } from "../testing/viewFixtures.mjs";
 import type { AnimatorDeps } from "./animator.mjs";
 import type { Step } from "./steps.mjs";
@@ -58,6 +61,43 @@ async function advance(ms: number): Promise<void> {
 }
 
 
+interface TableProps {
+    pending: ReadonlyArray<EventBatch>;
+    view:    PlayerView;
+}
+
+
+// The hook on a table that shows `start`; each rerender is a new screen.
+function onTable(
+    start: PlayerView,
+    play?: AnimatorDeps["play"],
+    wrapper?: (p: { children: ReactNode }) => ReactNode
+) {
+    const deps = { ...fakeDeps(), ...(play === undefined ? {} : { play }) };
+    let reduced = false;
+    const consume = vi.fn<(id: number) => void>();
+    const initialProps: TableProps = { pending: [], view: start };
+    const hook = renderHook(
+        (p: TableProps) => useAnimator(p.pending, consume, p.view, {
+            ...deps, reducedMotion: () => reduced
+        }),
+        {
+            initialProps,
+            ...(wrapper === undefined ? {} : { wrapper })
+        }
+    );
+    const reduce = (): void => {
+        reduced = true;
+    };
+    return { ...hook, deps, consume, reduce };
+}
+
+
+function milesOf(view: PlayerView): ReadonlyArray<number> {
+    return view.teams.map((t) => zoneMiles(t.zone));
+}
+
+
 describe("useAnimator", () => {
 
     const first: EventBatch = { id: 1, events: drove.events };
@@ -89,14 +129,15 @@ describe("useAnimator", () => {
 
     it("returns the batch that started most recently, with its view", async () => {
         const { result, rerender } = setup([]);
-        expect(result.current.isNone).toBe(true);
+        expect(result.current.started.isNone).toBe(true);
         rerender({ pending: [first] });
         await advance(0);
-        expect(result.current.isSome && result.current.value)
+        expect(result.current.started.isSome && result.current.started.value)
         .toEqual({ events: drove.events, view });
         rerender({ pending: [first, second] });
         await advance(batchMs);
-        expect(result.current.isSome && result.current.value.events).toBe(discarded.events);
+        const { started } = result.current;
+        expect(started.isSome && started.value.events).toBe(discarded.events);
     });
 
 
@@ -111,7 +152,8 @@ describe("useAnimator", () => {
         // The batch in flight finished its two steps; nothing came after.
         expect(deps.play).toHaveBeenCalledTimes(2);
         expect(deps.onBatchStart).toHaveBeenCalledOnce();
-        expect(result.current.isSome && result.current.value.events).toBe(drove.events);
+        const { started } = result.current;
+        expect(started.isSome && started.value.events).toBe(drove.events);
     });
 
 
@@ -193,6 +235,117 @@ describe("useAnimator", () => {
         expect(vi.getTimerCount()).toBe(0);
         await advance(5000);
         expect(consume).not.toHaveBeenCalled();
+    });
+
+
+    describe("the shown view", () => {
+
+        // Bob drives 75 (a flight to his lane), then Ann's turn and her draw
+        // of a Spare Tire (a flight to her hand): 450 ms each, one after the
+        // other with this fake play.
+        const bob = bobDrivesToAnn;
+        const bobs: EventBatch = { id: 2, events: bob.events };
+
+
+        it("shows the table from before a batch until each of its cards lands", async () => {
+            const { result, rerender } = onTable(bob.before);
+            rerender({ pending: [bobs], view: bob.view });
+            // The render the batch arrives in already holds the table back.
+            expect(result.current.shown).toBe(bob.before);
+            expect(result.current.drawing).toEqual([Card.spareTire]);
+            await advance(449);
+            expect(result.current.shown).toBe(bob.before);
+            await advance(1);
+            // Bob's card is on his lane; the pile and the turn wait.
+            expect(milesOf(result.current.shown)).toEqual(milesOf(bob.view));
+            expect(result.current.shown.drawPileCount).toBe(bob.before.drawPileCount);
+            expect(result.current.shown.phase).toEqual(bob.before.phase);
+            expect(result.current.drawing).toEqual([Card.spareTire]);
+            await advance(450);
+            expect(result.current.shown).toBe(bob.view);
+            expect(result.current.drawing).toEqual([]);
+        });
+
+
+        it("advances batch by batch", async () => {
+            const start = viewOf(midRace, "Ann");
+            const annDrove: EventBatch = { id: 1, events: drove.events };
+            const { result, rerender } = onTable(start);
+            rerender({ pending: [annDrove], view: bob.before });
+            await advance(0);
+            rerender({ pending: [annDrove, bobs], view: bob.view });
+            expect(result.current.shown).toBe(start);
+            await advance(batchMs);
+            expect(result.current.shown).toBe(bob.before);
+            await advance(batchMs);
+            expect(result.current.shown).toBe(bob.view);
+        });
+
+
+        it("shows the live table at once when a snapshot drops the batch", async () => {
+            const { result, rerender } = onTable(bob.before);
+            rerender({ pending: [bobs], view: bob.view });
+            await advance(100);
+            rerender({ pending: [], view: bob.view });
+            expect(result.current.shown).toBe(bob.view);
+            expect(result.current.drawing).toEqual([]);
+        });
+
+
+        it("shows the live table at once under reduced motion", () => {
+            const { result, rerender, reduce } = onTable(bob.before);
+            reduce();
+            rerender({ pending: [bobs], view: bob.view });
+            expect(result.current.shown).toBe(bob.view);
+            expect(result.current.drawing).toEqual([]);
+        });
+
+
+        it("shows a hazard batch once its window starts, while the card is held", async () => {
+            const { result, rerender, consume } = onTable(viewOf(midRace, "Ann"));
+            rerender({ pending: [{ id: 7, events: attacked.events }], view: attacked.view });
+            await advance(449);
+            expect(result.current.shown).not.toBe(attacked.view);
+            await advance(1);
+            expect(result.current.shown).toBe(attacked.view);
+            expect(consume).not.toHaveBeenCalled();
+        });
+
+
+        it("shows the live table 3 s after a batch stalls", async () => {
+            const stalls = vi.fn(() => new Promise<void>(() => {
+                // Never settles.
+            }));
+            const { result, rerender } = onTable(bob.before, stalls);
+            rerender({ pending: [bobs], view: bob.view });
+            await advance(2999);
+            expect(result.current.shown).toBe(bob.before);
+            await advance(1);
+            expect(result.current.shown).toBe(bob.view);
+            expect(result.current.drawing).toEqual([]);
+        });
+
+
+        it("lags and catches up under StrictMode's double mount", async () => {
+            const { result, rerender } = onTable(bob.before, undefined, StrictMode);
+            rerender({ pending: [bobs], view: bob.view });
+            expect(result.current.shown).toBe(bob.before);
+            await advance(batchMs);
+            expect(result.current.shown).toBe(bob.view);
+        });
+
+
+        it("leaves no timer behind once everything has landed, or on unmount", async () => {
+            const { rerender, unmount } = onTable(bob.before);
+            rerender({ pending: [bobs], view: bob.view });
+            await advance(batchMs);
+            expect(vi.getTimerCount()).toBe(0);
+            rerender({ pending: [bobs, { id: 3, events: drove.events }], view: bob.view });
+            await advance(100);
+            unmount();
+            expect(vi.getTimerCount()).toBe(0);
+        });
+
     });
 
 });

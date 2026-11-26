@@ -156,7 +156,8 @@ describe("useSound", () => {
         await advance(5000);
         // Six are skipped; the newest two play three sounds each.
         expect(engine.played).toHaveBeenCalledTimes(6);
-        expect(result.current.isSome && result.current.value.events).toBe(batches[7]!.events);
+        const { started } = result.current;
+        expect(started.isSome && started.value.events).toBe(batches[7]!.events);
     });
 
 

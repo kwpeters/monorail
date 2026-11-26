@@ -1,15 +1,34 @@
 import { NoneOption, SomeOption, type Option } from "@repo/depot/option";
+import type { Card } from "@repo/mille-bornes-core/card";
 import type { GameEvent } from "@repo/mille-bornes-core/events";
 import type { PlayerView } from "@repo/mille-bornes-core/view";
 import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import type { EventBatch } from "../state/screenStore.mjs";
 import { createAnimator, type Animator, type AnimatorDeps } from "./animator.mjs";
+import {
+    arrive, land, revealStep, shownTable, snapAll, startBatch, stillDrawing, type ShownTable
+} from "./shownTable.mjs";
 
 
 /** A batch the animator has started, with the view it arrived with. */
 export interface StartedBatch {
     readonly events: ReadonlyArray<GameEvent>;
     readonly view:   PlayerView;
+}
+
+
+/** What `useAnimator()` gives the table. */
+export interface AnimatedTable {
+    /** The batch that started most recently, if any. */
+    readonly started: Option<StartedBatch>;
+    /**
+     * The view the table's non-interactive parts show: the live view, or
+     * while a batch plays, the table before it with what has landed so far.
+     */
+    readonly shown:   PlayerView;
+    /** The cards the viewer drew that are still flying in, oldest first. */
+    readonly drawing: ReadonlyArray<Card>;
 }
 
 
@@ -22,6 +41,22 @@ interface Live {
 }
 
 
+// The longest the table may show a batch's head behind the live view (a
+// stalled animation): then it shows everything live.
+const lagCapMs = 3000;
+
+
+type Change = (t: ShownTable) => ShownTable;
+
+
+// For the animator's callbacks, never while React renders: committed at once,
+// so a card shows in the frame its flight ends, and a batch has landed before
+// the store drops it.
+function commit(setTable: (change: Change) => void, change: Change): void {
+    flushSync(() => setTable(change));
+}
+
+
 /**
  * Feeds the store's pending batches to an animator, each one once, with the
  * view of the render it first appears in (the screen it arrived with), and
@@ -30,30 +65,63 @@ interface Live {
  * too, so nothing stale plays after a phone wakes up; the batch in flight
  * plays on.  The animator lives from mount to unmount; StrictMode's extra
  * mount gets a fresh one, and the first one is stopped before it plays.
+ *
+ * It also works out the shown view (see `ShownTable`): the table before a
+ * batch, from the render the batch arrives in, then what each of its
+ * flights brings as it lands, and all of its view when its last card has
+ * landed (or its hazard window starts).  A snapshot, a stop, a new race, the
+ * end of a race, reduced motion, or a batch at the head for 3 s shows the
+ * live view at once.
  * @param pending - The store's batches not yet consumed, oldest first
  * @param consume - Marks a batch as played
  * @param view - The current view
  * @param deps - How to play a step, the motion preference and an optional
  * batch start hook (read on each call, so they may change between renders)
- * @returns The batch that started most recently, if any
+ * @returns The batch that started most recently, the shown view and the
+ * viewer's cards still flying in
  */
 export function useAnimator(
     pending: ReadonlyArray<EventBatch>,
     consume: (id: number) => void,
     view: PlayerView,
     deps: AnimatorDeps
-): Option<StartedBatch> {
+): AnimatedTable {
     const [started, setStarted] = useState<Option<StartedBatch>>(NoneOption.get());
+    const [table, setTable] = useState<ShownTable>(() => shownTable(view, pending));
     const latest = useRef({ consume, deps });
     const live = useRef<Option<Live>>(NoneOption.get());
+
+    // Adjusted while rendering, so the render a batch arrives in already
+    // shows the table from before it.
+    let shown = table;
+    if (table.live !== view || table.pending !== pending) {
+        shown = arrive(table, pending, view, deps.reducedMotion());
+        setTable(shown);
+    }
 
     useEffect(() => {
         latest.current = { consume, deps };
     });
 
     useEffect(() => {
+        const update = (change: Change): void => commit(setTable, change);
         const animator = createAnimator({
-            play:          (...args) => latest.current.deps.play(...args),
+            play: async (step, signal, release) => {
+                if (step.kind === "Hold") {
+                    update((t) => t.playing.isSome ? land(t, t.playing.value) : t);
+                }
+                if (step.kind === "Pulse") {
+                    update((t) => revealStep(t, step));
+                }
+                try {
+                    await latest.current.deps.play(step, signal, release);
+                }
+                finally {
+                    if (step.kind === "Fly") {
+                        update((t) => revealStep(t, step));
+                    }
+                }
+            },
             reducedMotion: () => latest.current.deps.reducedMotion(),
             onBatchStart:  (events, batchView, skipped) => {
                 setStarted(new SomeOption({ events, view: batchView }));
@@ -68,6 +136,7 @@ export function useAnimator(
         return () => {
             animator.stop();
             live.current = NoneOption.get();
+            setTable(snapAll);
         };
     }, []);
 
@@ -76,6 +145,7 @@ export function useAnimator(
             return;
         }
         const { animator, enqueued, finished } = live.current.value;
+        const update = (change: Change): void => commit(setTable, change);
         const ids = new Set(pending.map((batch) => batch.id));
         // A finished batch may linger in `pending` for a render or two.
         for (const id of finished) {
@@ -96,13 +166,25 @@ export function useAnimator(
         for (const { id, events } of pending) {
             if (!enqueued.has(id) && !finished.has(id)) {
                 enqueued.set(id, animator.enqueue(events, view, () => {
+                    update((t) => land(t, id));
                     enqueued.delete(id);
                     finished.add(id);
                     latest.current.consume(id);
-                }));
+                }, () => update((t) => startBatch(t, id))));
             }
         }
     }, [pending, view]);
 
-    return started;
+    // A head that does not land in time (an animation that stalls) stops
+    // holding the table back.
+    const head = shown.queue[0]?.id;
+    useEffect(() => {
+        if (head === undefined) {
+            return;
+        }
+        const timer = window.setTimeout(() => setTable(snapAll), lagCapMs);
+        return () => window.clearTimeout(timer);
+    }, [head]);
+
+    return { started, shown: shown.view, drawing: stillDrawing(shown) };
 }

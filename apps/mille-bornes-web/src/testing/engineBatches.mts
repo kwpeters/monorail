@@ -4,6 +4,7 @@ import type { DrivingZone } from "@repo/mille-bornes-core/drivingZone";
 import { applyPlayerCommand } from "@repo/mille-bornes-core/engine";
 import type { GameEvent } from "@repo/mille-bornes-core/events";
 import type { Game } from "@repo/mille-bornes-core/game";
+import type { PlayerId } from "@repo/mille-bornes-core/ids";
 import { eventsFor, viewFor, type PlayerView } from "@repo/mille-bornes-core/view";
 import { gameForSeats, team, type SeatCount } from "./viewFixtures.mjs";
 import { rollingZone } from "./zoneFixtures.mjs";
@@ -148,24 +149,78 @@ export function play(game: Game, name: string, command: PlayerCommand): Game {
 }
 
 
+/** What one seat's screen gets for another seat's move. */
+export interface SeenMove extends AnnsScreen {
+    /** The viewer's view before the move. */
+    before: PlayerView;
+}
+
+
+/**
+ * Has a seat make a move and returns what another seat's screen shows.
+ * @param before - The game, on the mover's turn
+ * @param mover - The name of the seat that moves
+ * @param command - The move
+ * @param viewer - The name of the seat whose screen it is
+ * @returns The viewer's view before and after the move, and their events
+ */
+export function seenBy(
+    before: Game,
+    mover: string,
+    command: PlayerCommand,
+    viewer: string
+): SeenMove {
+    const id = (name: string): PlayerId => {
+        return before.players.find((p) => p.seat.name === name)!.seat.id;
+    };
+    const { game, events } = applyPlayerCommand(before, id(mover), command).throwIfFailed();
+    return {
+        before: viewFor(before, id(viewer)).throwIfFailed(),
+        view:   viewFor(game, id(viewer)).throwIfFailed(),
+        events: eventsFor(id(viewer), events)
+    };
+}
+
+
+/**
+ * Ann's screen when Bob drives 75 miles after her 50 in `midRace`: his play,
+ * her turn and her draw.
+ */
+export const bobDrivesToAnn: SeenMove = seenBy(
+    play(midRace, "Ann", { type: "Drive", card: Card.dist50 }),
+    "Bob",
+    { type: "Drive", card: Card.dist75 },
+    "Ann"
+);
+
+
+/**
+ * A 4-seat game on Ann's turn: Ann (team 1, with Cy) holds a Flat Tire for
+ * team 2 (Bob and Di), and Di holds Puncture Proof.
+ */
+export const beforeFlatTire: Game = arrange(
+    4,
+    [
+        ["Ann", [Card.flatTire, Card.dist50]],
+        ["Bob", [Card.dist75, Card.drivingAce]],
+        ["Cy", [Card.roll, Card.stop]],
+        ["Di", [Card.punctureProof, Card.dist25]],
+    ],
+    [rollingZone(), rollingZone()]
+);
+
+
+/** The attack that opens `flatTireWindow`. */
+export const flatTireAttack: PlayerCommand = {
+    type: "Attack", card: Card.flatTire, targetTeam: team(1)
+};
+
+
 /**
  * A 4-seat game in a hazard window: Ann (team 1, with Cy) has hit team 2
  * (Bob and Di) with a Flat Tire, and Di holds Puncture Proof.
  */
-export const flatTireWindow: Game = play(
-    arrange(
-        4,
-        [
-            ["Ann", [Card.flatTire, Card.dist50]],
-            ["Bob", [Card.dist75, Card.drivingAce]],
-            ["Cy", [Card.roll, Card.stop]],
-            ["Di", [Card.punctureProof, Card.dist25]],
-        ],
-        [rollingZone(), rollingZone()]
-    ),
-    "Ann",
-    { type: "Attack", card: Card.flatTire, targetTeam: team(1) }
-);
+export const flatTireWindow: Game = play(beforeFlatTire, "Ann", flatTireAttack);
 
 
 /** A 2-seat game where Ann has just reached 700 miles and decides on Extension. */

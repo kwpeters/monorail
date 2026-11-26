@@ -10,9 +10,10 @@ import { z } from "zod";
  * A place on the table an animation starts or ends at; each one is the
  * element with the matching `data-anim-anchor` attribute.  A `Team` is the
  * whole lane (a pulse glows around it), and a card that flies to a lane lands
- * on its card slot; a `Seat` is a player's name chip in their lane (of
- * `team`, the lane to use when the chip is not on the table), where another
- * player's cards come from and go.
+ * on its card slot, as a card the viewer draws lands on its place in the hand
+ * (hidden there until then); a `Seat` is a player's name chip in their lane
+ * (of `team`, the lane to use when the chip is not on the table), where
+ * another player's cards come from and go.
  */
 export type Anchor =
     | { readonly kind: "DrawPile" }
@@ -33,14 +34,15 @@ export type PulseTone = z.infer<typeof pulseToneSchema>;
 /**
  * One thing to show.  A `Fly` moves a card (face down when it is none); it
  * lasts `ms` at the least, longer over a longer way (see `flightMs()`), and
- * ends fully visible on a lane or the discard pile, which show the result,
- * but fades out at a seat or the hand, which have no card of its own to take
- * over, unless it `lingers`, because a `Hold` takes it over; a `Pulse` glows
- * a lane once (twice when `big`); a `Hold` keeps a card pinned at a lane,
- * with a pulse of its `tone` beside it, until the animator ends it (the next
- * batch arrives, a snapshot shows the window is over, or `ms` passes).  The
- * animator starts a step as soon as `releaseAt()` says (a flight may still
- * be on its way when the next one leaves); a `Hold` always comes last.
+ * ends fully visible on a lane, the discard pile or the drawn card's place in the hand, which show
+ * the result, but fades out at a seat or a hand with no such place, which
+ * have no card of its own to take over, unless it `lingers`, because a
+ * `Hold` takes it over; a `Pulse` glows a lane once (twice when `big`); a
+ * `Hold` keeps a card pinned at a lane, with a pulse of its `tone` beside it,
+ * until the animator ends it (the next batch arrives, a snapshot shows the
+ * window is over, or `ms` passes).  The animator starts a step as soon as
+ * `releaseAt()` says (a flight may still be on its way when the next one
+ * leaves); a `Hold` always comes last.
  */
 export type Step =
     | {

@@ -39,12 +39,15 @@ export interface Animator {
      * @param view - The view the batch arrived with (it names the players)
      * @param onDone - Called when the batch's steps are over (not after
      * `stop()`, and not for a dropped batch)
+     * @param onStart - Called as the batch starts, right after
+     * `onBatchStart`
      * @returns A function that drops the batch if it has not started yet
      */
     enqueue: (
         events: ReadonlyArray<GameEvent>,
         view: PlayerView,
-        onDone?: () => void
+        onDone?: () => void,
+        onStart?: () => void
     ) => () => void;
 
     /**
@@ -62,9 +65,10 @@ export interface Animator {
 
 
 interface Queued {
-    readonly events: ReadonlyArray<GameEvent>;
-    readonly view:   PlayerView;
-    readonly onDone: () => void;
+    readonly events:  ReadonlyArray<GameEvent>;
+    readonly view:    PlayerView;
+    readonly onDone:  () => void;
+    readonly onStart: () => void;
 }
 
 
@@ -105,11 +109,16 @@ export function createAnimator(deps: AnimatorDeps): Animator {
     };
 
     const start = (batch: Queued, skipped = false): void => {
-        try {
-            deps.onBatchStart?.(batch.events, batch.view, skipped);
-        }
-        catch {
-            // A hook that throws (a sound) must not stop the animations.
+        for (const hook of [
+            () => deps.onBatchStart?.(batch.events, batch.view, skipped),
+            batch.onStart
+        ]) {
+            try {
+                hook();
+            }
+            catch {
+                // A hook that throws (a sound) must not stop the animations.
+            }
         }
     };
 
@@ -234,11 +243,11 @@ export function createAnimator(deps: AnimatorDeps): Animator {
     };
 
     return {
-        enqueue: (events, view, onDone = noop) => {
+        enqueue: (events, view, onDone = noop, onStart = noop) => {
             if (stopped) {
                 return noop;
             }
-            const entry: Queued = { events, view, onDone };
+            const entry: Queued = { events, view, onDone, onStart };
             waiting.push(entry);
             endCurrentHold();
             if (!running) {

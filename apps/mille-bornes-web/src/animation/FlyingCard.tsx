@@ -97,11 +97,18 @@ function rectOf(anchor: Anchor): Option<DOMRect> {
 }
 
 
-// Where a card lands: on a lane, its card slot; anywhere else, the anchor.
+// The card slot of a lane, or of the hand (the place of a card still flying
+// in), if it has one now.
+function cardSlot(anchor: Anchor): Option<DOMRect> {
+    return anchor.kind === "Team" || anchor.kind === "Hand" ?
+        rectOfName(`${anchorName(anchor)}-card`) :
+        NoneOption.get();
+}
+
+
+// Where a card lands: on its card slot, else on the anchor.
 function landingRect(anchor: Anchor): Option<DOMRect> {
-    return anchor.kind === "Team" ?
-        rectOfName(`${anchorName(anchor)}-card`).bindNone(() => rectOf(anchor)) :
-        rectOf(anchor);
+    return cardSlot(anchor).bindNone(() => rectOf(anchor));
 }
 
 
@@ -205,9 +212,10 @@ async function animate(
 
 
 // A card flies from where it is (for the player's own, where it was tapped)
-// to where it lands, fully visible, and is gone as it arrives: the lane or
-// the pile it lands on shows the result.  A seat or the hand has no card of
-// its own to take it over, so a card flying there fades out at the end.
+// to where it lands, fully visible, and is gone as it arrives: the lane, the
+// pile or the place in the hand it lands on shows the result.  A seat, or a
+// hand with no place waiting, has no card of its own to take it over, so a
+// card flying there fades out at the end.
 async function fly(
     layer: HTMLElement,
     step: Extract<Step, { kind: "Fly" }>,
@@ -220,14 +228,17 @@ async function fly(
         takeLaunch(step.card.value) :
         NoneOption.get();
     const from = launched.bindNone(() => rectOf(step.from));
-    const to = landingRect(step.to);
+    const slot = cardSlot(step.to);
+    const to = slot.bindNone(() => rectOf(step.to));
     if (from.isNone || to.isNone) {
         return;
     }
     const start = center(from.value);
     const end = center(to.value);
-    const ms = Math.max(step.ms, flightMs(Math.hypot(end.x - start.x, end.y - start.y)));
-    const fades = step.lingers !== true && (step.to.kind === "Seat" || step.to.kind === "Hand");
+    const way = flightMs(Math.hypot(end.x - start.x, end.y - start.y));
+    const ms = Math.max(step.ms, way);
+    const fades = step.lingers !== true &&
+        (step.to.kind === "Seat" || (step.to.kind === "Hand" && slot.isNone));
     const keyframes: Keyframe[] = [
         { transform: at(start, launched.isSome ? 1 : startScale), opacity: 1 },
         ...(fades ? [{ opacity: 1, offset: 0.8 }] : []),

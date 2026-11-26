@@ -14,6 +14,7 @@ function showHand(cards: ReadonlyArray<Card>, extras: Partial<HandProps> = {}) {
         counter:  () => false,
         onPlay:   NoneOption.get(),
         onTap:    vi.fn(),
+        hidden:   new Set(),
         ...extras,
     };
     return { ...render(<Hand {...props} />), props };
@@ -47,6 +48,29 @@ describe("Hand", () => {
     it("shows an empty hand without cards", () => {
         showHand([]);
         expect(document.querySelectorAll("[data-card]")).toHaveLength(0);
+    });
+
+
+    it("keeps the place of a card still flying in, hidden, as its landing", () => {
+        showHand([Card.dist25, Card.roll, Card.stop], { hidden: new Set([2]) });
+        const items = [...document.querySelectorAll<HTMLElement>(".cards > li")];
+        expect(items.map((li) => li.style.visibility)).toEqual(["", "", "hidden"]);
+        expect(items[2]).not.toBeVisible();
+        expect(items[0]).toBeVisible();
+        // Not read out: only the two cards that have landed are buttons.
+        expect(within(screen.getByRole("list")).getAllByRole("listitem")).toHaveLength(2);
+        expect(screen.queryByRole("button", { name: "Stop" })).not.toBeInTheDocument();
+        const landings = document.querySelectorAll("[data-anim-anchor='hand-card']");
+        expect(landings).toHaveLength(1);
+        expect(landings[0]).toBe(items[2]);
+    });
+
+
+    it("shows the card and drops its landing once it is no longer hidden", () => {
+        const { props, rerender } = showHand([Card.dist25, Card.stop], { hidden: new Set([1]) });
+        rerender(<Hand {...props} hidden={new Set()} />);
+        expect(cardButton("Stop")).toBeVisible();
+        expect(document.querySelector("[data-anim-anchor='hand-card']")).toBeNull();
     });
 
 
