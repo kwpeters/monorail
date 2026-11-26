@@ -15,7 +15,7 @@ import {
 import { team } from "../testing/viewFixtures.mjs";
 import { rollingZone } from "../testing/zoneFixtures.mjs";
 import {
-    flightMs, releaseAt, stepsFor, stepsForBatch, type Anchor, type Step
+    flightMs, releaseAt, rushSteps, stepsFor, stepsForBatch, type Anchor, type Step
 } from "./steps.mjs";
 
 
@@ -232,6 +232,26 @@ describe("stepsForBatch", () => {
             fly("50", hand, ours),
             fly(undefined, drawPile, bobsSeat)
         ]);
+    });
+
+});
+
+
+describe("rushSteps", () => {
+
+    it("halves each flight and drops the pulses and pauses", () => {
+        const steps = stepsForBatch(remedy, view);
+        expect(steps.map((s) => s.kind)).toEqual(["Fly", "Pulse", "Fly"]);
+        expect(rushSteps(steps)).toEqual(steps
+        .filter((s) => s.kind === "Fly")
+        .map((s) => ({ ...s, ms: 225, rushed: true })));
+        expect(rushSteps([{ kind: "Pause", ms: 150 }])).toEqual([]);
+    });
+
+
+    it("keeps a hold, which the waiting batch ends anyway", () => {
+        const held = stepsForBatch(eventsFor(annId, attack.events), view);
+        expect(rushSteps(held).map((s) => s.kind)).toEqual(["Fly", "Hold"]);
     });
 
 });

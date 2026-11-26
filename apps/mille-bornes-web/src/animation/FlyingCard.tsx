@@ -236,7 +236,7 @@ async function fly(
     const start = center(from.value);
     const end = center(to.value);
     const way = flightMs(Math.hypot(end.x - start.x, end.y - start.y));
-    const ms = Math.max(step.ms, way);
+    const ms = Math.max(step.ms, step.rushed === true ? way / 2 : way);
     const fades = step.lingers !== true &&
         (step.to.kind === "Seat" || (step.to.kind === "Hand" && slot.isNone));
     const keyframes: Keyframe[] = [

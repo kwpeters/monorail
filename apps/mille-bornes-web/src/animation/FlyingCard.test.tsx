@@ -414,6 +414,19 @@ describe("useFlyingCards", () => {
         });
 
 
+        it("takes half as long when rushed", async () => {
+            const stub = stubAnimations(false);
+            const { play } = show();
+            const signal = new AbortController().signal;
+            await play({ ...flight(fifty), ms: 225, rushed: true }, signal);
+            await play({ ...flight(fifty, lane0, seat), ms: 225, rushed: true }, signal);
+            const durations = stub.animate.mock.calls
+            .map(([, options]) => (options as KeyframeAnimationOptions).duration);
+            expect(durations[0]).toBe(375);
+            expect(durations[1]).toBeCloseTo(233.3, 0);
+        });
+
+
         it("fades out, in its last fifth, at a seat", async () => {
             const stub = stubAnimations(false);
             const { play } = show();

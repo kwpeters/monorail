@@ -244,6 +244,81 @@ describe("createAnimator", () => {
         });
 
 
+        it("rushes a batch with another one waiting: half-length flights, no pulse", async () => {
+            const h = harness();
+            const animator = createAnimator(h.deps);
+            animator.enqueue(h.batch("remedy", remedy.events), view, h.done("remedy"));
+            animator.enqueue(h.batch("drive", drive.events), view, h.done("drive"));
+            await vi.runAllTimersAsync();
+            const steps = vi.mocked(h.deps.play).mock.calls.map(([s]) => s);
+            // The remedy is Fly, Pulse, Fly in full; rushed, its pulse is gone.
+            expect(steps.map((s) => [s.kind, s.ms, s.kind === "Fly" && s.rushed === true]))
+            .toEqual([
+                ["Fly", 225, true], ["Fly", 225, true],
+                ["Fly", 450, false], ["Fly", 450, false]
+            ]);
+        });
+
+
+        it("rushes all but the newest of three waiting, and skips none", async () => {
+            const h = harness();
+            const animator = createAnimator(h.deps);
+            animator.enqueue(h.batch("b0", drive.events), view, h.done("b0"));
+            await vi.advanceTimersByTimeAsync(10);
+            for (let i = 1; i <= 3; i++) {
+                animator.enqueue(h.batch(`b${i}`, drive.events), view, h.done(`b${i}`));
+            }
+            await vi.runAllTimersAsync();
+            const flights = vi.mocked(h.deps.play).mock.calls.map(([s]) => s.ms);
+            expect(flights).toEqual([450, 450, 225, 225, 225, 225, 450, 450]);
+            expect(h.log.filter((l) => l.startsWith("done"))).toEqual(
+                ["done b0", "done b1", "done b2", "done b3"]
+            );
+        });
+
+
+        it("skips the oldest of four waiting, keeping the newest two", async () => {
+            const h = harness();
+            const animator = createAnimator(h.deps);
+            animator.enqueue(h.batch("b0", drive.events), view, h.done("b0"));
+            await vi.advanceTimersByTimeAsync(10);
+            for (let i = 1; i <= 4; i++) {
+                animator.enqueue(h.batch(`b${i}`, drive.events), view, h.done(`b${i}`));
+            }
+            await vi.runAllTimersAsync();
+            expect(h.log).toEqual([
+                "batch b0", ...playedSteps, "done b0",
+                "batch b1", "done b1", "batch b2", "done b2",
+                "batch b3", ...playedSteps, "done b3",
+                "batch b4", ...playedSteps, "done b4"
+            ]);
+            expect(vi.mocked(h.deps.play).mock.calls.map(([s]) => s.ms)).toEqual(
+                [450, 450, 225, 225, 450, 450]
+            );
+        });
+
+
+        it("calls a batch's own start hook as it starts, also when skipped", async () => {
+            const h = harness();
+            const animator = createAnimator(h.deps);
+            const started: string[] = [];
+            animator.enqueue(h.batch("b0", drive.events), view, h.done("b0"), () => {
+                started.push("b0");
+            });
+            await vi.advanceTimersByTimeAsync(10);
+            for (let i = 1; i <= 4; i++) {
+                animator.enqueue(h.batch(`b${i}`, drive.events), view, h.done(`b${i}`), () => {
+                    started.push(`b${i}`);
+                    h.log.push(`own b${i}`);
+                });
+            }
+            await vi.runAllTimersAsync();
+            expect(started).toEqual(["b0", "b1", "b2", "b3", "b4"]);
+            expect(h.log.slice(h.log.indexOf("batch b1"), h.log.indexOf("batch b1") + 3))
+            .toEqual(["batch b1", "own b1", "done b1"]);
+        });
+
+
         it("tells onBatchStart which batches of a backlog were skipped, in order", async () => {
             const h = harness();
             const started: Array<readonly [string, boolean]> = [];
@@ -438,7 +513,9 @@ describe("createAnimator", () => {
             const animator = createAnimator(h.deps);
             animator.enqueue(h.batch("drive", drive.events), view, h.done("drive"));
             animator.enqueue(h.batch("discard", discard.events), view, h.done("discard"));
-            await vi.advanceTimersByTimeAsync(400);
+            // The discard waits, so the drive is rushed: 225 ms flights, the
+            // second leaving at 158 ms.
+            await vi.advanceTimersByTimeAsync(200);
             expect(h.log).toEqual(["batch drive", "start Fly", "start Fly"]);
             animator.stop();
             expect(vi.getTimerCount()).toBe(0);

@@ -33,8 +33,9 @@ export type PulseTone = z.infer<typeof pulseToneSchema>;
 
 /**
  * One thing to show.  A `Fly` moves a card (face down when it is none); it
- * lasts `ms` at the least, longer over a longer way (see `flightMs()`), and
- * ends fully visible on a lane, the discard pile or the drawn card's place in the hand, which show
+ * lasts `ms` at the least, longer over a longer way (see `flightMs()`; a
+ * `rushed` flight half as long, see `rushSteps()`), and ends fully visible on
+ * a lane, the discard pile or the drawn card's place in the hand, which show
  * the result, but fades out at a seat or a hand with no such place, which
  * have no card of its own to take over, unless it `lingers`, because a
  * `Hold` takes it over; a `Pulse` glows a lane once (twice when `big`); a
@@ -52,6 +53,7 @@ export type Step =
         readonly to:       Anchor;
         readonly ms:       number;
         readonly lingers?: boolean;
+        readonly rushed?:  boolean;
     }
     | {
         readonly kind:   "Pulse";
@@ -249,4 +251,17 @@ export function stepsForBatch(
     return steps.some((s) => s.kind !== "Pause") ?
         steps.filter((s) => s.kind !== "Pause") :
         steps;
+}
+
+
+/**
+ * Shortens a batch's steps when more batches wait behind it: its flights take
+ * half their time, and it has no pulse or pause, so the table catches up.
+ * @param steps - The batch's steps, in order
+ * @returns The steps to play, in order
+ */
+export function rushSteps(steps: ReadonlyArray<Step>): ReadonlyArray<Step> {
+    return steps
+    .filter((s) => s.kind !== "Pulse" && s.kind !== "Pause")
+    .map((s) => s.kind === "Fly" ? { ...s, ms: s.ms / 2, rushed: true } : s);
 }

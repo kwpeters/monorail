@@ -312,6 +312,27 @@ describe("useAnimator", () => {
         });
 
 
+        it("does not hold the table back for the batches a backlog skips", async () => {
+            const views = [1, 2, 3, 4, 5].map(() => ({ ...bob.view }));
+            const batches = views.map((_, i) => ({ id: 10 + i, events: drove.events }));
+            const { result, rerender } = onTable(bob.before);
+            rerender({ pending: batches.slice(0, 1), view: views[0]! });
+            await advance(0);
+            for (let n = 2; n <= 5; n++) {
+                rerender({ pending: batches.slice(0, n), view: views[n - 1]! });
+            }
+            expect(result.current.shown).toBe(bob.before);
+            // The first lands; the next two are skipped; the fourth is
+            // rushed (two 225 ms flights), the last plays in full.
+            await advance(batchMs);
+            expect(result.current.shown).toBe(views[2]);
+            await advance(450);
+            expect(result.current.shown).toBe(views[3]);
+            await advance(batchMs);
+            expect(result.current.shown).toBe(views[4]);
+        });
+
+
         it("shows the live table 3 s after a batch stalls", async () => {
             const stalls = vi.fn(() => new Promise<void>(() => {
                 // Never settles.

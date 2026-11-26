@@ -1,6 +1,8 @@
 import type { GameEvent } from "@repo/mille-bornes-core/events";
 import type { PlayerView } from "@repo/mille-bornes-core/view";
-import { releaseAt, stepsForBatch, type Release, type Step } from "./steps.mjs";
+import {
+    releaseAt, rushSteps, stepsForBatch, type Release, type Step
+} from "./steps.mjs";
 
 
 /** What `createAnimator()` needs. */
@@ -72,9 +74,10 @@ interface Queued {
 }
 
 
-// More batches than this waiting (a hidden tab, a slow phone) and all but the
-// newest `playInFull` are started without their steps.
-const maxWaiting = 5;
+// More batches than this waiting (a robot-heavy table, a hidden tab, a slow
+// phone) and all but the newest `playInFull` are started without their
+// steps.  A batch with another one waiting behind it is rushed.
+const maxWaiting = 3;
 const playInFull = 2;
 
 
@@ -82,7 +85,9 @@ const playInFull = 2;
  * Makes the animation queue: batches play strictly in the order queued and
  * never overlap; within a batch a step starts when `releaseAt()` allows (a
  * flight when the one before it is 70% through, any other step when the one
- * before it has ended).  A failing `play` never stalls it.
+ * before it has ended).  A failing `play` never stalls it.  A backlog is
+ * shortened: a batch with another waiting behind it is rushed, and above
+ * three waiting the oldest are skipped.
  * @param deps - How to play a step, the motion preference and the batch
  * start hook
  * @returns The animator, idle
@@ -180,11 +185,13 @@ export function createAnimator(deps: AnimatorDeps): Animator {
         return { done, released };
     };
 
-    // Plays a batch's steps; resolves once they are all over (or stopped).
-    const playSteps = async (batch: Queued): Promise<void> => {
+    // Plays a batch's steps (`rushed`, see `rushSteps()`); resolves once they
+    // are all over (or stopped).
+    const playSteps = async (batch: Queued, rushed: boolean): Promise<void> => {
         // A hazard that landed in the same batch had no window to show.
         const landedAtOnce = batch.events.some((e) => e.type === "HazardLanded");
-        const steps = stepsForBatch(batch.events, batch.view);
+        const all = stepsForBatch(batch.events, batch.view);
+        const steps = rushed ? rushSteps(all) : all;
         const live = new Set<Promise<void>>();
         // Resolves when the next step may start.
         let gate: Promise<unknown> = Promise.resolve();
@@ -224,7 +231,7 @@ export function createAnimator(deps: AnimatorDeps): Animator {
                 const batch = waiting.shift()!;
                 start(batch);
                 try {
-                    await playSteps(batch);
+                    await playSteps(batch, waiting.length > 0);
                 }
                 catch {
                     // A batch that cannot be shown (an event this page does not
