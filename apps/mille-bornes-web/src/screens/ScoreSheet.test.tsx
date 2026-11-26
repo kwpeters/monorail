@@ -35,9 +35,9 @@ const rows: ReadonlyArray<readonly [string, (s: RaceScore) => number]> = [
 // call), then GameOver.
 const two = finishedGame(2, { seed: 4, length: "Short" });
 
-// A 3-seat Quick game: two tied races (one with an Extension call), then a
+// A 3-seat Quick game: two tied races, then a
 // trip completed.
-const three = finishedGame(3, { seed: 21, length: "Quick" });
+const three = finishedGame(3, { seed: 585, length: "Quick" });
 
 
 // A 2-seat game whose first race is a trip completed with Delayed Action.
@@ -103,7 +103,7 @@ describe("ScoreSheet", () => {
             ["2 seats, a race", two.raceOvers[0]!],
             ["2 seats, the game", two.gameOver],
             ["3 seats, a tied race", three.raceOvers[0]!],
-            ["3 seats, a tied race with an Extension call", three.raceOvers[1]!],
+            ["3 seats, a second tied race", three.raceOvers[1]!],
             ["3 seats, the game", three.gameOver],
             ["2 seats, a race with Delayed Action", delayed.raceOvers[0]!],
             ["2 seats, a race with a Safe Trip", bonus.raceOvers[0]!],

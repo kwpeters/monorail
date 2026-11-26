@@ -117,7 +117,7 @@ describe("useAnimator", () => {
     it("ends a Hold when the snapshot drops the batch that holds", async () => {
         const hazard: EventBatch = { id: 7, events: attacked.events };
         const { deps, consume, rerender } = setup([hazard]);
-        // The hazard's flight, then its Hold, which would last 6 s.
+        // The hazard's flight, then its Hold, which would last 10 s.
         await advance(400);
         expect(deps.play).toHaveBeenLastCalledWith(
             expect.objectContaining({ kind: "Hold" }), expect.any(AbortSignal)
@@ -161,7 +161,7 @@ describe("useAnimator", () => {
         rerender({ pending: [hazard] });
         await advance(1000);
         expect(consume).toHaveBeenCalledOnce();
-        await advance(5000);
+        await advance(10000);
         expect(consume).toHaveBeenCalledTimes(2);
     });
 

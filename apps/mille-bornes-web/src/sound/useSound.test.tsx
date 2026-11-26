@@ -5,7 +5,7 @@ import { StrictMode, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useAnimator } from "../animation/useAnimator.js";
 import type { EventBatch } from "../state/screenStore.mjs";
-import { annId, bobId, midRace, play } from "../testing/engineBatches.mjs";
+import { annId, bobId, midRace, play, stopAlreadyAnswered } from "../testing/engineBatches.mjs";
 import { createFakeEngine, type FakeEngine } from "../testing/fakeAudio.mjs";
 import { team } from "../testing/viewFixtures.mjs";
 import { AudioEngineContext, staggerMs, useSound } from "./useSound.js";
@@ -24,6 +24,15 @@ const hit = applyPlayerCommand(
 ).throwIfFailed();
 const bobsView = viewFor(hit.game, bobId).throwIfFailed();
 const hitBatch: EventBatch = { id: 2, events: eventsFor(bobId, hit.events) };
+
+
+// The same Stop with its safety already down: no window, so Bob's screen gets
+// [HazardPlayed, HazardLanded, TurnStarted, CardDrawn] in one batch.
+const instantHit = applyPlayerCommand(
+    stopAlreadyAnswered, annId, { type: "Attack", card: "Stop", targetTeam: team(1) }
+).throwIfFailed();
+const instantBobsView = viewFor(instantHit.game, bobId).throwIfFailed();
+const instantBatch: EventBatch = { id: 5, events: eventsFor(bobId, instantHit.events) };
 
 
 interface Props {
@@ -94,6 +103,19 @@ describe("useSound", () => {
         rerender({ pending: [batch] });
         await advance(5000);
         expect(engine.played).toHaveBeenCalledTimes(3);
+    });
+
+
+    it("plays the hazard sound once, with no window alert, when a hazard lands at once", async () => {
+        const vibrate = vi.fn(() => true);
+        setVibrate(vibrate);
+        const { engine } = setup([instantBatch], { view: instantBobsView });
+        await advance(5000);
+        const names = engine.played.mock.calls.flat();
+        expect(names.filter((n) => n === "hazard")).toEqual(["hazard"]);
+        expect(names).not.toContain("windowAlert");
+        // Only Bob's own turn buzzes, not a window alert.
+        expect(vibrate.mock.calls).toEqual([[[60]]]);
     });
 
 

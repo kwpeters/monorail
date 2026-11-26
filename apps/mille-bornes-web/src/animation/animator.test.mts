@@ -1,7 +1,7 @@
 import type { GameEvent } from "@repo/mille-bornes-core/events";
 import type { PlayerView } from "@repo/mille-bornes-core/view";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { annPlays } from "../testing/engineBatches.mjs";
+import { annPlays, annPlaysIn, stopAlreadyAnswered } from "../testing/engineBatches.mjs";
 import { team } from "../testing/viewFixtures.mjs";
 import { createAnimator, type AnimatorDeps } from "./animator.mjs";
 import type { Step } from "./steps.mjs";
@@ -13,6 +13,12 @@ import type { Step } from "./steps.mjs";
 const drive = annPlays({ type: "Drive", card: "50" });
 const discard = annPlays({ type: "Discard", card: "25" });
 const attack = annPlays({ type: "Attack", card: "Stop", targetTeam: team(1) });
+// A Stop whose safety is already down: [HazardPlayed, HazardLanded, TurnStarted,
+// CardDrawn] in one batch, with no hazard window.
+const instantAttack = annPlaysIn(
+    stopAlreadyAnswered,
+    { type: "Attack", card: "Stop", targetTeam: team(1) }
+);
 const { view } = drive;
 
 
@@ -302,14 +308,32 @@ describe("createAnimator", () => {
         });
 
 
-        it("ends after a cap of 6 s", async () => {
+        it("ends after a cap of 10 s", async () => {
             const h = harness();
             const animator = createAnimator(h.deps);
             animator.enqueue(h.batch("attack", attack.events), view, h.done("attack"));
-            await vi.advanceTimersByTimeAsync(350 + 5999);
+            await vi.advanceTimersByTimeAsync(350 + 9999);
             expect(h.log.at(-1)).toBe("start Hold");
             await vi.advanceTimersByTimeAsync(1);
             expect(h.log.slice(-2)).toEqual(["end Hold", "done attack"]);
+            expect(vi.getTimerCount()).toBe(0);
+        });
+
+
+        it("is skipped when the hazard landed in the same batch", async () => {
+            const h = harness();
+            const animator = createAnimator(h.deps);
+            expect(instantAttack.events.map((e) => e.type).slice(0, 2))
+            .toEqual(["HazardPlayed", "HazardLanded"]);
+            animator.enqueue(h.batch("instant", instantAttack.events), view, h.done("instant"));
+            // Far less than the hold cap: the batch must not wait for it.
+            await vi.advanceTimersByTimeAsync(3000);
+            expect(h.log).not.toContain("start Hold");
+            expect(h.log.at(-1)).toBe("done instant");
+            // The card still flies in, and the Bad pulse still plays.
+            expect(h.log.slice(0, 5)).toEqual(
+                ["batch instant", "start Fly", "end Fly", "start Pulse", "end Pulse"]
+            );
             expect(vi.getTimerCount()).toBe(0);
         });
 

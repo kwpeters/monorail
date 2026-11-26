@@ -57,6 +57,17 @@ export const bobHand: ReadonlyArray<Card> = ["Right of Way", "75", "50", "25", "
 export const midRace: Game = setUp(annHand, bobHand, [rollingZone(), rollingZone()]);
 
 
+/**
+ * Both teams rolling, on Ann's turn, with Right of Way already on Ann's
+ * team's drive pile: her Stop at Bob lands at once, with no hazard window.
+ */
+export const stopAlreadyAnswered: Game = setUp(
+    annHand,
+    ["75", "50", "25"],
+    [{ ...rollingZone(), safeties: [{ card: "Right of Way", coupFourre: false }] }, rollingZone()]
+);
+
+
 /** What Ann's screen gets for one command: her new view and her events. */
 export interface AnnsScreen {
     view:   PlayerView;
@@ -70,7 +81,18 @@ export interface AnnsScreen {
  * @returns Ann's view after the move and her (redacted) events
  */
 export function annPlays(command: PlayerCommand): AnnsScreen {
-    const { game, events } = applyPlayerCommand(midRace, annId, command).throwIfFailed();
+    return annPlaysIn(midRace, command);
+}
+
+
+/**
+ * Has Ann make a move in a game and returns what her screen would show.
+ * @param before - The game, on Ann's turn
+ * @param command - The move
+ * @returns Ann's view after the move and her (redacted) events
+ */
+export function annPlaysIn(before: Game, command: PlayerCommand): AnnsScreen {
+    const { game, events } = applyPlayerCommand(before, annId, command).throwIfFailed();
     return { view: viewFor(game, annId).throwIfFailed(), events: eventsFor(annId, events) };
 }
 

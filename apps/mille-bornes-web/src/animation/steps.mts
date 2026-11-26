@@ -65,9 +65,9 @@ const bigPulseMs = 900;
 const pauseMs = 150;
 
 
-// The longest a hazard stays pinned; the server's window is shorter, and its
-// end (the next batch) normally ends the hold first.
-const holdCapMs = 6000;
+// The longest a hazard stays pinned; it must stay above the server's window
+// (8 s by default), whose end (the next batch) normally ends the hold first.
+const holdCapMs = 10000;
 
 
 const hand: Anchor = { kind: "Hand" };

@@ -80,9 +80,19 @@ export function useSound(): (
             return;
         }
         let slot = 0;
+        // A hazard that lands in its own batch opened no window: it sounds
+        // once, and nothing alerts the hit team to a window.
+        const landedAtOnce = events.some((e) => e.type === "HazardPlayed") &&
+            events.some((e) => e.type === "HazardLanded");
         for (const event of events) {
-            const sounds = soundsFor(event, view);
-            const buzz = vibrationFor(event, view);
+            if (landedAtOnce && event.type === "HazardLanded") {
+                continue;
+            }
+            const sounds = soundsFor(event, view)
+            .filter((name) => !(landedAtOnce && name === "windowAlert"));
+            const buzz = landedAtOnce && event.type === "HazardPlayed" ?
+                NoneOption.get() :
+                vibrationFor(event, view);
             if (sounds.length === 0 && buzz.isNone) {
                 continue;
             }

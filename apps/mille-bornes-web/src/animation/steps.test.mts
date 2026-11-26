@@ -121,7 +121,7 @@ const table: Record<GameEvent["type"], readonly [GameEvent, ReadonlyArray<Step>]
             // The card stays visible from the flight into the hold, where
             // the red pulse plays beside it.
             fly("Stop", hand, theirs, true),
-            { kind: "Hold", card: "Stop", at: theirs, tone: "Bad", ms: 6000 }
+            { kind: "Hold", card: "Stop", at: theirs, tone: "Bad", ms: 10000 }
         ]
     ],
     HazardLanded: [eventOf(landed, "HazardLanded"), [pulse(theirs, "Bad")]],

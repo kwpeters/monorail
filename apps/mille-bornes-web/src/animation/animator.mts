@@ -164,9 +164,11 @@ export function createAnimator(deps: AnimatorDeps): Animator {
                 const batch = waiting.shift()!;
                 start(batch);
                 try {
+                    // A hazard that landed in the same batch had no window to show.
+                    const landedAtOnce = batch.events.some((e) => e.type === "HazardLanded");
                     for (const s of batch.events.flatMap((e) => stepsFor(e, batch.view))) {
                         // A Hold shows a hazard window that the next batch has closed.
-                        const over = s.kind === "Hold" && waiting.length > 0;
+                        const over = s.kind === "Hold" && (landedAtOnce || waiting.length > 0);
                         if (isStopped()) {
                             return;
                         }

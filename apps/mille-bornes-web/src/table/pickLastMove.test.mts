@@ -8,7 +8,7 @@ import { variantForSeatCount } from "@repo/mille-bornes-core/variant";
 import { viewFor } from "@repo/mille-bornes-core/view";
 import { describe, expect, it } from "vitest";
 import { describeEvent } from "../text/describeEvent.mjs";
-import { annId, bobId, midRace, setUp } from "../testing/engineBatches.mjs";
+import { annId, bobId, midRace, setUp, stopAlreadyAnswered } from "../testing/engineBatches.mjs";
 import { team } from "../testing/viewFixtures.mjs";
 import { rollingZone } from "../testing/zoneFixtures.mjs";
 import { pickLastMove } from "./pickLastMove.mjs";
@@ -36,6 +36,16 @@ describe("pickLastMove", () => {
 
     it("is none for an empty batch", () => {
         expect(pickLastMove([])).toEqual(NoneOption.get());
+    });
+
+
+    it("describes the hazard's play when it landed at once in the same batch", () => {
+        const { events, game } = applyPlayerCommand(
+            stopAlreadyAnswered, annId, { type: "Attack", card: "Stop", targetTeam: team(1) }
+        ).throwIfFailed();
+        expect(typesOf(events).slice(0, 2)).toEqual(["HazardPlayed", "HazardLanded"]);
+        expect(pickedType(events)).toBe("HazardPlayed");
+        expect(textOf(game, events)).toBe("You played Stop on Team 2.");
     });
 
 
