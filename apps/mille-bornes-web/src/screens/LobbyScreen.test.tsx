@@ -390,8 +390,12 @@ describe("LobbyScreen", () => {
 
         it("never offers the player's own current name", async () => {
             const { user } = await openForm(lobby(), () => 0, pool[0]);
+            // Replace the box text, so only the own-name path can exclude pool[0].
+            const field = screen.getByLabelText("New name");
+            await user.clear(field);
+            await user.type(field, "x");
             await user.click(screen.getByRole("button", { name: "Surprise me" }));
-            expect(screen.getByLabelText("New name")).toHaveValue(pool[1]);
+            expect(field).toHaveValue(pool[1]);
         });
 
 
