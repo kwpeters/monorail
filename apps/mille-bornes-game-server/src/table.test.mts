@@ -396,7 +396,7 @@ describe("Table", () => {
 
                     expect(eventTypes(h.updates[0]).slice(0, 2)).toEqual(["HazardPlayed", "HazardLanded"]);
                     expect(h.table.game.phase).toEqual({ kind: "Turn", player: bob });
-                    expect(h.table.timer()).toEqual(new NoneOption<VisibleTimer>());
+                    expect(h.table.timer()).toEqual(NoneOption.get());
                     // Only the robot's turn timer; no HazardWindow timer.
                     expect(h.clock.pendingCount()).toEqual(1);
 
