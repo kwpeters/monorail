@@ -2,6 +2,7 @@ import { NoneOption, Option, SomeOption } from "@repo/depot/option";
 import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import { cardSchema, safetyFor, type Card, type SafetyCard } from "./card.mjs";
 import { type Applied, type PlayerCommand, type SystemCommand } from "./commands.mjs";
+import { isDeadPosition } from "./deadPosition.mjs";
 import { ShuffledDeck } from "./deck.mjs";
 import { hasSafety, landHazard, newZone, zoneMiles, type ZoneChange } from "./drivingZone.mjs";
 import { type GameEvent } from "./events.mjs";
@@ -136,7 +137,9 @@ function finishRace(
 
 /**
  * Starts the turn of the next player who holds cards, or ends the race as
- * Exhausted when nobody does.
+ * Exhausted when nobody does or when the race is dead (see
+ * `isDeadPosition()`: the draw pile is empty and nobody can do anything but
+ * discard).
  * @param g - The game
  * @param from - The index in `g.players` to start looking from (inclusive)
  * @param events - The events so far; the new ones are appended
@@ -144,7 +147,9 @@ function finishRace(
  */
 function nextTurn(g: Game, from: number, events: ReadonlyArray<GameEvent>): Applied {
     const next = nextPlayerWithCards(g, from);
-    return next.isNone ? finishRace(g, exhausted(g), events) : startTurn(g, next.value, events);
+    return next.isNone || isDeadPosition(g) ?
+        finishRace(g, exhausted(g), events) :
+        startTurn(g, next.value, events);
 }
 
 

@@ -16,7 +16,9 @@ import { type GameLength } from "./scoring.mjs";
 import {
     commandKey, playGame, seededRandom, simulationPolicySchema, type SimulationPolicy
 } from "./simulation.mjs";
-import { deepFreeze, oneOnOne, threeByTwo, threeSolo, twoByTwo } from "./testHelpers.mjs";
+import {
+    deepFreeze, oneOnOne, scoresTheLongWay, threeByTwo, threeSolo, twoByTwo
+} from "./testHelpers.mjs";
 import { candidateCommands, eventsFor, legalPlays, viewFor } from "./view.mjs";
 
 
@@ -484,6 +486,33 @@ describe("simulation", () => {
             })).length;
             expect(nonCallerCompleted).toBeGreaterThan(0);
             expect(emptyPileCoupFourres).toBeGreaterThan(0);
+        });
+
+
+        it("scores a race that ended early exactly as playing the discards out would", () => {
+            const seeds = Array.from({ length: 40 }, (_, i) => i + 1);
+            for (const policy of policies) {
+                let early = 0;
+                for (const layout of layouts) {
+                    for (const seed of seeds) {
+                        const run: Run = { layout, length: "Short", seed, policy };
+                        for (const g of statesOf(run)) {
+                            const phase = g.phase;
+                            // Races won by completing the trip may leave live cards.
+                            if ((phase.kind !== "RaceOver" && phase.kind !== "GameOver") ||
+                                phase.result.outcome.kind !== "Exhausted" ||
+                                g.players.every((p) => p.hand.length === 0)) {
+                                continue;
+                            }
+                            early++;
+                            expect(scoresTheLongWay(g).throwIfFailed())
+                            .withContext(label(run))
+                            .toEqual(phase.result.scores);
+                        }
+                    }
+                }
+                expect(early).withContext(`${policy} early endings`).toBeGreaterThan(0);
+            }
         });
 
     });

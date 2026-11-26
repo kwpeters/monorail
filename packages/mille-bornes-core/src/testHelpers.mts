@@ -1,6 +1,8 @@
+import { FailedResult, SucceededResult, type Result } from "@repo/depot/result";
 import { Card, cardSchema } from "./card.mjs";
 import { cardCounts, type DeckKind, type ShuffledDeck } from "./deck.mjs";
 import { newZone, type DrivingZone } from "./drivingZone.mjs";
+import { applyPlayerCommand } from "./engine.mjs";
 import {
     seatOrder, type Game, type GameConfig, type Phase, type Seat, type SeatKind
 } from "./game.mjs";
@@ -9,7 +11,9 @@ import { checkInvariants, physicalCards } from "./invariants.mjs";
 import { PlayerName } from "./playerName.mjs";
 import { type Points } from "./points.mjs";
 import { describeRejection } from "./rejection.mjs";
+import { scoreRace, standardScoring, type RaceScore } from "./scoring.mjs";
 import { initialExtension, variantForSeatCount, type ExtensionState } from "./variant.mjs";
+import { candidateCommands, viewFor } from "./view.mjs";
 
 
 /**
@@ -234,4 +238,53 @@ export function unlandableHazard(why: Unlandable): Game {
         teams: landable.teams.map((t, i) => i === 1 ? { ...t, zone } : t),
         discardPile,
     };
+}
+
+
+/**
+ * Test support: plays out a finished race the long way, to prove that ending
+ * it early changed nothing.  The race's hands are discarded one card at a
+ * time in seat order, with no draws.  Before every discard, the real engine
+ * is asked whether any player could play anything but a Discard if it were
+ * their turn (so a position that was wrongly called dead is caught); the
+ * discard itself is applied by hand.
+ * The race is then scored again from the zones the tail leaves.
+ * @param finished - A game in phase RaceOver or GameOver whose race ended as
+ * Exhausted
+ * @returns The scores the long way gives, or a message naming the first state
+ * of the tail in which a play other than a Discard was legal
+ */
+export function scoresTheLongWay(finished: Game): Result<ReadonlyArray<RaceScore>, string> {
+    const { phase } = finished;
+    if (phase.kind !== "RaceOver" && phase.kind !== "GameOver") {
+        throw new Error(`scoresTheLongWay: the race is not over: the phase is ${phase.kind}.`);
+    }
+    const { outcome, scores } = phase.result;
+    const hands = finished.players.map((p) => [...p.hand]);
+    for (let turn = 0; hands.some((h) => h.length > 0); turn++) {
+        const playable = finished.players.flatMap((p, q) => {
+            const game: Game = {
+                ...finished,
+                players: finished.players.map((pl, i) => ({ ...pl, hand: hands[i]! })),
+                phase:   { kind: "Turn", player: p.seat.id },
+            };
+            const view = viewFor(game, p.seat.id).throwIfFailed();
+            return candidateCommands(view)
+            .filter((c) => c.type !== "Discard" && applyPlayerCommand(game, p.seat.id, c).succeeded)
+            .map((c) => `${p.seat.name} (seat ${q}) could play ${JSON.stringify(c)}`);
+        });
+        if (playable.length > 0) {
+            return new FailedResult(`After ${turn} discards: ${playable[0]}`);
+        }
+        const holder = hands.findIndex((h) => h.length > 0);
+        hands[holder]!.shift();
+    }
+    return new SucceededResult(
+        scoreRace(
+            standardScoring,
+            finished.teams.map((t) => t.zone),
+            outcome,
+            scores.map((s) => s.broughtForward)
+        )
+    );
 }
