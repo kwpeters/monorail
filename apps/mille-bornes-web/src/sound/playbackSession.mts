@@ -6,10 +6,11 @@ export interface AudioSessionLike {
 
 /** The part of `HTMLAudioElement` that `startPlaybackSession` uses. */
 export interface AudioElementLike {
-    src:         string;
-    loop:        boolean;
-    playsInline: boolean;
-    preload:     string;
+    src:             string;
+    loop:            boolean;
+    playsInline:     boolean;
+    preload:         string;
+    readonly paused: boolean;
     setAttribute(name: string, value: string): void;
     play(): unknown;
 }
@@ -60,53 +61,66 @@ function makeSilentWavDataUri(): string {
 export const silentWavDataUri = makeSilentWavDataUri();
 
 
-// The documents already given a playback session, so it starts once per page.
-const started = new WeakSet();
-
-// Keeps the silent element reachable so it is never garbage-collected.
-const keepAlive: AudioElementLike[] = [];
+// The silent element of each document: one per page, kept reachable so it is
+// never garbage-collected, and found again to restart it.
+const elements = new WeakMap<object, AudioElementLike>();
 
 
 /**
  * Asks iOS to treat the page's audio as media playback, so Web Audio is
  * audible even with the ring/silent switch on silent (otherwise it uses the
- * "ambient" session, which obeys the switch).  Call it from a user gesture.
+ * "ambient" session, which obeys the switch).  Call it from a user gesture,
+ * on every gesture until it returns true.
  *
- * With Safari's Audio Session API it sets `navigator.audioSession.type`.
+ * With Safari's Audio Session API it sets `navigator.audioSession.type`,
+ * which is permanent, and returns true.
  * Older iOS has no such API, but starting a media element switches the page
- * to a playback session, so a hidden element loops a silent clip.
+ * to a playback session, so one hidden element loops a silent clip.
+ * A browser can refuse the first `play()` (it rejects asynchronously), and iOS
+ * pauses the element when the app is backgrounded, the phone locks or audio is
+ * interrupted.
+ * So on this path every call starts the element if it is missing, restarts it
+ * if it is paused, and does nothing if it is playing; it never returns true,
+ * because the element can be paused again at any time.
  *
  * The session is deliberately left running when the game is muted: mute only
  * silences the game's own sounds, and unmuting then works at once.
  *
- * Trade-off, left as is: a playing media element can make iOS show lock-screen
- * Now Playing controls.  `navigator.mediaSession` could hide them, but how that
- * behaves across iOS versions is unverified, so it is not touched.
+ * Side effects, left as they are and unverified on a device: a playing media
+ * element can make iOS show lock-screen Now Playing controls
+ * (`navigator.mediaSession` could hide them, but how that behaves across iOS
+ * versions is unknown, so it is not touched), and a playback session can
+ * interrupt the player's own music or podcast app on the first tap, even while
+ * the game is muted.
  *
- * Nothing here throws, and calling it again for the same document does nothing.
+ * Nothing here throws.
  * @param env - The `navigator` and `document` to use
+ * @returns True when the session is permanent, so the caller can stop calling
  */
-export function startPlaybackSession(env: PlaybackSessionEnv): void {
-    if (started.has(env.document)) {
-        return;
-    }
-    started.add(env.document);
+export function startPlaybackSession(env: PlaybackSessionEnv): boolean {
     try {
         if (env.navigator.audioSession !== undefined) {
             env.navigator.audioSession.type = "playback";
-            return;
+            return true;
         }
-        const audio = env.document.createElement("audio");
-        audio.src = silentWavDataUri;
-        audio.loop = true;
-        audio.playsInline = true;
-        audio.setAttribute("playsinline", "");
-        audio.preload = "auto";
-        keepAlive.push(audio);
-        // A rejection only means the browser refused; sound still plays.
+        let audio = elements.get(env.document);
+        if (audio === undefined) {
+            audio = env.document.createElement("audio");
+            audio.src = silentWavDataUri;
+            audio.loop = true;
+            audio.playsInline = true;
+            audio.setAttribute("playsinline", "");
+            audio.preload = "auto";
+            elements.set(env.document, audio);
+        }
+        else if (!audio.paused) {
+            return false;
+        }
+        // A rejection only means the browser refused; the next gesture retries.
         Promise.resolve(audio.play()).catch(() => undefined);
     }
     catch {
         // No playback session: sounds still play where the switch allows.
     }
+    return false;
 }

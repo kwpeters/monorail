@@ -21,6 +21,12 @@ window.scrollTo = (): void => undefined;
 Element.prototype.scrollIntoView = (): void => undefined;
 
 
+// jsdom has media elements but no playback: its `play()` only logs "Not
+// implemented".  A resolved promise is what a browser that allows playback
+// returns; tests that need to see the call spy on this.
+HTMLMediaElement.prototype.play = (): Promise<void> => Promise.resolve();
+
+
 // jsdom has no modal dialogs: `showModal()` and `close()` are missing.  This
 // stand-in does what a browser does that the tests rely on: `showModal()`
 // opens the dialog and remembers the focused element, Escape closes it, and

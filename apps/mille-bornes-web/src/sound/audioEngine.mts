@@ -164,8 +164,8 @@ function startTone(ctx: AudioContextLike, tone: Tone, onEnded: () => void): () =
  * is missing), with a context that cannot resume, or while muted, `play` is a
  * no-op.  The mute choice is kept in `storage` under `muteStorageKey`; a
  * storage that throws, or holds anything but "true", means unmuted.
- * `prepareSession`, if given, runs once, on the first `unlock()` and before the
- * context is made; it is never retried, even if it throws.
+ * `prepareSession`, if given, runs on every `unlock()`, before the context is
+ * made, until it returns true (nothing more to do); a throw counts as false.
  * @param deps - How to make the context, where to keep the mute choice, and an
  * optional gesture-time audio session setup
  * @returns The engine, locked
@@ -173,7 +173,7 @@ function startTone(ctx: AudioContextLike, tone: Tone, onEnded: () => void): () =
 export function createAudioEngine(deps: {
     createContext:   () => Option<AudioContextLike>;
     storage:         StorageLike;
-    prepareSession?: () => void;
+    prepareSession?: () => boolean;
 }): AudioEngine {
     let context: Option<AudioContextLike> = NoneOption.get();
     let prepared = false;
@@ -204,12 +204,12 @@ export function createAudioEngine(deps: {
     return {
         unlock: () => {
             if (!prepared) {
-                prepared = true;
                 try {
-                    deps.prepareSession?.();
+                    prepared = deps.prepareSession?.() ?? true;
                 }
                 catch {
-                    // Without a playback session the sounds still play.
+                    // Without a playback session the sounds still play; the
+                    // next gesture tries again.
                 }
             }
             try {

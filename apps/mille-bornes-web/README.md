@@ -113,7 +113,11 @@ in its folder under `test-results/`;
 - The synthesized sounds have not been judged by the owner yet.
 - On an iPhone, the ring/silent switch normally silences web audio.
   The app asks iOS for a playback audio session,
-  so sounds play even in silent mode on iOS versions that support it.
+  so sounds play even in silent mode on newer iPhones
+  (iOS 16.4 and later, as far as we know).
+  Older iOS plays a silent clip in a loop to get the same session.
+  Either way, the first tap can interrupt the player's own music or podcast app,
+  even while the game is muted.
   If a very old iOS still stays silent,
   flip the switch to ring and raise the media volume.
 - Dimmed cards are marked `aria-disabled`,

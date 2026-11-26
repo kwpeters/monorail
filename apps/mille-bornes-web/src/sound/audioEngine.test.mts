@@ -84,10 +84,12 @@ describe("createAudioEngine", () => {
         });
 
 
-        it("prepares the session once, before the context is made", () => {
+        it("prepares the session on each unlock until it reports done, before the context", () => {
             const order: string[] = [];
+            const results = [false, false, true];
             const prepareSession = vi.fn(() => {
                 order.push("prepare");
+                return results.shift() ?? true;
             });
             const createContext = vi.fn(() => {
                 order.push("context");
@@ -99,17 +101,17 @@ describe("createAudioEngine", () => {
                 prepareSession
             });
             expect(prepareSession).not.toHaveBeenCalled();
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 6; i++) {
                 engine.unlock();
             }
-            expect(prepareSession).toHaveBeenCalledOnce();
-            expect(order).toEqual(["prepare", "context"]);
+            expect(prepareSession).toHaveBeenCalledTimes(3);
+            expect(order.slice(0, 2)).toEqual(["prepare", "context"]);
         });
 
 
-        it("still makes and resumes the context when preparing the session throws", () => {
+        it("retries a throwing prepareSession, and still makes and resumes the context", () => {
             const audio = createFakeAudio("suspended");
-            const prepareSession = vi.fn((): void => {
+            const prepareSession = vi.fn((): boolean => {
                 throw new Error("no session");
             });
             const engine = createAudioEngine({
@@ -120,8 +122,7 @@ describe("createAudioEngine", () => {
             expect(() => engine.unlock()).not.toThrow();
             expect(() => engine.unlock()).not.toThrow();
             expect(audio.resume).toHaveBeenCalled();
-            // Not retried on later taps.
-            expect(prepareSession).toHaveBeenCalledOnce();
+            expect(prepareSession).toHaveBeenCalledTimes(2);
         });
 
 
